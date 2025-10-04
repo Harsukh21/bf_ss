@@ -13,7 +13,11 @@ class BulkUserController extends Controller
      */
     public function index()
     {
-        $userCount = DB::table('users')->count();
+        try {
+            $userCount = DB::table('users')->count();
+        } catch (\Exception $e) {
+            $userCount = 0;
+        }
         return view('bulk-users', compact('userCount'));
     }
 
@@ -441,5 +445,103 @@ class BulkUserController extends Controller
         $totalTime = round((microtime(true) - $startTime) * 1000, 2);
         
         return view('database-test', compact('testResults', 'overallStatus', 'totalTime', 'dbInfo'));
+    }
+
+    /**
+     * Display all users with filtering and pagination
+     */
+    public function viewUsers(Request $request)
+    {
+        $query = DB::table('users');
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'ILIKE', "%{$search}%")
+                  ->orWhere('first_name', 'ILIKE', "%{$search}%")
+                  ->orWhere('last_name', 'ILIKE', "%{$search}%")
+                  ->orWhere('email', 'ILIKE', "%{$search}%")
+                  ->orWhere('company', 'ILIKE', "%{$search}%")
+                  ->orWhere('job_title', 'ILIKE', "%{$search}%")
+                  ->orWhere('city', 'ILIKE', "%{$search}%")
+                  ->orWhere('country', 'ILIKE', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('gender')) {
+            $query->where('gender', $request->get('gender'));
+        }
+
+        if ($request->filled('industry')) {
+            $query->where('industry', $request->get('industry'));
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->get('status'));
+        }
+
+        if ($request->filled('country')) {
+            $query->where('country', $request->get('country'));
+        }
+
+        if ($request->filled('salary_min')) {
+            $query->where('salary', '>=', $request->get('salary_min'));
+        }
+
+        if ($request->filled('salary_max')) {
+            $query->where('salary', '<=', $request->get('salary_max'));
+        }
+
+        // Get filter options for dropdowns
+        $genders = DB::table('users')->select('gender')->distinct()->whereNotNull('gender')->pluck('gender');
+        $industries = DB::table('users')->select('industry')->distinct()->whereNotNull('industry')->pluck('industry');
+        $countries = DB::table('users')->select('country')->distinct()->whereNotNull('country')->pluck('country');
+        $statuses = ['active', 'inactive', 'suspended'];
+
+        // Get statistics
+        $totalUsers = DB::table('users')->count();
+        $activeUsers = DB::table('users')->where('status', 'active')->count();
+        $avgSalary = DB::table('users')->whereNotNull('salary')->avg('salary');
+        $topCountries = DB::table('users')
+            ->select('country', DB::raw('COUNT(*) as count'))
+            ->whereNotNull('country')
+            ->groupBy('country')
+            ->orderBy('count', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Paginate results
+        $perPage = $request->get('per_page', 20);
+        $users = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+        // Convert timestamps to Carbon objects for proper formatting
+        $users->getCollection()->transform(function ($user) {
+            if ($user->created_at) {
+                $user->created_at = \Carbon\Carbon::parse($user->created_at);
+            }
+            if ($user->updated_at) {
+                $user->updated_at = \Carbon\Carbon::parse($user->updated_at);
+            }
+            if ($user->last_login_at) {
+                $user->last_login_at = \Carbon\Carbon::parse($user->last_login_at);
+            }
+            return $user;
+        });
+
+        // Add request parameters to pagination links
+        $users->appends($request->query());
+
+        return view('users.index', compact(
+            'users', 
+            'genders', 
+            'industries', 
+            'countries', 
+            'statuses',
+            'totalUsers',
+            'activeUsers',
+            'avgSalary',
+            'topCountries'
+        ));
     }
 }

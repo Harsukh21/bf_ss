@@ -74,6 +74,10 @@
                        class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium">
                         Get Started
                     </a>
+                    <a href="{{ route('users.index') }}" 
+                       class="text-gray-600 hover:text-primary-600 transition-colors">
+                        View Users
+                    </a>
                     <a href="{{ route('database.test') }}" 
                        class="text-gray-600 hover:text-primary-600 transition-colors">
                         DB Test

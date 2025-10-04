@@ -158,12 +158,13 @@
             </div>
         @endif
 
+
         <!-- Main Form -->
-        <div class="bg-white shadow rounded-lg">
+        <div id="mainForm" class="bg-white shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">
                 <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Insert Users</h3>
                 
-                <form method="POST" action="{{ route('bulk-users.store') }}" onsubmit="return validateForm()">
+                <form method="POST" action="{{ route('bulk-users.store') }}" id="userForm">
                     @csrf
                     
                     <!-- Number of Users -->
@@ -225,7 +226,7 @@
                     <!-- Submit Button -->
                     <div class="flex justify-between">
                         <button type="submit" 
-                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                             </svg>
@@ -233,8 +234,9 @@
                         </button>
                         
                         <button type="button" 
+                                id="clearButton"
                                 onclick="confirmClear()"
-                                class="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
+                                class="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                             </svg>
@@ -421,7 +423,7 @@ function updateResourceColors(data) {
     }
 }
 
-// Initialize resource monitoring on page load
+// Minimal JavaScript - only for resource monitoring
 document.addEventListener('DOMContentLoaded', function() {
     // Start basic resource monitoring (summary only)
     fetchResources();
