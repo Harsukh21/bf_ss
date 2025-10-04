@@ -216,9 +216,47 @@ class BulkUserController extends Controller
      */
     private function getCpuUsage()
     {
-        $load = sys_getloadavg();
-        $cpuCount = $this->getCpuCount();
-        return round(($load[0] / $cpuCount) * 100, 1);
+        try {
+            // Get CPU usage from /proc/stat
+            $stat1 = file_get_contents('/proc/stat');
+            usleep(100000); // Wait 0.1 seconds
+            $stat2 = file_get_contents('/proc/stat');
+            
+            $info1 = explode("\n", $stat1);
+            $info2 = explode("\n", $stat2);
+            
+            $cpu1 = explode(" ", $info1[0]);
+            $cpu2 = explode(" ", $info2[0]);
+            
+            $cpu1 = array_slice($cpu1, 1, 7);
+            $cpu2 = array_slice($cpu2, 1, 7);
+            
+            $cpu1 = array_map('intval', $cpu1);
+            $cpu2 = array_map('intval', $cpu2);
+            
+            $dif = [];
+            $dif[0] = $cpu2[0] - $cpu1[0]; // user
+            $dif[1] = $cpu2[1] - $cpu1[1]; // nice
+            $dif[2] = $cpu2[2] - $cpu1[2]; // system
+            $dif[3] = $cpu2[3] - $cpu1[3]; // idle
+            $dif[4] = $cpu2[4] - $cpu1[4]; // iowait
+            $dif[5] = $cpu2[5] - $cpu1[5]; // irq
+            $dif[6] = $cpu2[6] - $cpu1[6]; // softirq
+            
+            $idle = $dif[3];
+            $total = array_sum($dif);
+            
+            $cpu = (($total - $idle) / $total) * 100;
+            
+            return round($cpu, 1);
+        } catch (\Exception $e) {
+            // Fallback to load average if /proc/stat is not available
+            $load = sys_getloadavg();
+            $cpuCount = $this->getCpuCount();
+            // Convert load average to approximate CPU percentage (capped at 100%)
+            $cpuPercent = min(($load[0] / $cpuCount) * 100, 100);
+            return round($cpuPercent, 1);
+        }
     }
 
     /**
