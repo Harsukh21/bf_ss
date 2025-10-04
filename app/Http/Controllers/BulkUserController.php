@@ -152,4 +152,132 @@ class BulkUserController extends Controller
             return redirect()->back()->with('error', 'Error clearing users: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Get server resource information
+     */
+    public function getResources()
+    {
+        try {
+            $resources = [
+                'cpu_usage' => $this->getCpuUsage(),
+                'memory_usage' => $this->getMemoryUsage(),
+                'disk_usage' => $this->getDiskUsage(),
+                'database_size' => $this->getDatabaseSize(),
+                'active_connections' => $this->getActiveConnections(),
+                'timestamp' => now()->format('H:i:s'),
+                'uptime' => $this->getUptime(),
+            ];
+
+            return response()->json($resources);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get CPU usage percentage
+     */
+    private function getCpuUsage()
+    {
+        $load = sys_getloadavg();
+        $cpuCount = $this->getCpuCount();
+        return round(($load[0] / $cpuCount) * 100, 1);
+    }
+
+    /**
+     * Get CPU count
+     */
+    private function getCpuCount()
+    {
+        $cpuinfo = file_get_contents('/proc/cpuinfo');
+        preg_match_all('/^processor/m', $cpuinfo, $matches);
+        return count($matches[0]) ?: 1;
+    }
+
+    /**
+     * Get memory usage
+     */
+    private function getMemoryUsage()
+    {
+        $meminfo = file_get_contents('/proc/meminfo');
+        preg_match('/MemTotal:\s+(\d+)/', $meminfo, $total);
+        preg_match('/MemAvailable:\s+(\d+)/', $meminfo, $available);
+        
+        if (isset($total[1]) && isset($available[1])) {
+            $used = $total[1] - $available[1];
+            return [
+                'used' => $this->formatBytes($used * 1024),
+                'total' => $this->formatBytes($total[1] * 1024),
+                'percentage' => round(($used / $total[1]) * 100, 1)
+            ];
+        }
+        
+        return ['used' => 'N/A', 'total' => 'N/A', 'percentage' => 0];
+    }
+
+    /**
+     * Get disk usage
+     */
+    private function getDiskUsage()
+    {
+        $bytes = disk_free_space('/');
+        $total = disk_total_space('/');
+        $used = $total - $bytes;
+        
+        return [
+            'used' => $this->formatBytes($used),
+            'total' => $this->formatBytes($total),
+            'percentage' => round(($used / $total) * 100, 1)
+        ];
+    }
+
+    /**
+     * Get database size
+     */
+    private function getDatabaseSize()
+    {
+        try {
+            $size = DB::select("SELECT pg_size_pretty(pg_database_size(current_database())) as size")[0]->size;
+            return $size;
+        } catch (\Exception $e) {
+            return 'N/A';
+        }
+    }
+
+    /**
+     * Get active database connections
+     */
+    private function getActiveConnections()
+    {
+        try {
+            $count = DB::select("SELECT count(*) as count FROM pg_stat_activity WHERE state = 'active'")[0]->count;
+            return (int)$count;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Get system uptime
+     */
+    private function getUptime()
+    {
+        $uptime = shell_exec('uptime -p 2>/dev/null');
+        return trim($uptime) ?: 'N/A';
+    }
+
+    /**
+     * Format bytes to human readable format
+     */
+    private function formatBytes($bytes, $precision = 2)
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        
+        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
+            $bytes /= 1024;
+        }
+        
+        return round($bytes, $precision) . ' ' . $units[$i];
+    }
 }
