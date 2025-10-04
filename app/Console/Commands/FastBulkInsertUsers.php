@@ -41,6 +41,7 @@ class FastBulkInsertUsers extends Command
         try {
             $hashedPassword = Hash::make('password');
             $now = now();
+            $timestamp = time(); // Add timestamp to ensure uniqueness
             
             // Use large batch inserts for maximum speed
             $batchSize = 2000; // Large batches for PostgreSQL
@@ -51,12 +52,12 @@ class FastBulkInsertUsers extends Command
                 $currentBatchSize = min($batchSize, $count - $insertedCount);
                 $batchData = [];
                 
-                // Generate batch data
+                // Generate batch data with unique emails
                 for ($i = 0; $i < $currentBatchSize; $i++) {
                     $userNum = $insertedCount + $i + 1;
                     $batchData[] = [
                         'name' => "User {$userNum}",
-                        'email' => "user{$userNum}@example.com",
+                        'email' => "user{$userNum}_{$timestamp}@example.com", // Add timestamp for uniqueness
                         'email_verified_at' => $now,
                         'password' => $hashedPassword,
                         'created_at' => $now,

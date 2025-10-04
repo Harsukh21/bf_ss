@@ -49,7 +49,8 @@ class BulkInsertUsers extends Command
             $batchData = [];
             
             for ($i = 0; $i < $currentBatchSize; $i++) {
-                $email = $faker->unique()->safeEmail();
+                // Generate unique email with timestamp and random suffix
+                $email = "user" . ($insertedCount + $i + 1) . "_" . time() . "_" . uniqid() . "@example.com";
                 $batchData[] = [
                     'name' => $faker->name(),
                     'email' => $email,
@@ -82,3 +83,4 @@ class BulkInsertUsers extends Command
         return Command::SUCCESS;
     }
 }
+
