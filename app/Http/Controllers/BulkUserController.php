@@ -187,22 +187,6 @@ class BulkUserController extends Controller
         }
     }
 
-    /**
-     * Clear all users from database
-     */
-    public function clear()
-    {
-        try {
-            DB::table('users')->truncate();
-            return redirect()->back()->with('success', [
-                'message' => 'All users have been cleared from the database',
-                'performance' => null,
-                'method' => 'clear'
-            ]);
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error clearing users: ' . $e->getMessage());
-        }
-    }
 
     /**
      * Get server resource information
