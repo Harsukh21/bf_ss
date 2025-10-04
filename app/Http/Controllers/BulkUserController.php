@@ -84,11 +84,35 @@ class BulkUserController extends Controller
             // Generate batch data with unique emails
             for ($i = 0; $i < $currentBatchSize; $i++) {
                 $userNum = $insertedCount + $i + 1;
+                $faker = \Faker\Factory::create();
                 $batchData[] = [
                     'name' => "User {$userNum}",
+                    'first_name' => "User",
+                    'last_name' => $userNum,
                     'email' => "user{$userNum}_{$timestamp}@example.com", // Add timestamp for uniqueness
                     'email_verified_at' => $now,
                     'password' => $hashedPassword,
+                    'date_of_birth' => $faker->date('Y-m-d', '2000-01-01'),
+                    'gender' => $faker->randomElement(['male', 'female', 'other']),
+                    'phone' => $faker->phoneNumber(),
+                    'country' => $faker->country(),
+                    'city' => $faker->city(),
+                    'state' => $faker->state(),
+                    'postal_code' => $faker->postcode(),
+                    'address' => $faker->address(),
+                    'job_title' => $faker->jobTitle(),
+                    'company' => $faker->company(),
+                    'industry' => $faker->randomElement(['Technology', 'Healthcare', 'Finance', 'Education', 'Retail', 'Manufacturing']),
+                    'salary' => $faker->numberBetween(30000, 150000),
+                    'bio' => $faker->sentence(10),
+                    'website' => $faker->url(),
+                    'linkedin_url' => 'https://linkedin.com/in/user' . $userNum,
+                    'twitter_handle' => '@user' . $userNum,
+                    'status' => 'active',
+                    'email_notifications' => true,
+                    'sms_notifications' => $faker->boolean(),
+                    'avatar' => null,
+                    'notes' => 'Bulk inserted user #' . $userNum,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];
@@ -122,9 +146,32 @@ class BulkUserController extends Controller
                 $email = "user" . ($insertedCount + $i + 1) . "_{$timestamp}_" . uniqid() . "@example.com";
                 $batchData[] = [
                     'name' => $faker->name(),
+                    'first_name' => $faker->firstName(),
+                    'last_name' => $faker->lastName(),
                     'email' => $email,
                     'email_verified_at' => now(),
                     'password' => Hash::make('password'),
+                    'date_of_birth' => $faker->date('Y-m-d', '2000-01-01'),
+                    'gender' => $faker->randomElement(['male', 'female', 'other']),
+                    'phone' => $faker->phoneNumber(),
+                    'country' => $faker->country(),
+                    'city' => $faker->city(),
+                    'state' => $faker->state(),
+                    'postal_code' => $faker->postcode(),
+                    'address' => $faker->address(),
+                    'job_title' => $faker->jobTitle(),
+                    'company' => $faker->company(),
+                    'industry' => $faker->randomElement(['Technology', 'Healthcare', 'Finance', 'Education', 'Retail', 'Manufacturing']),
+                    'salary' => $faker->numberBetween(30000, 150000),
+                    'bio' => $faker->sentence(10),
+                    'website' => $faker->url(),
+                    'linkedin_url' => 'https://linkedin.com/in/' . $faker->userName(),
+                    'twitter_handle' => '@' . $faker->userName(),
+                    'status' => 'active',
+                    'email_notifications' => true,
+                    'sms_notifications' => $faker->boolean(),
+                    'avatar' => null,
+                    'notes' => 'Bulk inserted user with Faker data',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
@@ -355,12 +402,15 @@ class BulkUserController extends Controller
             $userCount = DB::table('users')->count();
             $usersTime = round((microtime(true) - $usersStart) * 1000, 2);
             
+            // Get column count for users table
+            $columnCount = count(DB::select("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND table_schema = 'public'"));
+            
             $testResults[] = [
                 'test' => 'Users Table Test',
                 'status' => 'success',
                 'message' => 'Users table access verified',
                 'time' => $usersTime . 'ms',
-                'details' => "Users table contains {$userCount} records"
+                'details' => "Users table contains {$userCount} records with {$columnCount} fields"
             ];
             
             // Test transaction capability
