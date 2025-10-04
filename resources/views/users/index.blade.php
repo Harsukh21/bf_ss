@@ -11,6 +11,14 @@
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900 mb-2">User Management</h1>
                     <p class="text-gray-600">Browse and filter through all user records</p>
+                    @if(isset($executionTime))
+                        <p class="text-sm text-green-600 mt-1">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            Loaded in {{ $executionTime }}ms
+                        </p>
+                    @endif
                 </div>
                 <div class="flex space-x-3">
                     <a href="{{ route('bulk-users.index') }}" 
@@ -330,7 +338,7 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $user->created_at ? $user->created_at->format('M j, Y') : '-' }}
+                                            {{ $user->created_at ? date('M j, Y', strtotime($user->created_at)) : '-' }}
                                         </td>
                                     </tr>
                                 @endforeach

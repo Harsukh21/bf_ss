@@ -1,0 +1,52 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            // Add indexes for commonly filtered fields
+            $table->index('gender');
+            $table->index('industry');
+            $table->index('status');
+            $table->index('country');
+            $table->index('created_at');
+            $table->index('salary');
+            
+            // Add composite indexes for common filter combinations
+            $table->index(['status', 'created_at']);
+            $table->index(['gender', 'industry']);
+            $table->index(['country', 'status']);
+            
+            // Note: Partial indexes would need to be created manually in PostgreSQL
+            // For now, we'll use regular indexes which will still improve performance
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            // Drop indexes
+            $table->dropIndex(['gender']);
+            $table->dropIndex(['industry']);
+            $table->dropIndex(['status']);
+            $table->dropIndex(['country']);
+            $table->dropIndex(['created_at']);
+            $table->dropIndex(['salary']);
+            $table->dropIndex(['status', 'created_at']);
+            $table->dropIndex(['gender', 'industry']);
+            $table->dropIndex(['country', 'status']);
+            // Note: Partial indexes would need to be dropped manually in PostgreSQL
+        });
+    }
+};
