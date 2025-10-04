@@ -280,4 +280,116 @@ class BulkUserController extends Controller
         
         return round($bytes, $precision) . ' ' . $units[$i];
     }
+
+    /**
+     * Test database connection and return detailed information
+     */
+    public function testDatabase()
+    {
+        $startTime = microtime(true);
+        $testResults = [];
+        $overallStatus = 'success';
+        
+        try {
+            // Test basic connection
+            $connectionStart = microtime(true);
+            $connection = DB::connection();
+            $connection->getPdo();
+            $connectionTime = round((microtime(true) - $connectionStart) * 1000, 2);
+            
+            $testResults[] = [
+                'test' => 'Database Connection',
+                'status' => 'success',
+                'message' => 'Successfully connected to PostgreSQL database',
+                'time' => $connectionTime . 'ms',
+                'details' => 'Connection established successfully'
+            ];
+            
+            // Test basic query
+            $queryStart = microtime(true);
+            $result = DB::select('SELECT 1 as test_value');
+            $queryTime = round((microtime(true) - $queryStart) * 1000, 2);
+            
+            $testResults[] = [
+                'test' => 'Basic Query Test',
+                'status' => 'success',
+                'message' => 'Basic SELECT query executed successfully',
+                'time' => $queryTime . 'ms',
+                'details' => 'Query returned: ' . $result[0]->test_value
+            ];
+            
+            // Test database info
+            $infoStart = microtime(true);
+            $dbInfo = DB::select("SELECT 
+                current_database() as database_name,
+                version() as version,
+                current_user as user,
+                inet_server_addr() as host,
+                inet_server_port() as port
+            ")[0];
+            $infoTime = round((microtime(true) - $infoStart) * 1000, 2);
+            
+            $testResults[] = [
+                'test' => 'Database Information',
+                'status' => 'success',
+                'message' => 'Database information retrieved successfully',
+                'time' => $infoTime . 'ms',
+                'details' => "Database: {$dbInfo->database_name}, User: {$dbInfo->user}"
+            ];
+            
+            // Test table access
+            $tableStart = microtime(true);
+            $tableCount = DB::select("SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = 'public'")[0]->count;
+            $tableTime = round((microtime(true) - $tableStart) * 1000, 2);
+            
+            $testResults[] = [
+                'test' => 'Table Access Test',
+                'status' => 'success',
+                'message' => 'Table access verified successfully',
+                'time' => $tableTime . 'ms',
+                'details' => "Found {$tableCount} tables in public schema"
+            ];
+            
+            // Test users table specifically
+            $usersStart = microtime(true);
+            $userCount = DB::table('users')->count();
+            $usersTime = round((microtime(true) - $usersStart) * 1000, 2);
+            
+            $testResults[] = [
+                'test' => 'Users Table Test',
+                'status' => 'success',
+                'message' => 'Users table access verified',
+                'time' => $usersTime . 'ms',
+                'details' => "Users table contains {$userCount} records"
+            ];
+            
+            // Test transaction capability
+            $transactionStart = microtime(true);
+            DB::beginTransaction();
+            DB::rollback(); // Rollback to test transaction capability
+            $transactionTime = round((microtime(true) - $transactionStart) * 1000, 2);
+            
+            $testResults[] = [
+                'test' => 'Transaction Test',
+                'status' => 'success',
+                'message' => 'Transaction support verified',
+                'time' => $transactionTime . 'ms',
+                'details' => 'Begin/rollback transaction executed successfully'
+            ];
+            
+        } catch (\Exception $e) {
+            $overallStatus = 'error';
+            $testResults[] = [
+                'test' => 'Database Connection Error',
+                'status' => 'error',
+                'message' => 'Database connection failed',
+                'time' => 'N/A',
+                'details' => $e->getMessage()
+            ];
+        }
+        
+        $totalTime = round((microtime(true) - $startTime) * 1000, 2);
+        
+        return view('database-test', compact('testResults', 'overallStatus', 'totalTime', 'dbInfo'));
+    }
 }
