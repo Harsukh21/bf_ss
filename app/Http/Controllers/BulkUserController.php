@@ -217,45 +217,58 @@ class BulkUserController extends Controller
     private function getCpuUsage()
     {
         try {
-            // Get CPU usage from /proc/stat
+            // Method 1: Use /proc/loadavg for more accurate results
+            $load = sys_getloadavg();
+            $cpuCount = $this->getCpuCount();
+            
+            if ($cpuCount > 0) {
+                // Convert 1-minute load average to approximate CPU percentage
+                $cpuPercent = ($load[0] / $cpuCount) * 100;
+                return round(min($cpuPercent, 100), 1);
+            }
+            
+            // Method 2: Fallback to /proc/stat (improved calculation)
             $stat1 = file_get_contents('/proc/stat');
-            usleep(100000); // Wait 0.1 seconds
+            usleep(200000); // Wait 0.2 seconds for better accuracy
             $stat2 = file_get_contents('/proc/stat');
             
             $info1 = explode("\n", $stat1);
             $info2 = explode("\n", $stat2);
             
-            $cpu1 = explode(" ", $info1[0]);
-            $cpu2 = explode(" ", $info2[0]);
+            if (empty($info1[0]) || empty($info2[0])) {
+                return 0.0;
+            }
             
+            $cpu1 = preg_split('/\s+/', trim($info1[0]));
+            $cpu2 = preg_split('/\s+/', trim($info2[0]));
+            
+            // Skip the 'cpu' label and get the numeric values
             $cpu1 = array_slice($cpu1, 1, 7);
             $cpu2 = array_slice($cpu2, 1, 7);
             
             $cpu1 = array_map('intval', $cpu1);
             $cpu2 = array_map('intval', $cpu2);
             
+            // Calculate differences
             $dif = [];
-            $dif[0] = $cpu2[0] - $cpu1[0]; // user
-            $dif[1] = $cpu2[1] - $cpu1[1]; // nice
-            $dif[2] = $cpu2[2] - $cpu1[2]; // system
-            $dif[3] = $cpu2[3] - $cpu1[3]; // idle
-            $dif[4] = $cpu2[4] - $cpu1[4]; // iowait
-            $dif[5] = $cpu2[5] - $cpu1[5]; // irq
-            $dif[6] = $cpu2[6] - $cpu1[6]; // softirq
+            for ($i = 0; $i < 7; $i++) {
+                $dif[$i] = $cpu2[$i] - $cpu1[$i];
+            }
             
-            $idle = $dif[3];
-            $total = array_sum($dif);
+            // Calculate CPU usage
+            $idle = $dif[3]; // idle time
+            $total = array_sum($dif); // total time
+            
+            if ($total <= 0) {
+                return 0.0;
+            }
             
             $cpu = (($total - $idle) / $total) * 100;
+            return round(min($cpu, 100), 1);
             
-            return round($cpu, 1);
         } catch (\Exception $e) {
-            // Fallback to load average if /proc/stat is not available
-            $load = sys_getloadavg();
-            $cpuCount = $this->getCpuCount();
-            // Convert load average to approximate CPU percentage (capped at 100%)
-            $cpuPercent = min(($load[0] / $cpuCount) * 100, 100);
-            return round($cpuPercent, 1);
+            // Final fallback: return 0 if all methods fail
+            return 0.0;
         }
     }
 
