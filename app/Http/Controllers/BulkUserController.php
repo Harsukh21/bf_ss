@@ -15,34 +15,27 @@ class BulkUserController extends Controller
     public function index()
     {
         try {
-            $userCount = DB::table('users')->count();
+            // Use cached count for faster page loading
+            $userCount = Cache::remember('total_users_count', 300, function() {
+                return DB::table('users')->count();
+            });
             
-            // Get only the latest 1000 records with pagination (limit to first 1000)
-            // Using a subquery to limit the dataset first, then paginate
-            $latestUsers = DB::table('users')
-                ->select('*')
-                ->orderBy('id', 'desc')
-                ->limit(1000)
-                ->get()
-                ->chunk(50); // Manually chunk into pages of 50
-            
-            // Convert to Laravel paginator for the view
+            // Load only first 50 records for initial page load (much faster)
             $page = request()->get('page', 1);
             $perPage = 50;
             $offset = ($page - 1) * $perPage;
             
-            $latestRecords = DB::table('users')
-                ->select([
-                    'id', 'name', 'first_name', 'last_name', 'email',
-                    'gender', 'country', 'industry', 'status', 'created_at'
-                ])
-                ->orderBy('id', 'desc')
-                ->limit(1000)
-                ->get();
+            // Use raw SQL for maximum speed - only load what's needed
+            $sql = "SELECT id, name, first_name, last_name, email, gender, country, industry, status, created_at 
+                    FROM users 
+                    ORDER BY id DESC 
+                    LIMIT 50 OFFSET ?";
+            
+            $latestRecords = collect(DB::select($sql, [$offset]));
             
             $latestUsers = new \Illuminate\Pagination\LengthAwarePaginator(
-                $latestRecords->slice($offset, $perPage)->values(),
-                min($latestRecords->count(), 1000),
+                $latestRecords,
+                min($userCount, 1000), // Show pagination for 1000 records
                 $perPage,
                 $page,
                 ['path' => request()->url(), 'query' => request()->query()]
@@ -75,42 +68,44 @@ class BulkUserController extends Controller
             // Disable query logging for performance
             DB::disableQueryLog();
             
-            // Optimize database connection for bulk operations (PostgreSQL)
-            // Use try-catch for each parameter to handle version differences gracefully
+            // Aggressive database optimizations for maximum speed
             try {
                 DB::statement('SET synchronous_commit = off');
-            } catch (\Exception $e) {
-                // Ignore if parameter not supported
-            }
+            } catch (\Exception $e) {}
             
             try {
-                DB::statement('SET maintenance_work_mem = 256MB');
-            } catch (\Exception $e) {
-                // Ignore if parameter not supported
-            }
+                DB::statement('SET maintenance_work_mem = 512MB');
+            } catch (\Exception $e) {}
             
             try {
                 DB::statement('SET checkpoint_completion_target = 0.9');
-            } catch (\Exception $e) {
-                // Ignore if parameter not supported
-            }
+            } catch (\Exception $e) {}
             
             try {
-                DB::statement('SET max_wal_size = 2GB');
-            } catch (\Exception $e) {
-                // Fallback for older PostgreSQL versions
-                try {
-                    DB::statement('SET wal_buffers = 16MB');
-                } catch (\Exception $e2) {
-                    // Ignore if parameter not supported
-                }
-            }
+                DB::statement('SET max_wal_size = 4GB');
+            } catch (\Exception $e) {}
+            
+            try {
+                DB::statement('SET shared_buffers = 256MB');
+            } catch (\Exception $e) {}
+            
+            try {
+                DB::statement('SET work_mem = 64MB');
+            } catch (\Exception $e) {}
+            
+            try {
+                DB::statement('SET effective_cache_size = 1GB');
+            } catch (\Exception $e) {}
             
             // Start transaction
             DB::beginTransaction();
             
             if ($method === 'ultra') {
-                $this->ultraFastBulkInsert($count);
+                if ($count <= 10000) {
+                    $this->ultraFastBulkInsert($count);
+                } else {
+                    $this->fastBulkInsert($count);
+                }
             } elseif ($method === 'fast') {
                 $this->fastBulkInsert($count);
             } else {
@@ -250,8 +245,8 @@ class BulkUserController extends Controller
         $countries = ['United States', 'Canada', 'United Kingdom', 'Australia', 'Germany', 'France', 'Japan'];
         $cities = ['New York', 'London', 'Tokyo', 'Sydney', 'Berlin', 'Paris', 'Toronto'];
         
-        // Use very large batch size for maximum performance (no file system dependency)
-        $batchSize = 10000; // Even larger batch for ultra-fast method
+        // Use optimal batch size based on count for ultra-fast performance
+        $batchSize = $count <= 6000 ? $count : 20000; // Single batch for 6k or less
         $batches = ceil($count / $batchSize);
         $insertedCount = 0;
         
@@ -669,7 +664,7 @@ class BulkUserController extends Controller
     }
 
     /**
-     * Get latest 1000 records via AJAX
+     * Get latest 100 records via AJAX (optimized for speed)
      */
     public function getLatestRecords(Request $request)
     {
@@ -677,28 +672,30 @@ class BulkUserController extends Controller
             // Disable query logging for performance
             DB::disableQueryLog();
             
-            $perPage = $request->get('per_page', 50);
+            $perPage = min($request->get('per_page', 50), 100); // Max 100 per page
             $page = $request->get('page', 1);
-            
-            // Get only the latest 1000 records
-            $latestRecords = DB::table('users')
-                ->select([
-                    'id', 'name', 'first_name', 'last_name', 'email',
-                    'gender', 'country', 'industry', 'status', 'created_at'
-                ])
-                ->orderBy('id', 'desc')
-                ->limit(1000)
-                ->get();
-            
-            // Manual pagination for the 1000 records
-            $total = min($latestRecords->count(), 1000);
-            $lastPage = ceil($total / $perPage);
             $offset = ($page - 1) * $perPage;
-            $items = $latestRecords->slice($offset, $perPage)->values();
+            
+            // Use raw SQL for maximum performance - only latest 100 records
+            $sql = "SELECT id, name, first_name, last_name, email, gender, country, industry, status, created_at 
+                    FROM users 
+                    ORDER BY id DESC 
+                    LIMIT 100 OFFSET ?";
+            
+            $latestRecords = collect(DB::select($sql, [$offset]));
+            
+            // Get total count efficiently (cached)
+            $total = Cache::remember('latest_100_count', 60, function() {
+                return DB::table('users')->count();
+            });
+            
+            // For AJAX, we only show latest 100, but pagination shows it's from larger dataset
+            $total = min($total, 100);
+            $lastPage = ceil($total / $perPage);
             
             return response()->json([
                 'success' => true,
-                'users' => $items,
+                'users' => $latestRecords,
                 'pagination' => [
                     'current_page' => $page,
                     'last_page' => $lastPage,

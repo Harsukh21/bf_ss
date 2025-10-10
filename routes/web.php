@@ -11,7 +11,7 @@ Route::get('/', function () {
 // Bulk User Routes
 Route::get('/bulk-users', [BulkUserController::class, 'index'])->name('bulk-users.index');
 Route::post('/bulk-users', [BulkUserController::class, 'store'])->name('bulk-users.store');
-Route::get('/bulk-users/latest-records', [BulkUserController::class, 'getLatestRecords'])->name('bulk-users.latest-records');
+Route::get('/bulk-users/latest-records', [BulkUserController::class, 'getLatestRecords'])->name('bulk-users.latest-records')->middleware('throttle:60,1');
 Route::get('/bulk-users/resources', [BulkUserController::class, 'getResources'])->name('bulk-users.resources');
 
 // Users View Routes
