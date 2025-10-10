@@ -30,3 +30,5 @@ Route::post('/test-csrf', function (Request $request) {
     return response()->json(['message' => 'CSRF token is valid', 'token' => $request->input('_token')]);
 });
 
+// some testing
+
