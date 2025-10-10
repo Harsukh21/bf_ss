@@ -669,31 +669,48 @@ class BulkUserController extends Controller
     }
 
     /**
-     * Get latest records via AJAX
+     * Get latest 1000 records via AJAX
      */
     public function getLatestRecords(Request $request)
     {
         try {
+            // Disable query logging for performance
+            DB::disableQueryLog();
+            
             $perPage = $request->get('per_page', 50);
-            $latestUsers = DB::table('users')
-                ->orderBy('created_at', 'desc')
+            $page = $request->get('page', 1);
+            
+            // Get only the latest 1000 records
+            $latestRecords = DB::table('users')
+                ->select([
+                    'id', 'name', 'first_name', 'last_name', 'email',
+                    'gender', 'country', 'industry', 'status', 'created_at'
+                ])
                 ->orderBy('id', 'desc')
-                ->paginate($perPage);
+                ->limit(1000)
+                ->get();
+            
+            // Manual pagination for the 1000 records
+            $total = min($latestRecords->count(), 1000);
+            $lastPage = ceil($total / $perPage);
+            $offset = ($page - 1) * $perPage;
+            $items = $latestRecords->slice($offset, $perPage)->values();
             
             return response()->json([
                 'success' => true,
-                'users' => $latestUsers->items(),
+                'users' => $items,
                 'pagination' => [
-                    'current_page' => $latestUsers->currentPage(),
-                    'last_page' => $latestUsers->lastPage(),
-                    'per_page' => $latestUsers->perPage(),
-                    'total' => $latestUsers->total(),
-                    'from' => $latestUsers->firstItem(),
-                    'to' => $latestUsers->lastItem()
+                    'current_page' => $page,
+                    'last_page' => $lastPage,
+                    'per_page' => $perPage,
+                    'total' => $total,
+                    'from' => $offset + 1,
+                    'to' => min($offset + $perPage, $total)
                 ]
             ]);
             
         } catch (\Exception $e) {
+            \Log::error('Error in getLatestRecords: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error loading latest records: ' . $e->getMessage()
