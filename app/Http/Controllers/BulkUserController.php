@@ -10,22 +10,47 @@ use Illuminate\Support\Facades\Cache;
 class BulkUserController extends Controller
 {
     /**
-     * Show the bulk user insertion form with latest records
+     * Show the bulk user insertion form with latest 1000 records only
      */
     public function index()
     {
         try {
             $userCount = DB::table('users')->count();
             
-            // Get latest 1000 records with pagination
+            // Get only the latest 1000 records with pagination (limit to first 1000)
+            // Using a subquery to limit the dataset first, then paginate
             $latestUsers = DB::table('users')
-                ->orderBy('created_at', 'desc')
+                ->select('*')
                 ->orderBy('id', 'desc')
-                ->paginate(50); // Show 50 records per page
+                ->limit(1000)
+                ->get()
+                ->chunk(50); // Manually chunk into pages of 50
+            
+            // Convert to Laravel paginator for the view
+            $page = request()->get('page', 1);
+            $perPage = 50;
+            $offset = ($page - 1) * $perPage;
+            
+            $latestRecords = DB::table('users')
+                ->select([
+                    'id', 'name', 'first_name', 'last_name', 'email',
+                    'gender', 'country', 'industry', 'status', 'created_at'
+                ])
+                ->orderBy('id', 'desc')
+                ->limit(1000)
+                ->get();
+            
+            $latestUsers = new \Illuminate\Pagination\LengthAwarePaginator(
+                $latestRecords->slice($offset, $perPage)->values(),
+                min($latestRecords->count(), 1000),
+                $perPage,
+                $page,
+                ['path' => request()->url(), 'query' => request()->query()]
+            );
                 
         } catch (\Exception $e) {
             $userCount = 0;
-            $latestUsers = collect(); // Empty collection on error
+            $latestUsers = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 50);
         }
         
         return view('bulk-users', compact('userCount', 'latestUsers'));
