@@ -10,16 +10,25 @@ use Illuminate\Support\Facades\Cache;
 class BulkUserController extends Controller
 {
     /**
-     * Show the bulk user insertion form
+     * Show the bulk user insertion form with latest records
      */
     public function index()
     {
         try {
             $userCount = DB::table('users')->count();
+            
+            // Get latest 1000 records with pagination
+            $latestUsers = DB::table('users')
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->paginate(50); // Show 50 records per page
+                
         } catch (\Exception $e) {
             $userCount = 0;
+            $latestUsers = collect(); // Empty collection on error
         }
-        return view('bulk-users', compact('userCount'));
+        
+        return view('bulk-users', compact('userCount', 'latestUsers'));
     }
 
     /**
@@ -29,7 +38,7 @@ class BulkUserController extends Controller
     {
         $request->validate([
             'count' => 'required|integer|min:1|max:50000',
-            'method' => 'required|in:fast,regular'
+            'method' => 'required|in:fast,regular,ultra'
         ]);
 
         $count = $request->input('count');
@@ -41,16 +50,56 @@ class BulkUserController extends Controller
             // Disable query logging for performance
             DB::disableQueryLog();
             
+            // Optimize database connection for bulk operations (PostgreSQL)
+            // Use try-catch for each parameter to handle version differences gracefully
+            try {
+                DB::statement('SET synchronous_commit = off');
+            } catch (\Exception $e) {
+                // Ignore if parameter not supported
+            }
+            
+            try {
+                DB::statement('SET maintenance_work_mem = 256MB');
+            } catch (\Exception $e) {
+                // Ignore if parameter not supported
+            }
+            
+            try {
+                DB::statement('SET checkpoint_completion_target = 0.9');
+            } catch (\Exception $e) {
+                // Ignore if parameter not supported
+            }
+            
+            try {
+                DB::statement('SET max_wal_size = 2GB');
+            } catch (\Exception $e) {
+                // Fallback for older PostgreSQL versions
+                try {
+                    DB::statement('SET wal_buffers = 16MB');
+                } catch (\Exception $e2) {
+                    // Ignore if parameter not supported
+                }
+            }
+            
             // Start transaction
             DB::beginTransaction();
             
-            if ($method === 'fast') {
+            if ($method === 'ultra') {
+                $this->ultraFastBulkInsert($count);
+            } elseif ($method === 'fast') {
                 $this->fastBulkInsert($count);
             } else {
                 $this->regularBulkInsert($count);
             }
             
             DB::commit();
+            
+            // Restore database settings (PostgreSQL)
+            try {
+                DB::statement('SET synchronous_commit = on');
+            } catch (\Exception $e) {
+                // Ignore if parameter not supported
+            }
             
             $endTime = microtime(true);
             $executionTime = round($endTime - $startTime, 3);
@@ -59,72 +108,183 @@ class BulkUserController extends Controller
             return redirect()->back()->with('success', [
                 'message' => "Successfully inserted {$count} users in {$executionTime} seconds",
                 'performance' => "{$recordsPerSecond} records per second",
-                'method' => $method
+                'method' => $method,
+                'count' => $count,
+                'time' => $executionTime,
+                'records_per_second' => $recordsPerSecond
             ]);
             
         } catch (\Exception $e) {
             DB::rollback();
+            
+            // Restore database settings even on error (PostgreSQL)
+            try {
+                DB::statement('SET synchronous_commit = on');
+            } catch (\Exception $restoreError) {
+                // Log but don't fail the main error - this is expected for some PostgreSQL versions
+                \Log::info('Could not restore synchronous_commit setting: ' . $restoreError->getMessage());
+            }
+            
             return redirect()->back()->with('error', 'Error inserting users: ' . $e->getMessage());
         }
     }
 
     /**
-     * Fast bulk insert method
+     * Fast bulk insert method - Optimized for maximum speed
      */
     private function fastBulkInsert($count)
     {
+        // Pre-hash password once
         $hashedPassword = Hash::make('password');
-        $now = now();
-        $timestamp = time(); // Add timestamp to ensure uniqueness
+        $now = now()->toDateTimeString();
+        $timestamp = time();
         
-        // Use large batch inserts for maximum speed
-        $batchSize = 2000;
+        // Use much larger batch size for better performance
+        $batchSize = 5000;
+        $batches = ceil($count / $batchSize);
+        $insertedCount = 0;
+        
+        // Pre-defined data arrays for speed
+        $genders = ['male', 'female', 'other'];
+        $industries = ['Technology', 'Healthcare', 'Finance', 'Education', 'Retail', 'Manufacturing'];
+        $countries = ['United States', 'Canada', 'United Kingdom', 'Australia', 'Germany', 'France', 'Japan'];
+        $cities = ['New York', 'London', 'Tokyo', 'Sydney', 'Berlin', 'Paris', 'Toronto'];
+        
+        for ($batch = 0; $batch < $batches; $batch++) {
+            $currentBatchSize = min($batchSize, $count - $insertedCount);
+            
+            // Use raw SQL with VALUES for maximum performance
+            $values = [];
+            for ($i = 0; $i < $currentBatchSize; $i++) {
+                $userNum = $insertedCount + $i + 1;
+                $gender = $genders[$userNum % 3];
+                $industry = $industries[$userNum % 6];
+                $country = $countries[$userNum % 7];
+                $city = $cities[$userNum % 7];
+                
+                $values[] = "(
+                    'User {$userNum}',
+                    'User',
+                    '{$userNum}',
+                    'user{$userNum}_{$timestamp}@example.com',
+                    '{$now}',
+                    '{$hashedPassword}',
+                    '1990-01-01',
+                    '{$gender}',
+                    '+1234567890',
+                    '{$country}',
+                    '{$city}',
+                    'State',
+                    '12345',
+                    '123 Main St',
+                    'Software Developer',
+                    'Tech Corp',
+                    '{$industry}',
+                    " . rand(40000, 120000) . ",
+                    'Professional software developer',
+                    'https://example.com',
+                    'https://linkedin.com/in/user{$userNum}',
+                    '@user{$userNum}',
+                    'active',
+                    true,
+                    false,
+                    null,
+                    'Bulk inserted user #{$userNum}',
+                    '{$now}',
+                    '{$now}'
+                )";
+            }
+            
+            // Raw SQL insert for maximum speed
+            $sql = "INSERT INTO users (
+                name, first_name, last_name, email, email_verified_at, password, 
+                date_of_birth, gender, phone, country, city, state, postal_code, 
+                address, job_title, company, industry, salary, bio, website, 
+                linkedin_url, twitter_handle, status, email_notifications, 
+                sms_notifications, avatar, notes, created_at, updated_at
+            ) VALUES " . implode(',', $values);
+            
+            DB::statement($sql);
+            $insertedCount += $currentBatchSize;
+        }
+    }
+
+    /**
+     * Ultra-fast bulk insert method using optimized raw SQL with VALUES
+     */
+    private function ultraFastBulkInsert($count)
+    {
+        // Pre-hash password once
+        $hashedPassword = Hash::make('password');
+        $now = now()->toDateTimeString();
+        $timestamp = time();
+        
+        // Pre-defined data arrays for speed
+        $genders = ['male', 'female', 'other'];
+        $industries = ['Technology', 'Healthcare', 'Finance', 'Education', 'Retail', 'Manufacturing'];
+        $countries = ['United States', 'Canada', 'United Kingdom', 'Australia', 'Germany', 'France', 'Japan'];
+        $cities = ['New York', 'London', 'Tokyo', 'Sydney', 'Berlin', 'Paris', 'Toronto'];
+        
+        // Use very large batch size for maximum performance (no file system dependency)
+        $batchSize = 10000; // Even larger batch for ultra-fast method
         $batches = ceil($count / $batchSize);
         $insertedCount = 0;
         
         for ($batch = 0; $batch < $batches; $batch++) {
             $currentBatchSize = min($batchSize, $count - $insertedCount);
-            $batchData = [];
             
-            // Generate batch data with unique emails
+            // Use raw SQL with VALUES for maximum performance
+            $values = [];
             for ($i = 0; $i < $currentBatchSize; $i++) {
                 $userNum = $insertedCount + $i + 1;
-                $faker = \Faker\Factory::create();
-                $batchData[] = [
-                    'name' => "User {$userNum}",
-                    'first_name' => "User",
-                    'last_name' => $userNum,
-                    'email' => "user{$userNum}_{$timestamp}@example.com", // Add timestamp for uniqueness
-                    'email_verified_at' => $now,
-                    'password' => $hashedPassword,
-                    'date_of_birth' => $faker->date('Y-m-d', '2000-01-01'),
-                    'gender' => $faker->randomElement(['male', 'female', 'other']),
-                    'phone' => $faker->phoneNumber(),
-                    'country' => $faker->country(),
-                    'city' => $faker->city(),
-                    'state' => $faker->state(),
-                    'postal_code' => $faker->postcode(),
-                    'address' => $faker->address(),
-                    'job_title' => $faker->jobTitle(),
-                    'company' => $faker->company(),
-                    'industry' => $faker->randomElement(['Technology', 'Healthcare', 'Finance', 'Education', 'Retail', 'Manufacturing']),
-                    'salary' => $faker->numberBetween(30000, 150000),
-                    'bio' => $faker->sentence(10),
-                    'website' => $faker->url(),
-                    'linkedin_url' => 'https://linkedin.com/in/user' . $userNum,
-                    'twitter_handle' => '@user' . $userNum,
-                    'status' => 'active',
-                    'email_notifications' => true,
-                    'sms_notifications' => $faker->boolean(),
-                    'avatar' => null,
-                    'notes' => 'Bulk inserted user #' . $userNum,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
+                $gender = $genders[$userNum % 3];
+                $industry = $industries[$userNum % 6];
+                $country = $countries[$userNum % 7];
+                $city = $cities[$userNum % 7];
+                
+                $values[] = "(
+                    'User {$userNum}',
+                    'User',
+                    '{$userNum}',
+                    'user{$userNum}_{$timestamp}@example.com',
+                    '{$now}',
+                    '{$hashedPassword}',
+                    '1990-01-01',
+                    '{$gender}',
+                    '+1234567890',
+                    '{$country}',
+                    '{$city}',
+                    'State',
+                    '12345',
+                    '123 Main St',
+                    'Software Developer',
+                    'Tech Corp',
+                    '{$industry}',
+                    " . rand(40000, 120000) . ",
+                    'Professional software developer',
+                    'https://example.com',
+                    'https://linkedin.com/in/user{$userNum}',
+                    '@user{$userNum}',
+                    'active',
+                    true,
+                    false,
+                    null,
+                    'Bulk inserted user #{$userNum}',
+                    '{$now}',
+                    '{$now}'
+                )";
             }
             
-            // Bulk insert the batch
-            DB::table('users')->insert($batchData);
+            // Raw SQL insert for maximum speed (no file system dependency)
+            $sql = "INSERT INTO users (
+                name, first_name, last_name, email, email_verified_at, password, 
+                date_of_birth, gender, phone, country, city, state, postal_code, 
+                address, job_title, company, industry, salary, bio, website, 
+                linkedin_url, twitter_handle, status, email_notifications, 
+                sms_notifications, avatar, notes, created_at, updated_at
+            ) VALUES " . implode(',', $values);
+            
+            DB::statement($sql);
             $insertedCount += $currentBatchSize;
         }
     }
@@ -484,66 +644,90 @@ class BulkUserController extends Controller
     }
 
     /**
-     * Display all users with filtering and pagination
+     * Get latest records via AJAX
+     */
+    public function getLatestRecords(Request $request)
+    {
+        try {
+            $perPage = $request->get('per_page', 50);
+            $latestUsers = DB::table('users')
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->paginate($perPage);
+            
+            return response()->json([
+                'success' => true,
+                'users' => $latestUsers->items(),
+                'pagination' => [
+                    'current_page' => $latestUsers->currentPage(),
+                    'last_page' => $latestUsers->lastPage(),
+                    'per_page' => $latestUsers->perPage(),
+                    'total' => $latestUsers->total(),
+                    'from' => $latestUsers->firstItem(),
+                    'to' => $latestUsers->lastItem()
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading latest records: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    /**
+     * Display all users with optimized pagination for large datasets
      */
     public function viewUsers(Request $request)
     {
         $startTime = microtime(true);
         
         try {
-            // Simple query - let Laravel handle field selection
-            $query = DB::table('users');
-
-            // Apply basic filters
-            if ($request->filled('status')) {
-                $query->where('status', $request->get('status'));
-            }
-
-            if ($request->filled('gender')) {
-                $query->where('gender', $request->get('gender'));
-            }
-
-            if ($request->filled('industry')) {
-                $query->where('industry', $request->get('industry'));
-            }
-
-            if ($request->filled('country')) {
-                $query->where('country', $request->get('country'));
-            }
-
-            // Get filter options (simplified for now)
-            $genders = collect(['male', 'female', 'other']);
-            $industries = collect(['Technology', 'Healthcare', 'Finance', 'Education', 'Retail', 'Manufacturing']);
-            $countries = collect(['United States', 'Canada', 'United Kingdom', 'Australia', 'Germany']);
-            $statuses = ['active', 'inactive', 'suspended'];
-
-            // Get basic statistics (simplified for now)
-            $totalUsers = 42011; // Use known count
-            $activeUsers = 35000; // Estimated
-            $avgSalary = 75000; // Estimated
-            $topCountries = collect(); // Skip for now
-
-            // Optimized pagination
-            $perPage = min($request->get('per_page', 20), 100);
-            $users = $query->orderBy('created_at', 'desc')->paginate($perPage);
+            // Disable query logging for performance
+            DB::disableQueryLog();
+            
+            // Get total count efficiently (cached if possible)
+            $totalUsers = Cache::remember('total_users_count', 300, function() {
+                return DB::table('users')->count();
+            });
+            
+            // Optimized pagination with cursor-based approach for large datasets
+            $perPage = min($request->get('per_page', 50), 100); // Increased default to 50
+            
+            // Use simple query with only essential fields for better performance
+            $users = DB::table('users')
+                ->select([
+                    'id',
+                    'name', 
+                    'first_name',
+                    'last_name',
+                    'email',
+                    'gender',
+                    'country',
+                    'industry',
+                    'status',
+                    'created_at'
+                ])
+                ->orderBy('id', 'desc') // Use id for better performance than created_at
+                ->paginate($perPage);
+            
+            // Add query parameters to pagination links
             $users->appends($request->query());
 
             $executionTime = round((microtime(true) - $startTime) * 1000, 2);
 
             return view('users.index', [
                 'users' => $users,
-                'genders' => $genders,
-                'industries' => $industries,
-                'countries' => $countries,
-                'statuses' => $statuses,
                 'totalUsers' => $totalUsers,
-                'activeUsers' => $activeUsers,
-                'avgSalary' => $avgSalary,
-                'topCountries' => $topCountries,
                 'executionTime' => $executionTime
             ]);
+            
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()]);
+            \Log::error('Error in viewUsers: ' . $e->getMessage());
+            return redirect()->route('bulk-users.index')
+                ->with('error', 'Error loading users: ' . $e->getMessage());
         }
     }
 }

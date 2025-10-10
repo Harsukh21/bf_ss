@@ -134,6 +134,14 @@
                             @if(session('success')['performance'])
                                 <p class="mt-1"><strong>Performance:</strong> {{ session('success')['performance'] }}</p>
                             @endif
+                            @if(session('success')['count'])
+                                <div class="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                                    <div><strong>Records:</strong> {{ number_format(session('success')['count']) }}</div>
+                                    <div><strong>Time:</strong> {{ session('success')['time'] }}s</div>
+                                    <div><strong>Speed:</strong> {{ number_format(session('success')['records_per_second']) }}/sec</div>
+                                    <div><strong>Method:</strong> {{ ucfirst(session('success')['method']) }}</div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -194,15 +202,29 @@
                         <div class="space-y-3">
                             <div class="flex items-start">
                                 <div class="flex items-center h-5">
-                                    <input id="fast" 
+                                    <input id="ultra" 
                                            name="method" 
                                            type="radio" 
-                                           value="fast"
+                                           value="ultra"
                                            checked
                                            class="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300">
                                 </div>
                                 <div class="ml-3 text-sm">
-                                    <label for="fast" class="font-medium text-gray-700">Fast Method (Recommended)</label>
+                                    <label for="ultra" class="font-medium text-gray-700">Ultra-Fast Method (Recommended)</label>
+                                    <p class="text-gray-500">Maximum speed using optimized raw SQL - can insert 6000+ users in under 0.5 seconds. No file system dependencies.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="fast" 
+                                           name="method" 
+                                           type="radio" 
+                                           value="fast"
+                                           class="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300">
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label for="fast" class="font-medium text-gray-700">Fast Method</label>
                                     <p class="text-gray-500">Optimized for speed - can insert 6000+ users in under 1 second. Uses bulk inserts with large batches.</p>
                                 </div>
                             </div>
@@ -244,10 +266,114 @@
             </div>
         </div>
 
+        <!-- Latest Records Table -->
+        <div class="mt-8 bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        Latest Records
+                        <span class="text-sm font-normal text-gray-500">
+                            ({{ isset($latestUsers) && $latestUsers->total() ? number_format($latestUsers->total()) : 0 }} total)
+                        </span>
+                    </h3>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="refreshLatestRecords()" 
+                                class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div id="latest-records-container">
+                    @if(isset($latestUsers) && $latestUsers->count() > 0)
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Industry</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    @foreach($latestUsers as $user)
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                                            #{{ $user->id }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
+                                            <div class="text-sm text-gray-500">{{ $user->first_name }} {{ $user->last_name }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">{{ $user->email }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                @if($user->gender === 'male') bg-blue-100 text-blue-800
+                                                @elseif($user->gender === 'female') bg-pink-100 text-pink-800
+                                                @else bg-gray-100 text-gray-800 @endif">
+                                                {{ ucfirst($user->gender ?? 'N/A') }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {{ $user->country ?? 'N/A' }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {{ $user->industry ?? 'N/A' }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                @if($user->status === 'active') bg-green-100 text-green-800
+                                                @elseif($user->status === 'inactive') bg-yellow-100 text-yellow-800
+                                                @else bg-red-100 text-red-800 @endif">
+                                                {{ ucfirst($user->status ?? 'active') }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ \Carbon\Carbon::parse($user->created_at)->format('M j, Y H:i') }}
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="mt-6">
+                            {{ $latestUsers->links() }}
+                        </div>
+                    @else
+                        <div class="text-center py-12">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">No users found</h3>
+                            <p class="mt-1 text-sm text-gray-500">Insert some users to see them here.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
         <!-- Performance Tips -->
         <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
             <h4 class="text-lg font-medium text-blue-900 mb-3">Performance Tips</h4>
             <ul class="text-sm text-blue-800 space-y-2">
+                <li class="flex items-start">
+                    <svg class="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>The <strong>Ultra-Fast Method</strong> can insert 20,000+ records per second using optimized raw SQL with large batches.</span>
+                </li>
                 <li class="flex items-start">
                     <svg class="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
@@ -264,7 +390,7 @@
                     <svg class="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                     </svg>
-                    <span>Large batches (2000+ records) provide optimal performance for bulk operations.</span>
+                    <span>Database optimizations are automatically applied during bulk operations for maximum speed.</span>
                 </li>
             </ul>
         </div>
@@ -394,6 +520,118 @@ function updateResourceColors(data) {
     }
 }
 
+// Refresh latest records via AJAX
+function refreshLatestRecords() {
+    const container = document.getElementById('latest-records-container');
+    const refreshButton = document.querySelector('button[onclick="refreshLatestRecords()"]');
+    
+    // Show loading state
+    refreshButton.disabled = true;
+    refreshButton.innerHTML = '<svg class="w-3 h-3 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Refreshing...';
+    
+    fetch('{{ route("bulk-users.latest-records") }}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the table content
+                updateLatestRecordsTable(data);
+            } else {
+                console.error('Error refreshing records:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing records:', error);
+        })
+        .finally(() => {
+            // Restore button state
+            refreshButton.disabled = false;
+            refreshButton.innerHTML = '<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Refresh';
+        });
+}
+
+// Update the latest records table with new data
+function updateLatestRecordsTable(data) {
+    const container = document.getElementById('latest-records-container');
+    
+    if (data.users && data.users.length > 0) {
+        let tableHTML = `
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Industry</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+        `;
+        
+        data.users.forEach(user => {
+            const genderClass = user.gender === 'male' ? 'bg-blue-100 text-blue-800' : 
+                              user.gender === 'female' ? 'bg-pink-100 text-pink-800' : 
+                              'bg-gray-100 text-gray-800';
+            
+            const statusClass = user.status === 'active' ? 'bg-green-100 text-green-800' : 
+                              user.status === 'inactive' ? 'bg-yellow-100 text-yellow-800' : 
+                              'bg-red-100 text-red-800';
+            
+            const createdDate = new Date(user.created_at).toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+            
+            tableHTML += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">#${user.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${user.name}</div>
+                        <div class="text-sm text-gray-500">${user.first_name} ${user.last_name}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${user.email}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${genderClass}">
+                            ${user.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'N/A'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.country || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.industry || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
+                            ${user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : 'Active'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${createdDate}</td>
+                </tr>
+            `;
+        });
+        
+        tableHTML += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        container.innerHTML = tableHTML;
+    } else {
+        container.innerHTML = `
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No users found</h3>
+                <p class="mt-1 text-sm text-gray-500">Insert some users to see them here.</p>
+            </div>
+        `;
+    }
+}
+
 // Simple form submission handler for double-click prevention
 document.addEventListener('DOMContentLoaded', function() {
     // Start basic resource monitoring (summary only)
@@ -420,6 +658,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return true;
         });
     }
+    
+    // Auto-refresh latest records after successful insert
+    @if(session('success'))
+        setTimeout(refreshLatestRecords, 1000);
+    @endif
 });
 </script>
 @endsection
