@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
-@section('title', 'Bulk User Management')
+@section('title', 'Single Insert Testing')
 
 @section('content')
 <div class="px-4 py-6 sm:px-0">
     <div class="max-w-4xl mx-auto">
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Bulk User Management</h1>
-            <p class="text-gray-600">Insert thousands of users into the database with high performance bulk operations.</p>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Single Insert Testing</h1>
+            <p class="text-gray-600">Test individual record inserts vs bulk operations for performance comparison.</p>
         </div>
 
         <!-- Stats Cards -->
@@ -34,85 +34,23 @@
                 </div>
             </div>
 
-            <!-- Server Resources -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
+            <!-- Performance Warning -->
+            <div class="bg-yellow-50 overflow-hidden shadow rounded-lg border border-yellow-200">
                 <div class="px-4 py-5 sm:p-6">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Server Resources</dt>
-                                    <dd class="text-sm text-gray-900">
-                                        <span id="cpu-usage">Loading...</span> CPU | 
-                                        <span id="memory-usage">Loading...</span> RAM
-                                    </dd>
-                                </dl>
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                </svg>
                             </div>
                         </div>
-                        <div class="text-right">
-                            <button onclick="toggleResources()" class="text-xs text-blue-600 hover:text-blue-800">
-                                <span id="resources-toggle">Show Details</span>
-                            </button>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-yellow-800 truncate">Performance Notice</dt>
+                                <dd class="text-sm text-yellow-700">Single inserts are much slower than bulk operations. Use for testing only.</dd>
+                            </dl>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Detailed Resources Panel (Hidden by default) -->
-        <div id="resources-panel" class="bg-white shadow rounded-lg mb-8 hidden">
-            <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                    Real-time Server Resources
-                    <span class="ml-2 text-sm font-normal text-gray-500">Last updated: <span id="last-updated">--:--:--</span></span>
-                </h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <!-- CPU Usage -->
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-blue-600" id="cpu-percentage">0%</div>
-                        <div class="text-sm text-gray-500">CPU Usage</div>
-                        <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" id="cpu-bar" style="width: 0%"></div>
-                        </div>
-                    </div>
-
-                    <!-- Memory Usage -->
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-green-600" id="memory-percentage">0%</div>
-                        <div class="text-sm text-gray-500">Memory Usage</div>
-                        <div class="text-xs text-gray-400" id="memory-details">0 MB / 0 MB</div>
-                        <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-600 h-2 rounded-full transition-all duration-300" id="memory-bar" style="width: 0%"></div>
-                        </div>
-                    </div>
-
-                    <!-- Disk Usage -->
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-orange-600" id="disk-percentage">0%</div>
-                        <div class="text-sm text-gray-500">Disk Usage</div>
-                        <div class="text-xs text-gray-400" id="disk-details">0 GB / 0 GB</div>
-                        <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-orange-600 h-2 rounded-full transition-all duration-300" id="disk-bar" style="width: 0%"></div>
-                        </div>
-                    </div>
-
-                    <!-- Database Info -->
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-purple-600" id="db-connections">0</div>
-                        <div class="text-sm text-gray-500">Active Connections</div>
-                        <div class="text-xs text-gray-400" id="db-size">Database Size: N/A</div>
-                        <div class="mt-2 text-xs text-gray-400" id="uptime">Uptime: N/A</div>
                     </div>
                 </div>
             </div>
@@ -130,16 +68,13 @@
                     <div class="ml-3 flex-1">
                         <h3 class="text-sm font-medium text-green-800">Success!</h3>
                         <div class="mt-2 text-sm text-green-700">
-                            <p>{{ session('success')['message'] }}</p>
-                            @if(session('success')['performance'])
-                                <p class="mt-1"><strong>Performance:</strong> {{ session('success')['performance'] }}</p>
-                            @endif
-                            @if(session('success')['count'])
+                            <p>{{ session('success') }}</p>
+                            @if(session('execution_time'))
                                 <div class="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                                    <div><strong>Records:</strong> {{ number_format(session('success')['count']) }}</div>
-                                    <div><strong>Time:</strong> {{ session('success')['time'] }}s</div>
-                                    <div><strong>Speed:</strong> {{ number_format(session('success')['records_per_second']) }}/sec</div>
-                                    <div><strong>Method:</strong> {{ ucfirst(session('success')['method']) }}</div>
+                                    <div><strong>Records:</strong> {{ number_format(session('records_inserted')) }}</div>
+                                    <div><strong>Time:</strong> {{ session('execution_time') }}s</div>
+                                    <div><strong>Speed:</strong> {{ number_format(session('records_inserted') / session('execution_time')) }}/sec</div>
+                                    <div><strong>Method:</strong> {{ session('method') }}</div>
                                 </div>
                             @endif
                         </div>
@@ -180,19 +115,18 @@
             </div>
         @endif
 
-
         <!-- Main Form -->
         <div id="mainForm" class="bg-white shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Insert Users</h3>
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Single Record Insert Testing</h3>
                 
-                <form method="POST" action="{{ route('bulk-users.store') }}" id="userForm">
+                <form method="POST" action="{{ route('single-insert.store') }}" id="userForm">
                     @csrf
                     
                     <!-- Number of Users -->
                     <div class="mb-6">
                         <label for="count" class="block text-sm font-medium text-gray-700 mb-2">
-                            Number of Users to Insert
+                            Number of Users to Insert (Single Records)
                         </label>
                         <div class="relative">
                             <input type="number" 
@@ -200,62 +134,26 @@
                                    name="count" 
                                    value="6000"
                                    min="1" 
-                                   max="50000" 
+                                   max="10000" 
                                    required
                                    class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                             <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">users</span>
                             </div>
                         </div>
-                        <p class="mt-2 text-sm text-gray-500">Enter the number of users to insert (1 - 50,000)</p>
+                        <p class="mt-2 text-sm text-gray-500">Each record will be inserted individually (much slower than bulk operations)</p>
+                        <p class="mt-1 text-sm text-red-600 font-medium">⚠️ Warning: This will be significantly slower than bulk inserts!</p>
                     </div>
 
-                    <!-- Insertion Method -->
+                    <!-- Method Info -->
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-3">Insertion Method</label>
-                        <div class="space-y-3">
-                            <div class="flex items-start">
-                                <div class="flex items-center h-5">
-                                    <input id="ultra" 
-                                           name="method" 
-                                           type="radio" 
-                                           value="ultra"
-                                           checked
-                                           class="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300">
-                                </div>
-                                <div class="ml-3 text-sm">
-                                    <label for="ultra" class="font-medium text-gray-700">Ultra-Fast Method (Recommended)</label>
-                                    <p class="text-gray-500">Maximum speed using optimized raw SQL - can insert 6000+ users in under 0.5 seconds. No file system dependencies.</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-start">
-                                <div class="flex items-center h-5">
-                                    <input id="fast" 
-                                           name="method" 
-                                           type="radio" 
-                                           value="fast"
-                                           class="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300">
-                                </div>
-                                <div class="ml-3 text-sm">
-                                    <label for="fast" class="font-medium text-gray-700">Fast Method</label>
-                                    <p class="text-gray-500">Optimized for speed - can insert 6000+ users in under 1 second. Uses bulk inserts with large batches.</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-start">
-                                <div class="flex items-center h-5">
-                                    <input id="regular" 
-                                           name="method" 
-                                           type="radio" 
-                                           value="regular"
-                                           class="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300">
-                                </div>
-                                <div class="ml-3 text-sm">
-                                    <label for="regular" class="font-medium text-gray-700">Regular Method</label>
-                                    <p class="text-gray-500">Uses Faker for realistic data generation. Slower but produces more varied user data.</p>
-                                </div>
-                            </div>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h4 class="text-sm font-medium text-blue-900 mb-2">Single Insert Method</h4>
+                            <p class="text-sm text-blue-800">
+                                Each record is inserted individually using <code>DB::table('users')->insert($record)</code>. 
+                                This method processes records in batches of 1000 for memory management, but each record 
+                                still requires a separate database call. Expect 10-50x slower performance compared to bulk operations.
+                            </p>
                         </div>
                     </div>
 
@@ -263,7 +161,7 @@
                     <div class="flex justify-between">
                         <button type="submit" 
                                 id="insertButton"
-                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed">
                             <!-- Loading Spinner (hidden by default) -->
                             <svg id="loadingSpinner" class="hidden w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -272,9 +170,17 @@
                             <svg id="plusIcon" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                             </svg>
-                            <span id="buttonText">Insert Users</span>
+                            <span id="buttonText">Insert Users (Single Records)</span>
                         </button>
                         
+                        <!-- Comparison Link -->
+                        <a href="{{ route('bulk-users.index') }}" 
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                            </svg>
+                            Compare with Bulk Insert
+                        </a>
                     </div>
                 </form>
             </div>
@@ -378,162 +284,41 @@
             </div>
         </div>
 
-        <!-- Performance Tips -->
+        <!-- Performance Comparison -->
         <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h4 class="text-lg font-medium text-blue-900 mb-3">Performance Tips</h4>
-            <ul class="text-sm text-blue-800 space-y-2">
-                <li class="flex items-start">
+            <h4 class="text-lg font-medium text-blue-900 mb-3">Performance Comparison</h4>
+            <div class="text-sm text-blue-800 space-y-2">
+                <div class="flex items-start">
                     <svg class="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                     </svg>
-                    <span>The <strong>Ultra-Fast Method</strong> can insert 20,000+ records per second using optimized raw SQL with large batches.</span>
-                </li>
-                <li class="flex items-start">
-                    <svg class="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <span><strong>Bulk Insert (Ultra-Fast):</strong> 6k records in ~0.5-0.8 seconds (7,500-12,000 records/sec)</span>
+                </div>
+                <div class="flex items-start">
+                    <svg class="w-4 h-4 mr-2 mt-0.5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                     </svg>
-                    <span>The <strong>Fast Method</strong> can insert 12,000+ records per second using optimized bulk inserts.</span>
-                </li>
-                <li class="flex items-start">
-                    <svg class="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <span><strong>Single Insert:</strong> 6k records in ~30-60 seconds (100-200 records/sec)</span>
+                </div>
+                <div class="flex items-start">
+                    <svg class="w-4 h-4 mr-2 mt-0.5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                     </svg>
-                    <span>For best performance, use PostgreSQL with proper indexing and sufficient memory.</span>
-                </li>
-                <li class="flex items-start">
-                    <svg class="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <span><strong>Performance Gap:</strong> Bulk inserts are 30-60x faster than single inserts</span>
+                </div>
+                <div class="flex items-start">
+                    <svg class="w-4 h-4 mr-2 mt-0.5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                     </svg>
-                    <span>Database optimizations are automatically applied during bulk operations for maximum speed.</span>
-                </li>
-            </ul>
+                    <span><strong>Use Case:</strong> Single inserts are useful for testing, validation, or when you need individual record processing</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- JavaScript Functions -->
 <script>
-// Resource monitoring variables
-let resourceUpdateInterval;
-let isResourcesPanelVisible = false;
-
-
-// Toggle resources panel
-function toggleResources() {
-    const panel = document.getElementById('resources-panel');
-    const toggle = document.getElementById('resources-toggle');
-    
-    if (isResourcesPanelVisible) {
-        panel.classList.add('hidden');
-        toggle.textContent = 'Show Details';
-        isResourcesPanelVisible = false;
-        clearInterval(resourceUpdateInterval);
-    } else {
-        panel.classList.remove('hidden');
-        toggle.textContent = 'Hide Details';
-        isResourcesPanelVisible = true;
-        startResourceMonitoring();
-    }
-}
-
-// Start monitoring server resources
-function startResourceMonitoring() {
-    // Initial load
-    fetchResources();
-    
-    // Update every 2 seconds
-    resourceUpdateInterval = setInterval(fetchResources, 2000);
-}
-
-// Fetch server resources
-function fetchResources() {
-    fetch('{{ route("bulk-users.resources") }}')
-        .then(response => response.json())
-        .then(data => {
-            updateResourceDisplay(data);
-        })
-        .catch(error => {
-            console.error('Error fetching resources:', error);
-        });
-}
-
-// Update resource display
-function updateResourceDisplay(data) {
-    // Update summary in main card
-    document.getElementById('cpu-usage').textContent = data.cpu_usage + '%';
-    document.getElementById('memory-usage').textContent = data.memory_usage.percentage + '%';
-    
-    // Update detailed panel
-    document.getElementById('last-updated').textContent = data.timestamp;
-    
-    // CPU
-    document.getElementById('cpu-percentage').textContent = data.cpu_usage + '%';
-    document.getElementById('cpu-bar').style.width = data.cpu_usage + '%';
-    
-    // Memory
-    document.getElementById('memory-percentage').textContent = data.memory_usage.percentage + '%';
-    document.getElementById('memory-details').textContent = data.memory_usage.used + ' / ' + data.memory_usage.total;
-    document.getElementById('memory-bar').style.width = data.memory_usage.percentage + '%';
-    
-    // Disk
-    document.getElementById('disk-percentage').textContent = data.disk_usage.percentage + '%';
-    document.getElementById('disk-details').textContent = data.disk_usage.used + ' / ' + data.disk_usage.total;
-    document.getElementById('disk-bar').style.width = data.disk_usage.percentage + '%';
-    
-    // Database
-    document.getElementById('db-connections').textContent = data.active_connections;
-    document.getElementById('db-size').textContent = 'Database Size: ' + data.database_size;
-    document.getElementById('uptime').textContent = 'Uptime: ' + data.uptime;
-    
-    // Color coding for resource usage
-    updateResourceColors(data);
-}
-
-// Update resource colors based on usage levels
-function updateResourceColors(data) {
-    // CPU color coding
-    const cpuElement = document.getElementById('cpu-percentage');
-    const cpuBar = document.getElementById('cpu-bar');
-    if (data.cpu_usage > 80) {
-        cpuElement.className = 'text-2xl font-bold text-red-600';
-        cpuBar.className = 'bg-red-600 h-2 rounded-full transition-all duration-300';
-    } else if (data.cpu_usage > 60) {
-        cpuElement.className = 'text-2xl font-bold text-orange-600';
-        cpuBar.className = 'bg-orange-600 h-2 rounded-full transition-all duration-300';
-    } else {
-        cpuElement.className = 'text-2xl font-bold text-blue-600';
-        cpuBar.className = 'bg-blue-600 h-2 rounded-full transition-all duration-300';
-    }
-    
-    // Memory color coding
-    const memElement = document.getElementById('memory-percentage');
-    const memBar = document.getElementById('memory-bar');
-    if (data.memory_usage.percentage > 80) {
-        memElement.className = 'text-2xl font-bold text-red-600';
-        memBar.className = 'bg-red-600 h-2 rounded-full transition-all duration-300';
-    } else if (data.memory_usage.percentage > 60) {
-        memElement.className = 'text-2xl font-bold text-orange-600';
-        memBar.className = 'bg-orange-600 h-2 rounded-full transition-all duration-300';
-    } else {
-        memElement.className = 'text-2xl font-bold text-green-600';
-        memBar.className = 'bg-green-600 h-2 rounded-full transition-all duration-300';
-    }
-    
-    // Disk color coding
-    const diskElement = document.getElementById('disk-percentage');
-    const diskBar = document.getElementById('disk-bar');
-    if (data.disk_usage.percentage > 90) {
-        diskElement.className = 'text-2xl font-bold text-red-600';
-        diskBar.className = 'bg-red-600 h-2 rounded-full transition-all duration-300';
-    } else if (data.disk_usage.percentage > 80) {
-        diskElement.className = 'text-2xl font-bold text-orange-600';
-        diskBar.className = 'bg-orange-600 h-2 rounded-full transition-all duration-300';
-    } else {
-        diskElement.className = 'text-2xl font-bold text-orange-600';
-        diskBar.className = 'bg-orange-600 h-2 rounded-full transition-all duration-300';
-    }
-}
-
 // Refresh latest records via AJAX
 function refreshLatestRecords() {
     const container = document.getElementById('latest-records-container');
@@ -543,12 +328,12 @@ function refreshLatestRecords() {
     refreshButton.disabled = true;
     refreshButton.innerHTML = '<svg class="w-3 h-3 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Refreshing...';
     
-    fetch('{{ route("bulk-users.latest-records") }}')
+    fetch('{{ route("single-insert.latest-records") }}')
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 // Update the table content
-                updateLatestRecordsTable(data);
+                updateLatestRecordsTable(data.data);
             } else {
                 console.error('Error refreshing records:', data.message);
             }
@@ -646,12 +431,8 @@ function updateLatestRecordsTable(data) {
     }
 }
 
-// Simple form submission handler for double-click prevention
+// Form submission handler
 document.addEventListener('DOMContentLoaded', function() {
-    // Start basic resource monitoring (summary only)
-    fetchResources();
-    setInterval(fetchResources, 5000); // Update every 5 seconds for summary
-    
     // Add form submission handler for double-click prevention
     const form = document.getElementById('userForm');
     if (form) {
@@ -666,7 +447,7 @@ document.addEventListener('DOMContentLoaded', function() {
             button.disabled = true;
             document.getElementById('loadingSpinner').classList.remove('hidden');
             document.getElementById('plusIcon').classList.add('hidden');
-            document.getElementById('buttonText').textContent = 'Inserting Users...';
+            document.getElementById('buttonText').textContent = 'Inserting Users (This may take a while)...';
             
             // Allow form to submit normally
             return true;

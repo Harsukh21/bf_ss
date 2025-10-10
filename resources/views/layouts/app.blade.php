@@ -27,6 +27,19 @@
             }
         }
     </script>
+    
+    <!-- Custom CSS for alert animations -->
+    <style>
+        .alert {
+            transition: all 0.3s ease-in-out;
+        }
+        .alert-close-btn {
+            cursor: pointer;
+        }
+        .alert-close-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div class="min-h-screen">
@@ -55,6 +68,10 @@
                         <a href="{{ route('bulk-users.index') }}" 
                            class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium">
                             Get Started
+                        </a>
+                        <a href="{{ route('single-insert.index') }}" 
+                           class="text-orange-600 hover:text-orange-700 transition-colors font-medium">
+                            Single Insert Test
                         </a>
                         <a href="{{ route('users.index') }}" 
                            class="text-gray-600 hover:text-primary-600 transition-colors">
@@ -85,14 +102,51 @@
 
     <!-- JavaScript for enhanced functionality -->
     <script>
-        // Auto-hide alerts after 5 seconds
+        // Manual close functionality for alerts
         document.addEventListener('DOMContentLoaded', function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                setTimeout(() => {
-                    alert.style.opacity = '0';
-                    setTimeout(() => alert.remove(), 300);
-                }, 5000);
+            console.log('DOM loaded, setting up alert close functionality');
+            
+            // Add close functionality to alerts with close buttons
+            document.addEventListener('click', function(e) {
+                console.log('Click detected on:', e.target);
+                
+                // Check if clicked element or its parent has the close button class
+                const closeBtn = e.target.closest('.alert-close-btn');
+                if (closeBtn) {
+                    console.log('Close button clicked');
+                    const alert = closeBtn.closest('.alert');
+                    if (alert) {
+                        console.log('Alert found, closing...');
+                        // Add smooth fade out animation
+                        alert.style.transition = 'all 0.3s ease-in-out';
+                        alert.style.opacity = '0';
+                        alert.style.transform = 'translateX(100%)';
+                        setTimeout(() => {
+                            alert.remove();
+                            console.log('Alert removed');
+                        }, 300);
+                    }
+                }
+            });
+            
+            // Also add direct event listeners to existing close buttons
+            const closeButtons = document.querySelectorAll('.alert-close-btn');
+            console.log('Found', closeButtons.length, 'close buttons');
+            closeButtons.forEach((btn, index) => {
+                btn.addEventListener('click', function(e) {
+                    console.log('Direct close button click', index);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const alert = this.closest('.alert');
+                    if (alert) {
+                        alert.style.transition = 'all 0.3s ease-in-out';
+                        alert.style.opacity = '0';
+                        alert.style.transform = 'translateX(100%)';
+                        setTimeout(() => {
+                            alert.remove();
+                        }, 300);
+                    }
+                });
             });
         });
 

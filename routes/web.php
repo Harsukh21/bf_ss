@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BulkUserController;
+use App\Http\Controllers\SingleInsertController;
 use Illuminate\Http\Request;
 
 Route::get('/', function () {
@@ -29,6 +30,11 @@ Route::get('/csrf-token', function () {
 Route::post('/test-csrf', function (Request $request) {
     return response()->json(['message' => 'CSRF token is valid', 'token' => $request->input('_token')]);
 });
+
+// Single Insert Test Routes
+Route::get('/single-insert', [SingleInsertController::class, 'index'])->name('single-insert.index');
+Route::post('/single-insert', [SingleInsertController::class, 'store'])->name('single-insert.store');
+Route::get('/single-insert/latest-records', [SingleInsertController::class, 'getLatestRecords'])->name('single-insert.latest-records')->middleware('throttle:60,1');
 
 // some testing
 

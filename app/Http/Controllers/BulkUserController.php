@@ -165,7 +165,7 @@ class BulkUserController extends Controller
         $insertedCount = 0;
         
         // Pre-defined data arrays for speed
-        $genders = ['male', 'female', 'other'];
+        $genders = ['male', 'female', 'other', 'prefer_not_to_say'];
         $industries = ['Technology', 'Healthcare', 'Finance', 'Education', 'Retail', 'Manufacturing'];
         $countries = ['United States', 'Canada', 'United Kingdom', 'Australia', 'Germany', 'France', 'Japan'];
         $cities = ['New York', 'London', 'Tokyo', 'Sydney', 'Berlin', 'Paris', 'Toronto'];
@@ -240,7 +240,7 @@ class BulkUserController extends Controller
         $timestamp = time();
         
         // Pre-defined data arrays for speed
-        $genders = ['male', 'female', 'other'];
+        $genders = ['male', 'female', 'other', 'prefer_not_to_say'];
         $industries = ['Technology', 'Healthcare', 'Finance', 'Education', 'Retail', 'Manufacturing'];
         $countries = ['United States', 'Canada', 'United Kingdom', 'Australia', 'Germany', 'France', 'Japan'];
         $cities = ['New York', 'London', 'Tokyo', 'Sydney', 'Berlin', 'Paris', 'Toronto'];
