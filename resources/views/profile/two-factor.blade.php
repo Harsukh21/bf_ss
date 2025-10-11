@@ -6,7 +6,7 @@
 <div class="container mx-auto px-4 py-6">
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Two-Factor Authentication</h1>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Secure your account with 2FA</h1>
             <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Add an extra layer of security to your account</p>
         </div>
         <a href="{{ route('profile.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-primary-700 dark:hover:bg-primary-800">
@@ -88,7 +88,7 @@
                                 <p>These recovery codes can be used to access your account if you lose your authenticator device. Store them in a safe place.</p>
                                 <div class="mt-3 grid grid-cols-2 gap-2">
                                     @foreach(session('recovery_codes') as $code)
-                                    <div class="font-mono text-xs bg-white dark:bg-gray-800 px-2 py-1 rounded border">{{ $code }}</div>
+                                    <div class="font-mono text-xs bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">{{ $code }}</div>
                                     @endforeach
                                 </div>
                             </div>
@@ -159,8 +159,8 @@
                 @if($qrCodeUrl)
                 <!-- QR Code -->
                 <div class="text-center mb-6">
-                    <div class="inline-block p-4 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">Scan with your authenticator app:</div>
+                    <div class="inline-block p-4 bg-white dark:bg-white rounded-lg border border-gray-200 dark:border-gray-300 shadow-lg">
+                        <div class="text-sm text-gray-600 dark:text-gray-700 mb-2 font-medium">Scan with your authenticator app:</div>
                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ urlencode($qrCodeUrl) }}" alt="QR Code" class="mx-auto">
                     </div>
                 </div>
@@ -168,7 +168,7 @@
                 <!-- Manual Entry -->
                 <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
                     <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Can't scan? Enter this code manually:</h4>
-                    <div class="font-mono text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">{{ $user->two_factor_secret }}</div>
+                    <div class="font-mono text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 break-all">{{ $user->two_factor_secret }}</div>
                 </div>
                 @endif
 

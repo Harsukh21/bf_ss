@@ -37,8 +37,7 @@
     <!-- Common CSS -->
     <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
     
-    <!-- Heroicons CDN -->
-    <script src="https://unpkg.com/heroicons@2.0.18/24/outline/index.js" type="module"></script>
+    <!-- Heroicons CDN removed - using inline SVG icons instead -->
 
     <!-- Custom Styles -->
     <style>
@@ -95,6 +94,8 @@
             }
         }
     </style>
+
+    @stack('head')
 </head>
 <body class="antialiased font-sans">
     <div class="min-h-screen gradient-bg flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -342,15 +343,29 @@
         }
     </style>
 
-    <!-- Common JavaScript -->
-    <script src="{{ asset('assets/js/app.js') }}"></script>
+    <!-- Common JavaScript - Temporarily disabled -->
+    <!-- <script src="{{ asset('assets/js/app.js') }}"></script> -->
     
     <!-- Auth-specific JavaScript -->
     <script>
-        // Show/Hide password toggle
-        function togglePassword(inputId, buttonId) {
+        // Prevent share-modal.js errors from blocking execution
+        window.addEventListener('error', function(e) {
+            if (e.filename && e.filename.includes('share-modal.js')) {
+                console.warn('Ignoring share-modal.js error:', e.message);
+                e.preventDefault();
+                return true;
+            }
+        });
+        
+        try {
+        // Toggle password functionality using event delegation
+        function togglePasswordVisibility(inputId, buttonId) {
             const input = document.getElementById(inputId);
             const button = document.getElementById(buttonId);
+            
+            if (!input || !button) {
+                return;
+            }
             
             if (input.type === 'password') {
                 input.type = 'text';
@@ -359,6 +374,233 @@
                 input.type = 'password';
                 button.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>';
             }
+        }
+
+        // Global function for showing loading state
+        window.showLoadingState = function() {
+            const button = document.getElementById('loginButton');
+            const spinner = document.getElementById('loginSpinner');
+            const icon = document.getElementById('loginIcon');
+            const text = document.getElementById('loginText');
+            
+            if (button) {
+                button.disabled = true;
+                button.classList.add('opacity-75', 'cursor-not-allowed');
+                button.style.pointerEvents = 'none';
+            }
+            
+            if (spinner) {
+                spinner.classList.remove('hidden');
+            }
+            
+            if (icon) {
+                icon.classList.add('hidden');
+            }
+            
+            if (text) {
+                text.textContent = 'Signing in...';
+            }
+        }
+
+        // Form handling for login page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-focus email input if it exists
+            const emailInput = document.getElementById('email');
+            if (emailInput) {
+                emailInput.focus();
+            }
+            
+            // Backup form submission handler
+            const loginFormBackup = document.getElementById('loginForm');
+            if (loginFormBackup) {
+                loginFormBackup.addEventListener('submit', function(e) {
+                    console.log('Form submit event triggered');
+                    // Don't prevent default - let form submit normally
+                    
+                    // Show loading state
+                    const button = document.getElementById('loginButton');
+                    const spinner = document.getElementById('loginSpinner');
+                    const icon = document.getElementById('loginIcon');
+                    const text = document.getElementById('loginText');
+                    
+                    if (spinner) {
+                        spinner.classList.remove('hidden');
+                    }
+                    if (icon) {
+                        icon.classList.add('hidden');
+                    }
+                    if (text) {
+                        text.textContent = 'Signing in...';
+                    }
+                    
+                    // Disable button after form starts submitting
+                    setTimeout(function() {
+                        if (button) {
+                            button.disabled = true;
+                            button.classList.add('opacity-75', 'cursor-not-allowed');
+                        }
+                    }, 100);
+                });
+            }
+            
+            // Debug: Check if elements exist
+            const loginButton = document.getElementById('loginButton');
+            const loginSpinner = document.getElementById('loginSpinner');
+            const loginIcon = document.getElementById('loginIcon');
+            const loginText = document.getElementById('loginText');
+            
+            // Element detection complete
+            
+            // Toggle password button event delegation
+            const togglePasswordBtn = document.getElementById('togglePassword');
+            if (togglePasswordBtn) {
+                togglePasswordBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const targetInput = this.getAttribute('data-target');
+                    const buttonId = this.getAttribute('id');
+                    togglePasswordVisibility(targetInput, buttonId);
+                });
+            }
+            
+            // Form submission handling for login form
+            const loginFormMain = document.getElementById('loginForm');
+            if (loginFormMain) {
+                // Function to reset button state
+                function resetButtonState() {
+                    const button = document.getElementById('loginButton');
+                    const spinner = document.getElementById('loginSpinner');
+                    const icon = document.getElementById('loginIcon');
+                    const text = document.getElementById('loginText');
+                    
+                    if (button) {
+                        button.disabled = false;
+                        button.classList.remove('opacity-75', 'cursor-not-allowed');
+                        button.style.pointerEvents = 'auto';
+                    }
+                    
+                    if (spinner) {
+                        spinner.classList.add('hidden');
+                    }
+                    
+                    if (icon) {
+                        icon.classList.remove('hidden');
+                    }
+                    
+                    if (text) {
+                        text.textContent = 'Sign in';
+                    }
+                }
+                
+                loginFormMain.addEventListener('submit', function(e) {
+                    // Don't prevent default - let form submit normally
+                    const button = document.getElementById('loginButton');
+                    const spinner = document.getElementById('loginSpinner');
+                    const icon = document.getElementById('loginIcon');
+                    const text = document.getElementById('loginText');
+                    
+                    // Show loading state immediately
+                    if (button) {
+                        button.disabled = true;
+                        button.classList.add('opacity-75', 'cursor-not-allowed');
+                        button.style.pointerEvents = 'none';
+                    }
+                    
+                    if (spinner) {
+                        spinner.classList.remove('hidden');
+                    }
+                    
+                    if (icon) {
+                        icon.classList.add('hidden');
+                    }
+                    
+                    if (text) {
+                        text.textContent = 'Signing in...';
+                    }
+                    
+                    // Reset button state after 10 seconds as fallback
+                    setTimeout(function() {
+                        if (button && button.disabled) {
+                            resetButtonState();
+                        }
+                    }, 10000);
+                });
+                
+                // Reset button state on page load (in case of back button)
+                resetButtonState();
+                
+                // Also add click event to button as fallback
+                const submitButton = document.getElementById('loginButton');
+                if (submitButton) {
+                    submitButton.addEventListener('click', function(e) {
+                        // Small delay to allow form validation to complete
+                        setTimeout(function() {
+                            const button = document.getElementById('loginButton');
+                            const spinner = document.getElementById('loginSpinner');
+                            const icon = document.getElementById('loginIcon');
+                            const text = document.getElementById('loginText');
+                            
+                            // Only show loading state if button is still enabled (form validation passed)
+                            if (button && !button.disabled) {
+                                if (button) {
+                                    button.disabled = true;
+                                    button.classList.add('opacity-75', 'cursor-not-allowed');
+                                    button.style.pointerEvents = 'none';
+                                }
+                                
+                                if (spinner) {
+                                    spinner.classList.remove('hidden');
+                                }
+                                
+                                if (icon) {
+                                    icon.classList.add('hidden');
+                                }
+                                
+                                if (text) {
+                                    text.textContent = 'Signing in...';
+                                }
+                            }
+                        }, 100);
+                    });
+                }
+            }
+            
+            // Alert close functionality - simplified and robust
+            setTimeout(function() {
+                const alertCloseButtons = document.querySelectorAll('.alert-close');
+                alertCloseButtons.forEach(function(button) {
+                    button.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const alert = this.closest('.alert');
+                        if (alert) {
+                            // Add smooth transition
+                            alert.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                            alert.style.opacity = '0';
+                            alert.style.transform = 'translateY(-10px)';
+                            alert.style.pointerEvents = 'none';
+                            
+                            setTimeout(function() {
+                                alert.remove();
+                            }, 300);
+                        }
+                    });
+                    
+                    // Add hover effect for close button
+                    button.addEventListener('mouseenter', function() {
+                        this.style.transform = 'scale(1.1)';
+                        this.style.transition = 'transform 0.2s ease';
+                    });
+                    
+                    button.addEventListener('mouseleave', function() {
+                        this.style.transform = 'scale(1)';
+                    });
+                });
+            }, 100);
+        });
+        
+        } catch (error) {
+            console.warn('Auth JavaScript error:', error);
         }
     </script>
 

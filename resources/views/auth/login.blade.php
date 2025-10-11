@@ -4,6 +4,7 @@
 @section('heading', 'Welcome Back')
 @section('subheading', 'Sign in to your account to continue')
 
+
 @section('content')
     <!-- Error Messages -->
     @if($errors->any())
@@ -19,7 +20,7 @@
                         {{ $errors->first() }}
                     </p>
                 </div>
-                <button type="button" class="alert-close flex-shrink-0 text-red-400 hover:text-red-600">
+                <button type="button" class="alert-close flex-shrink-0 text-red-400 hover:text-red-600" onclick="this.closest('.alert').remove()">
                     <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                     </svg>
@@ -42,7 +43,7 @@
                         {{ session('success') }}
                     </p>
                 </div>
-                <button type="button" class="alert-close flex-shrink-0 text-green-400 hover:text-green-600">
+                <button type="button" class="alert-close flex-shrink-0 text-green-400 hover:text-green-600" onclick="this.closest('.alert').remove()">
                     <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                     </svg>
@@ -103,7 +104,7 @@
                 <button 
                     type="button" 
                     id="togglePassword"
-                    onclick="togglePassword('password', 'togglePassword')"
+                    data-target="password"
                     class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -141,6 +142,36 @@
             <button 
                 type="submit" 
                 id="loginButton"
+                onclick="
+                    console.log('Button clicked');
+                    
+                    // Show loading state immediately but don't disable button yet
+                    const spinner = document.getElementById('loginSpinner');
+                    const icon = document.getElementById('loginIcon');
+                    const text = document.getElementById('loginText');
+                    
+                    if (spinner) {
+                        spinner.classList.remove('hidden');
+                    }
+                    if (icon) {
+                        icon.classList.add('hidden');
+                    }
+                    if (text) {
+                        text.textContent = 'Signing in...';
+                    }
+                    
+                    // Disable button after a short delay to allow form submission
+                    setTimeout(function() {
+                        const button = document.getElementById('loginButton');
+                        if (button) {
+                            button.disabled = true;
+                            button.classList.add('opacity-75', 'cursor-not-allowed');
+                        }
+                    }, 100);
+                    
+                    // Allow form to submit normally
+                    return true;
+                "
                 class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 transform hover:scale-105">
                 <svg id="loginSpinner" class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -170,26 +201,4 @@
     </p>
 @endsection
 
-@push('scripts')
-<script>
-    // Form submission handling
-    document.getElementById('loginForm').addEventListener('submit', function() {
-        const button = document.getElementById('loginButton');
-        const spinner = document.getElementById('loginSpinner');
-        const icon = document.getElementById('loginIcon');
-        const text = document.getElementById('loginText');
-        
-        // Show loading state
-        button.disabled = true;
-        spinner.classList.remove('hidden');
-        icon.classList.add('hidden');
-        text.textContent = 'Signing in...';
-    });
-
-    // Auto-focus email input
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('email').focus();
-    });
-</script>
-@endpush
 
