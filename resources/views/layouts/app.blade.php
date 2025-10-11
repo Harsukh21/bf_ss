@@ -73,6 +73,10 @@
                            class="text-orange-600 hover:text-orange-700 transition-colors font-medium">
                             Single Insert Test
                         </a>
+                        <a href="{{ route('sports.home') }}" 
+                           class="text-green-600 hover:text-green-700 transition-colors font-medium">
+                            🏆 Sports
+                        </a>
                         <a href="{{ route('users.index') }}" 
                            class="text-gray-600 hover:text-primary-600 transition-colors">
                             View Users
