@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('sportName'); // Sport name
             $table->string('tournamentsName'); // Tournament name
             $table->string('type'); // Market type (e.g., match_odds)
+            $table->boolean('isLive')->default(false); // Live flag
             $table->timestamps();
             
             // Indexes for better performance

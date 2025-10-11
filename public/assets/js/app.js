@@ -447,6 +447,24 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Laravel App initialized successfully!');
 });
 
+// Dropdown functionality
+function toggleDropdown(dropdownId) {
+    const dropdown = document.getElementById(dropdownId + '-dropdown');
+    const arrow = document.getElementById(dropdownId + '-arrow');
+    
+    if (dropdown && arrow) {
+        const isHidden = dropdown.classList.contains('hidden');
+        
+        if (isHidden) {
+            dropdown.classList.remove('hidden');
+            arrow.style.transform = 'rotate(180deg)';
+        } else {
+            dropdown.classList.add('hidden');
+            arrow.style.transform = 'rotate(0deg)';
+        }
+    }
+}
+
 // Export for module usage
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = App;
