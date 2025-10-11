@@ -117,25 +117,6 @@
             @enderror
         </div>
 
-        <!-- Remember Me & Forgot Password -->
-        <div class="flex items-center justify-between">
-            <div class="flex items-center">
-                <input 
-                    id="remember" 
-                    name="remember" 
-                    type="checkbox" 
-                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
-                <label for="remember" class="ml-2 block text-sm text-gray-700">
-                    Remember me
-                </label>
-            </div>
-
-            <div class="text-sm">
-                <a href="#" class="font-medium text-primary-600 hover:text-primary-500 transition-colors">
-                    Forgot password?
-                </a>
-            </div>
-        </div>
 
         <!-- Submit Button -->
         <div>
@@ -186,14 +167,6 @@
     </form>
 @endsection
 
-@section('footer')
-    <p class="text-sm text-gray-600">
-        Don't have an account? 
-        <a href="#" class="font-medium text-primary-600 hover:text-primary-500 transition-colors">
-            Sign up now
-        </a>
-    </p>
-@endsection
 
 @section('bottom_text')
     <p class="text-white text-sm">
