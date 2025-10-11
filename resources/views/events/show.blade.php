@@ -1,7 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="p-6">
+<div class="px-4 py-6 sm:px-0">
+    <div class="max-w-7xl mx-auto">
     <!-- Header -->
     <div class="mb-6">
         <div class="flex items-center justify-between">
@@ -156,6 +157,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </div>
 </div>
 @endsection

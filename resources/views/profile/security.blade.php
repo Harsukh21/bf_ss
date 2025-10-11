@@ -3,7 +3,8 @@
 @section('title', 'Security Settings')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="px-4 py-6 sm:px-0">
+    <div class="max-w-7xl mx-auto">
     <div class="flex items-center justify-between mb-6">
         <div>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Security Settings</h1>
@@ -228,5 +229,6 @@
         </div>
     </div>
     @endif
+    </div>
 </div>
 @endsection

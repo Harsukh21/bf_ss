@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\MarketController;
 use App\Http\Controllers\SystemLogController;
 use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\ProfileController;
@@ -28,6 +29,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/events/bulk-update', [EventController::class, 'bulkUpdate'])->name('events.bulk-update');
     Route::get('/events/stats', [EventController::class, 'getStats'])->name('events.stats');
     Route::get('/events/search', [EventController::class, 'search'])->name('events.search');
+
+    // Markets
+    Route::get('/markets', [MarketController::class, 'index'])->name('markets.index');
+    Route::get('/markets/{id}', [MarketController::class, 'show'])->name('markets.show');
 
     // System Logs
     Route::prefix('system-logs')->name('system-logs.')->group(function () {
