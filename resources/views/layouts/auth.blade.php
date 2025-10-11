@@ -34,6 +34,12 @@
         }
     </script>
 
+    <!-- Common CSS -->
+    <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
+    
+    <!-- Heroicons CDN -->
+    <script src="https://unpkg.com/heroicons@2.0.18/24/outline/index.js" type="module"></script>
+
     <!-- Custom Styles -->
     <style>
         .gradient-bg {
@@ -74,7 +80,7 @@
         }
     </style>
 </head>
-<body class="antialiased">
+<body class="antialiased font-sans">
     <div class="min-h-screen gradient-bg flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <!-- Background Pattern -->
         <div class="absolute inset-0 overflow-hidden">
@@ -153,17 +159,11 @@
         }
     </style>
 
-    <!-- JavaScript -->
+    <!-- Common JavaScript -->
+    <script src="{{ asset('assets/js/app.js') }}"></script>
+    
+    <!-- Auth-specific JavaScript -->
     <script>
-        // Form validation helper
-        function validateForm(formId) {
-            const form = document.getElementById(formId);
-            if (form) {
-                return form.checkValidity();
-            }
-            return true;
-        }
-
         // Show/Hide password toggle
         function togglePassword(inputId, buttonId) {
             const input = document.getElementById(inputId);
@@ -177,22 +177,6 @@
                 button.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>';
             }
         }
-
-        // Auto-hide alerts
-        document.addEventListener('DOMContentLoaded', function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                // Add close button functionality
-                const closeBtn = alert.querySelector('.alert-close');
-                if (closeBtn) {
-                    closeBtn.addEventListener('click', function() {
-                        alert.style.opacity = '0';
-                        alert.style.transform = 'translateY(-20px)';
-                        setTimeout(() => alert.remove(), 300);
-                    });
-                }
-            });
-        });
     </script>
 
     @stack('scripts')

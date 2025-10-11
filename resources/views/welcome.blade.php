@@ -4,7 +4,7 @@
 
 @section('content')
     <!-- Simple Hero Section -->
-    <section class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+    <section class="min-h-screen flex items-center justify-center bg-white">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <!-- Logo/Icon -->
             <div class="flex justify-center mb-8">

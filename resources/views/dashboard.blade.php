@@ -3,8 +3,8 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<div class="px-4 py-6 sm:px-0">
-    <div class="max-w-7xl mx-auto">
+<div class="px-4 py-6 sm:px-0 bg-white">
+    <div class="max-w-7xl mx-auto bg-white">
         <!-- Welcome Message -->
         @if(session('success'))
             <div class="alert mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md transition-opacity duration-300">
@@ -31,7 +31,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-                    <p class="mt-2 text-gray-600">Welcome back, {{ $user['name'] }}!</p>
+                    <p class="mt-2 text-gray-600">Welcome back, {{ Auth::user()->name }}!</p>
                 </div>
                 <div>
                     <form method="POST" action="{{ route('logout') }}">
@@ -53,15 +53,15 @@
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
                         <div class="h-20 w-20 rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
-                            {{ substr($user['name'], 0, 1) }}
+                            {{ substr(Auth::user()->name, 0, 1) }}
                         </div>
                     </div>
                     <div class="ml-6 flex-1">
-                        <h2 class="text-2xl font-bold text-gray-900">{{ $user['name'] }}</h2>
-                        <p class="text-gray-600">{{ $user['email'] }}</p>
+                        <h2 class="text-2xl font-bold text-gray-900">{{ Auth::user()->name }}</h2>
+                        <p class="text-gray-600">{{ Auth::user()->email }}</p>
                         <p class="mt-1 text-sm text-gray-500">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                                {{ $user['role'] }}
+                                {{ Auth::user()->email_verified_at ? 'Verified User' : 'User' }}
                             </span>
                         </p>
                     </div>

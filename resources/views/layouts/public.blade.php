@@ -34,17 +34,13 @@
         }
     </script>
 
-    <!-- Custom Styles -->
-    <style>
-        .gradient-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-    </style>
+    <!-- Common CSS -->
+    <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
+    
+    <!-- Heroicons CDN -->
+    <script src="https://unpkg.com/heroicons@2.0.18/24/outline/index.js" type="module"></script>
 </head>
-<body class="antialiased bg-gray-50">
+<body class="antialiased bg-white font-sans">
     <!-- Navigation -->
     <nav class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -154,24 +150,8 @@
         </div>
     </footer>
 
-    <!-- JavaScript -->
-    <script>
-        // Smooth scrolling for anchor links
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                });
-            });
-        });
-    </script>
+    <!-- Common JavaScript -->
+    <script src="{{ asset('assets/js/app.js') }}"></script>
 
     @stack('scripts')
 </body>
