@@ -423,6 +423,10 @@ document.addEventListener('DOMContentLoaded', function() {
     App.alerts.init();
     App.smoothScroll.init();
     App.mobileMenu.init();
+    
+    // Initialize new modules
+    if (window.themeToggle) themeToggle.init();
+    if (window.userDropdown) userDropdown.init();
 
     // Add loading states to buttons
     document.querySelectorAll('button[type="submit"]').forEach(button => {
@@ -446,6 +450,93 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('Laravel App initialized successfully!');
 });
+
+// Dark Mode Toggle
+window.themeToggle = {
+    init: function() {
+        this.loadTheme();
+        this.bindToggle();
+    },
+
+    loadTheme: function() {
+        const savedTheme = localStorage.getItem('theme');
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const theme = savedTheme || systemTheme;
+        
+        this.setTheme(theme);
+    },
+
+    setTheme: function(theme) {
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    },
+
+    bindToggle: function() {
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.contains('dark');
+                this.setTheme(isDark ? 'light' : 'dark');
+            });
+        }
+    }
+};
+
+// User Dropdown Toggle
+window.userDropdown = {
+    init: function() {
+        this.bindToggle();
+        this.bindOutsideClick();
+    },
+
+    bindToggle: function() {
+        const toggle = document.getElementById('userDropdownToggle');
+        const dropdown = document.getElementById('userDropdown');
+        const arrow = document.getElementById('userDropdownArrow');
+
+        if (toggle && dropdown) {
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isHidden = dropdown.classList.contains('hidden');
+                
+                // Close all other dropdowns first
+                this.closeAllDropdowns();
+                
+                if (isHidden) {
+                    dropdown.classList.remove('hidden');
+                    if (arrow) arrow.style.transform = 'rotate(180deg)';
+                } else {
+                    dropdown.classList.add('hidden');
+                    if (arrow) arrow.style.transform = 'rotate(0deg)';
+                }
+            });
+        }
+    },
+
+    bindOutsideClick: function() {
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('userDropdown');
+            const toggle = document.getElementById('userDropdownToggle');
+            
+            if (dropdown && toggle && !toggle.contains(e.target) && !dropdown.contains(e.target)) {
+                this.closeAllDropdowns();
+            }
+        });
+    },
+
+    closeAllDropdowns: function() {
+        const dropdown = document.getElementById('userDropdown');
+        const arrow = document.getElementById('userDropdownArrow');
+        
+        if (dropdown) dropdown.classList.add('hidden');
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
+    }
+};
 
 // Dropdown functionality
 function toggleDropdown(dropdownId) {

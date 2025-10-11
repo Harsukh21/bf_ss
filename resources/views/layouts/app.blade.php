@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,14 +13,19 @@
     <!-- Custom Tailwind Configuration -->
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
                         primary: {
                             50: '#eff6ff',
+                            100: '#dbeafe',
+                            400: '#60a5fa',
                             500: '#3b82f6',
                             600: '#2563eb',
                             700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
                         }
                     }
                 }
@@ -31,12 +36,15 @@
     <!-- Common CSS -->
     <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
     
+    <!-- Alpine.js CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
     <!-- Heroicons CDN -->
     <script src="https://unpkg.com/heroicons@2.0.18/24/outline/index.js" type="module"></script>
     
     @stack('css')
 </head>
-<body class="bg-white min-h-screen font-sans">
+<body class="bg-white dark:bg-gray-900 min-h-screen font-sans transition-colors">
     <div class="min-h-screen flex">
         <!-- Include Sidebar -->
         @include('layouts.partials.sidebar')
@@ -47,7 +55,7 @@
             @include('layouts.partials.top-header')
             
             <!-- Main Content -->
-            <main class="p-6 bg-white">
+            <main class="p-6 bg-white dark:bg-gray-900 transition-colors">
                 @yield('content')
             </main>
         </div>

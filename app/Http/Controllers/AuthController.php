@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Http\Controllers\ProfileController;
 
 class AuthController extends Controller
 {
@@ -38,6 +39,10 @@ class AuthController extends Controller
             $request->session()->regenerate();
             
             $user = Auth::user();
+            
+            // Track login information
+            ProfileController::trackLogin($user, $request);
+            
             return redirect()->intended('/dashboard')->with('success', 'Welcome back, ' . $user->name . '!');
         }
 

@@ -43,12 +43,28 @@
     <!-- Custom Styles -->
     <style>
         .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c, #4facfe, #00f2fe);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
         }
         
         .auth-card {
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         .floating-animation {
@@ -84,9 +100,24 @@
     <div class="min-h-screen gradient-bg flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <!-- Background Pattern -->
         <div class="absolute inset-0 overflow-hidden">
-            <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-            <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-            <div class="absolute top-40 left-40 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+            <!-- Animated Geometric Shapes -->
+            <div class="absolute top-10 left-10 w-20 h-20 bg-white opacity-20 rounded-lg animate-pulse-slow transform rotate-45"></div>
+            <div class="absolute top-32 right-20 w-16 h-16 bg-white opacity-15 rounded-full animate-bounce-slow"></div>
+            <div class="absolute bottom-20 left-20 w-24 h-24 bg-white opacity-25 transform rotate-12 animate-float"></div>
+            <div class="absolute bottom-32 right-10 w-12 h-12 bg-white opacity-20 rounded-lg animate-spin-slow"></div>
+            <div class="absolute top-1/2 left-1/4 w-8 h-8 bg-white opacity-30 rounded-full animate-pulse"></div>
+            <div class="absolute top-1/3 right-1/3 w-14 h-14 bg-white opacity-20 transform -rotate-45 animate-float-delayed"></div>
+            
+            <!-- Floating Particles -->
+            <div class="absolute top-1/4 left-1/2 w-2 h-2 bg-white opacity-40 rounded-full animate-float-particle-1"></div>
+            <div class="absolute top-3/4 right-1/4 w-1 h-1 bg-white opacity-50 rounded-full animate-float-particle-2"></div>
+            <div class="absolute top-1/2 right-1/2 w-3 h-3 bg-white opacity-30 rounded-full animate-float-particle-3"></div>
+            <div class="absolute bottom-1/4 left-1/3 w-2 h-2 bg-white opacity-40 rounded-full animate-float-particle-4"></div>
+            
+            <!-- Grid Pattern -->
+            <div class="absolute inset-0 opacity-5">
+                <div class="grid-pattern"></div>
+            </div>
         </div>
 
         <!-- Auth Card -->
@@ -131,31 +162,183 @@
 
     <!-- Custom Animations -->
     <style>
-        @keyframes blob {
-            0% {
-                transform: translate(0px, 0px) scale(1);
+        /* Slow pulse animation */
+        .animate-pulse-slow {
+            animation: pulse-slow 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-slow {
+            0%, 100% {
+                opacity: 0.2;
+                transform: scale(1);
             }
-            33% {
-                transform: translate(30px, -50px) scale(1.1);
-            }
-            66% {
-                transform: translate(-20px, 20px) scale(0.9);
-            }
-            100% {
-                transform: translate(0px, 0px) scale(1);
+            50% {
+                opacity: 0.4;
+                transform: scale(1.05);
             }
         }
 
-        .animate-blob {
-            animation: blob 7s infinite;
+        /* Slow bounce animation */
+        .animate-bounce-slow {
+            animation: bounce-slow 3s ease-in-out infinite;
         }
 
-        .animation-delay-2000 {
+        @keyframes bounce-slow {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        /* Floating animation */
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(12deg);
+            }
+            50% {
+                transform: translateY(-15px) rotate(12deg);
+            }
+        }
+
+        /* Delayed floating animation */
+        .animate-float-delayed {
+            animation: float-delayed 8s ease-in-out infinite;
             animation-delay: 2s;
         }
 
-        .animation-delay-4000 {
-            animation-delay: 4s;
+        @keyframes float-delayed {
+            0%, 100% {
+                transform: translateY(0px) rotate(-45deg);
+            }
+            50% {
+                transform: translateY(-25px) rotate(-45deg);
+            }
+        }
+
+        /* Slow spin animation */
+        .animate-spin-slow {
+            animation: spin-slow 20s linear infinite;
+        }
+
+        @keyframes spin-slow {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Particle animations */
+        .animate-float-particle-1 {
+            animation: float-particle-1 12s ease-in-out infinite;
+        }
+
+        .animate-float-particle-2 {
+            animation: float-particle-2 10s ease-in-out infinite;
+            animation-delay: 1s;
+        }
+
+        .animate-float-particle-3 {
+            animation: float-particle-3 14s ease-in-out infinite;
+            animation-delay: 2s;
+        }
+
+        .animate-float-particle-4 {
+            animation: float-particle-4 11s ease-in-out infinite;
+            animation-delay: 3s;
+        }
+
+        @keyframes float-particle-1 {
+            0%, 100% {
+                transform: translateY(0px) translateX(0px);
+                opacity: 0.4;
+            }
+            25% {
+                transform: translateY(-30px) translateX(10px);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateY(-15px) translateX(-5px);
+                opacity: 0.3;
+            }
+            75% {
+                transform: translateY(-40px) translateX(15px);
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes float-particle-2 {
+            0%, 100% {
+                transform: translateY(0px) translateX(0px);
+                opacity: 0.5;
+            }
+            33% {
+                transform: translateY(-25px) translateX(-10px);
+                opacity: 0.7;
+            }
+            66% {
+                transform: translateY(-35px) translateX(5px);
+                opacity: 0.3;
+            }
+        }
+
+        @keyframes float-particle-3 {
+            0%, 100% {
+                transform: translateY(0px) translateX(0px);
+                opacity: 0.3;
+            }
+            20% {
+                transform: translateY(-20px) translateX(8px);
+                opacity: 0.5;
+            }
+            40% {
+                transform: translateY(-40px) translateX(-12px);
+                opacity: 0.4;
+            }
+            60% {
+                transform: translateY(-25px) translateX(6px);
+                opacity: 0.6;
+            }
+            80% {
+                transform: translateY(-35px) translateX(-8px);
+                opacity: 0.3;
+            }
+        }
+
+        @keyframes float-particle-4 {
+            0%, 100% {
+                transform: translateY(0px) translateX(0px);
+                opacity: 0.4;
+            }
+            50% {
+                transform: translateY(-30px) translateX(12px);
+                opacity: 0.6;
+            }
+        }
+
+        /* Grid pattern */
+        .grid-pattern {
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: grid-move 20s linear infinite;
+        }
+
+        @keyframes grid-move {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 50px 50px;
+            }
         }
     </style>
 

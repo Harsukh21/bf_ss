@@ -21,6 +21,24 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'first_name',
+        'last_name',
+        'phone',
+        'bio',
+        'avatar',
+        'date_of_birth',
+        'timezone',
+        'language',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
+        'last_login_at',
+        'last_login_ip',
+        'last_login_user_agent',
+        'login_history',
+        'password_changed_at',
+        'current_session_id',
+        'active_sessions',
     ];
 
     /**
@@ -31,6 +49,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /**
@@ -43,6 +63,12 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'date_of_birth' => 'date',
+            'two_factor_confirmed_at' => 'datetime',
+            'last_login_at' => 'datetime',
+            'login_history' => 'array',
+            'password_changed_at' => 'datetime',
+            'active_sessions' => 'array',
         ];
     }
 }
