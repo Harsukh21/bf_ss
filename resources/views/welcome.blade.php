@@ -2,88 +2,357 @@
 
 @section('title', 'Welcome')
 
+@push('css')
+<style>
+    .gradient-text {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    /* Beautiful gradient background from login page */
+    .gradient-bg {
+        background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c, #4facfe, #00f2fe);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+    }
+    
+    @keyframes gradientShift {
+        0% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+    
+    /* Content z-index */
+    .content-relative {
+        position: relative;
+        z-index: 10;
+    }
+    
+    /* Pulse animation for logo */
+    .logo-pulse {
+        animation: logoPulse 3s ease-in-out infinite;
+    }
+    
+    @keyframes logoPulse {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        50% {
+            transform: scale(1.1);
+            box-shadow: 0 35px 60px -12px rgba(59, 130, 246, 0.6);
+        }
+    }
+    
+    /* Text fade-in animation */
+    .fade-in {
+        opacity: 0;
+        animation: fadeIn 1s ease-out forwards;
+    }
+    
+    .fade-in:nth-child(1) {
+        animation-delay: 0.2s;
+    }
+    
+    .fade-in:nth-child(2) {
+        animation-delay: 0.4s;
+    }
+    
+    .fade-in:nth-child(3) {
+        animation-delay: 0.6s;
+    }
+    
+    .fade-in:nth-child(4) {
+        animation-delay: 0.8s;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Button hover glow effect */
+    .btn-glow {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-glow::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+        z-index: 1;
+    }
+    
+    .btn-glow:hover::before {
+        left: 100%;
+    }
+    
+    .btn-glow span {
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Slow pulse animation */
+    .animate-pulse-slow {
+        animation: pulse-slow 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse-slow {
+        0%, 100% {
+            opacity: 0.2;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.4;
+            transform: scale(1.05);
+        }
+    }
+
+    /* Slow bounce animation */
+    .animate-bounce-slow {
+        animation: bounce-slow 3s ease-in-out infinite;
+    }
+
+    @keyframes bounce-slow {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-20px);
+        }
+    }
+
+    /* Floating animation */
+    .animate-float {
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px) rotate(12deg);
+        }
+        50% {
+            transform: translateY(-15px) rotate(12deg);
+        }
+    }
+
+    /* Delayed floating animation */
+    .animate-float-delayed {
+        animation: float-delayed 8s ease-in-out infinite;
+        animation-delay: 2s;
+    }
+
+    @keyframes float-delayed {
+        0%, 100% {
+            transform: translateY(0px) rotate(-45deg);
+        }
+        50% {
+            transform: translateY(-25px) rotate(-45deg);
+        }
+    }
+
+    /* Slow spin animation */
+    .animate-spin-slow {
+        animation: spin-slow 20s linear infinite;
+    }
+
+    @keyframes spin-slow {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Particle animations */
+    .animate-float-particle-1 {
+        animation: float-particle-1 12s ease-in-out infinite;
+    }
+
+    .animate-float-particle-2 {
+        animation: float-particle-2 10s ease-in-out infinite;
+        animation-delay: 1s;
+    }
+
+    .animate-float-particle-3 {
+        animation: float-particle-3 14s ease-in-out infinite;
+        animation-delay: 2s;
+    }
+
+    .animate-float-particle-4 {
+        animation: float-particle-4 11s ease-in-out infinite;
+        animation-delay: 3s;
+    }
+
+    @keyframes float-particle-1 {
+        0%, 100% {
+            transform: translateY(0px) translateX(0px);
+            opacity: 0.4;
+        }
+        25% {
+            transform: translateY(-30px) translateX(10px);
+            opacity: 0.6;
+        }
+        50% {
+            transform: translateY(-15px) translateX(-5px);
+            opacity: 0.3;
+        }
+        75% {
+            transform: translateY(-40px) translateX(15px);
+            opacity: 0.5;
+        }
+    }
+
+    @keyframes float-particle-2 {
+        0%, 100% {
+            transform: translateY(0px) translateX(0px);
+            opacity: 0.5;
+        }
+        33% {
+            transform: translateY(-25px) translateX(-10px);
+            opacity: 0.7;
+        }
+        66% {
+            transform: translateY(-35px) translateX(5px);
+            opacity: 0.3;
+        }
+    }
+
+    @keyframes float-particle-3 {
+        0%, 100% {
+            transform: translateY(0px) translateX(0px);
+            opacity: 0.3;
+        }
+        20% {
+            transform: translateY(-20px) translateX(8px);
+            opacity: 0.5;
+        }
+        40% {
+            transform: translateY(-40px) translateX(-12px);
+            opacity: 0.4;
+        }
+        60% {
+            transform: translateY(-25px) translateX(6px);
+            opacity: 0.6;
+        }
+        80% {
+            transform: translateY(-35px) translateX(-8px);
+            opacity: 0.3;
+        }
+    }
+
+    @keyframes float-particle-4 {
+        0%, 100% {
+            transform: translateY(0px) translateX(0px);
+            opacity: 0.4;
+        }
+        50% {
+            transform: translateY(-30px) translateX(12px);
+            opacity: 0.6;
+        }
+    }
+
+    /* Grid pattern */
+    .grid-pattern {
+        background-image: 
+            linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: grid-move 20s linear infinite;
+    }
+
+    @keyframes grid-move {
+        0% {
+            background-position: 0 0;
+        }
+        100% {
+            background-position: 50px 50px;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
-    <!-- Simple Hero Section -->
-    <section class="min-h-screen flex items-center justify-center bg-white">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <!-- Beautiful Animated Hero Section -->
+    <section class="min-h-screen gradient-bg flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <!-- Background Pattern -->
+        <div class="absolute inset-0 overflow-hidden">
+            <!-- Animated Geometric Shapes -->
+            <div class="absolute top-10 left-10 w-20 h-20 bg-white opacity-20 rounded-lg animate-pulse-slow transform rotate-45"></div>
+            <div class="absolute top-32 right-20 w-16 h-16 bg-white opacity-15 rounded-full animate-bounce-slow"></div>
+            <div class="absolute bottom-20 left-20 w-24 h-24 bg-white opacity-25 transform rotate-12 animate-float"></div>
+            <div class="absolute bottom-32 right-10 w-12 h-12 bg-white opacity-20 rounded-lg animate-spin-slow"></div>
+            <div class="absolute top-1/2 left-1/4 w-8 h-8 bg-white opacity-30 rounded-full animate-pulse"></div>
+            <div class="absolute top-1/3 right-1/3 w-14 h-14 bg-white opacity-20 transform -rotate-45 animate-float-delayed"></div>
+            
+            <!-- Floating Particles -->
+            <div class="absolute top-1/4 left-1/2 w-2 h-2 bg-white opacity-40 rounded-full animate-float-particle-1"></div>
+            <div class="absolute top-3/4 right-1/4 w-1 h-1 bg-white opacity-50 rounded-full animate-float-particle-2"></div>
+            <div class="absolute top-1/2 right-1/2 w-3 h-3 bg-white opacity-30 rounded-full animate-float-particle-3"></div>
+            <div class="absolute bottom-1/4 left-1/3 w-2 h-2 bg-white opacity-40 rounded-full animate-float-particle-4"></div>
+            
+            <!-- Grid Pattern -->
+            <div class="absolute inset-0 opacity-5">
+                <div class="grid-pattern w-full h-full"></div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center content-relative">
             <!-- Logo/Icon -->
-            <div class="flex justify-center mb-8">
-                <div class="w-24 h-24 bg-gradient-to-br from-primary-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl transform hover:rotate-12 transition-transform duration-300">
+            <div class="flex justify-center mb-8 fade-in">
+                <div class="w-24 h-24 bg-gradient-to-br from-primary-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl transform hover:rotate-12 transition-transform duration-300 logo-pulse" style="animation: logoPulse 3s ease-in-out infinite;">
                     <svg class="w-14 h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                    </svg>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
                 </div>
             </div>
 
             <!-- Heading -->
-            <h1 class="text-5xl md:text-7xl font-bold text-gray-900 mb-6">
-                Welcome to
+            <h1 class="text-5xl md:text-7xl font-bold text-gray-900 mb-6 fade-in">
+                    Welcome to
                 <span class="gradient-text block mt-2">
-                    {{ config('app.name', 'Laravel') }}
-                </span>
-            </h1>
+                        {{ config('app.name', 'Laravel') }}
+                    </span>
+                </h1>
 
             <!-- Description -->
-            <p class="text-xl md:text-2xl text-gray-600 mb-12 max-w-2xl mx-auto">
+            <p class="text-xl md:text-2xl text-gray-600 mb-12 max-w-2xl mx-auto fade-in">
                 Modern web application built with Laravel & Tailwind CSS
             </p>
 
-            <!-- CTA Buttons -->
-            <div class="flex flex-col sm:flex-row gap-6 justify-center mb-12">
+            <!-- CTA Button -->
+            <div class="flex justify-center mb-12 fade-in">
                 <a href="{{ route('login') }}" 
-                   class="group bg-gradient-to-r from-primary-600 to-purple-600 text-white px-10 py-4 rounded-full hover:from-primary-700 hover:to-purple-700 transition-all font-bold text-lg transform hover:scale-105 shadow-xl">
-                    <span class="flex items-center justify-center">
-                        Login
+                   class="group bg-gradient-to-r from-primary-600 to-purple-600 text-white px-12 py-4 rounded-full hover:from-primary-700 hover:to-purple-700 transition-all font-bold text-lg transform hover:scale-105 shadow-xl btn-glow">
+                    <span class="flex items-center justify-center relative z-10">
+                        Get Started
                         <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                         </svg>
                     </span>
                 </a>
-                
-                <a href="#about" 
-                   class="border-2 border-gray-300 text-gray-700 px-10 py-4 rounded-full hover:bg-white hover:border-primary-600 hover:text-primary-600 transition-all font-bold text-lg">
-                    Learn More
-                </a>
-            </div>
-
-            <!-- Simple Features -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20">
-                <div class="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-gray-200">
-                    <div class="text-4xl mb-4">🚀</div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Fast & Secure</h3>
-                    <p class="text-gray-600 text-sm">Built with modern security practices</p>
-                </div>
-                
-                <div class="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-gray-200">
-                    <div class="text-4xl mb-4">🎨</div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Beautiful Design</h3>
-                    <p class="text-gray-600 text-sm">Clean & modern user interface</p>
-                </div>
-                
-                <div class="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-gray-200">
-                    <div class="text-4xl mb-4">⚡</div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">High Performance</h3>
-                    <p class="text-gray-600 text-sm">Optimized for speed & efficiency</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- About Section (Hidden, revealed on scroll) -->
-    <section id="about" class="py-20 bg-white">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-4xl font-bold text-gray-900 mb-6">
-                Built with Modern Technology
-            </h2>
-            <p class="text-xl text-gray-600 mb-12">
-                Powered by Laravel, PostgreSQL, and Tailwind CSS for a robust and scalable web application.
-            </p>
-            
-            <div class="flex flex-wrap justify-center gap-4">
-                <span class="px-6 py-3 bg-red-100 text-red-700 rounded-full font-semibold">Laravel</span>
-                <span class="px-6 py-3 bg-blue-100 text-blue-700 rounded-full font-semibold">PostgreSQL</span>
-                <span class="px-6 py-3 bg-cyan-100 text-cyan-700 rounded-full font-semibold">Tailwind CSS</span>
-                <span class="px-6 py-3 bg-purple-100 text-purple-700 rounded-full font-semibold">PHP 8.3+</span>
             </div>
         </div>
     </section>
