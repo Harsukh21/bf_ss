@@ -59,7 +59,17 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/login')->with('success', 'You have been logged out.');
+        
+        // Clear any cached data and prevent back button access
+        $request->session()->flush();
+        
+        return redirect('/login')->with('success', 'You have been successfully logged out. Thank you for using our application!')
+            ->withHeaders([
+                'Cache-Control' => 'no-cache, no-store, must-revalidate, max-age=0',
+                'Pragma' => 'no-cache',
+                'Expires' => 'Sat, 01 Jan 1990 00:00:00 GMT',
+                'Last-Modified' => gmdate('D, d M Y H:i:s') . ' GMT'
+            ]);
     }
 
     /**
@@ -68,10 +78,18 @@ class AuthController extends Controller
     public function dashboard()
     {
         if (!Auth::check()) {
-            return redirect()->route('login');
+            return redirect()->route('login')->withHeaders([
+                'Cache-Control' => 'no-cache, no-store, must-revalidate, max-age=0',
+                'Pragma' => 'no-cache',
+                'Expires' => 'Sat, 01 Jan 1990 00:00:00 GMT'
+            ]);
         }
         
-        return view('dashboard');
+        return view('dashboard')->withHeaders([
+            'Cache-Control' => 'no-cache, no-store, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => 'Sat, 01 Jan 1990 00:00:00 GMT'
+        ]);
     }
 }
 

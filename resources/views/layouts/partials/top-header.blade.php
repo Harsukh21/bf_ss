@@ -58,15 +58,49 @@
                                 Settings
                             </a>
                             <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
-                            <form action="{{ route('logout') }}" method="POST" class="block">
+                            <form action="{{ route('logout') }}" method="POST" class="block" id="logoutForm">
                                 @csrf
-                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                <button type="button" onclick="handleLogout()" class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                                     <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                                     </svg>
                                     Logout
                                 </button>
                             </form>
+                            
+                            <script>
+                                async function handleLogout() {
+                                    try {
+                                        const result = await ToastNotification.confirm(
+                                            'Are you sure you want to logout? This will end your current session and redirect you to the login page. Any unsaved work will be lost.',
+                                            'Yes, Logout',
+                                            'Cancel'
+                                        );
+                                        
+                                        if (result) {
+                                            // Show logout progress toast
+                                            ToastNotification.show('Logging out... Please wait.', 'info', 2000);
+                                            
+                                            // Clear all browser storage
+                                            if (typeof(Storage) !== "undefined") {
+                                                localStorage.clear();
+                                                sessionStorage.clear();
+                                            }
+                                            
+                                            // Clear browser history
+                                            if (window.history && window.history.replaceState) {
+                                                window.history.replaceState(null, null, '/login');
+                                            }
+                                            
+                                            // Submit the logout form
+                                            document.getElementById('logoutForm').submit();
+                                        }
+                                    } catch (error) {
+                                        console.error('Logout error:', error);
+                                        ToastNotification.show('An error occurred during logout. Please try again.', 'error');
+                                    }
+                                }
+                            </script>
                         </div>
                     </div>
                 @else

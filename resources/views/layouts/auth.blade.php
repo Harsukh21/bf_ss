@@ -605,6 +605,110 @@
     </script>
 
     @stack('scripts')
+    
+    <!-- Toast Notification System for Auth Pages -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[9999] space-y-2">
+        <!-- Toast notifications will be dynamically inserted here -->
+    </div>
+
+    <script>
+        // Toast Notification System for Auth Pages
+        class ToastNotification {
+            static show(message, type = 'info', duration = 5000) {
+                const container = document.getElementById('toast-container');
+                if (!container) return;
+
+                const toast = document.createElement('div');
+                toast.className = `transform transition-all duration-300 ease-in-out translate-x-full opacity-0`;
+                
+                // Toast styles based on type
+                const typeStyles = {
+                    success: 'bg-green-500 border-green-600',
+                    error: 'bg-red-500 border-red-600',
+                    warning: 'bg-yellow-500 border-yellow-600',
+                    info: 'bg-blue-500 border-blue-600'
+                };
+                
+                const iconStyles = {
+                    success: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>`,
+                    error: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>`,
+                    warning: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>`,
+                    info: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>`
+                };
+
+                toast.innerHTML = `
+                    <div class="flex items-center p-4 rounded-lg shadow-lg border-l-4 ${typeStyles[type]} text-white max-w-md">
+                        <div class="flex-shrink-0">
+                            ${iconStyles[type]}
+                        </div>
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-medium">${message}</p>
+                        </div>
+                        <div class="ml-4 flex-shrink-0">
+                            <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-white hover:text-gray-200 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(toast);
+
+                // Animate in
+                setTimeout(() => {
+                    toast.classList.remove('translate-x-full', 'opacity-0');
+                    toast.classList.add('translate-x-0', 'opacity-100');
+                }, 100);
+
+                // Auto remove
+                if (duration > 0) {
+                    setTimeout(() => {
+                        this.remove(toast);
+                    }, duration);
+                }
+
+                return toast;
+            }
+
+            static remove(toast) {
+                if (!toast) return;
+                
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.parentElement.removeChild(toast);
+                    }
+                }, 300);
+            }
+        }
+
+        // Show success/error messages as toast notifications
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                ToastNotification.show('{{ session('success') }}', 'success', 6000);
+            @endif
+            
+            @if(session('error'))
+                ToastNotification.show('{{ session('error') }}', 'error', 6000);
+            @endif
+            
+            @if($errors->any())
+                @foreach($errors->all() as $error)
+                    ToastNotification.show('{{ $error }}', 'error', 6000);
+                @endforeach
+            @endif
+        });
+    </script>
 </body>
 </html>
 

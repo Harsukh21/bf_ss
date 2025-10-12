@@ -36,10 +36,31 @@
         z-index: 10;
     }
     
-    /* Ensure navigation stays above everything */
-    nav {
-        z-index: 50 !important;
+    /* Background animations z-index */
+    .bg-animations {
+        z-index: 1;
+        pointer-events: none;
+    }
+    
+    /* Ensure navigation and footer stay on top */
+    .nav-z-index {
+        z-index: 50;
+    }
+    
+    .footer-z-index {
+        z-index: 50;
+    }
+    
+    /* Ensure main content doesn't overlap navigation */
+    main {
         position: relative;
+        z-index: 1;
+    }
+    
+    /* Prevent background animations from interfering with navigation */
+    .min-h-screen {
+        margin-top: 0;
+        padding-top: 0;
     }
     
     /* Pulse animation for logo */
@@ -80,7 +101,7 @@
         animation-delay: 0.8s;
     }
     
-    @keyframes fadeIn {
+        @keyframes fadeIn {
         from {
             opacity: 0;
             transform: translateY(30px);
@@ -295,15 +316,15 @@
         100% {
             background-position: 50px 50px;
         }
-    }
-</style>
+        }
+    </style>
 @endpush
 
 @section('content')
     <!-- Beautiful Animated Hero Section -->
-    <section class="min-h-screen gradient-bg flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <section class="min-h-screen gradient-bg flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
         <!-- Background Pattern -->
-        <div class="absolute inset-0 overflow-hidden z-0">
+        <div class="absolute inset-0 overflow-hidden z-0 bg-animations">
             <!-- Animated Geometric Shapes -->
             <div class="absolute top-10 left-10 w-20 h-20 bg-white opacity-20 rounded-lg animate-pulse-slow transform rotate-45"></div>
             <div class="absolute top-32 right-20 w-16 h-16 bg-white opacity-15 rounded-full animate-bounce-slow"></div>
@@ -325,7 +346,7 @@
         </div>
         
         <!-- Main Content -->
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center content-relative z-10">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center content-relative">
             <!-- Logo/Icon -->
             <div class="flex justify-center mb-8 fade-in">
                 <div class="w-24 h-24 bg-gradient-to-br from-primary-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl transform hover:rotate-12 transition-transform duration-300 logo-pulse" style="animation: logoPulse 3s ease-in-out infinite;">

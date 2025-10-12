@@ -45,7 +45,7 @@
 </head>
 <body class="antialiased bg-white font-sans">
     <!-- Navigation -->
-    <nav class="bg-white shadow-sm border-b border-gray-200 relative z-50">
+    <nav class="bg-white shadow-sm border-b border-gray-200 relative z-50 nav-z-index">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
@@ -77,7 +77,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-gray-900 text-white">
+    <footer class="bg-gray-900 text-white relative z-50 footer-z-index">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="text-center">
                 <p class="text-gray-400 text-sm">

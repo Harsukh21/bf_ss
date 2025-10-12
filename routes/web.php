@@ -19,7 +19,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Protected Routes
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'prevent.back'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
     
