@@ -44,7 +44,7 @@
     
     @stack('css')
 </head>
-<body class="bg-white dark:bg-gray-900 min-h-screen font-sans transition-colors">
+<body class="bg-white dark:bg-gray-900 min-h-screen font-sans dark-mode-transition">
     <div class="min-h-screen flex">
         <!-- Include Sidebar -->
         @include('layouts.partials.sidebar')
@@ -55,7 +55,7 @@
             @include('layouts.partials.top-header')
             
             <!-- Main Content -->
-            <main class="p-6 bg-white dark:bg-gray-900 transition-colors">
+            <main class="p-6 bg-white dark:bg-gray-900 dark-mode-transition">
                 @yield('content')
             </main>
         </div>

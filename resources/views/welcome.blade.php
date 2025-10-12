@@ -36,6 +36,12 @@
         z-index: 10;
     }
     
+    /* Ensure navigation stays above everything */
+    nav {
+        z-index: 50 !important;
+        position: relative;
+    }
+    
     /* Pulse animation for logo */
     .logo-pulse {
         animation: logoPulse 3s ease-in-out infinite;
@@ -297,7 +303,7 @@
     <!-- Beautiful Animated Hero Section -->
     <section class="min-h-screen gradient-bg flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <!-- Background Pattern -->
-        <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute inset-0 overflow-hidden z-0">
             <!-- Animated Geometric Shapes -->
             <div class="absolute top-10 left-10 w-20 h-20 bg-white opacity-20 rounded-lg animate-pulse-slow transform rotate-45"></div>
             <div class="absolute top-32 right-20 w-16 h-16 bg-white opacity-15 rounded-full animate-bounce-slow"></div>
@@ -319,7 +325,7 @@
         </div>
         
         <!-- Main Content -->
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center content-relative">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center content-relative z-10">
             <!-- Logo/Icon -->
             <div class="flex justify-center mb-8 fade-in">
                 <div class="w-24 h-24 bg-gradient-to-br from-primary-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl transform hover:rotate-12 transition-transform duration-300 logo-pulse" style="animation: logoPulse 3s ease-in-out infinite;">
@@ -345,7 +351,7 @@
             <!-- CTA Button -->
             <div class="flex justify-center mb-12 fade-in">
                 <a href="{{ route('login') }}" 
-                   class="group bg-gradient-to-r from-primary-600 to-purple-600 text-white px-12 py-4 rounded-full hover:from-primary-700 hover:to-purple-700 transition-all font-bold text-lg transform hover:scale-105 shadow-xl btn-glow">
+                   class="group bg-gradient-to-r from-primary-600 to-purple-600 text-white px-12 py-4 rounded-full hover:from-primary-700 hover:to-purple-700 transition-all font-bold text-lg transform hover:scale-105 shadow-xl btn-glow cursor-pointer hover:cursor-pointer">
                     <span class="flex items-center justify-center relative z-10">
                         Get Started
                         <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">

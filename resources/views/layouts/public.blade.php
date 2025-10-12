@@ -45,7 +45,7 @@
 </head>
 <body class="antialiased bg-white font-sans">
     <!-- Navigation -->
-    <nav class="bg-white shadow-sm border-b border-gray-200">
+    <nav class="bg-white shadow-sm border-b border-gray-200 relative z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
@@ -63,7 +63,7 @@
                 <!-- Auth Button -->
                 <div class="flex items-center">
                     <a href="{{ route('login') }}" 
-                       class="bg-gradient-to-r from-primary-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-primary-700 hover:to-purple-700 transition-all font-medium">
+                       class="bg-gradient-to-r from-primary-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-primary-700 hover:to-purple-700 transition-all font-medium cursor-pointer hover:cursor-pointer">
                         Login
                     </a>
                 </div>
