@@ -4,9 +4,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\MarketController;
+use App\Http\Controllers\MarketRateController;
 use App\Http\Controllers\SystemLogController;
 use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 
 // Welcome page
 Route::get('/', function () {
@@ -23,6 +25,18 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
     
+    // Users Management
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::get('/create', [UserController::class, 'create'])->name('create');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::get('/{user}', [UserController::class, 'show'])->name('show');
+        Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [UserController::class, 'update'])->name('update');
+        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+        Route::get('/search', [UserController::class, 'search'])->name('search');
+    });
+    
     // Events
     Route::get('/events', [EventController::class, 'index'])->name('events.index');
     Route::get('/events/{id}', [EventController::class, 'show'])->name('events.show');
@@ -33,6 +47,13 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
     // Markets
     Route::get('/markets', [MarketController::class, 'index'])->name('markets.index');
     Route::get('/markets/{id}', [MarketController::class, 'show'])->name('markets.show');
+
+    // Market Rates Management (Read-only)
+    Route::prefix('market-rates')->name('market-rates.')->group(function () {
+        Route::get('/', [MarketRateController::class, 'index'])->name('index');
+        Route::get('/{marketRate}', [MarketRateController::class, 'show'])->name('show');
+        Route::get('/search', [MarketRateController::class, 'search'])->name('search');
+    });
 
     // System Logs
     Route::prefix('system-logs')->name('system-logs.')->group(function () {
