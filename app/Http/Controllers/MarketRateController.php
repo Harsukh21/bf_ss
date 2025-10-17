@@ -14,8 +14,26 @@ class MarketRateController extends Controller
      */
     public function index(Request $request)
     {
-        // Get all available events for dropdown
-        $events = Event::select('eventId', 'eventName', 'exEventId')->get();
+        // Get all available events for dropdown (from events table and market_lists)
+        $eventsFromEvents = Event::select('eventId', 'eventName', 'exEventId')->get();
+        
+        // Get events from market_lists and normalize the data structure
+        $marketEvents = DB::table('market_lists')
+            ->select('exEventId', 'eventName')
+            ->whereNotIn('exEventId', $eventsFromEvents->pluck('exEventId'))
+            ->distinct()
+            ->get();
+        
+        // Convert to proper objects with consistent property names
+        $eventsFromMarkets = $marketEvents->map(function ($event) {
+            return (object) [
+                'eventId' => 'market_' . time() . '_' . rand(1000, 9999),
+                'eventName' => $event->eventName,
+                'exEventId' => $event->exEventId
+            ];
+        });
+        
+        $events = $eventsFromEvents->concat($eventsFromMarkets);
         
         // Get selected event ID
         $selectedEventId = $request->get('exEventId');
@@ -56,8 +74,23 @@ class MarketRateController extends Controller
                 $marketRates = $query->oldest('created_at')->paginate(10);
             }
             
-            // Get event information
+            // Get event information (from events table or market_lists)
             $eventInfo = Event::where('exEventId', $selectedEventId)->first();
+            if (!$eventInfo) {
+                $marketEventInfo = DB::table('market_lists')
+                    ->where('exEventId', $selectedEventId)
+                    ->select('eventName', 'exEventId')
+                    ->selectRaw("'market_list' as source")
+                    ->first();
+                if ($marketEventInfo) {
+                    // Convert stdClass to object with proper attributes
+                    $eventInfo = (object) [
+                        'eventName' => $marketEventInfo->eventName,
+                        'exEventId' => $marketEventInfo->exEventId,
+                        'source' => $marketEventInfo->source
+                    ];
+                }
+            }
         }
 
         return view('market-rates.index', compact('marketRates', 'events', 'selectedEventId', 'eventInfo'));
