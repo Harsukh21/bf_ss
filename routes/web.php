@@ -48,11 +48,12 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
     Route::get('/markets', [MarketController::class, 'index'])->name('markets.index');
     Route::get('/markets/{id}', [MarketController::class, 'show'])->name('markets.show');
 
-    // Market Rates Management (Read-only)
+    // Market Rates Management (Dynamic tables)
     Route::prefix('market-rates')->name('market-rates.')->group(function () {
         Route::get('/', [MarketRateController::class, 'index'])->name('index');
-        Route::get('/{marketRate}', [MarketRateController::class, 'show'])->name('show');
+        Route::get('/{id}', [MarketRateController::class, 'show'])->name('show');
         Route::get('/search', [MarketRateController::class, 'search'])->name('search');
+        Route::get('/count', [MarketRateController::class, 'getCount'])->name('count');
     });
 
     // System Logs
