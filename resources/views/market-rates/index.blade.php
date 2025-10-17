@@ -164,19 +164,64 @@
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-500 dark:text-gray-400">{{ $rate->exMarketId }}</div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900 dark:text-gray-100">
-                                                @php
-                                                    $runners = is_string($rate->runners) ? json_decode($rate->runners, true) : $rate->runners;
-                                                    $runnerCount = is_array($runners) ? count($runners) : 0;
-                                                @endphp
-                                                <div class="font-medium">{{ $runnerCount }} runners</div>
+                                        <td class="px-6 py-4">
+                                            @php
+                                                $runners = is_string($rate->runners) ? json_decode($rate->runners, true) : $rate->runners;
+                                                $runnerCount = is_array($runners) ? count($runners) : 0;
+                                            @endphp
+                                            <div class="text-sm">
+                                                <div class="font-medium text-gray-900 dark:text-gray-100 mb-2">{{ $runnerCount }} runners</div>
                                                 @if(is_array($runners) && count($runners) > 0)
-                                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                        @foreach($runners as $runner)
-                                                            <div class="truncate">{{ $runner['runnerName'] ?? 'Unknown' }}</div>
-                                                        @endforeach
+                                                    <div class="min-w-0">
+                                                        <div class="overflow-x-auto">
+                                                            <table class="min-w-full text-xs">
+                                                                <thead>
+                                                                    <tr class="border-b border-gray-200 dark:border-gray-600">
+                                                                        <th class="text-left py-1 text-gray-500 dark:text-gray-400 font-medium">Runner</th>
+                                                                        <th class="text-right py-1 text-gray-500 dark:text-gray-400 font-medium">Back</th>
+                                                                        <th class="text-right py-1 text-gray-500 dark:text-gray-400 font-medium">Lay</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @foreach($runners as $runner)
+                                                                        <tr class="border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                                                            <td class="py-1 pr-2 text-gray-900 dark:text-gray-100 truncate max-w-32" title="{{ $runner['runnerName'] ?? 'Unknown' }}">
+                                                                                {{ $runner['runnerName'] ?? 'Unknown' }}
+                                                                            </td>
+                                                                            <td class="py-1 text-right">
+                                                                                @if(isset($runner['availableToBack']) && is_array($runner['availableToBack']) && count($runner['availableToBack']) > 0)
+                                                                                    @php
+                                                                                        $bestBack = $runner['availableToBack'][0];
+                                                                                        $backOdds = $bestBack['price'] ?? 0;
+                                                                                        $backSize = $bestBack['size'] ?? 0;
+                                                                                    @endphp
+                                                                                    <div class="text-green-600 dark:text-green-400 font-medium">{{ number_format($backOdds, 2) }}</div>
+                                                                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ number_format($backSize, 2) }}</div>
+                                                                                @else
+                                                                                    <div class="text-gray-400 dark:text-gray-500">-</div>
+                                                                                @endif
+                                                                            </td>
+                                                                            <td class="py-1 text-right">
+                                                                                @if(isset($runner['availableToLay']) && is_array($runner['availableToLay']) && count($runner['availableToLay']) > 0)
+                                                                                    @php
+                                                                                        $bestLay = $runner['availableToLay'][0];
+                                                                                        $layOdds = $bestLay['price'] ?? 0;
+                                                                                        $laySize = $bestLay['size'] ?? 0;
+                                                                                    @endphp
+                                                                                    <div class="text-red-600 dark:text-red-400 font-medium">{{ number_format($layOdds, 2) }}</div>
+                                                                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ number_format($laySize, 2) }}</div>
+                                                                                @else
+                                                                                    <div class="text-gray-400 dark:text-gray-500">-</div>
+                                                                                @endif
+                                                                            </td>
+                                                                        </tr>
+                                                                    @endforeach
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
                                                     </div>
+                                                @else
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400 italic">No runner data available</div>
                                                 @endif
                                             </div>
                                         </td>
@@ -261,12 +306,68 @@
     </div>
 </div>
 
+@push('css')
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--single {
+        height: 42px !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 0.375rem !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 40px !important;
+        padding-left: 12px !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 40px !important;
+    }
+    .dark .select2-container--default .select2-selection--single {
+        background-color: #374151 !important;
+        border-color: #4b5563 !important;
+    }
+    .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #f9fafb !important;
+    }
+    .select2-dropdown {
+        border: 1px solid #d1d5db !important;
+        border-radius: 0.375rem !important;
+    }
+    .dark .select2-dropdown {
+        background-color: #374151 !important;
+        border-color: #4b5563 !important;
+    }
+    .select2-results__option {
+        padding: 8px 12px !important;
+    }
+    .dark .select2-results__option {
+        background-color: #374151 !important;
+        color: #f9fafb !important;
+    }
+    .dark .select2-results__option--highlighted {
+        background-color: #4b5563 !important;
+    }
+</style>
+@endpush
+
 @push('js')
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 function toggleFilterDrawer() {
     const drawer = document.getElementById('filterDrawer');
     drawer.classList.toggle('hidden');
 }
+
+// Initialize Select2 for event dropdown
+document.addEventListener('DOMContentLoaded', function() {
+    $('#exEventId').select2({
+        placeholder: 'Search and select an event...',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#exEventId').parent()
+    });
+});
 </script>
 @endpush
 @endsection
