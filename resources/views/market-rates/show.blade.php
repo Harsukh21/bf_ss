@@ -87,38 +87,65 @@
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Selection ID</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Runner Name</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Handicap</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Sort Priority</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Metadata</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Available To Back</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Available To Lay</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Summary</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 @foreach($runners as $runner)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                            {{ $runner['selectionId'] ?? 'N/A' }}
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                {{ $runner['runnerName'] ?? 'Unknown Runner' }}
+                                            </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                                            {{ $runner['runnerName'] ?? 'N/A' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                            {{ $runner['handicap'] ?? 'N/A' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                            {{ $runner['sortPriority'] ?? 'N/A' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                            @if(isset($runner['metadata']) && is_array($runner['metadata']))
-                                                <div class="text-xs">
-                                                    @foreach($runner['metadata'] as $key => $value)
-                                                        <div><strong>{{ $key }}:</strong> {{ $value }}</div>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @if(isset($runner['exchange']['availableToBack']) && is_array($runner['exchange']['availableToBack']))
+                                                <div class="text-xs space-y-1">
+                                                    @foreach($runner['exchange']['availableToBack'] as $back)
+                                                        <div class="flex justify-between items-center bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded">
+                                                            <span class="text-green-700 dark:text-green-300">£{{ number_format($back['price'], 2) }}</span>
+                                                            <span class="text-green-600 dark:text-green-400">{{ number_format($back['size'], 2) }}</span>
+                                                        </div>
                                                     @endforeach
                                                 </div>
                                             @else
-                                                N/A
+                                                <span class="text-xs text-gray-400">No back data</span>
                                             @endif
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @if(isset($runner['exchange']['availableToLay']) && is_array($runner['exchange']['availableToLay']))
+                                                <div class="text-xs space-y-1">
+                                                    @foreach($runner['exchange']['availableToLay'] as $lay)
+                                                        <div class="flex justify-between items-center bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded">
+                                                            <span class="text-red-700 dark:text-red-300">£{{ number_format($lay['price'], 2) }}</span>
+                                                            <span class="text-red-600 dark:text-red-400">{{ number_format($lay['size'], 2) }}</span>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <span class="text-xs text-gray-400">No lay data</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-xs text-gray-600 dark:text-gray-400">
+                                                @php
+                                                    $backCount = isset($runner['exchange']['availableToBack']) ? count($runner['exchange']['availableToBack']) : 0;
+                                                    $layCount = isset($runner['exchange']['availableToLay']) ? count($runner['exchange']['availableToLay']) : 0;
+                                                    $backBest = $backCount > 0 ? max(array_column($runner['exchange']['availableToBack'], 'price')) : 0;
+                                                    $layBest = $layCount > 0 ? min(array_column($runner['exchange']['availableToLay'], 'price')) : 0;
+                                                @endphp
+                                                <div><strong>{{ $backCount }}</strong> back odds</div>
+                                                <div><strong>{{ $layCount }}</strong> lay odds</div>
+                                                @if($backBest > 0)
+                                                    <div class="text-green-600">Best Back: £{{ number_format($backBest, 2) }}</div>
+                                                @endif
+                                                @if($layBest > 0)
+                                                    <div class="text-red-600">Best Lay: £{{ number_format($layBest, 2) }}</div>
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach

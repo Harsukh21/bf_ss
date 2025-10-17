@@ -53,7 +53,7 @@ class MarketRateController extends Controller
                     }
                 }
 
-                $marketRates = $query->latest()->paginate(10);
+                $marketRates = $query->oldest('created_at')->paginate(10);
             }
             
             // Get event information

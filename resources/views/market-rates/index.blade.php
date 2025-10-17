@@ -144,6 +144,7 @@
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Market ID</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Runners</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -169,7 +170,14 @@
                                                     $runners = is_string($rate->runners) ? json_decode($rate->runners, true) : $rate->runners;
                                                     $runnerCount = is_array($runners) ? count($runners) : 0;
                                                 @endphp
-                                                {{ $runnerCount }} runners
+                                                <div class="font-medium">{{ $runnerCount }} runners</div>
+                                                @if(is_array($runners) && count($runners) > 0)
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                        @foreach($runners as $runner)
+                                                            <div class="truncate">{{ $runner['runnerName'] ?? 'Unknown' }}</div>
+                                                        @endforeach
+                                                    </div>
+                                                @endif
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
@@ -183,6 +191,9 @@
                                             @else
                                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">Upcoming</span>
                                             @endif
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            {{ $rate->created_at ? \Carbon\Carbon::parse($rate->created_at)->format('M d, Y H:i') : 'N/A' }}
                                         </td>
                                     </tr>
                                 @endforeach
