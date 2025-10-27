@@ -71,7 +71,15 @@ class MarketRateController extends Controller
                     }
                 }
 
-                $marketRates = $query->oldest('created_at')->paginate(10);
+                // Apply date range filter
+                if ($request->filled('date_from')) {
+                    $query->where('created_at', '>=', $request->get('date_from'));
+                }
+                if ($request->filled('date_to')) {
+                    $query->where('created_at', '<=', $request->get('date_to'));
+                }
+
+                $marketRates = $query->latest('created_at')->paginate(10);
             }
             
             // Get event information (from events table or market_lists)
@@ -143,5 +151,153 @@ class MarketRateController extends Controller
         $count = MarketRate::getCountForEvent($exEventId);
         
         return response()->json(['count' => $count]);
+    }
+
+    /**
+     * Export market rates to CSV
+     */
+    public function export(Request $request)
+    {
+        $selectedEventId = $request->get('exEventId');
+        
+        if (!$selectedEventId) {
+            return redirect()->route('market-rates.index')
+                ->with('error', 'Please select an event to export data.');
+        }
+
+        if (!MarketRate::tableExistsForEvent($selectedEventId)) {
+            return redirect()->route('market-rates.index')
+                ->with('error', 'No data available for this event.');
+        }
+
+        $query = MarketRate::forEvent($selectedEventId);
+
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('marketName', 'like', "%{$search}%")
+                  ->orWhere('exMarketId', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply market filter
+        if ($request->filled('market_name')) {
+            $query->where('marketName', $request->get('market_name'));
+        }
+
+        // Apply status filter
+        if ($request->filled('status')) {
+            if ($request->get('status') === 'inplay') {
+                $query->where('inplay', true);
+            } elseif ($request->get('status') === 'completed') {
+                $query->where('isCompleted', true);
+            } elseif ($request->get('status') === 'upcoming') {
+                $query->where('inplay', false)->where('isCompleted', false);
+            }
+        }
+
+        // Apply date range filter
+        if ($request->filled('date_from')) {
+            $query->where('created_at', '>=', $request->get('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->where('created_at', '<=', $request->get('date_to'));
+        }
+
+        // Get all data (no pagination for export)
+        $marketRates = $query->latest('created_at')->get();
+
+        // Get event information
+        $eventInfo = Event::where('exEventId', $selectedEventId)->first();
+        if (!$eventInfo) {
+            $marketEventInfo = DB::table('market_lists')
+                ->where('exEventId', $selectedEventId)
+                ->select('eventName', 'exEventId')
+                ->first();
+            if ($marketEventInfo) {
+                $eventInfo = (object) [
+                    'eventName' => $marketEventInfo->eventName,
+                    'exEventId' => $marketEventInfo->exEventId,
+                ];
+            }
+        }
+
+        // Generate CSV
+        $filename = 'market_rates_' . $selectedEventId . '_' . date('Y-m-d_H-i-s') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function() use ($marketRates) {
+            $file = fopen('php://output', 'w');
+            
+            // CSV Headers
+            fputcsv($file, [
+                'Market Name',
+                'Market ID',
+                'Runner Name',
+                'Back Price',
+                'Back Size',
+                'Lay Price',
+                'Lay Size',
+                'Status',
+                'In Play',
+                'Is Completed',
+                'Created At'
+            ]);
+
+            // CSV Data
+            foreach ($marketRates as $rate) {
+                $runners = is_string($rate->runners) ? json_decode($rate->runners, true) : $rate->runners;
+                $runners = is_array($runners) ? $runners : [];
+                
+                $status = '';
+                if ($rate->isCompleted) {
+                    $status = 'Completed';
+                } elseif ($rate->inplay) {
+                    $status = 'In Play';
+                } else {
+                    $status = 'Upcoming';
+                }
+
+                // Export each runner
+                foreach ($runners as $runner) {
+                    $runner = is_array($runner) ? $runner : (array) $runner;
+                    $runnerName = $runner['runnerName'] ?? 'Unknown';
+                    
+                    // Get best back and lay prices
+                    $exchange = is_array($runner['exchange'] ?? null) ? $runner['exchange'] : (array) ($runner['exchange'] ?? []);
+                    $availableToBack = $exchange['availableToBack'] ?? [];
+                    $availableToLay = $exchange['availableToLay'] ?? [];
+                    
+                    $availableToBack = is_array($availableToBack) ? $availableToBack : (array) $availableToBack;
+                    $availableToLay = is_array($availableToLay) ? $availableToLay : (array) $availableToLay;
+                    
+                    $bestBack = !empty($availableToBack) && is_array($availableToBack[0] ?? null) ? $availableToBack[0] : [];
+                    $bestLay = !empty($availableToLay) && is_array($availableToLay[0] ?? null) ? $availableToLay[0] : [];
+                    
+                    fputcsv($file, [
+                        $rate->marketName,
+                        $rate->exMarketId,
+                        $runnerName,
+                        $bestBack['price'] ?? '',
+                        $bestBack['size'] ?? '',
+                        $bestLay['price'] ?? '',
+                        $bestLay['size'] ?? '',
+                        $status,
+                        $rate->inplay ? 'Yes' : 'No',
+                        $rate->isCompleted ? 'Yes' : 'No',
+                        $rate->created_at
+                    ]);
+                }
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

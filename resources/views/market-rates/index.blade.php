@@ -2,6 +2,55 @@
 
 @section('title', 'Market Rates')
 
+@push('css')
+<style>
+    .filter-drawer {
+        position: fixed;
+        top: 0;
+        right: -500px;
+        width: 500px;
+        height: 100vh;
+        background: white;
+        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+        transition: right 0.3s ease-in-out;
+        z-index: 1000;
+        overflow-y: auto;
+    }
+    
+    .dark .filter-drawer {
+        background: #1f2937;
+        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .filter-drawer.open {
+        right: 0;
+    }
+    
+    .filter-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+    }
+    
+    .filter-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="px-4 py-6 sm:px-0">
     <div class="max-w-7xl mx-auto">
@@ -31,8 +80,9 @@
                         if(request('search')) $filterCount++;
                         if(request('market_name')) $filterCount++;
                         if(request('status')) $filterCount++;
+                        if(request('date_from') || request('date_to')) $filterCount++;
                     @endphp
-                    <button onclick="toggleFilterDrawer()" class="bg-primary-600 dark:bg-primary-700 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:hover:bg-primary-800 transition-colors flex items-center relative">
+                    <button onclick="toggleFilterDrawer()" class="bg-primary-600 dark:bg-primary-700 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:hover:bg-primary-800 transition-colors flex items-center relative" @if(!$selectedEventId) disabled @endif>
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
                         </svg>
@@ -41,6 +91,22 @@
                             <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">{{ $filterCount }}</span>
                         @endif
                     </button>
+                    @if($filterCount > 0 && $selectedEventId)
+                        <a href="{{ route('market-rates.index', ['exEventId' => $selectedEventId]) }}" class="bg-red-600 dark:bg-red-700 text-white px-4 py-2 rounded-lg hover:bg-red-700 dark:hover:bg-red-800 transition-colors flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            Clear Filters
+                        </a>
+                    @endif
+                    @if($selectedEventId && $marketRates->count() > 0)
+                        <a href="{{ route('market-rates.export', request()->all()) }}" class="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-800 transition-colors flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            Export CSV
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>
@@ -52,79 +118,35 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400">Choose an event to view its market rates</p>
             </div>
             <div class="p-6">
-                <form method="GET" action="{{ route('market-rates.index') }}" class="flex gap-4 items-end">
-                    <div class="flex-1 relative">
-                        <label for="exEventId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <form method="GET" action="{{ route('market-rates.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div class="md:col-span-3 relative">
+                        <label for="eventSearch" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Event
                         </label>
-                        <select name="exEventId" id="exEventId" class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white" required>
-                            <option value="">Select an event...</option>
-                            @foreach($events as $event)
-                                <option value="{{ $event->exEventId }}" {{ $selectedEventId == $event->exEventId ? 'selected' : '' }}>
-                                    {{ $event->eventName }} ({{ $event->eventId }})
-                                </option>
-                            @endforeach
-                        </select>
+                        <input type="text" 
+                               id="eventSearch" 
+                               placeholder="Search events..." 
+                               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                               value="{{ $eventInfo->eventName ?? '' }}"
+                               autocomplete="off">
+                        <input type="hidden" name="exEventId" id="exEventId" value="{{ $selectedEventId }}" required>
+                        
+                        <!-- Searchable dropdown -->
+                        <div id="eventDropdown" class="hidden absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                            <!-- Options will be populated by JavaScript -->
+                        </div>
                     </div>
-                    <button type="submit" class="bg-primary-600 dark:bg-primary-700 text-white px-6 py-2 rounded-md hover:bg-primary-700 dark:hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
-                        View Rates
-                    </button>
+                    <div class="md:col-span-1">
+                        <button type="submit" class="w-full bg-primary-600 dark:bg-primary-700 text-white px-6 py-2 rounded-md hover:bg-primary-700 dark:hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                            View Rates
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
 
         @if($selectedEventId)
             @if($eventInfo && $marketRates->count() > 0)
-                <!-- Filter Drawer -->
-                <div id="filterDrawer" class="hidden mb-6">
-                    <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
-                        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Filters</h3>
-                        </div>
-                        <div class="p-6">
-                            <form method="GET" action="{{ route('market-rates.index') }}">
-                                <input type="hidden" name="exEventId" value="{{ $selectedEventId }}">
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
-                                        <input type="text" name="search" id="search" value="{{ request('search') }}" 
-                                               placeholder="Search markets..." 
-                                               class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
-                                    </div>
-                                    <div>
-                                        <label for="market_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Market Type</label>
-                                        <select name="market_name" id="market_name" class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
-                                            <option value="">All Markets</option>
-                                            <option value="Match Winner" {{ request('market_name') == 'Match Winner' ? 'selected' : '' }}>Match Winner</option>
-                                            <option value="Over/Under 2.5 Goals" {{ request('market_name') == 'Over/Under 2.5 Goals' ? 'selected' : '' }}>Over/Under 2.5 Goals</option>
-                                            <option value="Total Sets" {{ request('market_name') == 'Total Sets' ? 'selected' : '' }}>Total Sets</option>
-                                            <option value="Total Runs" {{ request('market_name') == 'Total Runs' ? 'selected' : '' }}>Total Runs</option>
-                                            <option value="Total Points" {{ request('market_name') == 'Total Points' ? 'selected' : '' }}>Total Points</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
-                                        <select name="status" id="status" class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
-                                            <option value="">All Status</option>
-                                            <option value="inplay" {{ request('status') == 'inplay' ? 'selected' : '' }}>In Play</option>
-                                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
-                                            <option value="upcoming" {{ request('status') == 'upcoming' ? 'selected' : '' }}>Upcoming</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="flex justify-end space-x-3 mt-4">
-                                    <a href="{{ route('market-rates.index', ['exEventId' => $selectedEventId]) }}" 
-                                       class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                                        Clear
-                                    </a>
-                                    <button type="submit" class="px-4 py-2 bg-primary-600 dark:bg-primary-700 text-white rounded-md hover:bg-primary-700 dark:hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                                        Apply Filters
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Market Rates Table -->
                 <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
@@ -140,8 +162,6 @@
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Market</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Market ID</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Runners</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created</th>
@@ -151,18 +171,12 @@
                                 @foreach($marketRates as $rate)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href="{{ route('market-rates.show', $rate->id, ['exEventId' => $selectedEventId]) }}" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200 transition-colors duration-200">
+                                            <a href="{{ route('market-rates.show', $rate->id) . '?exEventId=' . urlencode($selectedEventId) }}" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200 transition-colors duration-200">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                                 </svg>
                                             </a>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $rate->marketName }}</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ $rate->exMarketId }}</div>
                                         </td>
                                         <td class="px-6 py-4">
                                             @php
@@ -184,14 +198,28 @@
                                                                 </thead>
                                                                 <tbody>
                                                                     @foreach($runners as $runner)
+                                                                        @php
+                                                                            // Handle both array and object structures
+                                                                            $runner = is_array($runner) ? $runner : (array) $runner;
+                                                                            $runnerName = $runner['runnerName'] ?? 'Unknown';
+                                                                            
+                                                                            // Get exchange data
+                                                                            $exchange = is_array($runner['exchange'] ?? null) ? $runner['exchange'] : (array) ($runner['exchange'] ?? []);
+                                                                            $availableToBack = $exchange['availableToBack'] ?? [];
+                                                                            $availableToLay = $exchange['availableToLay'] ?? [];
+                                                                            
+                                                                            // Convert to arrays
+                                                                            $availableToBack = is_array($availableToBack) ? $availableToBack : (array) $availableToBack;
+                                                                            $availableToLay = is_array($availableToLay) ? $availableToLay : (array) $availableToLay;
+                                                                        @endphp
                                                                         <tr class="border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                                                            <td class="py-1 pr-2 text-gray-900 dark:text-gray-100 truncate max-w-32" title="{{ $runner['runnerName'] ?? 'Unknown' }}">
-                                                                                {{ $runner['runnerName'] ?? 'Unknown' }}
+                                                                            <td class="py-1 pr-2 text-gray-900 dark:text-gray-100 truncate max-w-32" title="{{ $runnerName }}">
+                                                                                {{ $runnerName }}
                                                                             </td>
                                                                             <td class="py-1 text-right">
-                                                                                @if(isset($runner['availableToBack']) && is_array($runner['availableToBack']) && count($runner['availableToBack']) > 0)
+                                                                                @if(is_array($availableToBack) && count($availableToBack) > 0)
                                                                                     @php
-                                                                                        $bestBack = $runner['availableToBack'][0];
+                                                                                        $bestBack = is_array($availableToBack[0]) ? $availableToBack[0] : (array) $availableToBack[0];
                                                                                         $backOdds = $bestBack['price'] ?? 0;
                                                                                         $backSize = $bestBack['size'] ?? 0;
                                                                                     @endphp
@@ -202,9 +230,9 @@
                                                                                 @endif
                                                                             </td>
                                                                             <td class="py-1 text-right">
-                                                                                @if(isset($runner['availableToLay']) && is_array($runner['availableToLay']) && count($runner['availableToLay']) > 0)
+                                                                                @if(is_array($availableToLay) && count($availableToLay) > 0)
                                                                                     @php
-                                                                                        $bestLay = $runner['availableToLay'][0];
+                                                                                        $bestLay = is_array($availableToLay[0]) ? $availableToLay[0] : (array) $availableToLay[0];
                                                                                         $layOdds = $bestLay['price'] ?? 0;
                                                                                         $laySize = $bestLay['size'] ?? 0;
                                                                                     @endphp
@@ -306,87 +334,179 @@
     </div>
 </div>
 
+<!-- Filter Drawer -->
+@if($selectedEventId)
+<div id="filterOverlay" class="filter-overlay" onclick="toggleFilterDrawer()"></div>
+<div id="filterDrawer" class="filter-drawer">
+    <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Filters</h2>
+            <button onclick="toggleFilterDrawer()" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <form method="GET" action="{{ route('market-rates.index') }}">
+            <input type="hidden" name="exEventId" value="{{ $selectedEventId }}">
+            
+            <!-- Search -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
+                <input type="text" name="search" value="{{ request('search') }}" 
+                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400" 
+                       placeholder="Search markets...">
+            </div>
+            
+            <!-- Market Type -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Market Type</label>
+                <select name="market_name" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <option value="">All Markets</option>
+                    <option value="Match Winner" {{ request('market_name') == 'Match Winner' ? 'selected' : '' }}>Match Winner</option>
+                    <option value="Over/Under 2.5 Goals" {{ request('market_name') == 'Over/Under 2.5 Goals' ? 'selected' : '' }}>Over/Under 2.5 Goals</option>
+                    <option value="Total Sets" {{ request('market_name') == 'Total Sets' ? 'selected' : '' }}>Total Sets</option>
+                    <option value="Total Runs" {{ request('market_name') == 'Total Runs' ? 'selected' : '' }}>Total Runs</option>
+                    <option value="Total Points" {{ request('market_name') == 'Total Points' ? 'selected' : '' }}>Total Points</option>
+                </select>
+            </div>
+            
+            <!-- Status -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <option value="">All Status</option>
+                    <option value="inplay" {{ request('status') == 'inplay' ? 'selected' : '' }}>In Play</option>
+                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                    <option value="upcoming" {{ request('status') == 'upcoming' ? 'selected' : '' }}>Upcoming</option>
+                </select>
+            </div>
+            
+            <!-- Date Range -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date Range</label>
+                <div class="grid grid-cols-1 gap-2">
+                    <div>
+                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">From</label>
+                        <input type="datetime-local" name="date_from" value="{{ request('date_from') }}" 
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">To</label>
+                        <input type="datetime-local" name="date_to" value="{{ request('date_to') }}" 
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filter Buttons -->
+            <div class="flex space-x-3 mt-6">
+                <button type="submit" class="flex-1 bg-primary-600 dark:bg-primary-700 text-white py-2 px-4 rounded-lg hover:bg-primary-700 dark:hover:bg-primary-800 transition-colors">
+                    Apply Filters
+                </button>
+                <a href="{{ route('market-rates.index', ['exEventId' => $selectedEventId]) }}" class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition-colors text-center">
+                    Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
 
 @push('js')
 <script>
+const events = @json($events);
+
 function toggleFilterDrawer() {
+    const btn = event.target.closest('button');
+    if (btn && btn.disabled) return;
+    
     const drawer = document.getElementById('filterDrawer');
-    drawer.classList.toggle('hidden');
+    const overlay = document.getElementById('filterOverlay');
+    
+    if (drawer && overlay) {
+        drawer.classList.toggle('open');
+        overlay.classList.toggle('active');
+    }
 }
 
-// Simple searchable dropdown implementation
-function initializeSearchableDropdown() {
-    const select = document.getElementById('exEventId');
-    if (!select) return;
-    
-    // Create search input
-    const searchInput = document.createElement('input');
-    searchInput.type = 'text';
-    searchInput.placeholder = 'Search events...';
-    searchInput.className = 'block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white mb-2';
-    
-    // Create dropdown container
-    const dropdown = document.createElement('div');
-    dropdown.className = 'absolute z-50 w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto hidden';
-    
-    // Insert elements
-    select.parentNode.insertBefore(searchInput, select);
-    select.parentNode.insertBefore(dropdown, select);
-    select.style.display = 'none';
-    
-    // Populate dropdown with options
-    function populateDropdown(filter = '') {
-        dropdown.innerHTML = '';
-        const options = select.querySelectorAll('option');
+// Close drawer on escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const drawer = document.getElementById('filterDrawer');
+        const overlay = document.getElementById('filterOverlay');
         
-        options.forEach(option => {
-            if (option.value === '' || option.textContent.toLowerCase().includes(filter.toLowerCase())) {
-                const div = document.createElement('div');
-                div.className = 'px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-sm text-gray-900 dark:text-gray-100';
-                div.textContent = option.textContent;
-                div.dataset.value = option.value;
-                
-                div.addEventListener('click', function() {
-                    select.value = this.dataset.value;
-                    searchInput.value = this.textContent;
-                    dropdown.classList.add('hidden');
-                });
-                
-                dropdown.appendChild(div);
-            }
+        if (drawer && overlay && drawer.classList.contains('open')) {
+            drawer.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+    }
+});
+
+// Searchable Event Dropdown
+document.addEventListener('DOMContentLoaded', function() {
+    const eventSearch = document.getElementById('eventSearch');
+    const eventDropdown = document.getElementById('eventDropdown');
+    const exEventIdInput = document.getElementById('exEventId');
+    
+    if (!eventSearch || !eventDropdown || !exEventIdInput) return;
+    
+    function populateDropdown(searchTerm = '') {
+        eventDropdown.innerHTML = '';
+        
+        const filteredEvents = events.filter(event => {
+            const searchLower = searchTerm.toLowerCase();
+            return event.eventName.toLowerCase().includes(searchLower) || 
+                   event.eventId.toString().includes(searchTerm);
+        });
+        
+        if (filteredEvents.length === 0) {
+            eventDropdown.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No events found</div>';
+            return;
+        }
+        
+        filteredEvents.slice(0, 20).forEach(event => {
+            const div = document.createElement('div');
+            div.className = 'px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-sm text-gray-900 dark:text-gray-100';
+            div.innerHTML = `${event.eventName} <span class="text-gray-400 dark:text-gray-500">(${event.eventId})</span>`;
+            
+            div.addEventListener('click', function() {
+                exEventIdInput.value = event.exEventId;
+                eventSearch.value = event.eventName;
+                eventDropdown.classList.add('hidden');
+            });
+            
+            eventDropdown.appendChild(div);
         });
     }
     
-    // Show dropdown
-    searchInput.addEventListener('focus', function() {
-        dropdown.classList.remove('hidden');
+    eventSearch.addEventListener('focus', function() {
+        eventDropdown.classList.remove('hidden');
         populateDropdown();
     });
     
-    // Filter on input
-    searchInput.addEventListener('input', function() {
+    eventSearch.addEventListener('input', function() {
         populateDropdown(this.value);
     });
     
     // Hide dropdown when clicking outside
     document.addEventListener('click', function(e) {
-        if (!e.target.closest('.flex-1.relative')) {
-            dropdown.classList.add('hidden');
+        if (!eventSearch.contains(e.target) && !eventDropdown.contains(e.target)) {
+            eventDropdown.classList.add('hidden');
         }
     });
     
-    // Set initial value
-    if (select.value) {
-        const selectedOption = select.querySelector(`option[value="${select.value}"]`);
-        if (selectedOption) {
-            searchInput.value = selectedOption.textContent;
+    // Prevent form submission if no event is selected
+    eventSearch.closest('form').addEventListener('submit', function(e) {
+        if (!exEventIdInput.value) {
+            e.preventDefault();
+            eventSearch.classList.add('border-red-500');
+            setTimeout(() => {
+                eventSearch.classList.remove('border-red-500');
+            }, 2000);
         }
-    }
-}
-
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    initializeSearchableDropdown();
+    });
 });
 </script>
 @endpush

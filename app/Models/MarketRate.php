@@ -10,7 +10,7 @@ class MarketRate extends Model
 {
     use HasFactory;
 
-    public $timestamps = false;
+    public $timestamps = true;
     protected $table = 'market_rates'; // Default table, will be changed dynamically
 
     protected $fillable = [

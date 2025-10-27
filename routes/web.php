@@ -54,6 +54,7 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/{id}', [MarketRateController::class, 'show'])->name('show');
         Route::get('/search', [MarketRateController::class, 'search'])->name('search');
         Route::get('/count', [MarketRateController::class, 'getCount'])->name('count');
+        Route::get('/export/csv', [MarketRateController::class, 'export'])->name('export');
     });
 
     // System Logs
