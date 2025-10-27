@@ -19,12 +19,23 @@ class EventController extends Controller
                 ->pluck('sportId');
         });
 
+        // Get tournaments grouped by sport
         $tournaments = Cache::remember('events.tournaments', 300, function () {
             return DB::table('events')
-                ->select('tournamentsId', 'tournamentsName')
+                ->select('tournamentsId', 'tournamentsName', 'sportId')
                 ->distinct()
                 ->orderBy('tournamentsName')
                 ->get();
+        });
+
+        // Get all tournaments grouped by sport for JavaScript filtering
+        $tournamentsBySport = Cache::remember('events.tournaments_by_sport', 300, function () {
+            return DB::table('events')
+                ->select('tournamentsId', 'tournamentsName', 'sportId')
+                ->distinct()
+                ->orderBy('tournamentsName')
+                ->get()
+                ->groupBy('sportId');
         });
 
         // Build optimized raw query with specific column selection
@@ -79,7 +90,7 @@ class EventController extends Controller
         // Get sport configuration
         $sportConfig = config('sports.sports');
         
-        return view('events.index', compact('paginatedEvents', 'sports', 'tournaments', 'sportConfig'));
+        return view('events.index', compact('paginatedEvents', 'sports', 'tournaments', 'sportConfig', 'tournamentsBySport'));
     }
 
     /**
@@ -232,6 +243,7 @@ class EventController extends Controller
         // Clear cache
         Cache::forget('events.sports');
         Cache::forget('events.tournaments');
+        Cache::forget('events.tournaments_by_sport');
 
         return response()->json([
             'success' => true,

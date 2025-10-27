@@ -22,7 +22,7 @@ class MarketController extends Controller
 
         $tournaments = Cache::remember('markets.tournaments', 300, function () {
             return DB::table('market_lists')
-                ->select('tournamentsName')
+                ->select('tournamentsName', 'sportName')
                 ->distinct()
                 ->orderBy('tournamentsName')
                 ->get();
@@ -30,10 +30,30 @@ class MarketController extends Controller
 
         $marketTypes = Cache::remember('markets.types', 300, function () {
             return DB::table('market_lists')
-                ->select('type')
+                ->select('type', 'tournamentsName')
                 ->distinct()
                 ->orderBy('type')
-                ->pluck('type');
+                ->get();
+        });
+
+        // Get tournaments grouped by sport for JavaScript filtering
+        $tournamentsBySport = Cache::remember('markets.tournaments_by_sport', 300, function () {
+            return DB::table('market_lists')
+                ->select('tournamentsName', 'sportName')
+                ->distinct()
+                ->orderBy('tournamentsName')
+                ->get()
+                ->groupBy('sportName');
+        });
+
+        // Get market types grouped by tournament for JavaScript filtering
+        $marketTypesByTournament = Cache::remember('markets.types_by_tournament', 300, function () {
+            return DB::table('market_lists')
+                ->select('type', 'tournamentsName')
+                ->distinct()
+                ->orderBy('type')
+                ->get()
+                ->groupBy('tournamentsName');
         });
 
         // Build optimized raw query with specific column selection
@@ -93,7 +113,9 @@ class MarketController extends Controller
             'sports',
             'tournaments',
             'marketTypes',
-            'activeFilters'
+            'activeFilters',
+            'tournamentsBySport',
+            'marketTypesByTournament'
         ));
     }
 

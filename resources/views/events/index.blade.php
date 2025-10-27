@@ -385,8 +385,8 @@
             <!-- Sport -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sport</label>
-                <select name="sport" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    <option value="">All Sports</option>
+                <select name="sport" id="sportSelect" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <option value="">-- Select Sport --</option>
                     @foreach($sports as $sport)
                         <option value="{{ $sport }}" {{ request('sport') == $sport ? 'selected' : '' }}>
                             {{ $sportConfig[$sport] ?? 'Unknown Sport (ID: ' . $sport . ')' }}
@@ -398,12 +398,17 @@
             <!-- Tournament -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tournament</label>
-                <select name="tournament" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    <option value="">All Tournaments</option>
-                    @foreach($tournaments as $tournament)
-                        <option value="{{ $tournament->tournamentsId }}" {{ request('tournament') == $tournament->tournamentsId ? 'selected' : '' }}>{{ $tournament->tournamentsName }}</option>
-                    @endforeach
-                </select>
+                <div class="relative">
+                    <input type="text" id="tournamentSearch" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Click to see all tournaments or search..." autocomplete="off">
+                    <select name="tournament" id="tournamentSelect" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 absolute inset-0 opacity-0 pointer-events-none">
+                        <option value="">-- Select Tournament --</option>
+                        @foreach($tournaments as $tournament)
+                            <option value="{{ $tournament->tournamentsId }}" data-sport="{{ $tournament->sportId }}" data-name="{{ $tournament->tournamentsName }}" {{ request('tournament') == $tournament->tournamentsId ? 'selected' : '' }}>{{ $tournament->tournamentsName }}</option>
+                        @endforeach
+                    </select>
+                    <div id="tournamentDropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-y-auto hidden tournament-dropdown-scrollable">
+                    </div>
+                </div>
             </div>
             
             <!-- Status -->
@@ -461,6 +466,9 @@
 
 @push('scripts')
 <script>
+// Pass tournaments data to JavaScript
+const tournamentsBySport = @json($tournamentsBySport);
+
 function toggleFilterDrawer() {
     const drawer = document.getElementById('filterDrawer');
     const overlay = document.getElementById('filterOverlay');
@@ -488,5 +496,201 @@ document.addEventListener('keydown', function(event) {
         }
     }
 });
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    const sportSelect = document.getElementById('sportSelect');
+    const tournamentSelect = document.getElementById('tournamentSelect');
+    const tournamentSearch = document.getElementById('tournamentSearch');
+    const tournamentDropdown = document.getElementById('tournamentDropdown');
+    
+    let isFirstLoad = true;
+    
+    // Initialize tournament input display
+    function updateTournamentInputDisplay() {
+        const selectedOption = tournamentSelect.options[tournamentSelect.selectedIndex];
+        if (selectedOption && selectedOption.value !== '') {
+            tournamentSearch.value = selectedOption.getAttribute('data-name');
+            tournamentSearch.classList.add('text-gray-900', 'dark:text-gray-100');
+            tournamentSearch.classList.remove('text-gray-400', 'dark:text-gray-500');
+        } else {
+            tournamentSearch.value = '';
+        }
+    }
+    
+    updateTournamentInputDisplay();
+    
+    // Filter tournaments based on selected sport
+    function filterTournamentsBySport(sportId, preserveSelection = false) {
+        const allTournaments = Array.from(tournamentSelect.options);
+        
+        // Show all tournaments if no sport is selected
+        if (!sportId) {
+            allTournaments.forEach(option => {
+                option.style.display = '';
+            });
+            if (!preserveSelection && !isFirstLoad) {
+                tournamentSelect.value = '';
+                updateTournamentInputDisplay();
+            }
+            return;
+        }
+        
+        // Filter tournaments by sport
+        allTournaments.forEach(option => {
+            const dataSport = option.getAttribute('data-sport');
+            if (dataSport === sportId || option.value === '') {
+                option.style.display = '';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+        
+        // Clear tournament selection when sport changes
+        if (!preserveSelection && !isFirstLoad) {
+            const selectedTournament = tournamentSelect.options[tournamentSelect.selectedIndex];
+            const selectedTournamentSport = selectedTournament ? selectedTournament.getAttribute('data-sport') : null;
+            
+            if (!selectedTournamentSport || selectedTournamentSport !== sportId) {
+                tournamentSelect.value = '';
+                updateTournamentInputDisplay();
+            }
+        }
+    }
+    
+    // Handle sport selection change
+    sportSelect.addEventListener('change', function() {
+        const selectedSport = this.value;
+        isFirstLoad = false;
+        filterTournamentsBySport(selectedSport, false);
+        // Clear and refocus tournament search
+        tournamentSearch.value = '';
+        tournamentDropdown.classList.add('hidden');
+    });
+    
+    // Search and dropdown functionality
+    tournamentSearch.addEventListener('focus', function() {
+        showTournamentDropdown();
+    });
+    
+    tournamentSearch.addEventListener('input', function() {
+        showTournamentDropdown();
+    });
+    
+    function showTournamentDropdown() {
+        const searchTerm = tournamentSearch.value.trim().toLowerCase();
+        const selectedSport = sportSelect.value;
+        
+        let filteredOptions = Array.from(tournamentSelect.options).filter(option => {
+            // First, filter by sport if a sport is selected
+            if (selectedSport) {
+                const optionSport = option.getAttribute('data-sport');
+                if (optionSport !== selectedSport && option.value !== '') {
+                    return false;
+                }
+            }
+            
+            // Only filter by search term if user has typed something
+            if (searchTerm) {
+                const optionName = option.text.toLowerCase();
+                if (!optionName.includes(searchTerm)) {
+                    return false;
+                }
+            }
+            
+            return option.value === '' || option.style.display !== 'none';
+        });
+        
+        // If no tournaments found, show a message
+        if (filteredOptions.length === 0) {
+            tournamentDropdown.innerHTML = `
+                <div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                    No tournaments found
+                </div>
+            `;
+            tournamentDropdown.classList.remove('hidden');
+            return;
+        }
+        
+        // Build dropdown HTML
+        let dropdownHTML = '';
+        filteredOptions.forEach(option => {
+            const optionValue = option.value;
+            const optionName = option.text;
+            const isSelected = tournamentSelect.value === optionValue;
+            dropdownHTML += `
+                <div class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer ${isSelected ? 'bg-blue-100 dark:bg-blue-900/20 font-medium' : ''}" data-value="${optionValue}" data-name="${optionName}">
+                    ${optionName}
+                </div>
+            `;
+        });
+        
+        tournamentDropdown.innerHTML = dropdownHTML;
+        tournamentDropdown.classList.remove('hidden');
+        
+        // Add click handlers to dropdown items
+        tournamentDropdown.querySelectorAll('div[data-value]').forEach(item => {
+            item.addEventListener('click', function() {
+                const value = this.getAttribute('data-value');
+                const name = this.getAttribute('data-name');
+                
+                tournamentSelect.value = value;
+                tournamentSearch.value = name;
+                tournamentDropdown.classList.add('hidden');
+            });
+        });
+    }
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!tournamentSearch.contains(event.target) && !tournamentDropdown.contains(event.target)) {
+            tournamentDropdown.classList.add('hidden');
+        }
+    });
+    
+    // Apply initial filter if a sport is selected
+    const initialSport = sportSelect.value;
+    if (initialSport) {
+        filterTournamentsBySport(initialSport, true);
+    }
+});
 </script>
+
+<style>
+/* Custom tournament dropdown styles */
+.tournament-dropdown-scrollable {
+    scrollbar-width: auto;
+    scrollbar-color: #888 #f1f1f1;
+}
+
+.tournament-dropdown-scrollable::-webkit-scrollbar {
+    width: 10px;
+}
+
+.tournament-dropdown-scrollable::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.dark .tournament-dropdown-scrollable::-webkit-scrollbar-track {
+    background: #374151;
+}
+
+.tournament-dropdown-scrollable::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.tournament-dropdown-scrollable::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.dark .tournament-dropdown-scrollable::-webkit-scrollbar-thumb {
+    background: #6b7280;
+}
+
+.dark .tournament-dropdown-scrollable::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+</style>
 @endpush

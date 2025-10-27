@@ -53,7 +53,7 @@
             </div>
             <div class="p-6">
                 <form method="GET" action="{{ route('market-rates.index') }}" class="flex gap-4 items-end">
-                    <div class="flex-1">
+                    <div class="flex-1 relative">
                         <label for="exEventId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Event
                         </label>
@@ -306,67 +306,87 @@
     </div>
 </div>
 
-@push('css')
-<!-- Select2 CSS -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<style>
-    .select2-container--default .select2-selection--single {
-        height: 42px !important;
-        border: 1px solid #d1d5db !important;
-        border-radius: 0.375rem !important;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: 40px !important;
-        padding-left: 12px !important;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 40px !important;
-    }
-    .dark .select2-container--default .select2-selection--single {
-        background-color: #374151 !important;
-        border-color: #4b5563 !important;
-    }
-    .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
-        color: #f9fafb !important;
-    }
-    .select2-dropdown {
-        border: 1px solid #d1d5db !important;
-        border-radius: 0.375rem !important;
-    }
-    .dark .select2-dropdown {
-        background-color: #374151 !important;
-        border-color: #4b5563 !important;
-    }
-    .select2-results__option {
-        padding: 8px 12px !important;
-    }
-    .dark .select2-results__option {
-        background-color: #374151 !important;
-        color: #f9fafb !important;
-    }
-    .dark .select2-results__option--highlighted {
-        background-color: #4b5563 !important;
-    }
-</style>
-@endpush
 
 @push('js')
-<!-- Select2 JS -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 function toggleFilterDrawer() {
     const drawer = document.getElementById('filterDrawer');
     drawer.classList.toggle('hidden');
 }
 
-// Initialize Select2 for event dropdown
-document.addEventListener('DOMContentLoaded', function() {
-    $('#exEventId').select2({
-        placeholder: 'Search and select an event...',
-        allowClear: true,
-        width: '100%',
-        dropdownParent: $('#exEventId').parent()
+// Simple searchable dropdown implementation
+function initializeSearchableDropdown() {
+    const select = document.getElementById('exEventId');
+    if (!select) return;
+    
+    // Create search input
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = 'Search events...';
+    searchInput.className = 'block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white mb-2';
+    
+    // Create dropdown container
+    const dropdown = document.createElement('div');
+    dropdown.className = 'absolute z-50 w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto hidden';
+    
+    // Insert elements
+    select.parentNode.insertBefore(searchInput, select);
+    select.parentNode.insertBefore(dropdown, select);
+    select.style.display = 'none';
+    
+    // Populate dropdown with options
+    function populateDropdown(filter = '') {
+        dropdown.innerHTML = '';
+        const options = select.querySelectorAll('option');
+        
+        options.forEach(option => {
+            if (option.value === '' || option.textContent.toLowerCase().includes(filter.toLowerCase())) {
+                const div = document.createElement('div');
+                div.className = 'px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-sm text-gray-900 dark:text-gray-100';
+                div.textContent = option.textContent;
+                div.dataset.value = option.value;
+                
+                div.addEventListener('click', function() {
+                    select.value = this.dataset.value;
+                    searchInput.value = this.textContent;
+                    dropdown.classList.add('hidden');
+                });
+                
+                dropdown.appendChild(div);
+            }
+        });
+    }
+    
+    // Show dropdown
+    searchInput.addEventListener('focus', function() {
+        dropdown.classList.remove('hidden');
+        populateDropdown();
     });
+    
+    // Filter on input
+    searchInput.addEventListener('input', function() {
+        populateDropdown(this.value);
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.flex-1.relative')) {
+            dropdown.classList.add('hidden');
+        }
+    });
+    
+    // Set initial value
+    if (select.value) {
+        const selectedOption = select.querySelector(`option[value="${select.value}"]`);
+        if (selectedOption) {
+            searchInput.value = selectedOption.textContent;
+        }
+    }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSearchableDropdown();
 });
 </script>
 @endpush

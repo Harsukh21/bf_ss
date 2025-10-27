@@ -318,8 +318,8 @@
             <!-- Sport -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sport</label>
-                <select name="sport" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    <option value="">All Sports</option>
+                <select name="sport" id="sportSelect" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <option value="">-- Select Sport --</option>
                     @foreach($sports as $sport)
                         <option value="{{ $sport }}" {{ request('sport') == $sport ? 'selected' : '' }}>
                             {{ $sport }}
@@ -331,23 +331,33 @@
             <!-- Tournament -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tournament</label>
-                <select name="tournament" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    <option value="">All Tournaments</option>
-                    @foreach($tournaments as $tournament)
-                        <option value="{{ $tournament->tournamentsName }}" {{ request('tournament') == $tournament->tournamentsName ? 'selected' : '' }}>{{ $tournament->tournamentsName }}</option>
-                    @endforeach
-                </select>
+                <div class="relative">
+                    <input type="text" id="tournamentSearch" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Click to see all tournaments or search..." autocomplete="off">
+                    <select name="tournament" id="tournamentSelect" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 absolute inset-0 opacity-0 pointer-events-none">
+                        <option value="">-- Select Tournament --</option>
+                        @foreach($tournaments as $tournament)
+                            <option value="{{ $tournament->tournamentsName }}" data-sport="{{ $tournament->sportName }}" {{ request('tournament') == $tournament->tournamentsName ? 'selected' : '' }}>{{ $tournament->tournamentsName }}</option>
+                        @endforeach
+                    </select>
+                    <div id="tournamentDropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-y-auto hidden tournament-dropdown-scrollable">
+                    </div>
+                </div>
             </div>
             
             <!-- Market Type -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Market Type</label>
-                <select name="type" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    <option value="">All Types</option>
-                    @foreach($marketTypes as $type)
-                        <option value="{{ $type }}" {{ request('type') == $type ? 'selected' : '' }}>{{ $type }}</option>
-                    @endforeach
-                </select>
+                <div class="relative">
+                    <input type="text" id="marketTypeSearch" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Click to see all types or search..." autocomplete="off">
+                    <select name="type" id="marketTypeSelect" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 absolute inset-0 opacity-0 pointer-events-none">
+                        <option value="">-- Select Type --</option>
+                        @foreach($marketTypes as $type)
+                            <option value="{{ $type->type }}" data-tournament="{{ $type->tournamentsName }}" {{ request('type') == $type->type ? 'selected' : '' }}>{{ $type->type }}</option>
+                        @endforeach
+                    </select>
+                    <div id="marketTypeDropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-y-auto hidden tournament-dropdown-scrollable">
+                    </div>
+                </div>
             </div>
             
             <!-- Status -->
@@ -400,70 +410,411 @@
 
 @push('scripts')
 <script>
-    function toggleFilter() {
+// Pass data to JavaScript
+const tournamentsBySport = @json($tournamentsBySport);
+const marketTypesByTournament = @json($marketTypesByTournament);
+
+function toggleFilter() {
+    const drawer = document.getElementById('filterDrawer');
+    const overlay = document.getElementById('filterOverlay');
+    
+    drawer.classList.toggle('open');
+    overlay.classList.toggle('active');
+    
+    // Prevent body scroll when drawer is open
+    if (drawer.classList.contains('open')) {
+        document.body.style.overflow = 'hidden';
+    } else {
+        document.body.style.overflow = '';
+    }
+}
+
+function clearAllFilters() {
+    // Redirect to markets index without any query parameters
+    window.location.href = '{{ route("markets.index") }}';
+}
+
+function removeFilter(filterKey) {
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
+    
+    // Remove the specific filter parameter
+    switch(filterKey) {
+        case 'Sport':
+            params.delete('sport');
+            break;
+        case 'Tournament':
+            params.delete('tournament');
+            break;
+        case 'Type':
+            params.delete('type');
+            break;
+        case 'Live':
+            params.delete('is_live');
+            break;
+        case 'Pre-bet':
+            params.delete('is_prebet');
+            break;
+        case 'From Date':
+            params.delete('date_from');
+            break;
+        case 'To Date':
+            params.delete('date_to');
+            break;
+        case 'Search':
+            params.delete('search');
+            break;
+    }
+    
+    // Redirect with updated parameters
+    window.location.href = url.pathname + (params.toString() ? '?' + params.toString() : '');
+}
+
+// Close drawer on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
         const drawer = document.getElementById('filterDrawer');
-        const overlay = document.getElementById('filterOverlay');
-        
-        drawer.classList.toggle('open');
-        overlay.classList.toggle('active');
-        
-        // Prevent body scroll when drawer is open
         if (drawer.classList.contains('open')) {
-            document.body.style.overflow = 'hidden';
+            toggleFilter();
+        }
+    }
+});
+
+// Initialize dependent dropdowns
+document.addEventListener('DOMContentLoaded', function() {
+    const sportSelect = document.getElementById('sportSelect');
+    const tournamentSelect = document.getElementById('tournamentSelect');
+    const tournamentSearch = document.getElementById('tournamentSearch');
+    const tournamentDropdown = document.getElementById('tournamentDropdown');
+    const marketTypeSelect = document.getElementById('marketTypeSelect');
+    const marketTypeSearch = document.getElementById('marketTypeSearch');
+    const marketTypeDropdown = document.getElementById('marketTypeDropdown');
+    
+    let isFirstLoad = true;
+    
+    // Update tournament input display
+    function updateTournamentInputDisplay() {
+        const selectedOption = tournamentSelect.options[tournamentSelect.selectedIndex];
+        if (selectedOption && selectedOption.value !== '') {
+            tournamentSearch.value = selectedOption.text;
+            tournamentSearch.classList.add('text-gray-900', 'dark:text-gray-100');
+            tournamentSearch.classList.remove('text-gray-400', 'dark:text-gray-500');
         } else {
-            document.body.style.overflow = '';
+            tournamentSearch.value = '';
         }
     }
-
-    function clearAllFilters() {
-        // Redirect to markets index without any query parameters
-        window.location.href = '{{ route("markets.index") }}';
+    
+    updateTournamentInputDisplay();
+    
+    // Update market type input display
+    function updateMarketTypeInputDisplay() {
+        const selectedOption = marketTypeSelect.options[marketTypeSelect.selectedIndex];
+        if (selectedOption && selectedOption.value !== '') {
+            marketTypeSearch.value = selectedOption.text;
+            marketTypeSearch.classList.add('text-gray-900', 'dark:text-gray-100');
+            marketTypeSearch.classList.remove('text-gray-400', 'dark:text-gray-500');
+        } else {
+            marketTypeSearch.value = '';
+        }
     }
-
-    function removeFilter(filterKey) {
-        const url = new URL(window.location.href);
-        const params = new URLSearchParams(url.search);
+    
+    updateMarketTypeInputDisplay();
+    
+    // Filter tournaments based on selected sport
+    function filterTournamentsBySport(sportName, preserveSelection = false) {
+        const allTournaments = Array.from(tournamentSelect.options);
         
-        // Remove the specific filter parameter
-        switch(filterKey) {
-            case 'Sport':
-                params.delete('sport');
-                break;
-            case 'Tournament':
-                params.delete('tournament');
-                break;
-            case 'Type':
-                params.delete('type');
-                break;
-            case 'Live':
-                params.delete('is_live');
-                break;
-            case 'Pre-bet':
-                params.delete('is_prebet');
-                break;
-            case 'From Date':
-                params.delete('date_from');
-                break;
-            case 'To Date':
-                params.delete('date_to');
-                break;
-            case 'Search':
-                params.delete('search');
-                break;
+        if (!sportName) {
+            allTournaments.forEach(option => {
+                option.style.display = '';
+            });
+            if (!preserveSelection && !isFirstLoad) {
+                tournamentSelect.value = '';
+                updateTournamentInputDisplay();
+            }
+            // Also clear market type when sport is cleared
+            marketTypeSelect.value = '';
+            updateMarketTypeInputDisplay();
+            marketTypeSearch.value = '';
+            marketTypeDropdown.classList.add('hidden');
+            return;
         }
         
-        // Redirect with updated parameters
-        window.location.href = url.pathname + (params.toString() ? '?' + params.toString() : '');
-    }
-
-    // Close drawer on escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            const drawer = document.getElementById('filterDrawer');
-            if (drawer.classList.contains('open')) {
-                toggleFilter();
+        allTournaments.forEach(option => {
+            const optionSport = option.getAttribute('data-sport');
+            if (optionSport === sportName || option.value === '') {
+                option.style.display = '';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+        
+        if (!preserveSelection && !isFirstLoad) {
+            const selectedTournament = tournamentSelect.options[tournamentSelect.selectedIndex];
+            const selectedTournamentSport = selectedTournament ? selectedTournament.getAttribute('data-sport') : null;
+            
+            if (!selectedTournamentSport || selectedTournamentSport !== sportName) {
+                tournamentSelect.value = '';
+                updateTournamentInputDisplay();
+                // Also clear market type when tournament is cleared
+                marketTypeSelect.value = '';
+                updateMarketTypeInputDisplay();
+                marketTypeSearch.value = '';
+                marketTypeDropdown.classList.add('hidden');
             }
         }
+    }
+    
+    // Filter market types based on selected tournament
+    function filterMarketTypesByTournament(tournamentName, preserveSelection = false) {
+        const allMarketTypes = Array.from(marketTypeSelect.options);
+        
+        if (!tournamentName) {
+            allMarketTypes.forEach(option => {
+                option.style.display = '';
+            });
+            if (!preserveSelection && !isFirstLoad) {
+                marketTypeSelect.value = '';
+                updateMarketTypeInputDisplay();
+            }
+            return;
+        }
+        
+        allMarketTypes.forEach(option => {
+            const optionTournament = option.getAttribute('data-tournament');
+            if (optionTournament === tournamentName || option.value === '') {
+                option.style.display = '';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+        
+        if (!preserveSelection && !isFirstLoad) {
+            const selectedType = marketTypeSelect.options[marketTypeSelect.selectedIndex];
+            const selectedTypeTournament = selectedType ? selectedType.getAttribute('data-tournament') : null;
+            
+            if (!selectedTypeTournament || selectedTypeTournament !== tournamentName) {
+                marketTypeSelect.value = '';
+                updateMarketTypeInputDisplay();
+            }
+        }
+    }
+    
+    // Tournament dropdown functionality
+    function showTournamentDropdown() {
+        const searchTerm = tournamentSearch.value.trim().toLowerCase();
+        const selectedSport = sportSelect.value;
+        
+        let filteredOptions = Array.from(tournamentSelect.options).filter(option => {
+            if (selectedSport) {
+                const optionSport = option.getAttribute('data-sport');
+                if (optionSport !== selectedSport && option.value !== '') {
+                    return false;
+                }
+            }
+            
+            if (searchTerm) {
+                const optionName = option.text.toLowerCase();
+                if (!optionName.includes(searchTerm)) {
+                    return false;
+                }
+            }
+            
+            return option.value === '' || option.style.display !== 'none';
+        });
+        
+        if (filteredOptions.length === 0) {
+            tournamentDropdown.innerHTML = `
+                <div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                    No tournaments found
+                </div>
+            `;
+            tournamentDropdown.classList.remove('hidden');
+            return;
+        }
+        
+        let dropdownHTML = '';
+        filteredOptions.forEach(option => {
+            const optionValue = option.value;
+            const optionName = option.text;
+            const isSelected = tournamentSelect.value === optionValue;
+            dropdownHTML += `
+                <div class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer ${isSelected ? 'bg-blue-100 dark:bg-blue-900/20 font-medium' : ''}" data-value="${optionValue}" data-name="${optionName}">
+                    ${optionName}
+                </div>
+            `;
+        });
+        
+        tournamentDropdown.innerHTML = dropdownHTML;
+        tournamentDropdown.classList.remove('hidden');
+        
+        tournamentDropdown.querySelectorAll('div[data-value]').forEach(item => {
+            item.addEventListener('click', function() {
+                const value = this.getAttribute('data-value');
+                const name = this.getAttribute('data-name');
+                
+                tournamentSelect.value = value;
+                tournamentSearch.value = name;
+                tournamentDropdown.classList.add('hidden');
+                
+                // Filter market types based on selected tournament
+                isFirstLoad = true;
+                filterMarketTypesByTournament(value, false);
+                isFirstLoad = false;
+                
+                // Clear market type selection if it doesn't belong to this tournament
+                marketTypeSelect.value = '';
+                updateMarketTypeInputDisplay();
+                marketTypeSearch.value = '';
+                marketTypeDropdown.classList.add('hidden');
+            });
+        });
+    }
+    
+    // Market Type dropdown functionality
+    function showMarketTypeDropdown() {
+        const searchTerm = marketTypeSearch.value.trim().toLowerCase();
+        const selectedTournament = tournamentSelect.value;
+        
+        let filteredOptions = Array.from(marketTypeSelect.options).filter(option => {
+            if (selectedTournament) {
+                const optionTournament = option.getAttribute('data-tournament');
+                if (optionTournament !== selectedTournament && option.value !== '') {
+                    return false;
+                }
+            }
+            
+            if (searchTerm) {
+                const optionName = option.text.toLowerCase();
+                if (!optionName.includes(searchTerm)) {
+                    return false;
+                }
+            }
+            
+            return option.value === '' || option.style.display !== 'none';
+        });
+        
+        if (filteredOptions.length === 0) {
+            marketTypeDropdown.innerHTML = `
+                <div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                    No market types found
+                </div>
+            `;
+            marketTypeDropdown.classList.remove('hidden');
+            return;
+        }
+        
+        let dropdownHTML = '';
+        filteredOptions.forEach(option => {
+            const optionValue = option.value;
+            const optionName = option.text;
+            const isSelected = marketTypeSelect.value === optionValue;
+            dropdownHTML += `
+                <div class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer ${isSelected ? 'bg-blue-100 dark:bg-blue-900/20 font-medium' : ''}" data-value="${optionValue}" data-name="${optionName}">
+                    ${optionName}
+                </div>
+            `;
+        });
+        
+        marketTypeDropdown.innerHTML = dropdownHTML;
+        marketTypeDropdown.classList.remove('hidden');
+        
+        marketTypeDropdown.querySelectorAll('div[data-value]').forEach(item => {
+            item.addEventListener('click', function() {
+                const value = this.getAttribute('data-value');
+                const name = this.getAttribute('data-name');
+                
+                marketTypeSelect.value = value;
+                marketTypeSearch.value = name;
+                marketTypeDropdown.classList.add('hidden');
+            });
+        });
+    }
+    
+    // Event listeners
+    sportSelect.addEventListener('change', function() {
+        const selectedSport = this.value;
+        isFirstLoad = false;
+        filterTournamentsBySport(selectedSport, false);
+        tournamentSearch.value = '';
+        tournamentDropdown.classList.add('hidden');
     });
+    
+    tournamentSearch.addEventListener('focus', function() {
+        showTournamentDropdown();
+    });
+    
+    tournamentSearch.addEventListener('input', function() {
+        showTournamentDropdown();
+    });
+    
+    marketTypeSearch.addEventListener('focus', function() {
+        showMarketTypeDropdown();
+    });
+    
+    marketTypeSearch.addEventListener('input', function() {
+        showMarketTypeDropdown();
+    });
+    
+    // Hide dropdowns when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!tournamentSearch.contains(event.target) && !tournamentDropdown.contains(event.target)) {
+            tournamentDropdown.classList.add('hidden');
+        }
+        if (!marketTypeSearch.contains(event.target) && !marketTypeDropdown.contains(event.target)) {
+            marketTypeDropdown.classList.add('hidden');
+        }
+    });
+    
+    // Apply initial filters
+    const initialSport = sportSelect.value;
+    const initialTournament = tournamentSelect.value;
+    
+    if (initialSport) {
+        filterTournamentsBySport(initialSport, true);
+    }
+    
+    if (initialTournament) {
+        filterMarketTypesByTournament(initialTournament, true);
+    }
+});
 </script>
+
+<style>
+/* Custom tournament and market type dropdown styles */
+.tournament-dropdown-scrollable {
+    scrollbar-width: auto;
+    scrollbar-color: #888 #f1f1f1;
+}
+
+.tournament-dropdown-scrollable::-webkit-scrollbar {
+    width: 10px;
+}
+
+.tournament-dropdown-scrollable::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.dark .tournament-dropdown-scrollable::-webkit-scrollbar-track {
+    background: #374151;
+}
+
+.tournament-dropdown-scrollable::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.tournament-dropdown-scrollable::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.dark .tournament-dropdown-scrollable::-webkit-scrollbar-thumb {
+    background: #6b7280;
+}
+
+.dark .tournament-dropdown-scrollable::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+</style>
 @endpush
