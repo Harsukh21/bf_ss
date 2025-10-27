@@ -9,6 +9,7 @@ use App\Http\Controllers\SystemLogController;
 use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\GeneralSettingsController;
 
 // Welcome page
 Route::get('/', function () {
@@ -72,6 +73,14 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/', [PerformanceController::class, 'index'])->name('index');
         Route::post('/refresh', [PerformanceController::class, 'refresh'])->name('refresh');
         Route::get('/live-data', [PerformanceController::class, 'getLiveData'])->name('live-data');
+    });
+
+    // General Settings
+    Route::prefix('general-settings')->name('general-settings.')->group(function () {
+        Route::get('/', [GeneralSettingsController::class, 'index'])->name('index');
+        Route::post('/clear-cache', [GeneralSettingsController::class, 'clearCache'])->name('clear-cache');
+        Route::post('/optimize', [GeneralSettingsController::class, 'optimize'])->name('optimize');
+        Route::get('/info', [GeneralSettingsController::class, 'getInfo'])->name('info');
     });
     
     // Profile & Settings
