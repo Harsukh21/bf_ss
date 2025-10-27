@@ -118,10 +118,65 @@
             </div>
         </div>
 
+        <!-- Real-time Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <!-- Load Average 1min -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">Load (1 min)</p>
+                        <p class="text-2xl font-bold text-blue-600 dark:text-blue-400" id="load-1min">0.00</p>
+                    </div>
+                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Load Average 5min -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">Load (5 min)</p>
+                        <p class="text-2xl font-bold text-purple-600 dark:text-purple-400" id="load-5min">0.00</p>
+                    </div>
+                    <svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- System Memory -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">System Memory</p>
+                        <p class="text-2xl font-bold text-green-600 dark:text-green-400" id="system-memory-usage">0%</p>
+                    </div>
+                    <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Disk Usage -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">Disk Usage</p>
+                        <p class="text-2xl font-bold text-yellow-600 dark:text-yellow-400" id="disk-usage">0%</p>
+                    </div>
+                    <svg class="w-8 h-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
         <!-- Real-time Charts -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             <!-- CPU Usage Chart -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
+            <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow-md">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex items-center justify-between">
                         <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">
@@ -139,8 +194,68 @@
                 </div>
             </div>
 
+            <!-- Live Stats Sidebar -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Live Stats</h3>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600 dark:text-gray-400">CPU Usage</span>
+                            <span class="font-medium text-gray-900 dark:text-gray-100" id="live-cpu">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full transition-all" id="cpu-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600 dark:text-gray-400">Memory</span>
+                            <span class="font-medium text-gray-900 dark:text-gray-100" id="live-memory">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="bg-green-600 h-2 rounded-full transition-all" id="memory-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600 dark:text-gray-400">System Memory</span>
+                            <span class="font-medium text-gray-900 dark:text-gray-100" id="live-system-memory">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="bg-purple-600 h-2 rounded-full transition-all" id="system-memory-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600 dark:text-gray-400">Disk</span>
+                            <span class="font-medium text-gray-900 dark:text-gray-100" id="live-disk">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="bg-yellow-600 h-2 rounded-full transition-all" id="disk-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">Database</div>
+                        <div class="text-sm text-gray-700 dark:text-gray-300">
+                            <div class="flex justify-between mb-1">
+                                <span>Connections:</span>
+                                <span class="font-medium" id="live-db-connections">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Active Queries:</span>
+                                <span class="font-medium" id="live-db-queries">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Memory Usage Chart -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
+            <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow-md">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex items-center justify-between">
                         <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">
@@ -628,21 +743,56 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 // Update overview cards
-                document.getElementById('load-average').textContent = 
-                    Array.isArray(data.cpu.load_average) ? 
-                    data.cpu.load_average.map(load => load.toFixed(2)).join(', ') : 
-                    'N/A';
+                if (document.getElementById('load-average')) {
+                    document.getElementById('load-average').textContent = 
+                        Array.isArray(data.cpu.load_average) ? 
+                        data.cpu.load_average.map(load => load.toFixed(2)).join(', ') : 
+                        'N/A';
+                }
                 
-                document.getElementById('cpu-count').textContent = data.cpu.cpu_count;
-                document.getElementById('memory-usage').textContent = data.memory.usage_percentage + '%';
+                if (document.getElementById('load-1min')) {
+                    document.getElementById('load-1min').textContent = data.cpu.load_1min.toFixed(2);
+                }
+                
+                if (document.getElementById('load-5min')) {
+                    document.getElementById('load-5min').textContent = data.cpu.load_5min.toFixed(2);
+                }
+                
+                if (document.getElementById('cpu-count')) {
+                    document.getElementById('cpu-count').textContent = data.cpu.cpu_count;
+                }
+                
+                if (document.getElementById('memory-usage')) {
+                    document.getElementById('memory-usage').textContent = data.memory.usage_percentage.toFixed(1) + '%';
+                }
+                
+                // Update new metrics
+                if (document.getElementById('system-memory-usage')) {
+                    document.getElementById('system-memory-usage').textContent = data.memory.system_usage_percentage.toFixed(1) + '%';
+                }
+                
+                if (document.getElementById('disk-usage')) {
+                    document.getElementById('disk-usage').textContent = data.disk.usage_percentage.toFixed(1) + '%';
+                }
                 
                 // Update timestamps
-                document.getElementById('cpu-timestamp').textContent = data.timestamp;
-                document.getElementById('memory-timestamp').textContent = data.timestamp;
+                if (document.getElementById('cpu-timestamp')) {
+                    document.getElementById('cpu-timestamp').textContent = data.timestamp;
+                }
+                if (document.getElementById('memory-timestamp')) {
+                    document.getElementById('memory-timestamp').textContent = data.timestamp;
+                }
 
                 // Update current usage percentages in chart headers
-                document.getElementById('cpu-current-usage').textContent = data.cpu.usage_percentage.toFixed(1) + '%';
-                document.getElementById('memory-current-usage').textContent = data.memory.usage_percentage.toFixed(1) + '%';
+                if (document.getElementById('cpu-current-usage')) {
+                    document.getElementById('cpu-current-usage').textContent = data.cpu.usage_percentage.toFixed(1) + '%';
+                }
+                if (document.getElementById('memory-current-usage')) {
+                    document.getElementById('memory-current-usage').textContent = data.memory.usage_percentage.toFixed(1) + '%';
+                }
+
+                // Update live stats bars
+                updateLiveStats(data);
 
                 // Use CPU usage percentage from backend
                 let cpuUsage = data.cpu.usage_percentage || 0;
@@ -651,8 +801,57 @@ document.addEventListener('DOMContentLoaded', function() {
                 addDataPoint(cpuUsage, data.memory.usage_percentage, data.timestamp);
             })
             .catch(error => {
-                console.error('Error fetching live data:', error);
+                // Silently handle errors to avoid console spam
             });
+    }
+    
+    // Function to update live stats bars
+    function updateLiveStats(data) {
+        // CPU Usage Bar
+        const cpuBar = document.getElementById('cpu-bar');
+        const liveCpu = document.getElementById('live-cpu');
+        if (cpuBar && liveCpu) {
+            const cpuUsage = data.cpu.usage_percentage || 0;
+            cpuBar.style.width = cpuUsage + '%';
+            liveCpu.textContent = cpuUsage.toFixed(1) + '%';
+        }
+        
+        // Memory Bar
+        const memoryBar = document.getElementById('memory-bar');
+        const liveMemory = document.getElementById('live-memory');
+        if (memoryBar && liveMemory) {
+            const memUsage = data.memory.usage_percentage || 0;
+            memoryBar.style.width = memUsage + '%';
+            liveMemory.textContent = memUsage.toFixed(1) + '%';
+        }
+        
+        // System Memory Bar
+        const systemMemoryBar = document.getElementById('system-memory-bar');
+        const liveSystemMemory = document.getElementById('live-system-memory');
+        if (systemMemoryBar && liveSystemMemory) {
+            const sysMemUsage = data.memory.system_usage_percentage || 0;
+            systemMemoryBar.style.width = sysMemUsage + '%';
+            liveSystemMemory.textContent = sysMemUsage.toFixed(1) + '%';
+        }
+        
+        // Disk Bar
+        const diskBar = document.getElementById('disk-bar');
+        const liveDisk = document.getElementById('live-disk');
+        if (diskBar && liveDisk) {
+            const diskUsage = data.disk.usage_percentage || 0;
+            diskBar.style.width = diskUsage + '%';
+            liveDisk.textContent = diskUsage.toFixed(1) + '%';
+        }
+        
+        // Database info
+        const dbConnections = document.getElementById('live-db-connections');
+        const dbQueries = document.getElementById('live-db-queries');
+        if (dbConnections) {
+            dbConnections.textContent = data.database.connections;
+        }
+        if (dbQueries) {
+            dbQueries.textContent = data.database.running_queries;
+        }
     }
 
     // Initial data fetch

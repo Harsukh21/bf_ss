@@ -37,6 +37,8 @@ class PerformanceController extends Controller
     {
         $systemInfo = $this->getSystemInfo();
         $memoryInfo = $this->getMemoryInfo();
+        $diskInfo = $this->getDiskInfo();
+        $databaseInfo = $this->getDatabaseInfo();
         
         // Calculate CPU usage percentage from load average
         $cpuUsage = 0;
@@ -50,7 +52,10 @@ class PerformanceController extends Controller
             'cpu' => [
                 'load_average' => $systemInfo['load_average'],
                 'cpu_count' => $systemInfo['cpu_count'],
-                'usage_percentage' => round($cpuUsage, 2)
+                'usage_percentage' => round($cpuUsage, 2),
+                'load_1min' => is_array($systemInfo['load_average']) ? round($systemInfo['load_average'][0], 2) : 0,
+                'load_5min' => is_array($systemInfo['load_average']) ? round($systemInfo['load_average'][1], 2) : 0,
+                'load_15min' => is_array($systemInfo['load_average']) ? round($systemInfo['load_average'][2], 2) : 0,
             ],
             'memory' => [
                 'current_usage' => $memoryInfo['current_usage'],
@@ -59,10 +64,37 @@ class PerformanceController extends Controller
                 'system_total' => $memoryInfo['system_memory']['total'] ?? 'N/A',
                 'system_used' => $memoryInfo['system_memory']['used'] ?? 'N/A',
                 'system_available' => $memoryInfo['system_memory']['available'] ?? 'N/A',
-                'system_usage_percentage' => $memoryInfo['system_memory']['usage_percentage'] ?? 0
+                'system_usage_percentage' => $memoryInfo['system_memory']['usage_percentage'] ?? 0,
+                'current_bytes' => memory_get_usage(true),
+                'peak_bytes' => memory_get_peak_usage(true),
             ],
-            'timestamp' => now()->format('H:i:s')
+            'disk' => [
+                'usage_percentage' => $diskInfo['usage_percentage'],
+                'total' => $diskInfo['total'],
+                'used' => $diskInfo['used'],
+                'free' => $diskInfo['free'],
+            ],
+            'database' => [
+                'connections' => $databaseInfo['connections'] ?? 'N/A',
+                'running_queries' => $databaseInfo['running_queries'] ?? 'N/A',
+                'uptime' => $databaseInfo['uptime'] ?? 'N/A',
+            ],
+            'requests' => [
+                'total' => $this->getRequestStats()['total'] ?? 0,
+                'average_time' => $this->getRequestStats()['average_time'] ?? 0,
+            ],
+            'timestamp' => now()->format('H:i:s'),
+            'uptime' => $systemInfo['uptime'] ?? 'N/A'
         ]);
+    }
+    
+    private function getRequestStats()
+    {
+        // Get basic request statistics
+        return [
+            'total' => 0, // Would need to implement request counting
+            'average_time' => 0, // Would need to implement response time tracking
+        ];
     }
 
     private function getSystemInfo()
