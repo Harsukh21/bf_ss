@@ -87,8 +87,7 @@
 @endpush
 
 @section('content')
-<div class="px-4 py-6 sm:px-0">
-    <div class="max-w-7xl mx-auto">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
         <!-- Header -->
         <div class="mb-6">
             <div class="flex justify-between items-center">
@@ -308,8 +307,6 @@
             </div>
         @endif
         </div>
-    </div>
-</div>
 
 <!-- Filter Drawer -->
 <div id="filter-overlay" class="filter-overlay" onclick="toggleFilterDrawer()"></div>
@@ -412,11 +409,8 @@
 
     function confirmDeleteUser(userId, userName) {
         try {
-            console.log('confirmDeleteUser called with:', userId, userName);
-            
             // Validate parameters
             if (!userId || !userName) {
-                console.error('Invalid parameters for confirmDeleteUser:', userId, userName);
                 alert('Error: Invalid user data');
                 return;
             }
@@ -451,22 +445,17 @@
                 </div>
             </div>
         `;
-            console.log('Modal created, appending to body');
             document.body.appendChild(modal);
-            console.log('Modal appended to body');
         } catch (error) {
-            console.error('Error in confirmDeleteUser:', error);
             alert('Error creating delete confirmation dialog');
         }
     }
 
     function deleteUser(userId) {
         try {
-            console.log('deleteUser called with:', userId);
             
             // Validate userId
             if (!userId) {
-                console.error('Invalid userId for deleteUser:', userId);
                 alert('Error: Invalid user ID');
                 return;
             }
@@ -508,31 +497,6 @@
         if (event.target.classList.contains('fixed') && event.target.classList.contains('inset-0')) {
             closeModal();
         }
-    });
-
-    // Test function to verify JavaScript is working
-    function testModal() {
-        console.log('Test function called');
-        confirmDeleteUser(1, 'Test User');
-    }
-
-    // Add test button temporarily
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, JavaScript is working');
-        
-        // Add a test button temporarily for debugging
-        const testButton = document.createElement('button');
-        testButton.textContent = 'Test Modal';
-        testButton.className = 'fixed top-4 left-4 bg-blue-500 text-white px-4 py-2 rounded z-50';
-        testButton.onclick = testModal;
-        document.body.appendChild(testButton);
-        
-        // Remove test button after 10 seconds
-        setTimeout(() => {
-            if (testButton.parentNode) {
-                testButton.parentNode.removeChild(testButton);
-            }
-        }, 10000);
     });
 </script>
 @endpush

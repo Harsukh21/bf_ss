@@ -47,8 +47,7 @@
 @endpush
 
 @section('content')
-<div class="px-4 py-6 sm:px-0">
-    <div class="max-w-7xl mx-auto">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
         <!-- Header Section -->
     <div class="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
@@ -286,7 +285,6 @@
                 </div>
             @endif
         </div>
-</div>
 
 <!-- Filter Overlay -->
 <div id="filterOverlay" class="filter-overlay" onclick="toggleFilter()"></div>

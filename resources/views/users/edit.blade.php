@@ -354,11 +354,8 @@
 <script>
     function confirmDeleteUser(userId, userName) {
         try {
-            console.log('confirmDeleteUser called with:', userId, userName);
-            
             // Validate parameters
             if (!userId || !userName) {
-                console.error('Invalid parameters for confirmDeleteUser:', userId, userName);
                 alert('Error: Invalid user data');
                 return;
             }
@@ -393,22 +390,16 @@
                 </div>
             </div>
         `;
-            console.log('Modal created, appending to body');
             document.body.appendChild(modal);
-            console.log('Modal appended to body');
         } catch (error) {
-            console.error('Error in confirmDeleteUser:', error);
             alert('Error creating delete confirmation dialog');
         }
     }
 
     function deleteUser(userId) {
         try {
-            console.log('deleteUser called with:', userId);
-            
             // Validate userId
             if (!userId) {
-                console.error('Invalid userId for deleteUser:', userId);
                 alert('Error: Invalid user ID');
                 return;
             }

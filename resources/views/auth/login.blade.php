@@ -124,7 +124,6 @@
                 type="submit" 
                 id="loginButton"
                 onclick="
-                    console.log('Button clicked');
                     
                     // Show loading state immediately but don't disable button yet
                     const spinner = document.getElementById('loginSpinner');

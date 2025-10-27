@@ -9,3 +9,256 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Responsive Styles */
+/* Sidebar base styles */
+#sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Sidebar open state */
+#sidebar.sidebar-open {
+    transform: translateX(0) !important;
+}
+
+/* Desktop Sidebar */
+@media (min-width: 768px) {
+    /* When sidebar-open class is present, show it */
+    #sidebar.sidebar-open {
+        transform: translateX(0) !important;
+    }
+    
+    /* When sidebar-open class is NOT present, hide it */
+    #sidebar {
+        transform: translateX(-100%) !important;
+    }
+    
+    /* Override when sidebar-open is present */
+    #sidebar.sidebar-open {
+        transform: translateX(0) !important;
+    }
+    
+    #mainContent {
+        transition: margin-left 0.3s ease-in-out;
+    }
+    
+    #topHeader {
+        transition: left 0.3s ease-in-out;
+    }
+    
+    /* Hide overlay on desktop */
+    #sidebarOverlay.sidebar-overlay-active {
+        display: none !important;
+    }
+}
+
+/* Tablet Sidebar */
+@media (min-width: 640px) and (max-width: 767px) {
+    #sidebar {
+        transform: translateX(-100%);
+    }
+    
+    #sidebar.sidebar-open {
+        transform: translateX(0);
+    }
+    
+    #mainContent {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+
+/* Mobile adjustments */
+@media (max-width: 639px) {
+    #topHeader {
+        left: 0;
+        right: 0;
+        width: 100%;
+    }
+    
+    #mainContent {
+        margin-left: 0;
+        width: 100%;
+        padding-top: 64px;
+    }
+}
+
+/* Smooth transitions */
+.sidebar-transition {
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Sidebar overlay */
+#sidebarOverlay {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    #sidebarOverlay.sidebar-overlay-active {
+        display: block !important;
+    }
+}
+
+/* Responsive table wrapper */
+.responsive-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.responsive-table-wrapper table {
+    min-width: 640px;
+}
+
+@media (max-width: 639px) {
+    .responsive-table-wrapper table {
+        font-size: 0.875rem;
+    }
+}
+
+/* Card responsive padding */
+.responsive-card {
+    padding: 1rem;
+}
+
+@media (min-width: 640px) {
+    .responsive-card {
+        padding: 1.5rem;
+    }
+}
+
+/* Button group responsive stacking */
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+@media (max-width: 639px) {
+    .button-group {
+        flex-direction: column;
+    }
+    
+    .button-group button,
+    .button-group a {
+        width: 100%;
+    }
+}
+
+/* Filter drawer responsive */
+.filter-drawer {
+    width: 100%;
+    max-width: 500px;
+}
+
+@media (max-width: 639px) {
+    .filter-drawer {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+/* Grid responsive adjustments */
+.responsive-grid {
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+    .responsive-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .responsive-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1280px) {
+    .responsive-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Container responsive max-width */
+.container-responsive {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+    .container-responsive {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+}
+
+@media (min-width: 1280px) {
+    .container-responsive {
+        max-width: 1280px;
+    }
+}
+
+/* Form elements responsive */
+@media (max-width: 639px) {
+    .form-grid {
+        display: block;
+    }
+    
+    .form-grid > div {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Text responsive sizes */
+.text-responsive {
+    font-size: 0.875rem;
+}
+
+@media (min-width: 640px) {
+    .text-responsive {
+        font-size: 1rem;
+    }
+}
+
+/* Hide on mobile */
+.hide-mobile {
+    display: block;
+}
+
+@media (max-width: 767px) {
+    .hide-mobile {
+        display: none !important;
+    }
+}
+
+/* Show on mobile only */
+.show-mobile {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .show-mobile {
+        display: block;
+    }
+}
+
+/* Dark mode transitions */
+.dark-mode-transition * {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Toast notifications responsive */
+#toast-container {
+    max-width: 90%;
+}
+
+@media (min-width: 640px) {
+    #toast-container {
+        max-width: 384px;
+    }
+}

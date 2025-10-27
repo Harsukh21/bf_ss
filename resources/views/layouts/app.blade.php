@@ -50,19 +50,19 @@
         @include('layouts.partials.sidebar')
         
         <!-- Main Content Area -->
-        <div id="mainContent" class="flex-1 md:ml-64 ml-0 transition-all duration-300 ease-in-out pt-16">
+        <div id="mainContent" class="flex-1 w-full transition-all duration-300 ease-in-out">
             <!-- Include Top Header -->
             @include('layouts.partials.top-header')
             
             <!-- Main Content -->
-            <main class="p-6 bg-white dark:bg-gray-900 dark-mode-transition">
+            <main class="pt-14 md:pt-16 bg-white dark:bg-gray-900 dark-mode-transition">
                 @yield('content')
             </main>
         </div>
     </div>
 
     <!-- Sidebar Overlay (Mobile) -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden" style="display: none !important;"></div>
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden"></div>
 
     <!-- Common JavaScript -->
     <script src="{{ asset('assets/js/app.js') }}"></script>

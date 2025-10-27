@@ -414,7 +414,6 @@
             const loginFormBackup = document.getElementById('loginForm');
             if (loginFormBackup) {
                 loginFormBackup.addEventListener('submit', function(e) {
-                    console.log('Form submit event triggered');
                     // Don't prevent default - let form submit normally
                     
                     // Show loading state

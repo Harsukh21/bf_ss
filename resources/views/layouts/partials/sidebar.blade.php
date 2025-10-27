@@ -1,5 +1,5 @@
 <!-- Sidebar -->
-<aside id="sidebar" class="bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 w-64 min-h-screen fixed left-0 top-0 transition-all duration-300 ease-in-out z-40">
+<aside id="sidebar" class="sidebar-open bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 w-64 min-h-screen fixed left-0 top-0 z-40 sidebar-transition">
     <div class="flex flex-col h-full">
         <!-- Logo Section -->
         <div class="px-4 h-16 border-b border-gray-200 dark:border-gray-700 flex items-center">

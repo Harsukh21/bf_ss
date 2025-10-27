@@ -448,7 +448,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    console.log('Laravel App initialized successfully!');
 });
 
 // Dark Mode Toggle
