@@ -17,6 +17,7 @@ return [
         4 => 'Cricket',
         6 => 'Boxing',
         7 => 'HR',
+        9 => 'Pro Kabaddi',
         7522 => 'Basketball',
     ],
 
