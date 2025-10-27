@@ -48,6 +48,34 @@
         opacity: 0.5;
         cursor: not-allowed;
     }
+    
+    #viewRatesBtnText {
+        display: inline !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-width: auto !important;
+        position: relative !important;
+        z-index: 1 !important;
+    }
+    
+    #viewRatesBtnSpinner.hidden {
+        display: none !important;
+    }
+    
+    .animate-slide-in {
+        animation: slideInDown 0.3s ease-out;
+    }
+    
+    @keyframes slideInDown {
+        from {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
 </style>
 @endpush
 
@@ -110,6 +138,31 @@
             </div>
         </div>
 
+        <!-- Validation Alert -->
+        <div id="validation-alert" class="hidden mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 px-4 py-3 rounded-md animate-slide-in">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="ml-3 flex-1">
+                    <p class="text-sm font-medium">Please select a market event first</p>
+                    <p class="text-xs mt-1 text-yellow-700 dark:text-yellow-300">Type or select an event from the dropdown above to view its market rates.</p>
+                </div>
+                <div class="ml-auto pl-3">
+                    <div class="-mx-1.5 -my-1.5">
+                        <button type="button" onclick="closeValidationAlert()" class="inline-flex bg-yellow-50 dark:bg-yellow-900/20 rounded-md p-1.5 text-yellow-500 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-yellow-50 dark:focus:ring-offset-yellow-900/20 focus:ring-yellow-600">
+                            <span class="sr-only">Dismiss</span>
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Event Selection Card -->
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
             <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -117,7 +170,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400">Choose an event to view its market rates</p>
             </div>
             <div class="p-6">
-                <form method="GET" action="{{ route('market-rates.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <form method="GET" action="{{ route('market-rates.index') }}" id="eventSelectionForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     <div class="md:col-span-3 relative">
                         <label for="eventSearch" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Event
@@ -136,8 +189,12 @@
                         </div>
                     </div>
                     <div class="md:col-span-1">
-                        <button type="submit" class="w-full bg-primary-600 dark:bg-primary-700 text-white px-6 py-2 rounded-md hover:bg-primary-700 dark:hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
-                            View Rates
+                        <button type="submit" id="viewRatesBtn" class="w-full bg-primary-600 dark:bg-primary-700 text-white px-6 py-2 rounded-md hover:bg-primary-700 dark:hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors flex items-center justify-center" onclick="return handleViewRatesClick(event)">
+                            <span id="viewRatesBtnText">View Rates</span>
+                            <svg id="viewRatesBtnSpinner" class="hidden w-5 h-5 ml-2 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
                         </button>
                     </div>
                 </form>
@@ -428,6 +485,83 @@ function toggleFilterDrawer() {
     }
 }
 
+// Function to show validation alert
+function showValidationAlert() {
+    const alert = document.getElementById('validation-alert');
+    if (alert) {
+        alert.classList.remove('hidden');
+        
+        // Scroll to top to show the alert
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            closeValidationAlert();
+        }, 5000);
+    }
+}
+
+// Function to close validation alert
+function closeValidationAlert() {
+    const alert = document.getElementById('validation-alert');
+    if (alert) {
+        alert.classList.add('hidden');
+    }
+}
+
+// Handle View Rates button click - runs BEFORE form submit
+function handleViewRatesClick(e) {
+    const exEventIdInput = document.getElementById('exEventId');
+    const eventSearch = document.getElementById('eventSearch');
+    
+    if (!exEventIdInput || !eventSearch) {
+        return true; // Allow form submission if elements don't exist
+    }
+    
+    const currentEventId = exEventIdInput.value;
+    const hasHiddenValue = currentEventId && currentEventId.trim() !== '';
+    const hasVisibleValue = eventSearch.value && eventSearch.value.trim() !== '';
+    const eventSelected = hasHiddenValue && hasVisibleValue;
+    
+    if (!eventSelected) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        // Keep button in normal state - force visibility
+        const btn = document.getElementById('viewRatesBtn');
+        const btnText = document.getElementById('viewRatesBtnText');
+        const btnSpinner = document.getElementById('viewRatesBtnSpinner');
+        
+        if (btn && btnText && btnSpinner) {
+            btn.disabled = false;
+            btnText.textContent = 'View Rates';
+            btnText.style.display = 'inline';
+            btnText.style.visibility = 'visible';
+            btnText.style.opacity = '1';
+            btnSpinner.classList.add('hidden');
+        }
+        
+        // Show validation alert
+        showValidationAlert();
+        
+        // Highlight the search input
+        eventSearch.classList.add('border-red-500');
+        eventSearch.focus();
+        
+        // Remove red border after 3 seconds
+        setTimeout(() => {
+            eventSearch.classList.remove('border-red-500');
+        }, 3000);
+        
+        return false;
+    }
+    
+    // Event is selected - allow form to proceed and show loading state
+    // The form submit handler will set the loading state
+    return true;
+}
+
 // Close drawer on escape key
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
@@ -443,6 +577,17 @@ document.addEventListener('keydown', function(event) {
 
 // Searchable Event Dropdown
 document.addEventListener('DOMContentLoaded', function() {
+    // Ensure button starts in correct state
+    const btnText = document.getElementById('viewRatesBtnText');
+    const btnSpinner = document.getElementById('viewRatesBtnSpinner');
+    if (btnText && btnSpinner) {
+        btnText.textContent = 'View Rates';
+        btnText.style.display = 'inline';
+        btnText.style.visibility = 'visible';
+        btnText.style.opacity = '1';
+        btnSpinner.classList.add('hidden');
+    }
+    
     const eventSearch = document.getElementById('eventSearch');
     const eventDropdown = document.getElementById('eventDropdown');
     const exEventIdInput = document.getElementById('exEventId');
@@ -494,16 +639,80 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Store initial hidden input value to detect if user selected an event
+    const initialEventId = exEventIdInput.value;
+    
     // Prevent form submission if no event is selected
-    eventSearch.closest('form').addEventListener('submit', function(e) {
-        if (!exEventIdInput.value) {
-            e.preventDefault();
-            eventSearch.classList.add('border-red-500');
-            setTimeout(() => {
-                eventSearch.classList.remove('border-red-500');
-            }, 2000);
-        }
-    });
+    const form = document.getElementById('eventSelectionForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const currentEventId = exEventIdInput.value;
+            
+            // Check if event is selected - must have both hidden input value AND visible search input value
+            const hasHiddenValue = currentEventId && currentEventId.trim() !== '';
+            const hasVisibleValue = eventSearch.value && eventSearch.value.trim() !== '';
+            const eventSelected = hasHiddenValue && hasVisibleValue;
+            
+            if (!eventSelected) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Reset button state to prevent "Loading..." text
+                const btn = document.getElementById('viewRatesBtn');
+                const btnText = document.getElementById('viewRatesBtnText');
+                const btnSpinner = document.getElementById('viewRatesBtnSpinner');
+                
+                if (btn && btnText && btnSpinner) {
+                    btn.disabled = false;
+                    btnText.textContent = 'View Rates';
+                    btnSpinner.classList.add('hidden');
+                }
+                
+                // Show validation alert
+                showValidationAlert();
+                
+                // Highlight the search input
+                eventSearch.classList.add('border-red-500');
+                eventSearch.focus();
+                
+                // Remove red border after 3 seconds
+                setTimeout(() => {
+                    eventSearch.classList.remove('border-red-500');
+                }, 3000);
+            } else {
+                // Show loading state only if validation passes
+                const btn = document.getElementById('viewRatesBtn');
+                const btnText = document.getElementById('viewRatesBtnText');
+                const btnSpinner = document.getElementById('viewRatesBtnSpinner');
+                
+                if (btn && btnText && btnSpinner) {
+                    btn.disabled = true;
+                    btnText.textContent = 'Loading...';
+                    btnText.style.display = 'inline';
+                    btnText.style.visibility = 'visible';
+                    btnText.style.opacity = '1';
+                    btnSpinner.classList.remove('hidden');
+                    
+                    // Add loading message to the page
+                    const selectEventCard = eventSearch.closest('.bg-white');
+                    const messageDiv = document.createElement('div');
+                    messageDiv.id = 'loadingMessage';
+                    messageDiv.className = 'text-center py-8 bg-gray-50 dark:bg-gray-800';
+                    messageDiv.innerHTML = `
+                        <svg class="mx-auto h-12 w-12 text-primary-600 dark:text-primary-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">Loading market rates...</h3>
+                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Please wait while we fetch the data for you.</p>
+                    `;
+                    
+                    // Insert loading message after the select event card
+                    selectEventCard.insertAdjacentElement('afterend', messageDiv);
+                }
+            }
+        });
+    }
 });
 </script>
 @endpush
