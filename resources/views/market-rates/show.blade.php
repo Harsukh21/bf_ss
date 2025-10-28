@@ -74,6 +74,10 @@
                                     $backSlots = array_slice($availableToBack, 0, 3);
                                     $laySlots = array_slice($availableToLay, 0, 3);
                                     
+                                    // Reverse the arrays to show big to small from right to left
+                                    $backSlots = array_reverse($backSlots);
+                                    $laySlots = array_reverse($laySlots);
+                                    
                                     // Check if suspended
                                     $isSuspended = empty($availableToBack) && empty($availableToLay);
                                 @endphp
