@@ -67,15 +67,8 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'phone' => ['nullable', 'string', 'max:20'],
             'password' => ['required', 'confirmed', Password::defaults()],
-            'date_of_birth' => ['nullable', 'date'],
-            'bio' => ['nullable', 'string', 'max:1000'],
-            'timezone' => ['nullable', 'string', 'max:50'],
-            'language' => ['nullable', 'string', 'max:10'],
         ]);
 
         if ($validator->fails()) {
@@ -86,15 +79,8 @@ class UserController extends Controller
 
         $user = User::create([
             'name' => $request->name,
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
             'email' => $request->email,
-            'phone' => $request->phone,
             'password' => Hash::make($request->password),
-            'date_of_birth' => $request->date_of_birth,
-            'bio' => $request->bio,
-            'timezone' => $request->timezone,
-            'language' => $request->language,
         ]);
 
         return redirect()->route('users.index')
