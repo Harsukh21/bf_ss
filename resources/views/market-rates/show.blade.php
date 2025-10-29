@@ -245,7 +245,43 @@
         
         @if(is_array($runners) && count($runners) > 0)
         <!-- Screenshot Container - includes timestamp and table -->
-        <div id="ratesTableContainer">
+        <div id="ratesTableContainer" class="relative">
+            <!-- Navigation Buttons - Left and Right of Table -->
+            @unless(isset($gridEnabled) && $gridEnabled)
+            <div class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 z-10">
+                @if($previousMarketRate)
+                    <a href="{{ route('market-rates.show', $previousMarketRate->id) . '?exEventId=' . urlencode($selectedEventId) }}" 
+                       class="bg-blue-600 dark:bg-blue-700 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition-all transform hover:scale-110 flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </a>
+                @else
+                    <span class="bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 p-3 rounded-full shadow-lg cursor-not-allowed flex items-center justify-center opacity-50">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </span>
+                @endif
+            </div>
+            <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 z-10">
+                @if($nextMarketRate)
+                    <a href="{{ route('market-rates.show', $nextMarketRate->id) . '?exEventId=' . urlencode($selectedEventId) }}" 
+                       class="bg-blue-600 dark:bg-blue-700 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition-all transform hover:scale-110 flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </a>
+                @else
+                    <span class="bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 p-3 rounded-full shadow-lg cursor-not-allowed flex items-center justify-center opacity-50">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </span>
+                @endif
+            </div>
+            @endunless
+            
             <!-- Timestamp for Screenshot -->
             <div class="mb-2">
                 <span class="text-sm text-gray-600 dark:text-gray-400">
@@ -529,16 +565,22 @@ function takeScreenshot(format) {
     const backButton = document.querySelector('a[href*="market-rates.index"]');
     const gridSelectContainer = document.querySelector('select[id="gridSelect"]')?.parentElement;
     const screenshotButtonContainer = document.getElementById('screenshotBtnGrid')?.parentElement;
+    const leftNavBtn = document.querySelector('#ratesTableContainer .absolute.left-0');
+    const rightNavBtn = document.querySelector('#ratesTableContainer .absolute.right-0');
     
     const originalNavDisplay = navButtons ? navButtons.style.display : '';
     const originalBackDisplay = backButton ? backButton.style.display : '';
     const originalGridDisplay = gridSelectContainer ? gridSelectContainer.style.display : '';
     const originalScreenshotDisplay = screenshotButtonContainer ? screenshotButtonContainer.style.display : '';
+    const originalLeftNavDisplay = leftNavBtn ? leftNavBtn.style.display : '';
+    const originalRightNavDisplay = rightNavBtn ? rightNavBtn.style.display : '';
     
     if (navButtons) navButtons.style.display = 'none';
     if (backButton) backButton.style.display = 'none';
     if (gridSelectContainer) gridSelectContainer.style.display = 'none';
     if (screenshotButtonContainer) screenshotButtonContainer.style.display = 'none';
+    if (leftNavBtn) leftNavBtn.style.display = 'none';
+    if (rightNavBtn) rightNavBtn.style.display = 'none';
     
     // Target the correct container (grid or single)
     const element = document.getElementById('ratesGridContainer') || document.getElementById('ratesTableContainer');
@@ -548,6 +590,8 @@ function takeScreenshot(format) {
         if (backButton) backButton.style.display = originalBackDisplay;
         if (gridSelectContainer) gridSelectContainer.style.display = originalGridDisplay;
         if (screenshotButtonContainer) screenshotButtonContainer.style.display = originalScreenshotDisplay;
+        if (leftNavBtn) leftNavBtn.style.display = originalLeftNavDisplay;
+        if (rightNavBtn) rightNavBtn.style.display = originalRightNavDisplay;
         showNotification('Error: Could not find rates table to capture', 'error');
         return;
     }
@@ -563,6 +607,8 @@ function takeScreenshot(format) {
         if (backButton) backButton.style.display = originalBackDisplay;
         if (gridSelectContainer) gridSelectContainer.style.display = originalGridDisplay;
         if (screenshotButtonContainer) screenshotButtonContainer.style.display = originalScreenshotDisplay;
+        if (leftNavBtn) leftNavBtn.style.display = originalLeftNavDisplay;
+        if (rightNavBtn) rightNavBtn.style.display = originalRightNavDisplay;
         
         const link = document.createElement('a');
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -581,6 +627,8 @@ function takeScreenshot(format) {
         if (backButton) backButton.style.display = originalBackDisplay;
         if (gridSelectContainer) gridSelectContainer.style.display = originalGridDisplay;
         if (screenshotButtonContainer) screenshotButtonContainer.style.display = originalScreenshotDisplay;
+        if (leftNavBtn) leftNavBtn.style.display = originalLeftNavDisplay;
+        if (rightNavBtn) rightNavBtn.style.display = originalRightNavDisplay;
         showNotification('Screenshot failed. Please try again.', 'error');
     });
 }
