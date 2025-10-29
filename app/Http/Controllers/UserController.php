@@ -143,6 +143,15 @@ class UserController extends Controller
             $updateData['password'] = Hash::make($request->password);
         }
 
+        // Handle status update
+        if ($request->has('email_verified_at_status')) {
+            if ($request->email_verified_at_status === 'active') {
+                $updateData['email_verified_at'] = $user->email_verified_at ?? now();
+            } else {
+                $updateData['email_verified_at'] = null;
+            }
+        }
+
         $user->update($updateData);
 
         return redirect()->route('users.index')
@@ -165,6 +174,31 @@ class UserController extends Controller
 
         return redirect()->route('users.index')
             ->with('success', "User '{$userName}' has been deleted successfully.");
+    }
+
+    /**
+     * Update user status
+     */
+    public function updateStatus(Request $request, User $user)
+    {
+        $request->validate([
+            'status' => 'required|in:active,inactive',
+        ]);
+
+        if ($request->status === 'active') {
+            if (!$user->email_verified_at) {
+                $user->email_verified_at = now();
+                $user->save();
+            }
+        } else {
+            if ($user->email_verified_at) {
+                $user->email_verified_at = null;
+                $user->save();
+            }
+        }
+
+        return redirect()->route('users.index')
+            ->with('success', "User '{$user->name}' status updated successfully.");
     }
 
     /**

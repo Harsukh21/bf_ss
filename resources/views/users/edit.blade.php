@@ -63,7 +63,7 @@
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('users.update', $user) }}">
+                <form method="POST" action="{{ route('users.update', $user) }}" id="editUserForm">
                     @csrf
                     @method('PUT')
             
@@ -292,17 +292,12 @@
                         </h3>
                         <dl class="space-y-3">
                             <div>
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Account Status</dt>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Account Status</dt>
                                 <dd class="mt-1">
-                                    @if($user->email_verified_at)
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                            Active
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                                            Inactive
-                                        </span>
-                                    @endif
+                                    <select name="email_verified_at_status" form="editUserForm" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-gray-100 text-sm">
+                                        <option value="inactive" {{ !$user->email_verified_at ? 'selected' : '' }}>Inactive</option>
+                                        <option value="active" {{ $user->email_verified_at ? 'selected' : '' }}>Active</option>
+                                    </select>
                                 </dd>
                             </div>
                             <div>

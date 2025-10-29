@@ -237,11 +237,14 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @if($user->email_verified_at)
-                                        <span class="status-badge status-active">Active</span>
-                                    @else
-                                        <span class="status-badge status-inactive">Inactive</span>
-                                    @endif
+                                    <form action="{{ route('users.update-status', $user) }}" method="POST" class="inline" id="statusForm{{ $user->id }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <select name="status" onchange="updateStatus({{ $user->id }})" class="status-select text-xs font-medium rounded-full px-3 py-1 border-0 focus:ring-2 focus:ring-primary-500 {{ $user->email_verified_at ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300' }}">
+                                            <option value="active" {{ $user->email_verified_at ? 'selected' : '' }}>Active</option>
+                                            <option value="inactive" {{ !$user->email_verified_at ? 'selected' : '' }}>Inactive</option>
+                                        </select>
+                                    </form>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                     @if($user->last_login_at)
@@ -498,6 +501,13 @@
             closeModal();
         }
     });
+
+    function updateStatus(userId) {
+        const form = document.getElementById('statusForm' + userId);
+        if (form) {
+            form.submit();
+        }
+    }
 </script>
 @endpush
 @endsection
