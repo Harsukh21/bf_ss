@@ -249,25 +249,42 @@
         });
 
         // Handle sidebar logout
-        function handleSidebarLogout() {
-            if (typeof ToastNotification !== 'undefined') {
-                ToastNotification.confirm(
-                    'Are you sure you want to logout? This will end your current session and redirect you to the login page.',
-                    'Yes, Logout',
-                    'Cancel'
-                ).then(function(result) {
+        async function handleSidebarLogout() {
+            try {
+                if (typeof ToastNotification !== 'undefined') {
+                    const result = await ToastNotification.confirm(
+                        'Are you sure you want to logout? This will end your current session and redirect you to the login page. Any unsaved work will be lost.',
+                        'Yes, Logout',
+                        'Cancel'
+                    );
+                    
                     if (result) {
-                        ToastNotification.show('Logging out...', 'info');
-                        setTimeout(function() {
-                            document.getElementById('sidebarLogoutForm').submit();
-                        }, 500);
+                        // Show logout progress toast
+                        ToastNotification.show('Logging out... Please wait.', 'info', 2000);
+                        
+                        // Clear all browser storage
+                        if (typeof(Storage) !== "undefined") {
+                            localStorage.clear();
+                            sessionStorage.clear();
+                        }
+                        
+                        // Clear browser history
+                        if (window.history && window.history.replaceState) {
+                            window.history.replaceState(null, null, '/login');
+                        }
+                        
+                        // Submit the logout form
+                        document.getElementById('sidebarLogoutForm').submit();
                     }
-                }).catch(function(error) {
-                    console.error('Logout error:', error);
-                });
-            } else {
-                if (confirm('Are you sure you want to logout?')) {
-                    document.getElementById('sidebarLogoutForm').submit();
+                } else {
+                    if (confirm('Are you sure you want to logout? This will end your current session and redirect you to the login page. Any unsaved work will be lost.')) {
+                        document.getElementById('sidebarLogoutForm').submit();
+                    }
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+                if (typeof ToastNotification !== 'undefined') {
+                    ToastNotification.show('An error occurred during logout. Please try again.', 'error');
                 }
             }
         }
