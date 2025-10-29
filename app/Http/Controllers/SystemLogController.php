@@ -104,7 +104,7 @@ class SystemLogController extends Controller
         return response()->download($logPath);
     }
 
-    public function delete($filename)
+    public function clear($filename)
     {
         $logPath = storage_path('logs/' . $filename);
         
@@ -113,10 +113,11 @@ class SystemLogController extends Controller
         }
 
         try {
-            File::delete($logPath);
-            return redirect()->route('system-logs.index')->with('success', 'Log file deleted successfully.');
+            // Clear/truncate the file instead of deleting it
+            file_put_contents($logPath, '');
+            return redirect()->route('system-logs.view', $filename)->with('success', 'Log file cleared successfully.');
         } catch (\Exception $e) {
-            return redirect()->route('system-logs.index')->with('error', 'Failed to delete log file: ' . $e->getMessage());
+            return redirect()->route('system-logs.view', $filename)->with('error', 'Failed to clear log file: ' . $e->getMessage());
         }
     }
 
@@ -127,7 +128,8 @@ class SystemLogController extends Controller
         try {
             $files = File::files($logPath);
             foreach ($files as $file) {
-                File::delete($file->getPathname());
+                // Clear/truncate the file instead of deleting it
+                file_put_contents($file->getPathname(), '');
             }
             return redirect()->route('system-logs.index')->with('success', 'All log files cleared successfully.');
         } catch (\Exception $e) {

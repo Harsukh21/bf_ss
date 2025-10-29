@@ -63,7 +63,7 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/', [SystemLogController::class, 'index'])->name('index');
         Route::get('/view/{filename}', [SystemLogController::class, 'view'])->name('view');
         Route::get('/download/{filename}', [SystemLogController::class, 'download'])->name('download');
-        Route::delete('/delete/{filename}', [SystemLogController::class, 'delete'])->name('delete');
+        Route::post('/clear/{filename}', [SystemLogController::class, 'clear'])->name('clear');
         Route::delete('/clear-all', [SystemLogController::class, 'clearAll'])->name('clear-all');
         Route::post('/refresh', [SystemLogController::class, 'refresh'])->name('refresh');
     });
