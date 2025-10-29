@@ -104,7 +104,6 @@
                 <div class="flex space-x-3">
                     @php
                         $filterCount = 0;
-                        if(request('search')) $filterCount++;
                         if(request('market_name')) $filterCount++;
                         if(request('status')) $filterCount++;
                         if(request('date_from') || request('date_to')) $filterCount++;
@@ -310,15 +309,13 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            @if($rate->isCompleted)
-                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">Completed</span>
-                                            @elseif($rate->inplay)
+                                            @if($rate->inplay)
                                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300">
                                                     <span class="w-2 h-2 bg-red-400 rounded-full mr-1 animate-pulse"></span>
                                                     In Play
                                                 </span>
                                             @else
-                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">Upcoming</span>
+                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-300">Not In Play</span>
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -405,24 +402,14 @@
         <form method="GET" action="{{ route('market-rates.index') }}">
             <input type="hidden" name="exEventId" value="{{ $selectedEventId }}">
             
-            <!-- Search -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
-                <input type="text" name="search" value="{{ request('search') }}" 
-                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400" 
-                       placeholder="Search markets...">
-            </div>
-            
             <!-- Market Type -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Market Type</label>
                 <select name="market_name" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     <option value="">All Markets</option>
-                    <option value="Match Winner" {{ request('market_name') == 'Match Winner' ? 'selected' : '' }}>Match Winner</option>
-                    <option value="Over/Under 2.5 Goals" {{ request('market_name') == 'Over/Under 2.5 Goals' ? 'selected' : '' }}>Over/Under 2.5 Goals</option>
-                    <option value="Total Sets" {{ request('market_name') == 'Total Sets' ? 'selected' : '' }}>Total Sets</option>
-                    <option value="Total Runs" {{ request('market_name') == 'Total Runs' ? 'selected' : '' }}>Total Runs</option>
-                    <option value="Total Points" {{ request('market_name') == 'Total Points' ? 'selected' : '' }}>Total Points</option>
+                    @foreach($availableMarketNames as $marketName)
+                        <option value="{{ $marketName }}" {{ request('market_name') == $marketName ? 'selected' : '' }}>{{ $marketName }}</option>
+                    @endforeach
                 </select>
             </div>
             
@@ -432,8 +419,7 @@
                 <select name="status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     <option value="">All Status</option>
                     <option value="inplay" {{ request('status') == 'inplay' ? 'selected' : '' }}>In Play</option>
-                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
-                    <option value="upcoming" {{ request('status') == 'upcoming' ? 'selected' : '' }}>Upcoming</option>
+                    <option value="not_inplay" {{ request('status') == 'not_inplay' ? 'selected' : '' }}>Not In Play</option>
                 </select>
             </div>
             

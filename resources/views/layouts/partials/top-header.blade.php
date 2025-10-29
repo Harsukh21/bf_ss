@@ -17,6 +17,17 @@
 
             <!-- User Actions -->
             <div class="flex items-center space-x-4">
+                <!-- IST Time Display -->
+                <div class="hidden md:flex items-center space-x-2 px-3 py-1 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+                    <svg class="w-4 h-4 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-sm font-medium text-primary-700 dark:text-primary-300">
+                        <span class="font-semibold">IST:</span> 
+                        <span id="istTime">{{ now()->setTimezone('Asia/Kolkata')->format('d M Y, h:i:s A') }}</span>
+                    </span>
+                </div>
+                
                 <!-- Dark Mode Toggle -->
                 <button id="themeToggle" class="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 ease-in-out">
                     <!-- Sun icon for dark mode -->

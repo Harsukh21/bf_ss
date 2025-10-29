@@ -40,20 +40,20 @@ class MarketRateController extends Controller
         
         $marketRates = collect([]);
         $eventInfo = null;
+        $availableMarketNames = collect([]);
         
         if ($selectedEventId) {
             // Check if table exists for this event
             if (MarketRate::tableExistsForEvent($selectedEventId)) {
                 $query = MarketRate::forEvent($selectedEventId);
-
-                // Apply search filter
-                if ($request->filled('search')) {
-                    $search = $request->get('search');
-                    $query->where(function ($q) use ($search) {
-                        $q->where('marketName', 'like', "%{$search}%")
-                          ->orWhere('exMarketId', 'like', "%{$search}%");
-                    });
-                }
+                
+                // Get available market names for the dropdown
+                $availableMarketNames = MarketRate::forEvent($selectedEventId)
+                    ->select('marketName')
+                    ->distinct()
+                    ->whereNotNull('marketName')
+                    ->orderBy('marketName')
+                    ->pluck('marketName');
 
                 // Apply market filter
                 if ($request->filled('market_name')) {
@@ -64,19 +64,19 @@ class MarketRateController extends Controller
                 if ($request->filled('status')) {
                     if ($request->get('status') === 'inplay') {
                         $query->where('inplay', true);
-                    } elseif ($request->get('status') === 'completed') {
-                        $query->where('isCompleted', true);
-                    } elseif ($request->get('status') === 'upcoming') {
-                        $query->where('inplay', false)->where('isCompleted', false);
+                    } elseif ($request->get('status') === 'not_inplay') {
+                        $query->where('inplay', false);
                     }
                 }
 
                 // Apply date range filter
                 if ($request->filled('date_from')) {
-                    $query->where('created_at', '>=', $request->get('date_from'));
+                    $dateFrom = \Carbon\Carbon::parse($request->get('date_from'))->setTimezone('Asia/Kolkata');
+                    $query->where('created_at', '>=', $dateFrom);
                 }
                 if ($request->filled('date_to')) {
-                    $query->where('created_at', '<=', $request->get('date_to'));
+                    $dateTo = \Carbon\Carbon::parse($request->get('date_to'))->setTimezone('Asia/Kolkata');
+                    $query->where('created_at', '<=', $dateTo);
                 }
 
                 $marketRates = $query->latest('created_at')->paginate(10);
@@ -101,7 +101,7 @@ class MarketRateController extends Controller
             }
         }
 
-        return view('market-rates.index', compact('marketRates', 'events', 'selectedEventId', 'eventInfo'));
+        return view('market-rates.index', compact('marketRates', 'events', 'selectedEventId', 'eventInfo', 'availableMarketNames'));
     }
 
     /**
@@ -172,15 +172,6 @@ class MarketRateController extends Controller
 
         $query = MarketRate::forEvent($selectedEventId);
 
-        // Apply search filter
-        if ($request->filled('search')) {
-            $search = $request->get('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('marketName', 'like', "%{$search}%")
-                  ->orWhere('exMarketId', 'like', "%{$search}%");
-            });
-        }
-
         // Apply market filter
         if ($request->filled('market_name')) {
             $query->where('marketName', $request->get('market_name'));
@@ -190,19 +181,19 @@ class MarketRateController extends Controller
         if ($request->filled('status')) {
             if ($request->get('status') === 'inplay') {
                 $query->where('inplay', true);
-            } elseif ($request->get('status') === 'completed') {
-                $query->where('isCompleted', true);
-            } elseif ($request->get('status') === 'upcoming') {
-                $query->where('inplay', false)->where('isCompleted', false);
+            } elseif ($request->get('status') === 'not_inplay') {
+                $query->where('inplay', false);
             }
         }
 
         // Apply date range filter
         if ($request->filled('date_from')) {
-            $query->where('created_at', '>=', $request->get('date_from'));
+            $dateFrom = \Carbon\Carbon::parse($request->get('date_from'))->setTimezone('Asia/Kolkata');
+            $query->where('created_at', '>=', $dateFrom);
         }
         if ($request->filled('date_to')) {
-            $query->where('created_at', '<=', $request->get('date_to'));
+            $dateTo = \Carbon\Carbon::parse($request->get('date_to'))->setTimezone('Asia/Kolkata');
+            $query->where('created_at', '<=', $dateTo);
         }
 
         // Get all data (no pagination for export)
