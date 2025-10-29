@@ -218,7 +218,7 @@
                                 <tr>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Runners</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Market & Status</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created</th>
                                 </tr>
                             </thead>
@@ -226,14 +226,14 @@
                                 @foreach($marketRates as $rate)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href="{{ route('market-rates.show', $rate->id) . '?exEventId=' . urlencode($selectedEventId) }}" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200 transition-colors duration-200">
+                                            <a href="{{ route('market-rates.show', $rate->id) . '?exEventId=' . urlencode($selectedEventId) }}" target="_blank" rel="noopener noreferrer" class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200 transition-colors duration-200">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                                 </svg>
                                             </a>
                                         </td>
-                                        <td class="px-6 py-4">
+                                        <td class="px-6 py-4 min-w-[300px]">
                                             @php
                                                 $runners = is_string($rate->runners) ? json_decode($rate->runners, true) : $rate->runners;
                                                 $runnerCount = is_array($runners) ? count($runners) : 0;
@@ -268,7 +268,7 @@
                                                                             $availableToLay = is_array($availableToLay) ? $availableToLay : (array) $availableToLay;
                                                                         @endphp
                                                                         <tr class="border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                                                            <td class="py-1 pr-2 text-gray-900 dark:text-gray-100 truncate max-w-32" title="{{ $runnerName }}">
+                                                                            <td class="py-1 pr-2 text-gray-900 dark:text-gray-100 truncate max-w-56" title="{{ $runnerName }}">
                                                                                 {{ $runnerName }}
                                                                             </td>
                                                                             <td class="py-1 text-right">
@@ -309,14 +309,25 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            @if($rate->inplay)
-                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300">
-                                                    <span class="w-2 h-2 bg-red-400 rounded-full mr-1 animate-pulse"></span>
-                                                    In Play
-                                                </span>
-                                            @else
-                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-300">Not In Play</span>
-                                            @endif
+                                            <div class="space-y-2">
+                                                <!-- Market Name Badge -->
+                                                <div>
+                                                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                                                        {{ $rate->marketName ?? 'Unknown Market' }}
+                                                    </span>
+                                                </div>
+                                                <!-- Status Badge -->
+                                                <div>
+                                                    @if($rate->inplay)
+                                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300">
+                                                            <span class="w-2 h-2 bg-red-400 rounded-full mr-1 animate-pulse"></span>
+                                                            In Play
+                                                        </span>
+                                                    @else
+                                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-300">Not In Play</span>
+                                                    @endif
+                                                </div>
+                                            </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             {{ $rate->created_at ? \Carbon\Carbon::parse($rate->created_at)->format('M d, Y H:i') : 'N/A' }}

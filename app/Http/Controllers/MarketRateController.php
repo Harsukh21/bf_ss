@@ -126,7 +126,25 @@ class MarketRateController extends Controller
 
         $eventInfo = Event::where('exEventId', $selectedEventId)->first();
 
-        return view('market-rates.show', compact('marketRate', 'eventInfo', 'selectedEventId'));
+        // Get next and previous market rates for navigation
+        $allMarketRates = MarketRate::forEvent($selectedEventId)->orderBy('created_at', 'desc')->get();
+        $currentIndex = $allMarketRates->search(function($item) use ($id) {
+            return $item->id == $id;
+        });
+        
+        $previousMarketRate = null;
+        $nextMarketRate = null;
+        
+        if ($currentIndex !== false) {
+            if ($currentIndex > 0) {
+                $previousMarketRate = $allMarketRates[$currentIndex - 1];
+            }
+            if ($currentIndex < $allMarketRates->count() - 1) {
+                $nextMarketRate = $allMarketRates[$currentIndex + 1];
+            }
+        }
+
+        return view('market-rates.show', compact('marketRate', 'eventInfo', 'selectedEventId', 'previousMarketRate', 'nextMarketRate'));
     }
 
     /**
