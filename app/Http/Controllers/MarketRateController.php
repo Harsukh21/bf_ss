@@ -110,7 +110,9 @@ class MarketRateController extends Controller
     public function show(Request $request, $id)
     {
         $selectedEventId = $request->get('exEventId');
-        $gridEnabled = $request->boolean('grid');
+        $gridCount = $request->get('grid');
+        $gridEnabled = !empty($gridCount) && in_array((int)$gridCount, [10, 20, 40, 60]);
+        $gridCountValue = $gridEnabled ? (int)$gridCount : 10;
         
         if (!$selectedEventId || !MarketRate::tableExistsForEvent($selectedEventId)) {
             return redirect()->route('market-rates.index')
@@ -151,18 +153,19 @@ class MarketRateController extends Controller
                 $nextMarketRate = $allMarketRates[$currentIndex + 1];
             }
 
-            // When grid mode is enabled, get current record + 9 newer records (total 10)
+            // When grid mode is enabled, get current record + (count-1) newer records
             // All records are already filtered by marketName above
             if ($gridEnabled) {
                 $currentCreatedAt = $marketRate->created_at;
+                $additionalRecords = $gridCountValue - 1; // Subtract 1 for current record
                 
-                // Get up to 9 records with same marketName that are newer (created_at > current)
+                // Get up to (count-1) records with same marketName that are newer (created_at > current)
                 $newerRecords = MarketRate::forEvent($selectedEventId)
                     ->where('marketName', $marketRate->marketName)
                     ->whereNotNull('marketName')
                     ->where('created_at', '>', $currentCreatedAt)
                     ->orderBy('created_at', 'asc') // Order ascending to get them in chronological order
-                    ->limit(9)
+                    ->limit($additionalRecords)
                     ->get();
                 
                 // Double-check marketName matches and create collection with current record first
@@ -181,6 +184,7 @@ class MarketRateController extends Controller
             'previousMarketRate',
             'nextMarketRate',
             'gridEnabled',
+            'gridCountValue',
             'gridMarketRates'
         ));
     }

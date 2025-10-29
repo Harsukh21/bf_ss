@@ -19,10 +19,16 @@
                     <span class="text-sm text-gray-600 dark:text-gray-400">
                         Min: 10 | Max: 25K
                     </span>
-                    <!-- Grid Toggle -->
+                    <!-- Grid Dropdown -->
                     <div class="flex items-center space-x-2">
-                        <input id="gridToggle" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded" {{ isset($gridEnabled) && $gridEnabled ? 'checked' : '' }}>
-                        <label for="gridToggle" class="text-sm text-gray-700 dark:text-gray-300">Grid (10)</label>
+                        <label for="gridSelect" class="text-sm text-gray-700 dark:text-gray-300">Grid:</label>
+                        <select id="gridSelect" class="h-9 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Off</option>
+                            <option value="10" {{ isset($gridCountValue) && $gridCountValue == 10 ? 'selected' : '' }}>10</option>
+                            <option value="20" {{ isset($gridCountValue) && $gridCountValue == 20 ? 'selected' : '' }}>20</option>
+                            <option value="40" {{ isset($gridCountValue) && $gridCountValue == 40 ? 'selected' : '' }}>40</option>
+                            <option value="60" {{ isset($gridCountValue) && $gridCountValue == 60 ? 'selected' : '' }}>60</option>
+                        </select>
                     </div>
                     
                     <!-- Navigation Buttons -->
@@ -137,29 +143,30 @@
             </div>
         </div>
 
-        <!-- Grid Mode: show 10 records starting from current index -->
+        <!-- Grid Mode: show records in 2 columns (2 rates per row) -->
         @if(isset($gridEnabled) && $gridEnabled && isset($gridMarketRates) && $gridMarketRates->count())
-        <div id="ratesGridContainer" class="space-y-6">
-            @foreach($gridMarketRates as $rate)
+        <div id="ratesGridContainer" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+            @foreach($gridMarketRates as $index => $rate)
                 @php
                     $gridRunners = is_string($rate->runners) ? json_decode($rate->runners, true) : $rate->runners;
                 @endphp
                 @if(is_array($gridRunners) && count($gridRunners) > 0)
                 <div class="rates-grid-item">
-                    <div class="mb-2">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">
-                            Created: {{ $rate->created_at ? \Carbon\Carbon::parse($rate->created_at)->format('M d, Y H:i:s') : 'N/A' }}
+                    <div class="mb-1">
+                        <span class="text-xs text-gray-600 dark:text-gray-400">
+                            {{ $rate->created_at ? \Carbon\Carbon::parse($rate->created_at)->format('M d, Y H:i:s') : 'N/A' }}
                         </span>
                     </div>
-                    <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg mt-2">
+                    <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg mt-1">
                         <div class="overflow-x-auto">
-                            <table class="min-w-full">
+                            <table class="min-w-full text-xs">
                                 <thead>
                                     <tr class="bg-gray-100 dark:bg-gray-700 border-b-2 border-gray-300 dark:border-gray-600">
-                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-100 w-48">Runner</th>
-                                        <th class="px-2 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300 w-12"></th>
-                                        <th class="px-2 py-3 text-center text-xs font-semibold text-blue-700 dark:text-blue-300 border-l border-r border-gray-300 dark:border-gray-600" colspan="3">BACK</th>
-                                        <th class="px-2 py-3 text-center text-xs font-semibold text-pink-700 dark:text-pink-300 border-l border-r border-gray-300 dark:border-gray-600" colspan="3">LAY</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-900 dark:text-gray-100">Runner</th>
+                                        <th class="px-1 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 w-8"></th>
+                                        <th class="px-1 py-2 text-center text-xs font-semibold text-blue-700 dark:text-blue-300 border-l border-r border-gray-300 dark:border-gray-600" colspan="3">BACK</th>
+                                        <th class="px-1 py-2 text-center text-xs font-semibold text-pink-700 dark:text-pink-300 border-l border-r border-gray-300 dark:border-gray-600" colspan="3">LAY</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -177,35 +184,35 @@
                                             $isSuspended = empty($availableToBack) && empty($availableToLay);
                                         @endphp
                                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                            <td class="px-6 py-4">
-                                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $runnerName }}</div>
+                                            <td class="px-3 py-2">
+                                                <div class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ $runnerName }}</div>
                                             </td>
-                                            <td class="px-2 py-4 text-center"><span class="text-sm text-red-600 dark:text-red-400">0.0</span></td>
+                                            <td class="px-1 py-2 text-center"><span class="text-xs text-red-600 dark:text-red-400">0.0</span></td>
                                             @if($isSuspended)
-                                                <td colspan="6" class="px-2 py-4 text-center border-l border-r border-gray-300 dark:border-gray-600">
-                                                    <span class="text-lg font-bold text-red-600 dark:text-red-400">SUSPEND</span>
+                                                <td colspan="6" class="px-1 py-2 text-center border-l border-r border-gray-300 dark:border-gray-600">
+                                                    <span class="text-sm font-bold text-red-600 dark:text-red-400">SUSPEND</span>
                                                 </td>
                                             @else
                                                 @for($i = 0; $i < 3; $i++)
-                                                    <td class="px-2 py-4 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: #E3F2FD;">
+                                                    <td class="px-1 py-2 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: #E3F2FD;">
                                                         @if(isset($backSlots[$i]))
                                                             @php $slot = is_array($backSlots[$i]) ? $backSlots[$i] : (array) $backSlots[$i]; @endphp
-                                                            <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ number_format($slot['price'] ?? 0, 2) }}</div>
+                                                            <div class="text-xs font-semibold text-gray-900 dark:text-gray-100">{{ number_format($slot['price'] ?? 0, 2) }}</div>
                                                             <div class="text-xs text-gray-600 dark:text-gray-400">{{ number_format($slot['size'] ?? 0, 2) }}</div>
                                                         @else
-                                                            <div class="text-sm text-gray-400 dark:text-gray-500">-</div>
+                                                            <div class="text-xs text-gray-400 dark:text-gray-500">-</div>
                                                             <div class="text-xs text-gray-400 dark:text-gray-500">25K</div>
                                                         @endif
                                                     </td>
                                                 @endfor
                                                 @for($i = 0; $i < 3; $i++)
-                                                    <td class="px-2 py-4 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: #FCE4EC;">
+                                                    <td class="px-1 py-2 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: #FCE4EC;">
                                                         @if(isset($laySlots[$i]))
                                                             @php $slot = is_array($laySlots[$i]) ? $laySlots[$i] : (array) $laySlots[$i]; @endphp
-                                                            <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ number_format($slot['price'] ?? 0, 2) }}</div>
+                                                            <div class="text-xs font-semibold text-gray-900 dark:text-gray-100">{{ number_format($slot['price'] ?? 0, 2) }}</div>
                                                             <div class="text-xs text-gray-600 dark:text-gray-400">{{ number_format($slot['size'] ?? 0, 2) }}</div>
                                                         @else
-                                                            <div class="text-sm text-gray-400 dark:text-gray-500">-</div>
+                                                            <div class="text-xs text-gray-400 dark:text-gray-500">-</div>
                                                             <div class="text-xs text-gray-400 dark:text-gray-500">25K</div>
                                                         @endif
                                                     </td>
@@ -220,6 +227,7 @@
                 </div>
                 @endif
             @endforeach
+            </div>
         </div>
         @else
         <!-- Betfair Style Runners Table -->
@@ -421,7 +429,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const screenshotDropdown = document.getElementById('screenshotDropdown');
     const screenshotBtnGrid = document.getElementById('screenshotBtnGrid');
     const screenshotDropdownGrid = document.getElementById('screenshotDropdownGrid');
-    const gridToggle = document.getElementById('gridToggle');
+    const gridSelect = document.getElementById('gridSelect');
     
     if (screenshotBtn && screenshotDropdown) {
         screenshotBtn.addEventListener('click', function(e) {
@@ -451,12 +459,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Grid toggle behavior: add/remove grid=1 param and reload
-    if (gridToggle) {
-        gridToggle.addEventListener('change', function() {
+    // Grid select behavior: update grid parameter and reload
+    if (gridSelect) {
+        gridSelect.addEventListener('change', function() {
             const url = new URL(window.location.href);
-            if (this.checked) {
-                url.searchParams.set('grid', '1');
+            if (this.value) {
+                url.searchParams.set('grid', this.value);
             } else {
                 url.searchParams.delete('grid');
             }
@@ -500,20 +508,20 @@ function takeScreenshot(format) {
     
     showNotification('Taking screenshot...', 'info');
     
-    // Hide navigation buttons, grid toggle, and back button for cleaner screenshot
+    // Hide navigation buttons, grid select, and back button for cleaner screenshot
     const navButtons = document.querySelector('.flex.space-x-2');
     const backButton = document.querySelector('a[href*="market-rates.index"]');
-    const gridToggleContainer = document.querySelector('input[id="gridToggle"]')?.parentElement;
+    const gridSelectContainer = document.querySelector('select[id="gridSelect"]')?.parentElement;
     const screenshotButtonContainer = document.getElementById('screenshotBtnGrid')?.parentElement;
     
     const originalNavDisplay = navButtons ? navButtons.style.display : '';
     const originalBackDisplay = backButton ? backButton.style.display : '';
-    const originalGridDisplay = gridToggleContainer ? gridToggleContainer.style.display : '';
+    const originalGridDisplay = gridSelectContainer ? gridSelectContainer.style.display : '';
     const originalScreenshotDisplay = screenshotButtonContainer ? screenshotButtonContainer.style.display : '';
     
     if (navButtons) navButtons.style.display = 'none';
     if (backButton) backButton.style.display = 'none';
-    if (gridToggleContainer) gridToggleContainer.style.display = 'none';
+    if (gridSelectContainer) gridSelectContainer.style.display = 'none';
     if (screenshotButtonContainer) screenshotButtonContainer.style.display = 'none';
     
     // Target the correct container (grid or single)
@@ -522,7 +530,7 @@ function takeScreenshot(format) {
     if (!element) {
         if (navButtons) navButtons.style.display = originalNavDisplay;
         if (backButton) backButton.style.display = originalBackDisplay;
-        if (gridToggleContainer) gridToggleContainer.style.display = originalGridDisplay;
+        if (gridSelectContainer) gridSelectContainer.style.display = originalGridDisplay;
         if (screenshotButtonContainer) screenshotButtonContainer.style.display = originalScreenshotDisplay;
         showNotification('Error: Could not find rates table to capture', 'error');
         return;
@@ -537,7 +545,7 @@ function takeScreenshot(format) {
     }).then(canvas => {
         if (navButtons) navButtons.style.display = originalNavDisplay;
         if (backButton) backButton.style.display = originalBackDisplay;
-        if (gridToggleContainer) gridToggleContainer.style.display = originalGridDisplay;
+        if (gridSelectContainer) gridSelectContainer.style.display = originalGridDisplay;
         if (screenshotButtonContainer) screenshotButtonContainer.style.display = originalScreenshotDisplay;
         
         const link = document.createElement('a');
@@ -555,7 +563,7 @@ function takeScreenshot(format) {
     }).catch(error => {
         if (navButtons) navButtons.style.display = originalNavDisplay;
         if (backButton) backButton.style.display = originalBackDisplay;
-        if (gridToggleContainer) gridToggleContainer.style.display = originalGridDisplay;
+        if (gridSelectContainer) gridSelectContainer.style.display = originalGridDisplay;
         if (screenshotButtonContainer) screenshotButtonContainer.style.display = originalScreenshotDisplay;
         showNotification('Screenshot failed. Please try again.', 'error');
     });
