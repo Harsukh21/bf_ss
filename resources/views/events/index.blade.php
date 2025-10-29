@@ -62,8 +62,6 @@
                         if(request('sport')) $filterCount++;
                         if(request('tournament')) $filterCount++;
                         if(request('status')) $filterCount++;
-                        if(request('highlight')) $filterCount++;
-                        if(request('popular')) $filterCount++;
                         if(request('date_from')) $filterCount++;
                         if(request('date_to')) $filterCount++;
                     @endphp
@@ -129,18 +127,6 @@
                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
                             Status: {{ ucfirst(request('status')) }}
                             <button onclick="removeFilter('status')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
-                        </span>
-                    @endif
-                    @if(request('highlight'))
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-                            Highlight: Yes
-                            <button onclick="removeFilter('highlight')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
-                        </span>
-                    @endif
-                    @if(request('popular'))
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-                            Popular: Yes
-                            <button onclick="removeFilter('popular')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
                         </span>
                     @endif
                     @if(request('date_from'))
@@ -417,21 +403,6 @@
                     <option value="void" {{ request('status') == 'void' ? 'selected' : '' }}>Void</option>
                     <option value="unsettled" {{ request('status') == 'unsettled' ? 'selected' : '' }}>Unsettled</option>
                 </select>
-            </div>
-            
-            <!-- Flags -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Flags</label>
-                <div class="space-y-2">
-                    <label class="flex items-center">
-                        <input type="checkbox" name="highlight" value="1" {{ request('highlight') ? 'checked' : '' }} class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 bg-white dark:bg-gray-700">
-                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Highlight</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" name="popular" value="1" {{ request('popular') ? 'checked' : '' }} class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 bg-white dark:bg-gray-700">
-                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Popular</span>
-                    </label>
-                </div>
             </div>
             
             <!-- Date Range -->

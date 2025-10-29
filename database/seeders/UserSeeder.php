@@ -25,27 +25,6 @@ class UserSeeder extends Seeder
             ]
         );
 
-        // Create additional test users (optional)
-        User::updateOrCreate(
-            ['email' => 'admin@example.com'],
-            [
-                'name' => 'Admin User',
-                'email' => 'admin@example.com',
-                'password' => Hash::make('password123'),
-                'email_verified_at' => now(),
-            ]
-        );
-
-        User::updateOrCreate(
-            ['email' => 'user@example.com'],
-            [
-                'name' => 'Test User',
-                'email' => 'user@example.com',
-                'password' => Hash::make('password123'),
-                'email_verified_at' => now(),
-            ]
-        );
-
         $this->command->info('Users created successfully!');
         $this->command->info('Login credentials:');
         $this->command->info('harsukh21@gmail.com / Har#$785');

@@ -383,8 +383,8 @@
                             @if($marketRate->isCompleted)
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">Completed</span>
                             @elseif($marketRate->inplay)
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300">
-                                    <span class="w-2 h-2 bg-red-400 rounded-full mr-1 animate-pulse"></span>
+                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">
+                                    <span class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
                                     In Play
                                 </span>
                             @else

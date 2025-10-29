@@ -19,6 +19,7 @@ return [
         7 => 'HR',
         9 => 'Pro Kabaddi',
         7522 => 'Basketball',
+        76548427 => 'Politics',
     ],
 
     /*
