@@ -31,14 +31,63 @@ class GeneralSettingsController extends Controller
 
     public function optimize()
     {
+        $results = [];
+        $errors = [];
+        
         try {
-            Artisan::call('optimize:clear');
-            Artisan::call('config:cache');
-            Artisan::call('route:cache');
-            Artisan::call('view:cache');
+            // Clear existing caches first
+            try {
+                Artisan::call('optimize:clear');
+                $results[] = 'Cleared optimization cache';
+            } catch (\Exception $e) {
+                // If optimize:clear doesn't exist, manually clear
+                Artisan::call('config:clear');
+                Artisan::call('route:clear');
+                Artisan::call('view:clear');
+                Artisan::call('cache:clear');
+                $results[] = 'Cleared all caches manually';
+            }
+            
+            // Cache configuration
+            try {
+                Artisan::call('config:cache');
+                $results[] = 'Configuration cached';
+            } catch (\Exception $e) {
+                $errors[] = 'config:cache failed: ' . $e->getMessage();
+            }
+            
+            // Cache routes (skip if in development with closures)
+            try {
+                if (app()->environment('production')) {
+                    Artisan::call('route:cache');
+                    $results[] = 'Routes cached';
+                } else {
+                    // In development, just ensure routes are not cached
+                    try {
+                        Artisan::call('route:clear');
+                    } catch (\Exception $e) {
+                        // Ignore route:clear errors
+                    }
+                }
+            } catch (\Exception $e) {
+                $errors[] = 'route:cache failed: ' . $e->getMessage();
+            }
+            
+            // Cache views
+            try {
+                Artisan::call('view:cache');
+                $results[] = 'Views cached';
+            } catch (\Exception $e) {
+                $errors[] = 'view:cache failed: ' . $e->getMessage();
+            }
+            
+            $message = 'Application optimized successfully. ' . implode(', ', $results);
+            if (!empty($errors)) {
+                $message .= ' (Some operations had warnings: ' . implode('; ', $errors) . ')';
+            }
             
             return redirect()->route('general-settings.index')
-                ->with('success', 'Application optimized successfully.');
+                ->with('success', $message);
         } catch (\Exception $e) {
             return redirect()->route('general-settings.index')
                 ->with('error', 'Failed to optimize: ' . $e->getMessage());
