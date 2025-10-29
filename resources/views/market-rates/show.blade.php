@@ -19,8 +19,14 @@
                     <span class="text-sm text-gray-600 dark:text-gray-400">
                         Min: 10 | Max: 25K
                     </span>
+                    <!-- Grid Toggle -->
+                    <div class="flex items-center space-x-2">
+                        <input id="gridToggle" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded" {{ isset($gridEnabled) && $gridEnabled ? 'checked' : '' }}>
+                        <label for="gridToggle" class="text-sm text-gray-700 dark:text-gray-300">Grid (10)</label>
+                    </div>
                     
                     <!-- Navigation Buttons -->
+                    @unless(isset($gridEnabled) && $gridEnabled)
                     <div class="flex space-x-2">
                         @if($previousMarketRate)
                             <a href="{{ route('market-rates.show', $previousMarketRate->id) . '?exEventId=' . urlencode($selectedEventId) }}" 
@@ -86,6 +92,39 @@
                             </div>
                         </div>
                     </div>
+                    @endunless
+                    
+                    <!-- Screenshot button for grid mode -->
+                    @if(isset($gridEnabled) && $gridEnabled)
+                    <div class="relative">
+                        <button id="screenshotBtnGrid" class="bg-green-600 dark:bg-green-700 text-white px-3 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-800 transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Screenshot
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div id="screenshotDropdownGrid" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                            <button onclick="takeScreenshot('png')" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                Download PNG
+                            </button>
+                            <button onclick="takeScreenshot('jpeg')" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                Download JPEG
+                            </button>
+                        </div>
+                    </div>
+                    @endif
                     
                     <a href="{{ route('market-rates.index', ['exEventId' => $selectedEventId]) }}" 
                        class="bg-gray-600 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors flex items-center">
@@ -98,6 +137,91 @@
             </div>
         </div>
 
+        <!-- Grid Mode: show 10 records starting from current index -->
+        @if(isset($gridEnabled) && $gridEnabled && isset($gridMarketRates) && $gridMarketRates->count())
+        <div id="ratesGridContainer" class="space-y-6">
+            @foreach($gridMarketRates as $rate)
+                @php
+                    $gridRunners = is_string($rate->runners) ? json_decode($rate->runners, true) : $rate->runners;
+                @endphp
+                @if(is_array($gridRunners) && count($gridRunners) > 0)
+                <div class="rates-grid-item">
+                    <div class="mb-2">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">
+                            Created: {{ $rate->created_at ? \Carbon\Carbon::parse($rate->created_at)->format('M d, Y H:i:s') : 'N/A' }}
+                        </span>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg mt-2">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead>
+                                    <tr class="bg-gray-100 dark:bg-gray-700 border-b-2 border-gray-300 dark:border-gray-600">
+                                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-100 w-48">Runner</th>
+                                        <th class="px-2 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300 w-12"></th>
+                                        <th class="px-2 py-3 text-center text-xs font-semibold text-blue-700 dark:text-blue-300 border-l border-r border-gray-300 dark:border-gray-600" colspan="3">BACK</th>
+                                        <th class="px-2 py-3 text-center text-xs font-semibold text-pink-700 dark:text-pink-300 border-l border-r border-gray-300 dark:border-gray-600" colspan="3">LAY</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    @foreach($gridRunners as $runner)
+                                        @php
+                                            $runner = is_array($runner) ? $runner : (array) $runner;
+                                            $runnerName = $runner['runnerName'] ?? 'Unknown Runner';
+                                            $exchange = is_array($runner['exchange'] ?? null) ? $runner['exchange'] : (array) ($runner['exchange'] ?? []);
+                                            $availableToBack = $exchange['availableToBack'] ?? [];
+                                            $availableToLay = $exchange['availableToLay'] ?? [];
+                                            $availableToBack = is_array($availableToBack) ? $availableToBack : (array) $availableToBack;
+                                            $availableToLay = is_array($availableToLay) ? $availableToLay : (array) $availableToLay;
+                                            $backSlots = array_reverse(array_slice($availableToBack, 0, 3));
+                                            $laySlots = array_reverse(array_slice($availableToLay, 0, 3));
+                                            $isSuspended = empty($availableToBack) && empty($availableToLay);
+                                        @endphp
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                            <td class="px-6 py-4">
+                                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $runnerName }}</div>
+                                            </td>
+                                            <td class="px-2 py-4 text-center"><span class="text-sm text-red-600 dark:text-red-400">0.0</span></td>
+                                            @if($isSuspended)
+                                                <td colspan="6" class="px-2 py-4 text-center border-l border-r border-gray-300 dark:border-gray-600">
+                                                    <span class="text-lg font-bold text-red-600 dark:text-red-400">SUSPEND</span>
+                                                </td>
+                                            @else
+                                                @for($i = 0; $i < 3; $i++)
+                                                    <td class="px-2 py-4 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: #E3F2FD;">
+                                                        @if(isset($backSlots[$i]))
+                                                            @php $slot = is_array($backSlots[$i]) ? $backSlots[$i] : (array) $backSlots[$i]; @endphp
+                                                            <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ number_format($slot['price'] ?? 0, 2) }}</div>
+                                                            <div class="text-xs text-gray-600 dark:text-gray-400">{{ number_format($slot['size'] ?? 0, 2) }}</div>
+                                                        @else
+                                                            <div class="text-sm text-gray-400 dark:text-gray-500">-</div>
+                                                            <div class="text-xs text-gray-400 dark:text-gray-500">25K</div>
+                                                        @endif
+                                                    </td>
+                                                @endfor
+                                                @for($i = 0; $i < 3; $i++)
+                                                    <td class="px-2 py-4 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: #FCE4EC;">
+                                                        @if(isset($laySlots[$i]))
+                                                            @php $slot = is_array($laySlots[$i]) ? $laySlots[$i] : (array) $laySlots[$i]; @endphp
+                                                            <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ number_format($slot['price'] ?? 0, 2) }}</div>
+                                                            <div class="text-xs text-gray-600 dark:text-gray-400">{{ number_format($slot['size'] ?? 0, 2) }}</div>
+                                                        @else
+                                                            <div class="text-sm text-gray-400 dark:text-gray-500">-</div>
+                                                            <div class="text-xs text-gray-400 dark:text-gray-500">25K</div>
+                                                        @endif
+                                                    </td>
+                                                @endfor
+                                            @endif
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                @endif
+            @endforeach
+        </div>
+        @else
         <!-- Betfair Style Runners Table -->
         @php
             $runners = is_string($marketRate->runners) ? json_decode($marketRate->runners, true) : $marketRate->runners;
@@ -221,7 +345,6 @@
                     </table>
                 </div>
             </div>
-            </div>
             <!-- End of Screenshot Container -->
 
             <!-- Market Info Footer -->
@@ -243,12 +366,12 @@
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">Upcoming</span>
                             @endif
                     </div>
-                    </div>
-                    <div>
+                </div>
+                <div>
                     <span class="font-medium">Event ID:</span> {{ $selectedEventId }}
-        </div>
-                                                </div>
-                                            @else
+                </div>
+            </div>
+        @else
             <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
                 <div class="px-6 py-12 text-center">
                         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,6 +381,7 @@
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">No runners information available for this market.</p>
                 </div>
             </div>
+        @endif
         @endif
 
         
@@ -295,11 +419,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Screenshot dropdown toggle
     const screenshotBtn = document.getElementById('screenshotBtn');
     const screenshotDropdown = document.getElementById('screenshotDropdown');
+    const screenshotBtnGrid = document.getElementById('screenshotBtnGrid');
+    const screenshotDropdownGrid = document.getElementById('screenshotDropdownGrid');
+    const gridToggle = document.getElementById('gridToggle');
     
     if (screenshotBtn && screenshotDropdown) {
         screenshotBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             screenshotDropdown.classList.toggle('hidden');
+        });
+    }
+
+    if (screenshotBtnGrid && screenshotDropdownGrid) {
+        screenshotBtnGrid.addEventListener('click', function(e) {
+            e.stopPropagation();
+            screenshotDropdownGrid.classList.toggle('hidden');
         });
     }
 
@@ -310,14 +444,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 screenshotDropdown.classList.add('hidden');
             }
         }
+        if (screenshotBtnGrid && screenshotDropdownGrid) {
+            if (!screenshotBtnGrid.contains(e.target) && !screenshotDropdownGrid.contains(e.target)) {
+                screenshotDropdownGrid.classList.add('hidden');
+            }
+        }
     });
+
+    // Grid toggle behavior: add/remove grid=1 param and reload
+    if (gridToggle) {
+        gridToggle.addEventListener('change', function() {
+            const url = new URL(window.location.href);
+            if (this.checked) {
+                url.searchParams.set('grid', '1');
+            } else {
+                url.searchParams.delete('grid');
+            }
+            window.location.href = url.toString();
+        });
+    }
 });
 
 // Take screenshot function
 function takeScreenshot(format) {
     const dropdown = document.getElementById('screenshotDropdown');
+    const dropdownGrid = document.getElementById('screenshotDropdownGrid');
     if (dropdown) {
         dropdown.classList.add('hidden');
+    }
+    if (dropdownGrid) {
+        dropdownGrid.classList.add('hidden');
     }
     
     // Check if library is loaded
@@ -344,21 +500,30 @@ function takeScreenshot(format) {
     
     showNotification('Taking screenshot...', 'info');
     
-    // Hide navigation buttons for cleaner screenshot
+    // Hide navigation buttons, grid toggle, and back button for cleaner screenshot
     const navButtons = document.querySelector('.flex.space-x-2');
     const backButton = document.querySelector('a[href*="market-rates.index"]');
+    const gridToggleContainer = document.querySelector('input[id="gridToggle"]')?.parentElement;
+    const screenshotButtonContainer = document.getElementById('screenshotBtnGrid')?.parentElement;
+    
     const originalNavDisplay = navButtons ? navButtons.style.display : '';
     const originalBackDisplay = backButton ? backButton.style.display : '';
+    const originalGridDisplay = gridToggleContainer ? gridToggleContainer.style.display : '';
+    const originalScreenshotDisplay = screenshotButtonContainer ? screenshotButtonContainer.style.display : '';
     
     if (navButtons) navButtons.style.display = 'none';
     if (backButton) backButton.style.display = 'none';
+    if (gridToggleContainer) gridToggleContainer.style.display = 'none';
+    if (screenshotButtonContainer) screenshotButtonContainer.style.display = 'none';
     
-    // Target the rates table container which includes timestamp and table
-    const element = document.getElementById('ratesTableContainer');
+    // Target the correct container (grid or single)
+    const element = document.getElementById('ratesGridContainer') || document.getElementById('ratesTableContainer');
     
     if (!element) {
         if (navButtons) navButtons.style.display = originalNavDisplay;
         if (backButton) backButton.style.display = originalBackDisplay;
+        if (gridToggleContainer) gridToggleContainer.style.display = originalGridDisplay;
+        if (screenshotButtonContainer) screenshotButtonContainer.style.display = originalScreenshotDisplay;
         showNotification('Error: Could not find rates table to capture', 'error');
         return;
     }
@@ -372,6 +537,8 @@ function takeScreenshot(format) {
     }).then(canvas => {
         if (navButtons) navButtons.style.display = originalNavDisplay;
         if (backButton) backButton.style.display = originalBackDisplay;
+        if (gridToggleContainer) gridToggleContainer.style.display = originalGridDisplay;
+        if (screenshotButtonContainer) screenshotButtonContainer.style.display = originalScreenshotDisplay;
         
         const link = document.createElement('a');
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -388,6 +555,8 @@ function takeScreenshot(format) {
     }).catch(error => {
         if (navButtons) navButtons.style.display = originalNavDisplay;
         if (backButton) backButton.style.display = originalBackDisplay;
+        if (gridToggleContainer) gridToggleContainer.style.display = originalGridDisplay;
+        if (screenshotButtonContainer) screenshotButtonContainer.style.display = originalScreenshotDisplay;
         showNotification('Screenshot failed. Please try again.', 'error');
     });
 }

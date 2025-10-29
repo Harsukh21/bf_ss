@@ -110,6 +110,7 @@ class MarketRateController extends Controller
     public function show(Request $request, $id)
     {
         $selectedEventId = $request->get('exEventId');
+        $gridEnabled = $request->boolean('grid');
         
         if (!$selectedEventId || !MarketRate::tableExistsForEvent($selectedEventId)) {
             return redirect()->route('market-rates.index')
@@ -127,16 +128,20 @@ class MarketRateController extends Controller
         $eventInfo = Event::where('exEventId', $selectedEventId)->first();
 
         // Get next and previous market rates for navigation (filtered by marketName)
+        // Ensure we only get records with the exact same marketName
         $allMarketRates = MarketRate::forEvent($selectedEventId)
             ->where('marketName', $marketRate->marketName)
+            ->whereNotNull('marketName')
             ->orderBy('created_at', 'desc')
             ->get();
+        
         $currentIndex = $allMarketRates->search(function($item) use ($id) {
             return $item->id == $id;
         });
         
         $previousMarketRate = null;
         $nextMarketRate = null;
+        $gridMarketRates = collect();
         
         if ($currentIndex !== false) {
             if ($currentIndex > 0) {
@@ -145,9 +150,39 @@ class MarketRateController extends Controller
             if ($currentIndex < $allMarketRates->count() - 1) {
                 $nextMarketRate = $allMarketRates[$currentIndex + 1];
             }
+
+            // When grid mode is enabled, get current record + 9 newer records (total 10)
+            // All records are already filtered by marketName above
+            if ($gridEnabled) {
+                $currentCreatedAt = $marketRate->created_at;
+                
+                // Get up to 9 records with same marketName that are newer (created_at > current)
+                $newerRecords = MarketRate::forEvent($selectedEventId)
+                    ->where('marketName', $marketRate->marketName)
+                    ->whereNotNull('marketName')
+                    ->where('created_at', '>', $currentCreatedAt)
+                    ->orderBy('created_at', 'asc') // Order ascending to get them in chronological order
+                    ->limit(9)
+                    ->get();
+                
+                // Double-check marketName matches and create collection with current record first
+                $gridMarketRates = collect([$marketRate])
+                    ->merge($newerRecords->filter(function($item) use ($marketRate) {
+                        return $item->marketName === $marketRate->marketName;
+                    }))
+                    ->values();
+            }
         }
 
-        return view('market-rates.show', compact('marketRate', 'eventInfo', 'selectedEventId', 'previousMarketRate', 'nextMarketRate'));
+        return view('market-rates.show', compact(
+            'marketRate',
+            'eventInfo',
+            'selectedEventId',
+            'previousMarketRate',
+            'nextMarketRate',
+            'gridEnabled',
+            'gridMarketRates'
+        ));
     }
 
     /**
