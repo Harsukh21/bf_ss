@@ -98,13 +98,6 @@
             </div>
         </div>
 
-        <!-- Timestamp -->
-        <div class="mb-4">
-            <span class="text-sm text-gray-600 dark:text-gray-400">
-                Created: {{ $marketRate->created_at ? \Carbon\Carbon::parse($marketRate->created_at)->format('M d, Y H:i:s') : 'N/A' }}
-            </span>
-        </div>
-
         <!-- Betfair Style Runners Table -->
         @php
             $runners = is_string($marketRate->runners) ? json_decode($marketRate->runners, true) : $marketRate->runners;
@@ -114,8 +107,8 @@
         <!-- Screenshot Container - includes timestamp and table -->
         <div id="ratesTableContainer">
             <!-- Timestamp for Screenshot -->
-            <div class="mb-2 px-2 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded inline-block">
-                <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">
+            <div class="mb-2">
+                <span class="text-sm text-gray-600 dark:text-gray-400">
                     Created: {{ $marketRate->created_at ? \Carbon\Carbon::parse($marketRate->created_at)->format('M d, Y H:i:s') : 'N/A' }}
                 </span>
             </div>
@@ -180,7 +173,7 @@
                                     @else
                                         <!-- BACK Columns (3 slots) -->
                                         @for($i = 0; $i < 3; $i++)
-                                            <td class="px-2 py-4 text-center border-l border-r border-gray-200 dark:border-gray-600 bg-blue-50 dark:bg-blue-900/20">
+                                            <td class="px-2 py-4 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: #E3F2FD;">
                                                 @if(isset($backSlots[$i]))
                                                     @php
                                                         $slot = is_array($backSlots[$i]) ? $backSlots[$i] : (array) $backSlots[$i];
@@ -202,7 +195,7 @@
                                         
                                         <!-- LAY Columns (3 slots) -->
                                         @for($i = 0; $i < 3; $i++)
-                                            <td class="px-2 py-4 text-center border-l border-r border-gray-200 dark:border-gray-600 bg-pink-50 dark:bg-pink-900/20">
+                                            <td class="px-2 py-4 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: #FCE4EC;">
                                                 @if(isset($laySlots[$i]))
                                                     @php
                                                         $slot = is_array($laySlots[$i]) ? $laySlots[$i] : (array) $laySlots[$i];
