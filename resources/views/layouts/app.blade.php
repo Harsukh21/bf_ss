@@ -247,6 +247,30 @@
         document.addEventListener('DOMContentLoaded', function() {
             clearHistory();
         });
+
+        // Handle sidebar logout
+        function handleSidebarLogout() {
+            if (typeof ToastNotification !== 'undefined') {
+                ToastNotification.confirm(
+                    'Are you sure you want to logout? This will end your current session and redirect you to the login page.',
+                    'Yes, Logout',
+                    'Cancel'
+                ).then(function(result) {
+                    if (result) {
+                        ToastNotification.show('Logging out...', 'info');
+                        setTimeout(function() {
+                            document.getElementById('sidebarLogoutForm').submit();
+                        }, 500);
+                    }
+                }).catch(function(error) {
+                    console.error('Logout error:', error);
+                });
+            } else {
+                if (confirm('Are you sure you want to logout?')) {
+                    document.getElementById('sidebarLogoutForm').submit();
+                }
+            }
+        }
         
         // Prevent caching of this page
         if (window.history && window.history.pushState) {
