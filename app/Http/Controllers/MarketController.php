@@ -159,13 +159,13 @@ class MarketController extends Controller
             $query->where('isPreBet', true);
         }
 
-        // Date range filter
+        // Date range filter - using marketTime from market_lists table
         if ($request->filled('date_from')) {
-            $query->whereDate('marketTime', '>=', $request->date_from);
+            $query->where('marketTime', '>=', $request->date_from . ' 00:00:00');
         }
 
         if ($request->filled('date_to')) {
-            $query->whereDate('marketTime', '<=', $request->date_to);
+            $query->where('marketTime', '<=', $request->date_to . ' 23:59:59');
         }
 
         // Search filter
