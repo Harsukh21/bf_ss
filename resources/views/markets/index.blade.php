@@ -261,7 +261,7 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {{ \Carbon\Carbon::parse($market->marketTime)->format('M d, Y H:i') }}
+                                        {{ \Carbon\Carbon::parse($market->marketTime)->format('M d, Y H:i:s') }}
                                     </td>
                                 </tr>
                             @endforeach

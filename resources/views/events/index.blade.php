@@ -320,7 +320,7 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {{ $event->createdAt ? \Carbon\Carbon::parse($event->createdAt)->format('M d, Y H:i') : 'N/A' }}
+                                        {{ $event->createdAt ? \Carbon\Carbon::parse($event->createdAt)->format('M d, Y H:i:s') : 'N/A' }}
                                     </td>
                                 </tr>
                             @endforeach
