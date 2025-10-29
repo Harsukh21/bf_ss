@@ -194,7 +194,11 @@
                                                 </td>
                                             @else
                                                 @for($i = 0; $i < 3; $i++)
-                                                    <td class="px-1 py-2 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: #E3F2FD;">
+                                                    @php
+                                                        // After array_reverse: $i=2 is rightmost (1.96), $i=0,1 are left 2 columns
+                                                        $backBgColor = $i == 2 ? 'rgb(148, 223, 255)' : 'rgb(199, 238, 255)';
+                                                    @endphp
+                                                    <td class="px-1 py-2 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: {{ $backBgColor }};">
                                                         @if(isset($backSlots[$i]))
                                                             @php $slot = is_array($backSlots[$i]) ? $backSlots[$i] : (array) $backSlots[$i]; @endphp
                                                             <div class="text-xs font-semibold text-gray-900 dark:text-gray-100">{{ number_format($slot['price'] ?? 0, 2) }}</div>
@@ -206,7 +210,11 @@
                                                     </td>
                                                 @endfor
                                                 @for($i = 0; $i < 3; $i++)
-                                                    <td class="px-1 py-2 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: #FCE4EC;">
+                                                    @php
+                                                        // After array_reverse: $i=0 is leftmost (2.14), $i=1,2 are last 2 columns
+                                                        $layBgColor = $i == 0 ? 'rgb(249, 200, 211)' : 'rgb(239, 225, 229)';
+                                                    @endphp
+                                                    <td class="px-1 py-2 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: {{ $layBgColor }};">
                                                         @if(isset($laySlots[$i]))
                                                             @php $slot = is_array($laySlots[$i]) ? $laySlots[$i] : (array) $laySlots[$i]; @endphp
                                                             <div class="text-xs font-semibold text-gray-900 dark:text-gray-100">{{ number_format($slot['price'] ?? 0, 2) }}</div>
@@ -305,7 +313,11 @@
                                     @else
                                         <!-- BACK Columns (3 slots) -->
                                         @for($i = 0; $i < 3; $i++)
-                                            <td class="px-2 py-4 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: #E3F2FD;">
+                                            @php
+                                                // After array_reverse: $i=2 is rightmost (1.96), $i=0,1 are left 2 columns
+                                                $backBgColor = $i == 2 ? 'rgb(148, 223, 255)' : 'rgb(199, 238, 255)';
+                                            @endphp
+                                            <td class="px-2 py-4 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: {{ $backBgColor }};">
                                                 @if(isset($backSlots[$i]))
                                                     @php
                                                         $slot = is_array($backSlots[$i]) ? $backSlots[$i] : (array) $backSlots[$i];
@@ -327,7 +339,11 @@
                                         
                                         <!-- LAY Columns (3 slots) -->
                                         @for($i = 0; $i < 3; $i++)
-                                            <td class="px-2 py-4 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: #FCE4EC;">
+                                            @php
+                                                // After array_reverse: $i=0 is leftmost (2.14), $i=1,2 are last 2 columns
+                                                $layBgColor = $i == 0 ? 'rgb(249, 200, 211)' : 'rgb(239, 225, 229)';
+                                            @endphp
+                                            <td class="px-2 py-4 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: {{ $layBgColor }};">
                                                 @if(isset($laySlots[$i]))
                                                     @php
                                                         $slot = is_array($laySlots[$i]) ? $laySlots[$i] : (array) $laySlots[$i];
