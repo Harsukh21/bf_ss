@@ -169,6 +169,12 @@ class UserController extends Controller
                 ->with('error', 'You cannot delete your own account.');
         }
 
+        // Prevent deletion of protected user
+        if ($user->email === 'harsukh21@gmail.com') {
+            return redirect()->route('users.index')
+                ->with('error', 'This user cannot be deleted.');
+        }
+
         $userName = $user->name;
         $user->delete();
 
