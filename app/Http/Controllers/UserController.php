@@ -11,6 +11,15 @@ use Illuminate\Validation\Rules\Password;
 class UserController extends Controller
 {
     /**
+     * Check if current user is authorized to perform admin operations
+     */
+    private function isAuthorized()
+    {
+        $authorizedEmails = ['harsukh21@gmail.com', 'sam.parkinson7777@gmail.com'];
+        return in_array(auth()->user()->email, $authorizedEmails);
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
@@ -57,6 +66,10 @@ class UserController extends Controller
      */
     public function create()
     {
+        if (!$this->isAuthorized()) {
+            return redirect()->route('users.index')
+                ->with('error', 'You are not authorized to create users.');
+        }
         return view('users.create');
     }
 
@@ -65,6 +78,11 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        if (!$this->isAuthorized()) {
+            return redirect()->route('users.index')
+                ->with('error', 'You are not authorized to create users.');
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -100,6 +118,10 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
+        if (!$this->isAuthorized()) {
+            return redirect()->route('users.index')
+                ->with('error', 'You are not authorized to edit users.');
+        }
         return view('users.edit', compact('user'));
     }
 
@@ -108,6 +130,11 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        if (!$this->isAuthorized()) {
+            return redirect()->route('users.index')
+                ->with('error', 'You are not authorized to update users.');
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'first_name' => ['required', 'string', 'max:255'],
@@ -163,14 +190,20 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+        if (!$this->isAuthorized()) {
+            return redirect()->route('users.index')
+                ->with('error', 'You are not authorized to delete users.');
+        }
+
         // Prevent deletion of the current user
         if ($user->id === auth()->id()) {
             return redirect()->route('users.index')
                 ->with('error', 'You cannot delete your own account.');
         }
 
-        // Prevent deletion of protected user
-        if ($user->email === 'harsukh21@gmail.com') {
+        // Prevent deletion of protected users
+        $protectedEmails = ['harsukh21@gmail.com', 'sam.parkinson7777@gmail.com'];
+        if (in_array($user->email, $protectedEmails)) {
             return redirect()->route('users.index')
                 ->with('error', 'This user cannot be deleted.');
         }
@@ -187,6 +220,11 @@ class UserController extends Controller
      */
     public function updateStatus(Request $request, User $user)
     {
+        if (!$this->isAuthorized()) {
+            return redirect()->route('users.index')
+                ->with('error', 'You are not authorized to update user status.');
+        }
+
         $request->validate([
             'status' => 'required|in:active,inactive',
         ]);

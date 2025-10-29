@@ -124,12 +124,18 @@
                         @endif
                     </button>
                     
-                    <a href="{{ route('users.create') }}" class="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-800 transition-colors flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        Add User
-                    </a>
+                    @php
+                        $authorizedEmails = ['harsukh21@gmail.com', 'sam.parkinson7777@gmail.com'];
+                        $isAuthorized = in_array(auth()->user()->email, $authorizedEmails);
+                    @endphp
+                    @if($isAuthorized)
+                        <a href="{{ route('users.create') }}" class="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-800 transition-colors flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Add User
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>
@@ -237,14 +243,26 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <form action="{{ route('users.update-status', $user) }}" method="POST" class="inline" id="statusForm{{ $user->id }}">
-                                        @csrf
-                                        @method('PATCH')
-                                        <select name="status" onchange="updateStatus({{ $user->id }})" class="status-select text-xs font-medium rounded-full px-3 py-1 border-0 focus:ring-2 focus:ring-primary-500 {{ $user->email_verified_at ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300' }}">
-                                            <option value="active" {{ $user->email_verified_at ? 'selected' : '' }}>Active</option>
-                                            <option value="inactive" {{ !$user->email_verified_at ? 'selected' : '' }}>Inactive</option>
-                                        </select>
-                                    </form>
+                                    @php
+                                        $authorizedEmails = ['harsukh21@gmail.com', 'sam.parkinson7777@gmail.com'];
+                                        $isAuthorized = in_array(auth()->user()->email, $authorizedEmails);
+                                    @endphp
+                                    @if($isAuthorized)
+                                        <form action="{{ route('users.update-status', $user) }}" method="POST" class="inline" id="statusForm{{ $user->id }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <select name="status" onchange="updateStatus({{ $user->id }})" class="status-select text-xs font-medium rounded-full px-3 py-1 border-0 focus:ring-2 focus:ring-primary-500 {{ $user->email_verified_at ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300' }}">
+                                                <option value="active" {{ $user->email_verified_at ? 'selected' : '' }}>Active</option>
+                                                <option value="inactive" {{ !$user->email_verified_at ? 'selected' : '' }}>Inactive</option>
+                                            </select>
+                                        </form>
+                                    @else
+                                        @if($user->email_verified_at)
+                                            <span class="status-badge status-active">Active</span>
+                                        @else
+                                            <span class="status-badge status-inactive">Inactive</span>
+                                        @endif
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                     @if($user->last_login_at)
@@ -265,19 +283,28 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                             </svg>
                                         </a>
-                                        <a href="{{ route('users.edit', $user) }}" 
-                                           class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                            </svg>
-                                        </a>
-                                        @if($user->id !== auth()->id() && $user->email !== 'harsukh21@gmail.com')
-                                            <button onclick="confirmDeleteUser({{ $user->id }}, {{ json_encode($user->name) }})" 
-                                                    class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200">
+                                        @php
+                                            $authorizedEmails = ['harsukh21@gmail.com', 'sam.parkinson7777@gmail.com'];
+                                            $isAuthorized = in_array(auth()->user()->email, $authorizedEmails);
+                                        @endphp
+                                        @if($isAuthorized)
+                                            <a href="{{ route('users.edit', $user) }}" 
+                                               class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                                 </svg>
-                                            </button>
+                                            </a>
+                                            @php
+                                                $protectedEmails = ['harsukh21@gmail.com', 'sam.parkinson7777@gmail.com'];
+                                            @endphp
+                                            @if($user->id !== auth()->id() && !in_array($user->email, $protectedEmails))
+                                                <button onclick="confirmDeleteUser({{ $user->id }}, {{ json_encode($user->name) }})" 
+                                                        class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                    </svg>
+                                                </button>
+                                            @endif
                                         @endif
                                     </div>
                                 </td>
