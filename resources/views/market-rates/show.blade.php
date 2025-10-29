@@ -31,44 +31,9 @@
                         </select>
                     </div>
                     
-                    <!-- Navigation Buttons -->
+                    <!-- Screenshot Options -->
                     @unless(isset($gridEnabled) && $gridEnabled)
                     <div class="flex space-x-2">
-                        @if($previousMarketRate)
-                            <a href="{{ route('market-rates.show', $previousMarketRate->id) . '?exEventId=' . urlencode($selectedEventId) }}" 
-                               class="bg-blue-600 dark:bg-blue-700 text-white px-3 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors flex items-center">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                                </svg>
-                                Previous
-                            </a>
-                        @else
-                            <span class="bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 px-3 py-2 rounded-lg flex items-center cursor-not-allowed">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                                </svg>
-                                Previous
-                            </span>
-                        @endif
-                        
-                        @if($nextMarketRate)
-                            <a href="{{ route('market-rates.show', $nextMarketRate->id) . '?exEventId=' . urlencode($selectedEventId) }}" 
-                               class="bg-blue-600 dark:bg-blue-700 text-white px-3 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors flex items-center">
-                                Next
-                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                </svg>
-                            </a>
-                        @else
-                            <span class="bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 px-3 py-2 rounded-lg flex items-center cursor-not-allowed">
-                                Next
-                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                </svg>
-                            </span>
-                        @endif
-                        
-                        <!-- Screenshot Options -->
                         <div class="relative">
                             <button id="screenshotBtn" class="bg-green-600 dark:bg-green-700 text-white px-3 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-800 transition-colors flex items-center">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
