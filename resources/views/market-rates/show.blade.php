@@ -122,16 +122,13 @@
                         <span class="text-xs text-gray-600 dark:text-gray-400">
                             {{ $rate->created_at ? \Carbon\Carbon::parse($rate->created_at)->format('M d, Y H:i:s') : 'N/A' }}
                         </span>
-                        <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                            Matched: {{ number_format($rate->totalMatched ?? 0, 2) }}
-                        </span>
                     </div>
                     <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg mt-1">
                         <div class="overflow-x-auto">
                             <table class="min-w-full text-xs">
                                 <thead>
                                     <tr class="bg-gray-100 dark:bg-gray-700 border-b-2 border-gray-300 dark:border-gray-600">
-                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-900 dark:text-gray-100">Runner</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-900 dark:text-gray-100">VOL: {{ number_format($rate->totalMatched ?? 0, 2) }}</th>
                                         <th class="px-1 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 w-8"></th>
                                         <th class="px-1 py-2 text-center text-xs font-semibold text-blue-700 dark:text-blue-300 border-l border-r border-gray-300 dark:border-gray-600" colspan="3">BACK</th>
                                         <th class="px-1 py-2 text-center text-xs font-semibold text-pink-700 dark:text-pink-300 border-l border-r border-gray-300 dark:border-gray-600" colspan="3">LAY</th>
@@ -262,7 +259,7 @@
                     <table class="min-w-full">
                         <thead>
                             <tr class="bg-gray-100 dark:bg-gray-700 border-b-2 border-gray-300 dark:border-gray-600">
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-100 w-48">Runner</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-100 w-48">VOL: {{ number_format($marketRate->totalMatched ?? 0, 2) }}</th>
                                 <th class="px-2 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300 w-12"></th>
                                 <th class="px-2 py-3 text-center text-xs font-semibold text-blue-700 dark:text-blue-300 border-l border-r border-gray-300 dark:border-gray-600" colspan="3">BACK</th>
                                 <th class="px-2 py-3 text-center text-xs font-semibold text-pink-700 dark:text-pink-300 border-l border-r border-gray-300 dark:border-gray-600" colspan="3">LAY</th>

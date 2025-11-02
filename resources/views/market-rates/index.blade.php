@@ -44,23 +44,6 @@
         visibility: visible;
     }
     
-    button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-    
-    #viewRatesBtnText {
-        display: inline !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        min-width: auto !important;
-        position: relative !important;
-        z-index: 1 !important;
-    }
-    
-    #viewRatesBtnSpinner.hidden {
-        display: none !important;
-    }
     
     .animate-slide-in {
         animation: slideInDown 0.3s ease-out;
@@ -188,12 +171,11 @@
                         </div>
                     </div>
                     <div class="md:col-span-1">
-                        <button type="submit" id="viewRatesBtn" class="w-full bg-primary-600 dark:bg-primary-700 text-white px-6 py-2 rounded-md hover:bg-primary-700 dark:hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors flex items-center justify-center" onclick="return handleViewRatesClick(event)">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 opacity-0 pointer-events-none">
+                            Action
+                        </label>
+                        <button type="submit" id="viewRatesBtn" class="w-full bg-primary-600 dark:bg-primary-700 text-white px-6 py-2 rounded-md hover:bg-primary-700 dark:hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors flex items-center justify-center">
                             <span id="viewRatesBtnText">View Rates</span>
-                            <svg id="viewRatesBtnSpinner" class="hidden w-5 h-5 ml-2 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
                         </button>
                     </div>
                 </form>
@@ -345,7 +327,26 @@
                         </div>
                     @endif
                 </div>
-            @elseif($eventInfo)
+            @elseif($eventInfo && $ratesTableNotFound)
+                <!-- Rates Table Not Found Message -->
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+                    <div class="px-6 py-12 text-center">
+                        <svg class="mx-auto h-12 w-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Market Rates Table Not Found</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            The market rates table for <strong>{{ $eventInfo->eventName }}</strong> does not exist in the database.
+                        </p>
+                        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                            Event ID: {{ $selectedEventId }}
+                        </p>
+                        <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">
+                            The table <code class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">market_rates_{{{ $selectedEventId }}}</code> was not found.
+                        </p>
+                    </div>
+                </div>
+            @elseif($eventInfo && $marketRates->count() === 0)
                 <!-- No Data Message -->
                 <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
                     <div class="px-6 py-12 text-center">
@@ -357,7 +358,7 @@
                             No market rates data available for <strong>{{ $eventInfo->eventName }}</strong>.
                         </p>
                         <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                            The market rates table for this event may not exist yet.
+                            The market rates table exists but contains no data.
                         </p>
                     </div>
                 </div>
@@ -506,59 +507,6 @@ function closeValidationAlert() {
     }
 }
 
-// Handle View Rates button click - runs BEFORE form submit
-function handleViewRatesClick(e) {
-    const exEventIdInput = document.getElementById('exEventId');
-    const eventSearch = document.getElementById('eventSearch');
-    
-    if (!exEventIdInput || !eventSearch) {
-        return true; // Allow form submission if elements don't exist
-    }
-    
-    const currentEventId = exEventIdInput.value;
-    const hasHiddenValue = currentEventId && currentEventId.trim() !== '';
-    const hasVisibleValue = eventSearch.value && eventSearch.value.trim() !== '';
-    const eventSelected = hasHiddenValue && hasVisibleValue;
-    
-    if (!eventSelected) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        
-        // Keep button in normal state - force visibility
-        const btn = document.getElementById('viewRatesBtn');
-        const btnText = document.getElementById('viewRatesBtnText');
-        const btnSpinner = document.getElementById('viewRatesBtnSpinner');
-        
-        if (btn && btnText && btnSpinner) {
-            btn.disabled = false;
-            btnText.textContent = 'View Rates';
-            btnText.style.display = 'inline';
-            btnText.style.visibility = 'visible';
-            btnText.style.opacity = '1';
-            btnSpinner.classList.add('hidden');
-        }
-        
-        // Show validation alert
-        showValidationAlert();
-        
-        // Highlight the search input
-        eventSearch.classList.add('border-red-500');
-        eventSearch.focus();
-        
-        // Remove red border after 3 seconds
-        setTimeout(() => {
-            eventSearch.classList.remove('border-red-500');
-        }, 3000);
-        
-        return false;
-    }
-    
-    // Event is selected - allow form to proceed and show loading state
-    // The form submit handler will set the loading state
-    return true;
-}
-
 // Close drawer on escape key
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
@@ -574,17 +522,6 @@ document.addEventListener('keydown', function(event) {
 
 // Searchable Event Dropdown
 document.addEventListener('DOMContentLoaded', function() {
-    // Ensure button starts in correct state
-    const btnText = document.getElementById('viewRatesBtnText');
-    const btnSpinner = document.getElementById('viewRatesBtnSpinner');
-    if (btnText && btnSpinner) {
-        btnText.textContent = 'View Rates';
-        btnText.style.display = 'inline';
-        btnText.style.visibility = 'visible';
-        btnText.style.opacity = '1';
-        btnSpinner.classList.add('hidden');
-    }
-    
     const eventSearch = document.getElementById('eventSearch');
     const eventDropdown = document.getElementById('eventDropdown');
     const exEventIdInput = document.getElementById('exEventId');
@@ -635,81 +572,6 @@ document.addEventListener('DOMContentLoaded', function() {
             eventDropdown.classList.add('hidden');
         }
     });
-    
-    // Store initial hidden input value to detect if user selected an event
-    const initialEventId = exEventIdInput.value;
-    
-    // Prevent form submission if no event is selected
-    const form = document.getElementById('eventSelectionForm');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            const currentEventId = exEventIdInput.value;
-            
-            // Check if event is selected - must have both hidden input value AND visible search input value
-            const hasHiddenValue = currentEventId && currentEventId.trim() !== '';
-            const hasVisibleValue = eventSearch.value && eventSearch.value.trim() !== '';
-            const eventSelected = hasHiddenValue && hasVisibleValue;
-            
-            if (!eventSelected) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Reset button state to prevent "Loading..." text
-                const btn = document.getElementById('viewRatesBtn');
-                const btnText = document.getElementById('viewRatesBtnText');
-                const btnSpinner = document.getElementById('viewRatesBtnSpinner');
-                
-                if (btn && btnText && btnSpinner) {
-                    btn.disabled = false;
-                    btnText.textContent = 'View Rates';
-                    btnSpinner.classList.add('hidden');
-                }
-                
-                // Show validation alert
-                showValidationAlert();
-                
-                // Highlight the search input
-                eventSearch.classList.add('border-red-500');
-                eventSearch.focus();
-                
-                // Remove red border after 3 seconds
-                setTimeout(() => {
-                    eventSearch.classList.remove('border-red-500');
-                }, 3000);
-            } else {
-                // Show loading state only if validation passes
-                const btn = document.getElementById('viewRatesBtn');
-                const btnText = document.getElementById('viewRatesBtnText');
-                const btnSpinner = document.getElementById('viewRatesBtnSpinner');
-                
-                if (btn && btnText && btnSpinner) {
-                    btn.disabled = true;
-                    btnText.textContent = 'Loading...';
-                    btnText.style.display = 'inline';
-                    btnText.style.visibility = 'visible';
-                    btnText.style.opacity = '1';
-                    btnSpinner.classList.remove('hidden');
-                    
-                    // Add loading message to the page
-                    const selectEventCard = eventSearch.closest('.bg-white');
-                    const messageDiv = document.createElement('div');
-                    messageDiv.id = 'loadingMessage';
-                    messageDiv.className = 'text-center py-8 bg-gray-50 dark:bg-gray-800';
-                    messageDiv.innerHTML = `
-                        <svg class="mx-auto h-12 w-12 text-primary-600 dark:text-primary-400 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">Loading market rates...</h3>
-                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Please wait while we fetch the data for you.</p>
-                    `;
-                    
-                    // Insert loading message after the select event card
-                    selectEventCard.insertAdjacentElement('afterend', messageDiv);
-                }
-            }
-        });
-    }
 });
 </script>
 @endpush
