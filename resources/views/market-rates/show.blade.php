@@ -166,11 +166,11 @@
                                                     <td class="px-1 py-2 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: {{ $backBgColor }};">
                                                         @if(isset($backSlots[$i]))
                                                             @php $slot = is_array($backSlots[$i]) ? $backSlots[$i] : (array) $backSlots[$i]; @endphp
-                                                            <div class="text-xs font-semibold text-gray-900 dark:text-gray-100">{{ number_format($slot['price'] ?? 0, 2) }}</div>
-                                                            <div class="text-xs text-gray-600 dark:text-gray-400">{{ number_format($slot['size'] ?? 0, 2) }}</div>
+                                                            <div class="text-xs font-semibold text-gray-900">{{ number_format($slot['price'] ?? 0, 2) }}</div>
+                                                            <div class="text-xs text-gray-600">{{ number_format($slot['size'] ?? 0, 2) }}</div>
                                                         @else
-                                                            <div class="text-xs text-gray-400 dark:text-gray-500">-</div>
-                                                            <div class="text-xs text-gray-400 dark:text-gray-500">25K</div>
+                                                            <div class="text-xs text-gray-400">-</div>
+                                                            <div class="text-xs text-gray-400">25K</div>
                                                         @endif
                                                     </td>
                                                 @endfor
@@ -182,11 +182,11 @@
                                                     <td class="px-1 py-2 text-center border-l border-r border-gray-200 dark:border-gray-600" style="background-color: {{ $layBgColor }};">
                                                         @if(isset($laySlots[$i]))
                                                             @php $slot = is_array($laySlots[$i]) ? $laySlots[$i] : (array) $laySlots[$i]; @endphp
-                                                            <div class="text-xs font-semibold text-gray-900 dark:text-gray-100">{{ number_format($slot['price'] ?? 0, 2) }}</div>
-                                                            <div class="text-xs text-gray-600 dark:text-gray-400">{{ number_format($slot['size'] ?? 0, 2) }}</div>
+                                                            <div class="text-xs font-semibold text-gray-900">{{ number_format($slot['price'] ?? 0, 2) }}</div>
+                                                            <div class="text-xs text-gray-600">{{ number_format($slot['size'] ?? 0, 2) }}</div>
                                                         @else
-                                                            <div class="text-xs text-gray-400 dark:text-gray-500">-</div>
-                                                            <div class="text-xs text-gray-400 dark:text-gray-500">25K</div>
+                                                            <div class="text-xs text-gray-400">-</div>
+                                                            <div class="text-xs text-gray-400">25K</div>
                                                         @endif
                                                     </td>
                                                 @endfor
@@ -325,15 +325,15 @@
                                                         $price = $slot['price'] ?? 0;
                                                         $size = $slot['size'] ?? 0;
                                                     @endphp
-                                                    <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                                    <div class="text-sm font-semibold text-gray-900">
                                                         {{ number_format($price, 2) }}
                                                     </div>
-                                                    <div class="text-xs text-gray-600 dark:text-gray-400">
+                                                    <div class="text-xs text-gray-600">
                                                         {{ number_format($size, 2) }}
                                                     </div>
                                                 @else
-                                                    <div class="text-sm text-gray-400 dark:text-gray-500">-</div>
-                                                    <div class="text-xs text-gray-400 dark:text-gray-500">25K</div>
+                                                    <div class="text-sm text-gray-400">-</div>
+                                                    <div class="text-xs text-gray-400">25K</div>
                                                 @endif
                                             </td>
                                         @endfor
@@ -351,15 +351,15 @@
                                                         $price = $slot['price'] ?? 0;
                                                         $size = $slot['size'] ?? 0;
                                                     @endphp
-                                                    <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                                    <div class="text-sm font-semibold text-gray-900">
                                                         {{ number_format($price, 2) }}
                                                     </div>
-                                                    <div class="text-xs text-gray-600 dark:text-gray-400">
+                                                    <div class="text-xs text-gray-600">
                                                         {{ number_format($size, 2) }}
                                                     </div>
                                                 @else
-                                                    <div class="text-sm text-gray-400 dark:text-gray-500">-</div>
-                                                    <div class="text-xs text-gray-400 dark:text-gray-500">25K</div>
+                                                    <div class="text-sm text-gray-400">-</div>
+                                                    <div class="text-xs text-gray-400">25K</div>
                                                 @endif
                                             </td>
                                         @endfor

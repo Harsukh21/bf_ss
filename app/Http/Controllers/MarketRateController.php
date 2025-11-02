@@ -116,7 +116,7 @@ class MarketRateController extends Controller
         $selectedEventId = $request->get('exEventId');
         $gridCount = $request->get('grid');
         $gridEnabled = !empty($gridCount) && in_array((int)$gridCount, [10, 20, 40, 60]);
-        $gridCountValue = $gridEnabled ? (int)$gridCount : 10;
+        $gridCountValue = $gridEnabled ? (int)$gridCount : null;
         
         if (!$selectedEventId || !MarketRate::tableExistsForEvent($selectedEventId)) {
             return redirect()->route('market-rates.index')
