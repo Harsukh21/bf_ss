@@ -90,7 +90,6 @@ class MarketController extends Controller
             ->offset($offset)
             ->limit($perPage)
             ->get();
-
         // Create paginator manually
         $paginatedMarkets = new LengthAwarePaginator(
             $markets,

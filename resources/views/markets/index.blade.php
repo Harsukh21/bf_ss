@@ -231,11 +231,14 @@
                                         <div class="text-sm text-gray-500 dark:text-gray-400">Event ID: {{ $market->exEventId }}</div>
                                         <div class="mt-1">
                                             @if($market->marketTime)
+                                                @php
+                                                    $marketTimeDate = \Carbon\Carbon::parse($market->marketTime);
+                                                @endphp
                                                 <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300">
                                                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                     </svg>
-                                                    {{ \Carbon\Carbon::parse($market->marketTime)->format('M d, Y h:i A') }}
+                                                    {{ $marketTimeDate->format('h:i A') }}
                                                 </span>
                                             @else
                                                 <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">N/A</span>
