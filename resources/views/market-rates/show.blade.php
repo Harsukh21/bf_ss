@@ -118,9 +118,12 @@
                 @endphp
                 @if(is_array($gridRunners) && count($gridRunners) > 0)
                 <div class="rates-grid-item">
-                    <div class="mb-1">
+                    <div class="mb-1 flex justify-between items-center">
                         <span class="text-xs text-gray-600 dark:text-gray-400">
                             {{ $rate->created_at ? \Carbon\Carbon::parse($rate->created_at)->format('M d, Y H:i:s') : 'N/A' }}
+                        </span>
+                        <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                            Matched: {{ number_format($rate->totalMatched ?? 0, 2) }}
                         </span>
                     </div>
                     <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg mt-1">
@@ -377,6 +380,10 @@
                 <div class="flex space-x-4">
                     <div>
                         <span class="font-medium">Market ID:</span> {{ $marketRate->exMarketId }}
+                    </div>
+                    <div>
+                        <span class="font-medium">Total Matched:</span> 
+                        <span class="font-semibold">{{ number_format($marketRate->totalMatched ?? 0, 2) }}</span>
                     </div>
                     <div>
                         <span class="font-medium">Status:</span>

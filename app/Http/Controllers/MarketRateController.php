@@ -99,6 +99,17 @@ class MarketRateController extends Controller
                     ];
                 }
             }
+            
+            // If event info still not found but table exists, create a basic event info object
+            // This handles cases where market_rates table exists but event isn't in events or market_lists
+            if (!$eventInfo && MarketRate::tableExistsForEvent($selectedEventId)) {
+                // Generate a fallback event name using the event ID
+                $eventInfo = (object) [
+                    'eventName' => 'Event: ' . substr($selectedEventId, 0, 8) . '...',
+                    'exEventId' => $selectedEventId,
+                    'source' => 'market_rates_table'
+                ];
+            }
         }
 
         return view('market-rates.index', compact('marketRates', 'events', 'selectedEventId', 'eventInfo', 'availableMarketNames'));

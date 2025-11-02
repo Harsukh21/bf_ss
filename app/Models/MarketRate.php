@@ -19,6 +19,7 @@ class MarketRate extends Model
         'runners',
         'inplay',
         'isCompleted',
+        'totalMatched',
     ];
 
     protected $casts = [
