@@ -11,9 +11,14 @@
                     <h1 class="text-2xl font-bold text-purple-900 dark:text-purple-100">
                     {{ $eventInfo->eventName ?? 'Unknown Event' }} - {{ $marketRate->marketName }}
                     </h1>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        <span class="font-medium">Market ID:</span> {{ $marketRate->exMarketId }} <span class="font-medium">Event ID:</span> {{ $selectedEventId }}
-                    </p>
+                    <div class="text-[13px] text-gray-600 dark:text-gray-400 mt-1">
+                        <div>
+                            <span class="font-medium">Market ID:</span> {{ $marketRate->exMarketId }}
+                        </div>
+                        <div>
+                            <span class="font-medium">Event ID:</span> {{ $selectedEventId }}
+                        </div>
+                    </div>
                 </div>
                 <div class="flex space-x-3 items-center">
                     {{-- <span class="text-sm text-gray-600 dark:text-gray-400">
