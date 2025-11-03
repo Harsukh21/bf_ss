@@ -11,7 +11,7 @@
                     <h1 class="text-2xl font-bold text-purple-900 dark:text-purple-100">
                         {{ $marketRate->marketName }}
                     </h1>
-                    <p class="text-gray-600 dark:text-gray-400 mt-1">
+                    <p class="text-lg text-gray-600 dark:text-gray-400 mt-1">
                         Event: {{ $eventInfo->eventName ?? 'Unknown Event' }}
                     </p>
                 </div>
@@ -170,7 +170,7 @@
                                                             <div class="text-xs text-gray-600">{{ number_format($slot['size'] ?? 0, 2) }}</div>
                                                         @else
                                                             <div class="text-xs text-gray-400">-</div>
-                                                            <div class="text-xs text-gray-400">25K</div>
+                                                            <div class="text-xs text-gray-400">0</div>
                                                         @endif
                                                     </td>
                                                 @endfor
@@ -186,7 +186,7 @@
                                                             <div class="text-xs text-gray-600">{{ number_format($slot['size'] ?? 0, 2) }}</div>
                                                         @else
                                                             <div class="text-xs text-gray-400">-</div>
-                                                            <div class="text-xs text-gray-400">25K</div>
+                                                            <div class="text-xs text-gray-400">0</div>
                                                         @endif
                                                     </td>
                                                 @endfor
@@ -250,12 +250,8 @@
             <!-- Market Info -->
             <div class="mb-2 flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
                 <div class="flex space-x-4">
-                    {{-- <div>
-                        <span class="font-medium">Market ID:</span> {{ $marketRate->exMarketId }}
-                    </div> --}}
                     <div>
-                        <span class="font-medium">VOL:</span> 
-                        <span class="font-semibold">{{ number_format($marketRate->totalMatched ?? 0, 2) }}</span>
+                        <span class="font-medium">Market ID:</span> {{ $marketRate->exMarketId }}
                     </div>
                     <div>
                         <span class="font-medium">Status:</span>
@@ -271,9 +267,9 @@
                             @endif
                     </div>
                 </div>
-                {{-- <div>
+                <div>
                     <span class="font-medium">Event ID:</span> {{ $selectedEventId }}
-                </div> --}}
+                </div>
             </div>
 
             <!-- Timestamp for Screenshot -->
@@ -362,7 +358,7 @@
                                                     </div>
                                                 @else
                                                     <div class="text-sm text-gray-400">-</div>
-                                                    <div class="text-xs text-gray-400">25K</div>
+                                                    <div class="text-xs text-gray-400">0</div>
                                                 @endif
                                             </td>
                                         @endfor
@@ -388,7 +384,7 @@
                                                     </div>
                                                 @else
                                                     <div class="text-sm text-gray-400">-</div>
-                                                    <div class="text-xs text-gray-400">25K</div>
+                                                    <div class="text-xs text-gray-400">0</div>
                                                 @endif
                                             </td>
                                         @endfor
