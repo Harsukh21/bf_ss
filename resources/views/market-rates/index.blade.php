@@ -221,7 +221,7 @@
                                                 $runnerCount = is_array($runners) ? count($runners) : 0;
                                             @endphp
                                             <div class="text-sm">
-                                                <div class="font-medium text-gray-900 dark:text-gray-100 mb-2">{{ $runnerCount }} runners</div>
+                                                <div class="font-medium text-gray-900 dark:text-gray-100 mb-2">VOL: {{ number_format($rate->totalMatched ?? 0, 2) }}</div>
                                                 @if(is_array($runners) && count($runners) > 0)
                                                     <div class="min-w-0">
                                                         <div class="overflow-x-auto">
