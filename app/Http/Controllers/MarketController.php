@@ -217,4 +217,86 @@ class MarketController extends Controller
 
         return $activeFilters;
     }
+
+    public function export(Request $request)
+    {
+        // Build the same query as index but without pagination
+        $query = DB::table('market_lists')
+            ->select([
+                'id',
+                '_id',
+                'eventName',
+                'exEventId',
+                'exMarketId',
+                'isPreBet',
+                'marketName',
+                'marketTime',
+                'sportName',
+                'tournamentsName',
+                'type',
+                'isLive',
+                'created_at'
+            ]);
+
+        // Apply the same filters
+        $this->applyFilters($query, $request);
+
+        // Get all results (no pagination)
+        $markets = $query->orderBy('id', 'desc')->get();
+
+        // Prepare CSV data
+        $filename = 'markets_export_' . date('Y-m-d_His') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($markets) {
+            $file = fopen('php://output', 'w');
+            
+            // Add CSV headers
+            fputcsv($file, [
+                'ID',
+                'Market ID',
+                'Event Name',
+                'Event ID',
+                'Market Name',
+                'Sport',
+                'Tournament',
+                'Type',
+                'Status',
+                'Market Time',
+                'Created At'
+            ]);
+
+            // Add data rows
+            foreach ($markets as $market) {
+                $status = 'Scheduled';
+                if ($market->isLive) {
+                    $status = 'Live';
+                } elseif ($market->isPreBet) {
+                    $status = 'Pre-bet';
+                }
+
+                fputcsv($file, [
+                    $market->id,
+                    $market->_id,
+                    $market->eventName,
+                    $market->exEventId,
+                    $market->marketName,
+                    $market->sportName,
+                    $market->tournamentsName,
+                    $market->type,
+                    $status,
+                    $market->marketTime,
+                    $market->created_at
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

@@ -48,6 +48,7 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
 
     // Markets
     Route::get('/markets', [MarketController::class, 'index'])->name('markets.index');
+    Route::get('/markets/export', [MarketController::class, 'export'])->name('markets.export');
     Route::get('/markets/{id}', [MarketController::class, 'show'])->name('markets.show');
 
     // Market Rates Management (Dynamic tables)
