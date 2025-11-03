@@ -120,7 +120,7 @@
                 <div class="rates-grid-item">
                     <div class="mb-1 flex justify-between items-center">
                         <span class="text-xs text-gray-600 dark:text-gray-400">
-                            {{ $rate->created_at ? \Carbon\Carbon::parse($rate->created_at)->format('M d, Y H:i:s') : 'N/A' }}
+                            {{ $rate->created_at ? \Carbon\Carbon::parse($rate->created_at)->format('M d, Y h:i:s A') : 'N/A' }}
                         </span>
                     </div>
                     <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg mt-1">
@@ -250,9 +250,9 @@
             <!-- Market Info -->
             <div class="mb-2 flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
                 <div class="flex space-x-4">
-                    <div>
+                    {{-- <div>
                         <span class="font-medium">Market ID:</span> {{ $marketRate->exMarketId }}
-                    </div>
+                    </div> --}}
                     <div>
                         <span class="font-medium">VOL:</span> 
                         <span class="font-semibold">{{ number_format($marketRate->totalMatched ?? 0, 2) }}</span>
@@ -271,15 +271,15 @@
                             @endif
                     </div>
                 </div>
-                <div>
+                {{-- <div>
                     <span class="font-medium">Event ID:</span> {{ $selectedEventId }}
-                </div>
+                </div> --}}
             </div>
 
             <!-- Timestamp for Screenshot -->
             <div class="mb-2">
                 <span class="text-sm text-gray-600 dark:text-gray-400">
-                    Created: {{ $marketRate->created_at ? \Carbon\Carbon::parse($marketRate->created_at)->format('M d, Y H:i:s') : 'N/A' }}
+                    SS TIME: {{ $marketRate->created_at ? \Carbon\Carbon::parse($marketRate->created_at)->format('M d, Y h:i:s A') : 'N/A' }}
                 </span>
             </div>
             
