@@ -9,10 +9,10 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-2xl font-bold text-purple-900 dark:text-purple-100">
-                        {{ $marketRate->marketName }}
+                    {{ $eventInfo->eventName ?? 'Unknown Event' }} - {{ $marketRate->marketName }}
                     </h1>
-                    <p class="text-lg text-gray-600 dark:text-gray-400 mt-1">
-                        Event: {{ $eventInfo->eventName ?? 'Unknown Event' }}
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        <span class="font-medium">Market ID:</span> {{ $marketRate->exMarketId }} <span class="font-medium">Event ID:</span> {{ $selectedEventId }}
                     </p>
                 </div>
                 <div class="flex space-x-3 items-center">
@@ -251,9 +251,6 @@
             <div class="mb-2 flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
                 <div class="flex space-x-4">
                     <div>
-                        <span class="font-medium">Market ID:</span> {{ $marketRate->exMarketId }}
-                    </div>
-                    <div>
                         <span class="font-medium">Status:</span>
                             @if($marketRate->isCompleted)
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">Completed</span>
@@ -266,9 +263,6 @@
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">Upcoming</span>
                             @endif
                     </div>
-                </div>
-                <div>
-                    <span class="font-medium">Event ID:</span> {{ $selectedEventId }}
                 </div>
             </div>
 
