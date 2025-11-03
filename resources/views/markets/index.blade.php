@@ -238,7 +238,7 @@
                                                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                     </svg>
-                                                    {{ $marketTimeDate->format('h:i A') }}
+                                                    {{ $marketTimeDate->format('j M Y h:i:s A') }}
                                                 </span>
                                             @else
                                                 <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">N/A</span>
