@@ -201,7 +201,7 @@
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Runners</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Market & Status</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">SS TIME</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -221,7 +221,7 @@
                                                 $runnerCount = is_array($runners) ? count($runners) : 0;
                                             @endphp
                                             <div class="text-sm">
-                                                <div class="font-medium text-gray-900 dark:text-gray-100 mb-2">{{ $runnerCount }} runners</div>
+                                                <div class="font-medium text-gray-900 dark:text-gray-100 mb-2">VOL: {{ number_format($rate->totalMatched ?? 0, 2) }}</div>
                                                 @if(is_array($runners) && count($runners) > 0)
                                                     <div class="min-w-0">
                                                         <div class="overflow-x-auto">
@@ -312,7 +312,7 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {{ $rate->created_at ? \Carbon\Carbon::parse($rate->created_at)->format('M d, Y H:i:s') : 'N/A' }}
+                                            {{ $rate->created_at ? \Carbon\Carbon::parse($rate->created_at)->format('M d, Y h:i:s A') : 'N/A' }}
                                         </td>
                                     </tr>
                                 @endforeach

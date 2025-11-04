@@ -9,16 +9,21 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-2xl font-bold text-purple-900 dark:text-purple-100">
-                        {{ $marketRate->marketName }}
+                    {{ $eventInfo->eventName ?? 'Unknown Event' }} - {{ $marketRate->marketName }}
                     </h1>
-                    <p class="text-gray-600 dark:text-gray-400 mt-1">
-                        Event: {{ $eventInfo->eventName ?? 'Unknown Event' }}
-                    </p>
+                    <div class="text-[13px] text-gray-600 dark:text-gray-400 mt-1">
+                        <div>
+                            <span class="font-medium">Market ID:</span> {{ $marketRate->exMarketId }}
+                        </div>
+                        <div>
+                            <span class="font-medium">Event ID:</span> {{ $selectedEventId }}
+                        </div>
+                    </div>
                 </div>
                 <div class="flex space-x-3 items-center">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">
+                    {{-- <span class="text-sm text-gray-600 dark:text-gray-400">
                         Min: 10 | Max: 25K
-                    </span>
+                    </span> --}}
                     <!-- Grid Dropdown -->
                     <div class="flex items-center space-x-2">
                         <label for="gridSelect" class="text-sm text-gray-700 dark:text-gray-300">Grid:</label>
@@ -120,7 +125,7 @@
                 <div class="rates-grid-item">
                     <div class="mb-1 flex justify-between items-center">
                         <span class="text-xs text-gray-600 dark:text-gray-400">
-                            {{ $rate->created_at ? \Carbon\Carbon::parse($rate->created_at)->format('M d, Y H:i:s') : 'N/A' }}
+                            {{ $rate->created_at ? \Carbon\Carbon::parse($rate->created_at)->format('M d, Y h:i:s A') : 'N/A' }}
                         </span>
                     </div>
                     <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg mt-1">
@@ -170,7 +175,7 @@
                                                             <div class="text-xs text-gray-600">{{ number_format($slot['size'] ?? 0, 2) }}</div>
                                                         @else
                                                             <div class="text-xs text-gray-400">-</div>
-                                                            <div class="text-xs text-gray-400">25K</div>
+                                                            <div class="text-xs text-gray-400">0</div>
                                                         @endif
                                                     </td>
                                                 @endfor
@@ -186,7 +191,7 @@
                                                             <div class="text-xs text-gray-600">{{ number_format($slot['size'] ?? 0, 2) }}</div>
                                                         @else
                                                             <div class="text-xs text-gray-400">-</div>
-                                                            <div class="text-xs text-gray-400">25K</div>
+                                                            <div class="text-xs text-gray-400">0</div>
                                                         @endif
                                                     </td>
                                                 @endfor
@@ -247,10 +252,29 @@
             </div>
             @endunless
             
+            <!-- Market Info -->
+            <div class="mb-2 flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+                <div class="flex space-x-4">
+                    <div>
+                        <span class="font-medium">Status:</span>
+                            @if($marketRate->isCompleted)
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">Completed</span>
+                            @elseif($marketRate->inplay)
+                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">
+                                    <span class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
+                                    In Play
+                                </span>
+                            @else
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">Upcoming</span>
+                            @endif
+                    </div>
+                </div>
+            </div>
+
             <!-- Timestamp for Screenshot -->
             <div class="mb-2">
                 <span class="text-sm text-gray-600 dark:text-gray-400">
-                    Created: {{ $marketRate->created_at ? \Carbon\Carbon::parse($marketRate->created_at)->format('M d, Y H:i:s') : 'N/A' }}
+                    SS TIME: {{ $marketRate->created_at ? \Carbon\Carbon::parse($marketRate->created_at)->format('M d, Y h:i:s A') : 'N/A' }}
                 </span>
             </div>
             
@@ -333,7 +357,7 @@
                                                     </div>
                                                 @else
                                                     <div class="text-sm text-gray-400">-</div>
-                                                    <div class="text-xs text-gray-400">25K</div>
+                                                    <div class="text-xs text-gray-400">0</div>
                                                 @endif
                                             </td>
                                         @endfor
@@ -359,7 +383,7 @@
                                                     </div>
                                                 @else
                                                     <div class="text-sm text-gray-400">-</div>
-                                                    <div class="text-xs text-gray-400">25K</div>
+                                                    <div class="text-xs text-gray-400">0</div>
                                                 @endif
                                             </td>
                                         @endfor
@@ -371,35 +395,6 @@
                 </div>
             </div>
             <!-- End of Screenshot Container -->
-
-            <!-- Market Info Footer -->
-            <div class="mt-4 flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
-                <div class="flex space-x-4">
-                    <div>
-                        <span class="font-medium">Market ID:</span> {{ $marketRate->exMarketId }}
-                    </div>
-                    <div>
-                        <span class="font-medium">Total Matched:</span> 
-                        <span class="font-semibold">{{ number_format($marketRate->totalMatched ?? 0, 2) }}</span>
-                    </div>
-                    <div>
-                        <span class="font-medium">Status:</span>
-                            @if($marketRate->isCompleted)
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">Completed</span>
-                            @elseif($marketRate->inplay)
-                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">
-                                    <span class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
-                                    In Play
-                                </span>
-                            @else
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">Upcoming</span>
-                            @endif
-                    </div>
-                </div>
-                <div>
-                    <span class="font-medium">Event ID:</span> {{ $selectedEventId }}
-                </div>
-            </div>
         @else
             <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
                 <div class="px-6 py-12 text-center">
