@@ -294,4 +294,103 @@ class EventController extends Controller
 
         return response()->json($events);
     }
+
+    /**
+     * Export events to CSV with filters applied
+     */
+    public function export(Request $request)
+    {
+        // Build the same query as index but without pagination
+        $query = DB::table('events')
+            ->select([
+                'id',
+                'eventId',
+                'sportId',
+                'tournamentsId',
+                'tournamentsName',
+                'eventName',
+                'highlight',
+                'quicklink',
+                'popular',
+                'IsSettle',
+                'IsVoid',
+                'IsUnsettle',
+                'dataSwitch',
+                'createdAt'
+            ]);
+
+        // Apply the same filters
+        $this->applyFilters($query, $request);
+
+        // Get all results (no pagination)
+        $events = $query->orderBy('createdAt', 'desc')
+                       ->orderBy('id', 'desc')
+                       ->get();
+
+        // Get sport configuration for display
+        $sportConfig = config('sports.sports');
+
+        // Prepare CSV data
+        $filename = 'events_export_' . date('Y-m-d_His') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($events, $sportConfig) {
+            $file = fopen('php://output', 'w');
+            
+            // Add CSV headers
+            fputcsv($file, [
+                'ID',
+                'Event ID',
+                'Sport',
+                'Tournament ID',
+                'Tournament Name',
+                'Event Name',
+                'Highlight',
+                'Quicklink',
+                'Popular',
+                'Status',
+                'Data Switch',
+                'Created At'
+            ]);
+
+            // Add data rows
+            foreach ($events as $event) {
+                // Determine status
+                $status = 'Unsettled';
+                if ($event->IsVoid) {
+                    $status = 'Void';
+                } elseif ($event->IsSettle) {
+                    $status = 'Settled';
+                } elseif ($event->IsUnsettle) {
+                    $status = 'Unsettled';
+                }
+
+                // Get sport name from config
+                $sportName = $sportConfig[$event->sportId] ?? $event->sportId;
+
+                fputcsv($file, [
+                    $event->id,
+                    $event->eventId,
+                    $sportName,
+                    $event->tournamentsId,
+                    $event->tournamentsName,
+                    $event->eventName,
+                    $event->highlight ? 'Yes' : 'No',
+                    $event->quicklink ? 'Yes' : 'No',
+                    $event->popular ? 'Yes' : 'No',
+                    $status,
+                    $event->dataSwitch ? 'On' : 'Off',
+                    $event->createdAt
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

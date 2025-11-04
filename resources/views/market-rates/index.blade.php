@@ -89,7 +89,8 @@
                         $filterCount = 0;
                         if(request('market_name')) $filterCount++;
                         if(request('status')) $filterCount++;
-                        if(request('date_from') || request('date_to')) $filterCount++;
+                        if(request('date_from')) $filterCount++;
+                        if(request('date_to')) $filterCount++;
                     @endphp
                     <button onclick="toggleFilterDrawer()" class="bg-primary-600 dark:bg-primary-700 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:hover:bg-primary-800 transition-colors flex items-center relative" @if(!$selectedEventId) disabled @endif>
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -119,6 +120,49 @@
                 </div>
             </div>
         </div>
+
+        <!-- Active Filters Display -->
+        @if($filterCount > 0 && $selectedEventId)
+        <div class="mb-6">
+            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                        </svg>
+                        <span class="text-sm font-medium text-blue-900 dark:text-blue-100">Active Filters ({{ $filterCount }}):</span>
+                    </div>
+                    <a href="{{ route('market-rates.index', ['exEventId' => $selectedEventId]) }}" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">Clear All</a>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    @if(request('market_name'))
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                            Market: {{ request('market_name') }}
+                            <button onclick="removeFilter('market_name')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
+                        </span>
+                    @endif
+                    @if(request('status'))
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                            Status: {{ request('status') === 'inplay' ? 'In Play' : 'Not In Play' }}
+                            <button onclick="removeFilter('status')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
+                        </span>
+                    @endif
+                    @if(request('date_from'))
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                            From: {{ request('date_from') }}
+                            <button onclick="removeFilter('date_from')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
+                        </span>
+                    @endif
+                    @if(request('date_to'))
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                            To: {{ request('date_to') }}
+                            <button onclick="removeFilter('date_to')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
+                        </span>
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endif
 
         <!-- Validation Alert -->
         <div id="validation-alert" class="hidden mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 px-4 py-3 rounded-md animate-slide-in">
@@ -269,7 +313,17 @@
                                                                             <td class="py-1 text-right">
                                                                                 @if(is_array($availableToLay) && count($availableToLay) > 0)
                                                                                     @php
-                                                                                        $bestLay = is_array($availableToLay[0]) ? $availableToLay[0] : (array) $availableToLay[0];
+                                                                                        // Find the LAY entry with maximum price value (best lay odds)
+                                                                                        $maxLayPrice = 0;
+                                                                                        $bestLay = null;
+                                                                                        foreach ($availableToLay as $lay) {
+                                                                                            $lay = is_array($lay) ? $lay : (array) $lay;
+                                                                                            $layPriceValue = $lay['price'] ?? 0;
+                                                                                            if ($layPriceValue > $maxLayPrice) {
+                                                                                                $maxLayPrice = $layPriceValue;
+                                                                                                $bestLay = $lay;
+                                                                                            }
+                                                                                        }
                                                                                         $layOdds = $bestLay['price'] ?? 0;
                                                                                         $laySize = $bestLay['size'] ?? 0;
                                                                                     @endphp
@@ -573,6 +627,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Remove individual filter
+function removeFilter(filterName) {
+    const url = new URL(window.location);
+    const exEventId = url.searchParams.get('exEventId');
+    
+    // Remove the filter parameter
+    url.searchParams.delete(filterName);
+    
+    // Ensure exEventId is preserved
+    if (exEventId) {
+        url.searchParams.set('exEventId', exEventId);
+    }
+    
+    window.location.href = url.toString();
+}
 </script>
 @endpush
 @endsection

@@ -41,6 +41,7 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
     
     // Events
     Route::get('/events', [EventController::class, 'index'])->name('events.index');
+    Route::get('/events/export', [EventController::class, 'export'])->name('events.export');
     Route::get('/events/{id}', [EventController::class, 'show'])->name('events.show');
     Route::post('/events/bulk-update', [EventController::class, 'bulkUpdate'])->name('events.bulk-update');
     Route::get('/events/stats', [EventController::class, 'getStats'])->name('events.stats');
