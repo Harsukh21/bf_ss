@@ -54,6 +54,7 @@ class EventController extends Controller
                 'IsVoid',
                 'IsUnsettle',
                 'dataSwitch',
+                'marketTime',
                 'createdAt'
             ]);
 
