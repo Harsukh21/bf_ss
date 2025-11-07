@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 
 class EventSeeder extends Seeder
 {
@@ -622,6 +623,13 @@ class EventSeeder extends Seeder
         ];
 
         // Insert events using raw DB query for better performance
+        $events = array_map(function ($event) {
+            return Arr::except($event, ['id']);
+        }, $events);
+
         DB::table('events')->insert($events);
+
+        $sequence = DB::selectOne("SELECT pg_get_serial_sequence('events', 'id') AS seq")->seq ?? 'events_id_seq';
+        DB::statement("SELECT setval('{$sequence}', COALESCE(MAX(id), 0)) FROM events");
     }
 }
