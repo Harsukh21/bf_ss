@@ -128,7 +128,13 @@ class MarketRateController extends Controller
             }
         }
 
-        return view('market-rates.index', compact('marketRates', 'events', 'selectedEventId', 'eventInfo', 'availableMarketNames', 'ratesTableNotFound'));
+        $filterCount = 0;
+        if ($request->filled('market_name')) $filterCount++;
+        if ($request->filled('status')) $filterCount++;
+        if ($request->filled('date_from')) $filterCount++;
+        if ($request->filled('date_to')) $filterCount++;
+
+        return view('market-rates.index', compact('marketRates', 'events', 'selectedEventId', 'eventInfo', 'availableMarketNames', 'ratesTableNotFound', 'filterCount'));
     }
 
     /**
