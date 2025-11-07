@@ -3,6 +3,7 @@
 @section('title', 'Event List')
 
 @push('css')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
     .filter-drawer {
         position: fixed;
@@ -43,6 +44,279 @@
         opacity: 1;
         visibility: visible;
     }
+
+    .time-range-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .time-block {
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 0.9rem 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .dark .time-block {
+        background-color: rgba(55, 65, 81, 0.6);
+        border-color: #4b5563;
+    }
+
+    .time-block-header {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #6b7280;
+        letter-spacing: 0.04em;
+    }
+
+    .dark .time-block-header {
+        color: #9ca3af;
+    }
+
+    .time-block-inputs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .time-select-ampm {
+        min-width: 70px;
+    }
+
+    .time-picker-panel {
+        position: relative;
+    }
+
+    .time-picker-button {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.5rem;
+        padding: 0.75rem 0.85rem;
+        padding-right: 2.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.75rem;
+        background-color: #ffffff;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1f2937;
+        transition: all 0.2s ease-in-out;
+        position: relative;
+    }
+
+    .time-picker-button:hover {
+        border-color: #2563eb;
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.12);
+    }
+
+    .time-picker-button.placeholder span {
+        color: #9ca3af;
+        font-weight: 500;
+    }
+
+    .time-picker-icon {
+        position: absolute;
+        right: 0.85rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 18px;
+        height: 18px;
+        color: #9ca3af;
+        pointer-events: none;
+    }
+
+    .dark .time-picker-icon {
+        color: #d1d5db;
+    }
+
+    .dark .time-picker-button {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: #f9fafb;
+    }
+
+    .dark .time-picker-button.placeholder span {
+        color: #9ca3af;
+    }
+
+    .time-picker-dropdown {
+        position: absolute;
+        top: calc(100% + 0.6rem);
+        left: 0;
+        width: 100%;
+        background-color: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 1rem;
+        box-shadow: 0 25px 60px rgba(15, 23, 42, 0.15);
+        padding: 1rem 1.1rem 1.2rem;
+        z-index: 60;
+    }
+
+    .dark .time-picker-dropdown {
+        background-color: #1f2937;
+        border-color: #374151;
+        box-shadow: 0 25px 60px rgba(15, 23, 42, 0.45);
+    }
+
+    .time-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .time-picker-column {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .time-picker-column p {
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #6b7280;
+        margin-bottom: 0.1rem;
+    }
+
+    .dark .time-picker-column p {
+        color: #9ca3af;
+    }
+
+    .time-picker-options {
+        display: grid;
+        gap: 0.3rem;
+        max-height: 190px;
+        overflow-y: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.85rem;
+        background-color: #ffffff;
+        padding: 0.4rem;
+        scrollbar-width: thin;
+    }
+
+    .time-picker-options-hour {
+        grid-template-columns: repeat(2, minmax(0, 70px));
+    }
+
+    .time-picker-options-minute,
+    .time-picker-options-second {
+        grid-template-columns: repeat(3, minmax(0, 70px));
+    }
+
+    .time-picker-options-period {
+        grid-template-columns: repeat(2, minmax(0, 70px));
+    }
+
+    .dark .time-picker-options {
+        border-color: #374151;
+        background-color: #111827;
+    }
+
+    .time-picker-option {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.45rem 0.4rem;
+        border-radius: 0.65rem;
+        font-weight: 600;
+        font-size: 0.82rem;
+        color: #1f2937;
+        background: transparent;
+        transition: all 0.15s ease-in-out;
+        border: none;
+        cursor: pointer;
+    }
+
+    .time-picker-option:hover {
+        background-color: #2563eb;
+        color: #ffffff;
+    }
+
+    .time-picker-option.active {
+        background-color: #2563eb;
+        color: #ffffff;
+        box-shadow: 0 15px 28px rgba(37, 99, 235, 0.25);
+    }
+
+    .dark .time-picker-option {
+        color: #e5e7eb;
+    }
+
+    .dark .time-picker-option:hover,
+    .dark .time-picker-option.active {
+        background-color: #2563eb;
+        color: #ffffff;
+    }
+
+    .time-picker-actions {
+        margin-top: 1.1rem;
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .time-picker-action {
+        flex: 1;
+        padding: 0.55rem 0.75rem;
+        border-radius: 0.75rem;
+        border: 1px solid #d1d5db;
+        background-color: #f9fafb;
+        font-weight: 600;
+        color: #1f2937;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .time-picker-action:hover {
+        background-color: #e5e7eb;
+    }
+
+    .time-picker-action.primary {
+        background-color: #2563eb;
+        border-color: #2563eb;
+        color: #ffffff;
+    }
+
+    .time-picker-action.primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .dark .time-picker-action {
+        border-color: #4b5563;
+        background-color: #374151;
+        color: #f3f4f6;
+    }
+
+    .dark .time-picker-action:hover {
+        background-color: #4b5563;
+    }
+
+    .dark .time-picker-action.primary {
+        background-color: #2563eb;
+        border-color: #2563eb;
+    }
+
+    .timepicker-hint {
+        font-size: 0.7rem;
+        color: #9ca3af;
+        margin: 0;
+    }
+
+    .dark .timepicker-hint {
+        color: #9ca3af;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
 </style>
 @endpush
 
@@ -62,8 +336,68 @@
                         if(request('sport')) $filterCount++;
                         if(request('tournament')) $filterCount++;
                         if(request('status')) $filterCount++;
-                        if(request('date_from')) $filterCount++;
-                        if(request('date_to')) $filterCount++;
+                        if(request('event_date')) $filterCount++;
+                        if((request()->filled('time_from_hour') && request()->filled('time_from_minute') && request()->filled('time_from_second')) || request()->filled('time_from')) $filterCount++;
+                        if((request()->filled('time_to_hour') && request()->filled('time_to_minute') && request()->filled('time_to_second')) || request()->filled('time_to')) $filterCount++;
+
+                        $timeFromRaw = request('time_from');
+                        if (!$timeFromRaw && request()->filled('time_from_hour') && request()->filled('time_from_minute') && request()->filled('time_from_second')) {
+                            $timeFromRaw = sprintf('%02d:%02d:%02d %s',
+                                (int) request('time_from_hour'),
+                                (int) request('time_from_minute'),
+                                (int) request('time_from_second'),
+                                strtoupper(request('time_from_ampm', 'AM'))
+                            );
+                        }
+
+                        $timeToRaw = request('time_to');
+                        if (!$timeToRaw && request()->filled('time_to_hour') && request()->filled('time_to_minute') && request()->filled('time_to_second')) {
+                            $timeToRaw = sprintf('%02d:%02d:%02d %s',
+                                (int) request('time_to_hour'),
+                                (int) request('time_to_minute'),
+                                (int) request('time_to_second'),
+                                strtoupper(request('time_to_ampm', 'PM'))
+                            );
+                        }
+
+                        $timeFormats = ['h:i:s A', 'H:i:s', 'h:i A', 'H:i'];
+
+                        $timeFromDisplay = null;
+                        if ($timeFromRaw) {
+                            foreach ($timeFormats as $format) {
+                                try {
+                                    $timeFromDisplay = \Carbon\Carbon::createFromFormat($format, $timeFromRaw)->format('h:i:s A');
+                                    break;
+                                } catch (\Exception $e) {
+                                    $timeFromDisplay = $timeFromRaw;
+                                }
+                            }
+                        }
+
+                        $timeToDisplay = null;
+                        if ($timeToRaw) {
+                            foreach ($timeFormats as $format) {
+                                try {
+                                    $timeToDisplay = \Carbon\Carbon::createFromFormat($format, $timeToRaw)->format('h:i:s A');
+                                    break;
+                                } catch (\Exception $e) {
+                                    $timeToDisplay = $timeToRaw;
+                                }
+                            }
+                        }
+
+                        $timeFromValue = $timeFromDisplay;
+                        $timeToValue = $timeToDisplay;
+
+                        $defaultPickerTime = \Carbon\Carbon::now(config('app.timezone', 'UTC'))->format('h:i:s A');
+
+                        if(!$timeFromValue) {
+                            $timeFromValue = $defaultPickerTime;
+                        }
+
+                        if(!$timeToValue) {
+                            $timeToValue = $defaultPickerTime;
+                        }
                     @endphp
                     
                     <a 
@@ -138,16 +472,87 @@
                             <button onclick="removeFilter('status')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
                         </span>
                     @endif
-                    @if(request('date_from'))
+                    @if(request('event_date'))
+                        @php
+                            $eventDateDisplay = null;
+                            try {
+                                $eventDateDisplay = \Carbon\Carbon::parse(request('event_date'))->format('M d, Y');
+                            } catch (\Exception $e) {
+                                $eventDateDisplay = request('event_date');
+                            }
+                        @endphp
                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-                            From: {{ request('date_from') }}
-                            <button onclick="removeFilter('date_from')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
+                            Date: {{ $eventDateDisplay }}
+                            <button onclick="removeFilter('event_date')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
                         </span>
                     @endif
-                    @if(request('date_to'))
+                    @php
+                        $timeFromDisplay = null;
+                        if(request()->filled('time_from_hour') && request()->filled('time_from_minute') && request()->filled('time_from_second')) {
+                            $hour = str_pad((int) request('time_from_hour'), 2, '0', STR_PAD_LEFT);
+                            $minute = str_pad((int) request('time_from_minute'), 2, '0', STR_PAD_LEFT);
+                            $second = str_pad((int) request('time_from_second'), 2, '0', STR_PAD_LEFT);
+                            $ampm = strtoupper(request('time_from_ampm', 'AM'));
+                            if (!in_array($ampm, ['AM', 'PM'])) {
+                                $ampm = 'AM';
+                            }
+                            $fromString = $hour . ':' . $minute . ':' . $second . ' ' . $ampm;
+                            try {
+                                $timeFromDisplay = \Carbon\Carbon::createFromFormat('h:i:s A', $fromString)->format('h:i:s A');
+                            } catch (\Exception $e) {
+                                $timeFromDisplay = $fromString;
+                            }
+                        }
+                        if(!$timeFromDisplay && request()->filled('time_from')) {
+                            $fallbackFormats = ['H:i:s', 'h:i:s A', 'H:i', 'h:i A'];
+                            foreach ($fallbackFormats as $format) {
+                                try {
+                                    $timeFromDisplay = \Carbon\Carbon::createFromFormat($format, request('time_from'))->format('h:i:s A');
+                                    break;
+                                } catch (\Exception $e) {
+                                    $timeFromDisplay = request('time_from');
+                                }
+                            }
+                        }
+ 
+                        $timeToDisplay = null;
+                        if(request()->filled('time_to_hour') && request()->filled('time_to_minute') && request()->filled('time_to_second')) {
+                            $hour = str_pad((int) request('time_to_hour'), 2, '0', STR_PAD_LEFT);
+                            $minute = str_pad((int) request('time_to_minute'), 2, '0', STR_PAD_LEFT);
+                            $second = str_pad((int) request('time_to_second'), 2, '0', STR_PAD_LEFT);
+                            $ampm = strtoupper(request('time_to_ampm', 'PM'));
+                            if (!in_array($ampm, ['AM', 'PM'])) {
+                                $ampm = 'PM';
+                            }
+                            $toString = $hour . ':' . $minute . ':' . $second . ' ' . $ampm;
+                            try {
+                                $timeToDisplay = \Carbon\Carbon::createFromFormat('h:i:s A', $toString)->format('h:i:s A');
+                            } catch (\Exception $e) {
+                                $timeToDisplay = $toString;
+                            }
+                        }
+                        if(!$timeToDisplay && request()->filled('time_to')) {
+                            $fallbackFormats = ['H:i:s', 'h:i:s A', 'H:i', 'h:i A'];
+                            foreach ($fallbackFormats as $format) {
+                                try {
+                                    $timeToDisplay = \Carbon\Carbon::createFromFormat($format, request('time_to'))->format('h:i:s A');
+                                    break;
+                                } catch (\Exception $e) {
+                                    $timeToDisplay = request('time_to');
+                                }
+                            }
+                        }
+                    @endphp
+                    @if($timeFromDisplay)
                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-                            To: {{ request('date_to') }}
-                            <button onclick="removeFilter('date_to')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
+                            Time From: {{ $timeFromDisplay }}
+                            <button onclick="removeTimeFilter('from')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
+                        </span>
+                    @endif
+                    @if($timeToDisplay)
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                            Time To: {{ $timeToDisplay }}
+                            <button onclick="removeTimeFilter('to')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
                         </span>
                     @endif
                 </div>
@@ -404,17 +809,125 @@
                 </select>
             </div>
             
-            <!-- Date Range -->
+            <!-- Event Date -->
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date Range</label>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="date" name="date_from" value="{{ request('date_from') }}" 
-                           class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" 
-                           placeholder="From">
-                    <input type="date" name="date_to" value="{{ request('date_to') }}" 
-                           class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" 
-                           placeholder="To">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Event Date</label>
+                <input type="date" name="event_date" value="{{ request('event_date') }}"
+                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+            </div>
+
+            <!-- Event Time Range -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Event Time Range (12-hour format)</label>
+                <div class="time-range-container space-y-3">
+                    <div class="time-block" x-data="timePickerComponent('{{ $timeFromValue }}')" x-init="init()" x-on:keydown.escape.window="close()">
+                        <div class="time-block-header">From</div>
+                        <div class="time-picker-panel">
+                            <input type="hidden" name="time_from" x-ref="hidden">
+                            <button type="button" class="time-picker-button" :class="{ 'placeholder': !isComplete }" @click="toggle">
+                                <span x-text="display"></span>
+                                <svg class="time-picker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </button>
+                            <div class="time-picker-dropdown" x-cloak x-show="open" x-transition @click.away="close()">
+                                <div class="time-picker-grid">
+                                    <div class="time-picker-column">
+                                        <p>Hour</p>
+                                        <div class="time-picker-options time-picker-options-hour" x-ref="hourOptions">
+                                            <template x-for="hour in hours" :key="'from-hour-' + hour">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.hour === hour }" @click="setHour(hour)" x-text="hour"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>Minute</p>
+                                        <div class="time-picker-options time-picker-options-minute" x-ref="minuteOptions">
+                                            <template x-for="minute in minutes" :key="'from-minute-' + minute">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.minute === minute }" @click="setMinute(minute)" x-text="minute"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>Second</p>
+                                        <div class="time-picker-options time-picker-options-second" x-ref="secondOptions">
+                                            <template x-for="second in seconds" :key="'from-second-' + second">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.second === second }" @click="setSecond(second)" x-text="second"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>AM / PM</p>
+                                        <div class="time-picker-options time-picker-options-period" x-ref="periodOptions">
+                                            <template x-for="period in periods" :key="'from-period-' + period">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.period === period }" @click="setPeriod(period)" x-text="period"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="time-picker-actions">
+                                    <button type="button" class="time-picker-action" @click="clear()">Clear</button>
+                                    <button type="button" class="time-picker-action primary" :disabled="!isComplete" @click="confirm()">Done</button>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="timepicker-hint">Example: 02:30:00 PM</p>
+                    </div>
+                    <div class="time-block" x-data="timePickerComponent('{{ $timeToValue }}')" x-init="init()" x-on:keydown.escape.window="close()">
+                        <div class="time-block-header">To</div>
+                        <div class="time-picker-panel">
+                            <input type="hidden" name="time_to" x-ref="hidden">
+                            <button type="button" class="time-picker-button" :class="{ 'placeholder': !isComplete }" @click="toggle">
+                                <span x-text="display"></span>
+                                <svg class="time-picker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </button>
+                            <div class="time-picker-dropdown" x-cloak x-show="open" x-transition @click.away="close()">
+                                <div class="time-picker-grid">
+                                    <div class="time-picker-column">
+                                        <p>Hour</p>
+                                        <div class="time-picker-options time-picker-options-hour" x-ref="hourOptions">
+                                            <template x-for="hour in hours" :key="'to-hour-' + hour">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.hour === hour }" @click="setHour(hour)" x-text="hour"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>Minute</p>
+                                        <div class="time-picker-options time-picker-options-minute" x-ref="minuteOptions">
+                                            <template x-for="minute in minutes" :key="'to-minute-' + minute">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.minute === minute }" @click="setMinute(minute)" x-text="minute"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>Second</p>
+                                        <div class="time-picker-options time-picker-options-second" x-ref="secondOptions">
+                                            <template x-for="second in seconds" :key="'to-second-' + second">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.second === second }" @click="setSecond(second)" x-text="second"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>AM / PM</p>
+                                        <div class="time-picker-options time-picker-options-period" x-ref="periodOptions">
+                                            <template x-for="period in periods" :key="'to-period-' + period">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.period === period }" @click="setPeriod(period)" x-text="period"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="time-picker-actions">
+                                    <button type="button" class="time-picker-action" @click="clear()">Clear</button>
+                                    <button type="button" class="time-picker-action primary" :disabled="!isComplete" @click="confirm()">Done</button>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="timepicker-hint">Example: 11:45:30 PM</p>
+                    </div>
                 </div>
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Times apply to the selected event date.</p>
             </div>
             
             <!-- Filter Buttons -->
@@ -433,6 +946,135 @@
 
 @push('scripts')
 <script>
+window.timePickerComponent = function(initialValue) {
+    return {
+        open: false,
+        hours: Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')),
+        minutes: Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')),
+        seconds: Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')),
+        periods: ['AM', 'PM'],
+        selection: { hour: '', minute: '', second: '', period: 'AM' },
+        init() {
+            this.setFromString(initialValue);
+        },
+        get display() {
+            if (this.selection.hour && this.selection.minute) {
+                const second = this.selection.second || '00';
+                return `${this.selection.hour}:${this.selection.minute}:${second} ${this.selection.period}`;
+            }
+            return 'Select time';
+        },
+        get isComplete() {
+            return this.selection.hour && this.selection.minute && this.selection.period;
+        },
+        toggle() {
+            this.open = !this.open;
+            if (this.open) {
+                this.scrollToActive();
+            }
+        },
+        close() {
+            this.open = false;
+        },
+        setHour(hour) {
+            this.selection.hour = hour;
+            this.ensureDefaults();
+            this.updateHidden();
+        },
+        setMinute(minute) {
+            this.selection.minute = minute;
+            this.ensureDefaults();
+            this.updateHidden();
+        },
+        setSecond(second) {
+            this.selection.second = second;
+            this.ensureDefaults();
+            this.updateHidden();
+        },
+        setPeriod(period) {
+            this.selection.period = period;
+            this.ensureDefaults();
+            this.updateHidden();
+        },
+        ensureDefaults() {
+            if (!this.selection.period) {
+                this.selection.period = 'AM';
+            }
+            if (!this.selection.second) {
+                this.selection.second = '00';
+            }
+        },
+        updateHidden() {
+            if (this.isComplete) {
+                const value = `${this.selection.hour}:${this.selection.minute}:${this.selection.second || '00'} ${this.selection.period}`;
+                this.$refs.hidden.value = value;
+            } else {
+                this.$refs.hidden.value = '';
+            }
+        },
+        confirm() {
+            if (this.isComplete) {
+                this.updateHidden();
+                this.close();
+            }
+        },
+        clear(skipClose = false) {
+            this.selection = { hour: '', minute: '', second: '', period: 'AM' };
+            this.$refs.hidden.value = '';
+            if (!skipClose) {
+                this.close();
+            }
+            this.updateHidden();
+        },
+        setFromString(value) {
+            const trimmed = (value || '').trim();
+            if (!trimmed) {
+                this.clear(true);
+                return;
+            }
+
+            const match = trimmed.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+            if (match) {
+                let hour = parseInt(match[1], 10);
+                const minute = match[2];
+                const second = (match[3] || '00').padStart(2, '0');
+                let period = match[4] ? match[4].toUpperCase() : null;
+
+                if (!period) {
+                    period = hour >= 12 ? 'PM' : 'AM';
+                }
+
+                if (hour === 0) {
+                    hour = 12;
+                } else if (hour > 12) {
+                    hour -= 12;
+                }
+
+                this.selection.hour = String(hour).padStart(2, '0');
+                this.selection.minute = minute;
+                this.selection.second = second;
+                this.selection.period = period;
+                this.updateHidden();
+            } else {
+                this.clear(true);
+            }
+        },
+        scrollToActive() {
+            this.$nextTick(() => {
+                ['hourOptions', 'minuteOptions', 'secondOptions', 'periodOptions'].forEach(refName => {
+                    const container = this.$refs[refName];
+                    if (container) {
+                        const active = container.querySelector('.time-picker-option.active');
+                        if (active && active.scrollIntoView) {
+                            active.scrollIntoView({ block: 'center' });
+                        }
+                    }
+                });
+            });
+        }
+    };
+};
+
 // Pass tournaments data to JavaScript
 const tournamentsBySport = @json($tournamentsBySport);
 
@@ -448,6 +1090,37 @@ function toggleFilterDrawer() {
 function removeFilter(filterName) {
     const url = new URL(window.location);
     url.searchParams.delete(filterName);
+    if (filterName === 'event_date') {
+        ['time_from_hour','time_from_minute','time_from_second','time_from_ampm','time_from',
+         'time_to_hour','time_to_minute','time_to_second','time_to_ampm','time_to'].forEach(param => url.searchParams.delete(param));
+    }
+    const exEventId = url.searchParams.get('exEventId');
+    if (exEventId) {
+        url.searchParams.set('exEventId', exEventId);
+    }
+    window.location.href = url.toString();
+}
+
+// Remove time filter
+function removeTimeFilter(type) {
+    const url = new URL(window.location);
+    if (type === 'from') {
+        url.searchParams.delete('time_from_hour');
+        url.searchParams.delete('time_from_minute');
+        url.searchParams.delete('time_from_second');
+        url.searchParams.delete('time_from_ampm');
+        url.searchParams.delete('time_from');
+    } else { // type === 'to'
+        url.searchParams.delete('time_to_hour');
+        url.searchParams.delete('time_to_minute');
+        url.searchParams.delete('time_to_second');
+        url.searchParams.delete('time_to_ampm');
+        url.searchParams.delete('time_to');
+    }
+    const exEventId = url.searchParams.get('exEventId');
+    if (exEventId) {
+        url.searchParams.set('exEventId', exEventId);
+    }
     window.location.href = url.toString();
 }
 

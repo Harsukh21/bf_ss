@@ -6,6 +6,7 @@ use App\Models\MarketRate;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class MarketRateController extends Controller
 {
@@ -15,21 +16,37 @@ class MarketRateController extends Controller
     public function index(Request $request)
     {
         // Get all available events for dropdown (from events table and market_lists)
-        $eventsFromEvents = Event::select('eventId', 'eventName', 'exEventId')->get();
+        $eventsFromEvents = Event::select('eventId', 'eventName', 'exEventId', 'marketTime', 'createdAt')
+            ->get()
+            ->map(function ($event) {
+                $dateSource = $event->marketTime ?? $event->createdAt;
+                $formattedDate = $dateSource ? Carbon::parse($dateSource)->timezone(config('app.timezone', 'UTC'))->format('M d, Y h:i A') : null;
+
+                return (object) [
+                    'eventId' => $event->eventId,
+                    'eventName' => $event->eventName,
+                    'exEventId' => $event->exEventId,
+                    'marketTime' => $dateSource ? Carbon::parse($dateSource)->format('Y-m-d H:i:s') : null,
+                    'formattedDate' => $formattedDate,
+                ];
+            });
         
         // Get events from market_lists and normalize the data structure
         $marketEvents = DB::table('market_lists')
-            ->select('exEventId', 'eventName')
+            ->select('exEventId', 'eventName', 'marketTime')
             ->whereNotIn('exEventId', $eventsFromEvents->pluck('exEventId'))
             ->distinct()
             ->get();
         
         // Convert to proper objects with consistent property names
         $eventsFromMarkets = $marketEvents->map(function ($event) {
+            $formattedDate = $event->marketTime ? Carbon::parse($event->marketTime)->timezone(config('app.timezone', 'UTC'))->format('M d, Y h:i A') : null;
             return (object) [
                 'eventId' => 'market_' . time() . '_' . rand(1000, 9999),
                 'eventName' => $event->eventName,
-                'exEventId' => $event->exEventId
+                'exEventId' => $event->exEventId,
+                'marketTime' => $event->marketTime ? Carbon::parse($event->marketTime)->format('Y-m-d H:i:s') : null,
+                'formattedDate' => $formattedDate,
             ];
         });
         
@@ -91,7 +108,7 @@ class MarketRateController extends Controller
             if (!$eventInfo) {
                 $marketEventInfo = DB::table('market_lists')
                     ->where('exEventId', $selectedEventId)
-                    ->select('eventName', 'exEventId')
+                    ->select('eventName', 'exEventId', 'marketTime')
                     ->selectRaw("'market_list' as source")
                     ->first();
                 if ($marketEventInfo) {
@@ -99,9 +116,15 @@ class MarketRateController extends Controller
                     $eventInfo = (object) [
                         'eventName' => $marketEventInfo->eventName,
                         'exEventId' => $marketEventInfo->exEventId,
-                        'source' => $marketEventInfo->source
+                        'source' => $marketEventInfo->source,
+                        'marketTime' => $marketEventInfo->marketTime ?? null,
                     ];
                 }
+            }
+
+            if ($eventInfo) {
+                $dateSource = $eventInfo->marketTime ?? ($eventInfo->createdAt ?? null);
+                $eventInfo->formattedDate = $dateSource ? Carbon::parse($dateSource)->timezone(config('app.timezone', 'UTC'))->format('M d, Y h:i A') : null;
             }
         }
 

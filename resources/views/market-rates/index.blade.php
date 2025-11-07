@@ -205,7 +205,7 @@
                                id="eventSearch" 
                                placeholder="Search events..." 
                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-                               value="{{ $eventInfo->eventName ?? '' }}"
+                               value="{{ $eventInfo ? trim($eventInfo->eventName . ($eventInfo->formattedDate ?? false ? ' - ' . $eventInfo->formattedDate : '')) : '' }}"
                                autocomplete="off">
                         <input type="hidden" name="exEventId" id="exEventId" value="{{ $selectedEventId }}" required>
                         
@@ -599,14 +599,21 @@ document.addEventListener('DOMContentLoaded', function() {
         filteredEvents.slice(0, 20).forEach(event => {
             const div = document.createElement('div');
             div.className = 'px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-sm text-gray-900 dark:text-gray-100';
-            div.innerHTML = `${event.eventName} <span class="text-gray-400 dark:text-gray-500">(${event.eventId})</span>`;
-            
+            div.innerHTML = `
+                <div class="flex flex-col">
+                    <span class="font-medium">${event.eventName}</span>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">ID: ${event.eventId}</span>
+                    ${event.formattedDate ? `<span class="text-xs text-gray-500 dark:text-gray-400">${event.formattedDate}</span>` : ''}
+                </div>
+            `;
+
             div.addEventListener('click', function() {
                 exEventIdInput.value = event.exEventId;
-                eventSearch.value = event.eventName;
+                const displayValue = event.formattedDate ? `${event.eventName} - ${event.formattedDate}` : event.eventName;
+                eventSearch.value = displayValue;
                 eventDropdown.classList.add('hidden');
             });
-            
+
             eventDropdown.appendChild(div);
         });
     }

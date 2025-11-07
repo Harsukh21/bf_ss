@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Carbon\Carbon;
+use Exception;
 
 class EventController extends Controller
 {
@@ -180,13 +182,66 @@ class EventController extends Controller
             $query->where('popular', $request->boolean('popular'));
         }
 
-        // Date range filtering
-        if ($request->filled('date_from')) {
-            $query->where('createdAt', '>=', $request->date_from . ' 00:00:00');
-        }
+        // Event date + time filtering (based on marketTime)
+        if ($request->filled('event_date')) {
+            $timezone = config('app.timezone', 'UTC');
+            $eventDate = $request->event_date;
 
-        if ($request->filled('date_to')) {
-            $query->where('createdAt', '<=', $request->date_to . ' 23:59:59');
+            $normalizedTimeFrom = null;
+            $normalizedTimeTo = null;
+
+            $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
+
+            if ($request->filled('time_from')) {
+                foreach ($timeFormats as $format) {
+                    try {
+                        $normalizedTimeFrom = Carbon::createFromFormat($format, $request->time_from)->format('H:i:s');
+                        break;
+                    } catch (
+                        Exception $e
+                    ) {
+                        continue;
+                    }
+                }
+            }
+
+            if ($request->filled('time_to')) {
+                foreach ($timeFormats as $format) {
+                    try {
+                        $normalizedTimeTo = Carbon::createFromFormat($format, $request->time_to)->format('H:i:s');
+                        break;
+                    } catch (
+                        Exception $e
+                    ) {
+                        continue;
+                    }
+                }
+            }
+
+            try {
+                $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $eventDate . ' ' . ($normalizedTimeFrom ?? '00:00:00'), $timezone);
+            } catch (
+                Exception $e
+            ) {
+                $startDateTime = Carbon::now($timezone)->startOfDay();
+            }
+
+            try {
+                $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $eventDate . ' ' . ($normalizedTimeTo ?? '23:59:59'), $timezone);
+            } catch (
+                Exception $e
+            ) {
+                $endDateTime = Carbon::now($timezone)->endOfDay();
+            }
+
+            if ($endDateTime->lt($startDateTime)) {
+                $endDateTime = $startDateTime->copy()->endOfDay();
+            }
+
+            $query->whereBetween('marketTime', [
+                $startDateTime->format('Y-m-d H:i:s'),
+                $endDateTime->format('Y-m-d H:i:s')
+            ]);
         }
     }
 
@@ -317,6 +372,7 @@ class EventController extends Controller
                 'IsVoid',
                 'IsUnsettle',
                 'dataSwitch',
+                'marketTime',
                 'createdAt'
             ]);
 
@@ -355,6 +411,7 @@ class EventController extends Controller
                 'Popular',
                 'Status',
                 'Data Switch',
+                'Event Time',
                 'Created At'
             ]);
 
@@ -385,6 +442,7 @@ class EventController extends Controller
                     $event->popular ? 'Yes' : 'No',
                     $status,
                     $event->dataSwitch ? 'On' : 'Off',
+                    $event->marketTime,
                     $event->createdAt
                 ]);
             }
