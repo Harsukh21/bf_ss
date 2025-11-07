@@ -28,13 +28,15 @@ class MarketController extends Controller
                 ->get();
         });
 
-        $marketTypes = Cache::remember('markets.types', 300, function () {
+        $marketTypeRecords = Cache::remember('markets.market_names', 300, function () {
             return DB::table('market_lists')
-                ->select('type', 'tournamentsName')
+                ->select('marketName', 'tournamentsName', 'eventName')
                 ->distinct()
-                ->orderBy('type')
+                ->orderBy('marketName')
                 ->get();
         });
+
+        $marketTypes = $marketTypeRecords;
 
         // Get tournaments grouped by sport for JavaScript filtering
         $tournamentsBySport = Cache::remember('markets.tournaments_by_sport', 300, function () {
@@ -47,14 +49,20 @@ class MarketController extends Controller
         });
 
         // Get market types grouped by tournament for JavaScript filtering
-        $marketTypesByTournament = Cache::remember('markets.types_by_tournament', 300, function () {
+        $marketTypesByTournament = Cache::remember('markets.types_by_tournament', 300, function () use ($marketTypeRecords) {
+            return $marketTypeRecords->groupBy('tournamentsName');
+        });
+
+        $eventsByTournament = Cache::remember('markets.events_by_tournament', 300, function () {
             return DB::table('market_lists')
-                ->select('type', 'tournamentsName')
+                ->select('eventName', 'tournamentsName')
                 ->distinct()
-                ->orderBy('type')
+                ->orderBy('eventName')
                 ->get()
                 ->groupBy('tournamentsName');
         });
+
+        $marketTypesByEvent = $marketTypeRecords->groupBy('eventName');
 
         // Build optimized raw query with specific column selection
         $query = DB::table('market_lists')
@@ -114,7 +122,9 @@ class MarketController extends Controller
             'marketTypes',
             'activeFilters',
             'tournamentsBySport',
-            'marketTypesByTournament'
+            'marketTypesByTournament',
+            'eventsByTournament',
+            'marketTypesByEvent'
         ));
     }
 
@@ -143,9 +153,19 @@ class MarketController extends Controller
             $query->where('tournamentsName', $request->tournament);
         }
 
-        // Market type filter
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
+        if ($request->filled('event_name')) {
+            $query->where('eventName', $request->event_name);
+        }
+
+        // Market name filter
+        if ($request->filled('market_name')) {
+            $query->where('marketName', $request->market_name);
+        } elseif ($request->filled('type')) {
+            // Backward compatibility if legacy parameter is present
+            $query->where(function ($q) use ($request) {
+                $q->where('marketName', $request->type)
+                  ->orWhere('type', $request->type);
+            });
         }
 
         // Live filter
@@ -191,8 +211,14 @@ class MarketController extends Controller
             $activeFilters['Tournament'] = $request->tournament;
         }
 
-        if ($request->filled('type')) {
-            $activeFilters['Type'] = $request->type;
+        if ($request->filled('event_name')) {
+            $activeFilters['Event'] = $request->event_name;
+        }
+
+        if ($request->filled('market_name')) {
+            $activeFilters['Market'] = $request->market_name;
+        } elseif ($request->filled('type')) {
+            $activeFilters['Market'] = $request->type;
         }
 
         if ($request->has('is_live')) {

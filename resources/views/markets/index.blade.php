@@ -361,16 +361,34 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Market Type -->
+
+            <!-- Event -->
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Market Type</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Event</label>
+                <div class="relative">
+                    <input type="text" id="eventSearch" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Click to see all events or search..." autocomplete="off">
+                    <select name="event_name" id="eventSelect" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 absolute inset-0 opacity-0 pointer-events-none">
+                        <option value="">-- Select Event --</option>
+                        @foreach($eventsByTournament as $tournamentName => $events)
+                            @foreach($events as $event)
+                                <option value="{{ $event->eventName }}" data-tournament="{{ $tournamentName }}" {{ request('event_name') == $event->eventName ? 'selected' : '' }}>{{ $event->eventName }}</option>
+                            @endforeach
+                        @endforeach
+                    </select>
+                    <div id="eventDropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-y-auto hidden tournament-dropdown-scrollable">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Market</label>
                 <div class="relative">
                     <input type="text" id="marketTypeSearch" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Click to see all types or search..." autocomplete="off">
-                    <select name="type" id="marketTypeSelect" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 absolute inset-0 opacity-0 pointer-events-none">
-                        <option value="">-- Select Type --</option>
+                    <select name="market_name" id="marketTypeSelect" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 absolute inset-0 opacity-0 pointer-events-none">
+                        <option value="">-- Select Market --</option>
                         @foreach($marketTypes as $type)
-                            <option value="{{ $type->type }}" data-tournament="{{ $type->tournamentsName }}" {{ request('type') == $type->type ? 'selected' : '' }}>{{ $type->type }}</option>
+                            <option value="{{ $type->marketName }}" data-tournament="{{ $type->tournamentsName }}" {{ request('market_name') == $type->marketName ? 'selected' : '' }}>{{ $type->marketName }}</option>
                         @endforeach
                     </select>
                     <div id="marketTypeDropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-y-auto hidden tournament-dropdown-scrollable">
@@ -431,6 +449,8 @@
 // Pass data to JavaScript
 const tournamentsBySport = @json($tournamentsBySport);
 const marketTypesByTournament = @json($marketTypesByTournament);
+const eventsByTournament = @json($eventsByTournament);
+const marketTypesByEvent = @json($marketTypesByEvent);
 
 function toggleFilter() {
     const drawer = document.getElementById('filterDrawer');
@@ -464,8 +484,11 @@ function removeFilter(filterKey) {
         case 'Tournament':
             params.delete('tournament');
             break;
-        case 'Type':
-            params.delete('type');
+        case 'Event':
+            params.delete('event_name');
+            break;
+        case 'Market':
+            params.delete('market_name');
             break;
         case 'Live':
             params.delete('is_live');
@@ -504,6 +527,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const tournamentSelect = document.getElementById('tournamentSelect');
     const tournamentSearch = document.getElementById('tournamentSearch');
     const tournamentDropdown = document.getElementById('tournamentDropdown');
+    const eventSelect = document.getElementById('eventSelect');
+    const eventSearch = document.getElementById('eventSearch');
+    const eventDropdown = document.getElementById('eventDropdown');
     const marketTypeSelect = document.getElementById('marketTypeSelect');
     const marketTypeSearch = document.getElementById('marketTypeSearch');
     const marketTypeDropdown = document.getElementById('marketTypeDropdown');
@@ -523,6 +549,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     updateTournamentInputDisplay();
+    
+    // Update event input display
+    function updateEventInputDisplay() {
+        const selectedOption = eventSelect.options[eventSelect.selectedIndex];
+        if (selectedOption && selectedOption.value !== '') {
+            eventSearch.value = selectedOption.text;
+            eventSearch.classList.add('text-gray-900', 'dark:text-gray-100');
+            eventSearch.classList.remove('text-gray-400', 'dark:text-gray-500');
+        } else {
+            eventSearch.value = '';
+        }
+    }
+    
+    updateEventInputDisplay();
     
     // Update market type input display
     function updateMarketTypeInputDisplay() {
@@ -550,11 +590,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 tournamentSelect.value = '';
                 updateTournamentInputDisplay();
             }
-            // Also clear market type when sport is cleared
-            marketTypeSelect.value = '';
-            updateMarketTypeInputDisplay();
-            marketTypeSearch.value = '';
-            marketTypeDropdown.classList.add('hidden');
+            // Also clear event when sport is cleared
+            eventSelect.value = '';
+            updateEventInputDisplay();
+            eventDropdown.classList.add('hidden');
+            filterMarketTypesByEvent(null, false);
             return;
         }
         
@@ -574,15 +614,85 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!selectedTournamentSport || selectedTournamentSport !== sportName) {
                 tournamentSelect.value = '';
                 updateTournamentInputDisplay();
-                // Also clear market type when tournament is cleared
-                marketTypeSelect.value = '';
-                updateMarketTypeInputDisplay();
-                marketTypeSearch.value = '';
-                marketTypeDropdown.classList.add('hidden');
+                // Also clear event when tournament is cleared
+                eventSelect.value = '';
+                updateEventInputDisplay();
+                eventDropdown.classList.add('hidden');
+                filterMarketTypesByEvent(null, false);
             }
         }
     }
     
+    // Filter events based on selected tournament
+    function filterEventsByTournament(tournamentName, preserveSelection = false) {
+        const allEvents = Array.from(eventSelect.options);
+        
+        if (!tournamentName) {
+            allEvents.forEach(option => {
+                option.style.display = '';
+            });
+            if (!preserveSelection && !isFirstLoad) {
+                eventSelect.value = '';
+                updateEventInputDisplay();
+                filterMarketTypesByEvent(null, false);
+            }
+            return;
+        }
+        
+        allEvents.forEach(option => {
+            const optionTournament = option.getAttribute('data-tournament');
+            if (optionTournament === tournamentName || option.value === '') {
+                option.style.display = '';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+        
+        if (!preserveSelection && !isFirstLoad) {
+            const selectedEvent = eventSelect.options[eventSelect.selectedIndex];
+            const selectedEventTournament = selectedEvent ? selectedEvent.getAttribute('data-tournament') : null;
+            
+            if (!selectedEventTournament || selectedEventTournament !== tournamentName) {
+                eventSelect.value = '';
+                updateEventInputDisplay();
+                filterMarketTypesByEvent(null, false);
+            }
+        }
+    }
+
+    // Filter market types based on selected event (fallback to tournament)
+    function filterMarketTypesByEvent(eventName, preserveSelection = false) {
+        const allMarketTypes = Array.from(marketTypeSelect.options);
+
+        if (!eventName) {
+            filterMarketTypesByTournament(tournamentSelect.value, preserveSelection);
+            return;
+        }
+
+        const allowedTypes = (marketTypesByEvent[eventName] || []).map(item => item.marketName);
+
+        allMarketTypes.forEach(option => {
+            if (option.value === '') {
+                option.style.display = '';
+                return;
+            }
+
+            if (allowedTypes.includes(option.value)) {
+                option.style.display = '';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+
+        if (!preserveSelection && !isFirstLoad) {
+            const selectedType = marketTypeSelect.options[marketTypeSelect.selectedIndex];
+            if (!selectedType || !allowedTypes.includes(selectedType.value)) {
+                marketTypeSelect.value = '';
+                updateMarketTypeInputDisplay();
+            }
+        }
+    }
+
     // Filter market types based on selected tournament
     function filterMarketTypesByTournament(tournamentName, preserveSelection = false) {
         const allMarketTypes = Array.from(marketTypeSelect.options);
@@ -675,26 +785,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 tournamentSearch.value = name;
                 tournamentDropdown.classList.add('hidden');
                 
-                // Filter market types based on selected tournament
+                // Filter events based on selected tournament
                 isFirstLoad = true;
-                filterMarketTypesByTournament(value, false);
+                filterEventsByTournament(value, false);
                 isFirstLoad = false;
                 
-                // Clear market type selection if it doesn't belong to this tournament
-                marketTypeSelect.value = '';
-                updateMarketTypeInputDisplay();
-                marketTypeSearch.value = '';
-                marketTypeDropdown.classList.add('hidden');
+                // Clear event selection if it doesn't belong to this tournament
+                eventSelect.value = '';
+                updateEventInputDisplay();
+                eventDropdown.classList.add('hidden');
+                filterMarketTypesByEvent(null, false);
             });
         });
     }
     
-    // Market Type dropdown functionality
-    function showMarketTypeDropdown() {
-        const searchTerm = marketTypeSearch.value.trim().toLowerCase();
+    // Event dropdown functionality
+    function showEventDropdown() {
+        const searchTerm = eventSearch.value.trim().toLowerCase();
         const selectedTournament = tournamentSelect.value;
         
-        let filteredOptions = Array.from(marketTypeSelect.options).filter(option => {
+        let filteredOptions = Array.from(eventSelect.options).filter(option => {
             if (selectedTournament) {
                 const optionTournament = option.getAttribute('data-tournament');
                 if (optionTournament !== selectedTournament && option.value !== '') {
@@ -713,12 +823,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         if (filteredOptions.length === 0) {
-            marketTypeDropdown.innerHTML = `
+            eventDropdown.innerHTML = `
                 <div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-                    No market types found
+                    No events found
                 </div>
             `;
-            marketTypeDropdown.classList.remove('hidden');
+            eventDropdown.classList.remove('hidden');
             return;
         }
         
@@ -726,7 +836,7 @@ document.addEventListener('DOMContentLoaded', function() {
         filteredOptions.forEach(option => {
             const optionValue = option.value;
             const optionName = option.text;
-            const isSelected = marketTypeSelect.value === optionValue;
+            const isSelected = eventSelect.value === optionValue;
             dropdownHTML += `
                 <div class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer ${isSelected ? 'bg-blue-100 dark:bg-blue-900/20 font-medium' : ''}" data-value="${optionValue}" data-name="${optionName}">
                     ${optionName}
@@ -734,17 +844,19 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         });
         
-        marketTypeDropdown.innerHTML = dropdownHTML;
-        marketTypeDropdown.classList.remove('hidden');
+        eventDropdown.innerHTML = dropdownHTML;
+        eventDropdown.classList.remove('hidden');
         
-        marketTypeDropdown.querySelectorAll('div[data-value]').forEach(item => {
+        eventDropdown.querySelectorAll('div[data-value]').forEach(item => {
             item.addEventListener('click', function() {
                 const value = this.getAttribute('data-value');
                 const name = this.getAttribute('data-name');
                 
-                marketTypeSelect.value = value;
-                marketTypeSearch.value = name;
-                marketTypeDropdown.classList.add('hidden');
+                eventSelect.value = value;
+                eventSearch.value = name;
+                eventDropdown.classList.add('hidden');
+                filterMarketTypesByEvent(value, false);
+                updateMarketTypeInputDisplay();
             });
         });
     }
@@ -756,6 +868,9 @@ document.addEventListener('DOMContentLoaded', function() {
         filterTournamentsBySport(selectedSport, false);
         tournamentSearch.value = '';
         tournamentDropdown.classList.add('hidden');
+        filterEventsByTournament('', false);
+        filterMarketTypesByEvent(null, false);
+        updateMarketTypeInputDisplay();
     });
     
     tournamentSearch.addEventListener('focus', function() {
@@ -765,19 +880,28 @@ document.addEventListener('DOMContentLoaded', function() {
     tournamentSearch.addEventListener('input', function() {
         showTournamentDropdown();
     });
-    
-    marketTypeSearch.addEventListener('focus', function() {
-        showMarketTypeDropdown();
+
+    eventSelect.addEventListener('change', function() {
+        const selectedEvent = this.value;
+        filterMarketTypesByEvent(selectedEvent, false);
+        updateMarketTypeInputDisplay();
     });
-    
-    marketTypeSearch.addEventListener('input', function() {
-        showMarketTypeDropdown();
+
+    eventSearch.addEventListener('focus', function() {
+        showEventDropdown();
+    });
+
+    eventSearch.addEventListener('input', function() {
+        showEventDropdown();
     });
     
     // Hide dropdowns when clicking outside
     document.addEventListener('click', function(event) {
         if (!tournamentSearch.contains(event.target) && !tournamentDropdown.contains(event.target)) {
             tournamentDropdown.classList.add('hidden');
+        }
+        if (!eventSearch.contains(event.target) && !eventDropdown.contains(event.target)) {
+            eventDropdown.classList.add('hidden');
         }
         if (!marketTypeSearch.contains(event.target) && !marketTypeDropdown.contains(event.target)) {
             marketTypeDropdown.classList.add('hidden');
@@ -787,12 +911,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Apply initial filters
     const initialSport = sportSelect.value;
     const initialTournament = tournamentSelect.value;
+    const initialEvent = eventSelect.value;
     
     if (initialSport) {
         filterTournamentsBySport(initialSport, true);
     }
     
     if (initialTournament) {
+        filterEventsByTournament(initialTournament, true);
+    }
+
+    if (initialEvent) {
+        filterMarketTypesByEvent(initialEvent, true);
+    } else if (initialTournament) {
         filterMarketTypesByTournament(initialTournament, true);
     }
 });
