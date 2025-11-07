@@ -93,7 +93,13 @@ class EventController extends Controller
         // Get sport configuration
         $sportConfig = config('sports.sports');
         
-        return view('events.index', compact('paginatedEvents', 'sports', 'tournaments', 'sportConfig', 'tournamentsBySport'));
+        return view('events.index', compact(
+            'paginatedEvents',
+            'sports',
+            'tournaments',
+            'sportConfig',
+            'tournamentsBySport'
+        ));
     }
 
     /**
@@ -161,14 +167,30 @@ class EventController extends Controller
         // Optimized status filtering with raw queries
         if ($request->filled('status')) {
             switch ($request->status) {
+                case 'upcoming':
+                    $query->where('marketTime', '>', Carbon::now());
+                    break;
+                case 'in_play':
+                    // In-play: marketTime passed but event not settled/voided yet
+                    $query->where('marketTime', '<=', Carbon::now())
+                          ->where('IsSettle', 0)
+                          ->where('IsVoid', 0)
+                          ->where('IsUnsettle', 0);
+                    break;
                 case 'settled':
                     $query->where('IsSettle', 1)->where('IsVoid', 0);
                     break;
-                case 'void':
-                    $query->where('IsVoid', 1);
-                    break;
                 case 'unsettled':
                     $query->where('IsUnsettle', 1)->where('IsSettle', 0)->where('IsVoid', 0);
+                    break;
+                case 'closed':
+                    // Closed: event finished but not settled (manual assumption)
+                    $query->where('IsSettle', 0)
+                          ->where('IsVoid', 0)
+                          ->where('marketTime', '<=', Carbon::now());
+                    break;
+                case 'voided':
+                    $query->where('IsVoid', 1);
                     break;
             }
         }
@@ -182,66 +204,74 @@ class EventController extends Controller
             $query->where('popular', $request->boolean('popular'));
         }
 
-        // Event date + time filtering (based on marketTime)
-        if ($request->filled('event_date')) {
-            $timezone = config('app.timezone', 'UTC');
-            $eventDate = $request->event_date;
+        $timezone = config('app.timezone', 'UTC');
+        $dateFromEnabled = $request->boolean('event_date_from_enabled');
+        $dateToEnabled = $request->boolean('event_date_to_enabled');
+        $timeFromEnabled = $request->boolean('time_from_enabled');
+        $timeToEnabled = $request->boolean('time_to_enabled');
 
-            $normalizedTimeFrom = null;
-            $normalizedTimeTo = null;
+        $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
 
-            $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
+        $startDateTime = null;
+        $endDateTime = null;
 
-            if ($request->filled('time_from')) {
+        if ($dateFromEnabled && $request->filled('event_date_from')) {
+            $dateFrom = $request->event_date_from;
+            $timeComponent = '00:00:00';
+
+            if ($timeFromEnabled) {
                 foreach ($timeFormats as $format) {
                     try {
-                        $normalizedTimeFrom = Carbon::createFromFormat($format, $request->time_from)->format('H:i:s');
+                        $timeComponent = Carbon::createFromFormat($format, $request->time_from)->format('H:i:s');
                         break;
-                    } catch (
-                        Exception $e
-                    ) {
-                        continue;
-                    }
-                }
-            }
-
-            if ($request->filled('time_to')) {
-                foreach ($timeFormats as $format) {
-                    try {
-                        $normalizedTimeTo = Carbon::createFromFormat($format, $request->time_to)->format('H:i:s');
-                        break;
-                    } catch (
-                        Exception $e
-                    ) {
+                    } catch (Exception $e) {
                         continue;
                     }
                 }
             }
 
             try {
-                $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $eventDate . ' ' . ($normalizedTimeFrom ?? '00:00:00'), $timezone);
-            } catch (
-                Exception $e
-            ) {
+                $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom . ' ' . $timeComponent, $timezone);
+            } catch (Exception $e) {
                 $startDateTime = Carbon::now($timezone)->startOfDay();
             }
+        }
 
-            try {
-                $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $eventDate . ' ' . ($normalizedTimeTo ?? '23:59:59'), $timezone);
-            } catch (
-                Exception $e
-            ) {
-                $endDateTime = Carbon::now($timezone)->endOfDay();
+        if ($dateToEnabled && $request->filled('event_date_to')) {
+            $dateTo = $request->event_date_to;
+            $timeComponent = '23:59:59';
+
+            if ($timeToEnabled) {
+                foreach ($timeFormats as $format) {
+                    try {
+                        $timeComponent = Carbon::createFromFormat($format, $request->time_to)->format('H:i:s');
+                        break;
+                    } catch (Exception $e) {
+                        continue;
+                    }
+                }
             }
 
+            try {
+                $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo . ' ' . $timeComponent, $timezone);
+            } catch (Exception $e) {
+                $endDateTime = Carbon::now($timezone)->endOfDay();
+            }
+        }
+
+        if ($startDateTime && $endDateTime) {
             if ($endDateTime->lt($startDateTime)) {
                 $endDateTime = $startDateTime->copy()->endOfDay();
             }
 
             $query->whereBetween('marketTime', [
                 $startDateTime->format('Y-m-d H:i:s'),
-                $endDateTime->format('Y-m-d H:i:s')
+                $endDateTime->format('Y-m-d H:i:s'),
             ]);
+        } elseif ($startDateTime) {
+            $query->where('marketTime', '>=', $startDateTime->format('Y-m-d H:i:s'));
+        } elseif ($endDateTime) {
+            $query->where('marketTime', '<=', $endDateTime->format('Y-m-d H:i:s'));
         }
     }
 

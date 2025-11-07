@@ -44,6 +44,64 @@
         visibility: visible;
     }
 
+    .filter-field-group {
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1rem 1.25rem;
+    }
+
+    .dark .filter-field-group {
+        background-color: rgba(55, 65, 81, 0.6);
+        border-color: #4b5563;
+    }
+
+    .filter-field-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+
+    .dark .filter-field-title {
+        color: #e5e7eb;
+    }
+
+    .filter-field-row {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+    }
+
+    .filter-field-label {
+        width: 3.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #6b7280;
+        letter-spacing: 0.04em;
+    }
+
+    .dark .filter-field-label {
+        color: #9ca3af;
+    }
+
+    .filter-field-apply {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #4b5563;
+    }
+
+    .dark .filter-field-apply {
+        color: #d1d5db;
+    }
+
+    .filter-field-apply input {
+        margin-right: 0.4rem;
+    }
+
     .time-range-container {
         display: flex;
         flex-direction: column;
@@ -51,18 +109,9 @@
     }
 
     .time-block {
-        background-color: #f9fafb;
-        border: 1px solid #e5e7eb;
-        border-radius: 0.75rem;
-        padding: 0.9rem 1rem;
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
-    }
-
-    .dark .time-block {
-        background-color: rgba(55, 65, 81, 0.6);
-        border-color: #4b5563;
     }
 
     .time-block-header {
@@ -96,7 +145,7 @@
         width: 100%;
         display: flex;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: space-between;
         gap: 0.5rem;
         padding: 0.75rem 0.85rem;
         padding-right: 2.5rem;
@@ -115,9 +164,14 @@
         box-shadow: 0 10px 25px rgba(37, 99, 235, 0.12);
     }
 
-    .time-picker-button.placeholder span {
+    .time-picker-button.placeholder {
         color: #9ca3af;
-        font-weight: 500;
+    }
+
+    .time-picker-button:disabled {
+        cursor: not-allowed;
+        background-color: #f3f4f6;
+        color: #9ca3af;
     }
 
     .time-picker-icon {
@@ -397,6 +451,12 @@
                         if(!$timeToValue) {
                             $timeToValue = $defaultPickerTime;
                         }
+
+                        $timeFromEnabled = request()->filled('time_from') || (request()->filled('time_from_hour') && request()->filled('time_from_minute'));
+                        $timeToEnabled = request()->filled('time_to') || (request()->filled('time_to_hour') && request()->filled('time_to_minute'));
+
+                        $dateFromEnabled = request()->filled('event_date_from');
+                        $dateToEnabled = request()->filled('event_date_to');
                     @endphp
                     
                     <button onclick="toggleFilterDrawer()" class="bg-primary-600 dark:bg-primary-700 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:hover:bg-primary-800 transition-colors flex items-center relative">
@@ -802,28 +862,53 @@
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
                 <select name="status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     <option value="">All Status</option>
+                    <option value="upcoming" {{ request('status') == 'upcoming' ? 'selected' : '' }}>Upcoming</option>
+                    <option value="in_play" {{ request('status') == 'in_play' ? 'selected' : '' }}>In-Play</option>
                     <option value="settled" {{ request('status') == 'settled' ? 'selected' : '' }}>Settled</option>
-                    <option value="void" {{ request('status') == 'void' ? 'selected' : '' }}>Void</option>
                     <option value="unsettled" {{ request('status') == 'unsettled' ? 'selected' : '' }}>Unsettled</option>
+                    <option value="closed" {{ request('status') == 'closed' ? 'selected' : '' }}>Closed</option>
+                    <option value="voided" {{ request('status') == 'voided' ? 'selected' : '' }}>Voided</option>
                 </select>
             </div>
             
-            <!-- Event Date -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Event Date</label>
-                <input type="date" name="event_date" value="{{ request('event_date') }}"
-                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+            <!-- Event Date Range -->
+            <div class="mb-4 filter-field-group">
+                <div class="filter-field-title">Event Date Range</div>
+                <div class="space-y-3">
+                    <div class="filter-field-row">
+                        <span class="filter-field-label">From</span>
+                        <input type="date" name="event_date_from" value="{{ request('event_date_from') }}" class="js-event-date-from flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+                        <label class="filter-field-apply">
+                            <input type="checkbox" name="event_date_from_enabled" value="1" {{ $dateFromEnabled ? 'checked' : '' }} class="js-event-date-from-enabled h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                            Apply
+                        </label>
+                    </div>
+                    <div class="filter-field-row">
+                        <span class="filter-field-label">To</span>
+                        <input type="date" name="event_date_to" value="{{ request('event_date_to') }}" class="js-event-date-to flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+                        <label class="filter-field-apply">
+                            <input type="checkbox" name="event_date_to_enabled" value="1" {{ $dateToEnabled ? 'checked' : '' }} class="js-event-date-to-enabled h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                            Apply
+                        </label>
+                    </div>
+                </div>
             </div>
 
             <!-- Event Time Range -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Event Time Range (12-hour format)</label>
+            <div class="mb-4 filter-field-group">
+                <div class="filter-field-title">Event Time Range (12-hour format)</div>
                 <div class="time-range-container space-y-3">
-                    <div class="time-block" x-data="timePickerComponent('{{ $timeFromValue }}')" x-init="init()" x-on:keydown.escape.window="close()">
-                        <div class="time-block-header">From</div>
+                    <div class="time-block" x-data="timePickerComponent('{{ $timeFromValue }}', {{ $timeFromEnabled ? 'true' : 'false' }})" x-init="init()" x-on:keydown.escape.window="close()">
+                        <div class="flex items-center justify-between">
+                            <div class="time-block-header">From</div>
+                            <label class="inline-flex items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                                <input type="checkbox" name="time_from_enabled" value="1" x-model="enabled" @change="updateHidden()" class="js-time-from-enabled h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <span class="ml-2">Apply</span>
+                            </label>
+                        </div>
                         <div class="time-picker-panel">
-                            <input type="hidden" name="time_from" x-ref="hidden">
-                            <button type="button" class="time-picker-button" :class="{ 'placeholder': !isComplete }" @click="toggle">
+                            <input type="hidden" name="time_from" x-ref="hidden" :disabled="!enabled">
+                            <button type="button" class="time-picker-button" :class="{ 'placeholder': !isComplete, 'opacity-60': !enabled }" :disabled="!enabled" @click="toggle">
                                 <span x-text="display"></span>
                                 <svg class="time-picker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -872,11 +957,17 @@
                         </div>
                         <p class="timepicker-hint">Example: 02:30:00 PM</p>
                     </div>
-                    <div class="time-block" x-data="timePickerComponent('{{ $timeToValue }}')" x-init="init()" x-on:keydown.escape.window="close()">
-                        <div class="time-block-header">To</div>
+                    <div class="time-block" x-data="timePickerComponent('{{ $timeToValue }}', {{ $timeToEnabled ? 'true' : 'false' }})" x-init="init()" x-on:keydown.escape.window="close()">
+                        <div class="flex items-center justify-between">
+                            <div class="time-block-header">To</div>
+                            <label class="inline-flex items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                                <input type="checkbox" name="time_to_enabled" value="1" x-model="enabled" @change="updateHidden()" class="js-time-to-enabled h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <span class="ml-2">Apply</span>
+                            </label>
+                        </div>
                         <div class="time-picker-panel">
-                            <input type="hidden" name="time_to" x-ref="hidden">
-                            <button type="button" class="time-picker-button" :class="{ 'placeholder': !isComplete }" @click="toggle">
+                            <input type="hidden" name="time_to" x-ref="hidden" :disabled="!enabled">
+                            <button type="button" class="time-picker-button" :class="{ 'placeholder': !isComplete, 'opacity-60': !enabled }" :disabled="!enabled" @click="toggle">
                                 <span x-text="display"></span>
                                 <svg class="time-picker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -945,7 +1036,7 @@
 
 @push('scripts')
 <script>
-window.timePickerComponent = function(initialValue) {
+window.timePickerComponent = function(initialValue, initiallyEnabled = false) {
     return {
         open: false,
         hours: Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')),
@@ -953,8 +1044,12 @@ window.timePickerComponent = function(initialValue) {
         seconds: Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')),
         periods: ['AM', 'PM'],
         selection: { hour: '', minute: '', second: '', period: 'AM' },
+        enabled: initiallyEnabled,
         init() {
             this.setFromString(initialValue);
+            this.$watch('enabled', () => {
+                this.updateHidden();
+            });
         },
         get display() {
             if (this.selection.hour && this.selection.minute) {
@@ -1004,7 +1099,7 @@ window.timePickerComponent = function(initialValue) {
             }
         },
         updateHidden() {
-            if (this.isComplete) {
+            if (this.enabled && this.isComplete) {
                 const value = `${this.selection.hour}:${this.selection.minute}:${this.selection.second || '00'} ${this.selection.period}`;
                 this.$refs.hidden.value = value;
             } else {
@@ -1292,6 +1387,60 @@ document.addEventListener('DOMContentLoaded', function() {
     if (initialSport) {
         filterTournamentsBySport(initialSport, true);
     }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const dateFromInput = document.querySelector('.js-event-date-from');
+    const dateFromCheckbox = document.querySelector('.js-event-date-from-enabled');
+    const dateToInput = document.querySelector('.js-event-date-to');
+    const dateToCheckbox = document.querySelector('.js-event-date-to-enabled');
+    const timeFromCheckbox = document.querySelector('.js-time-from-enabled');
+    const timeToCheckbox = document.querySelector('.js-time-to-enabled');
+
+    function syncDate(input, checkbox) {
+        if (!input || !checkbox) return;
+        const hasValue = Boolean(input.value);
+        checkbox.disabled = !hasValue;
+        if (!hasValue && checkbox.checked) {
+            checkbox.checked = false;
+            checkbox.dispatchEvent(new Event('change'));
+        }
+    }
+
+    function syncTime(timeCheckbox, relatedDateInput, relatedDateCheckbox) {
+        if (!timeCheckbox || !relatedDateInput || !relatedDateCheckbox) return;
+        const allowed = Boolean(relatedDateInput.value) && relatedDateCheckbox.checked && !relatedDateCheckbox.disabled;
+        timeCheckbox.disabled = !allowed;
+        if (!allowed && timeCheckbox.checked) {
+            timeCheckbox.checked = false;
+            timeCheckbox.dispatchEvent(new Event('change'));
+        }
+    }
+
+    if (dateFromInput && dateFromCheckbox) {
+        dateFromInput.addEventListener('input', () => {
+            syncDate(dateFromInput, dateFromCheckbox);
+            syncTime(timeFromCheckbox, dateFromInput, dateFromCheckbox);
+        });
+        dateFromCheckbox.addEventListener('change', () => {
+            syncTime(timeFromCheckbox, dateFromInput, dateFromCheckbox);
+        });
+        syncDate(dateFromInput, dateFromCheckbox);
+    }
+
+    if (dateToInput && dateToCheckbox) {
+        dateToInput.addEventListener('input', () => {
+            syncDate(dateToInput, dateToCheckbox);
+            syncTime(timeToCheckbox, dateToInput, dateToCheckbox);
+        });
+        dateToCheckbox.addEventListener('change', () => {
+            syncTime(timeToCheckbox, dateToInput, dateToCheckbox);
+        });
+        syncDate(dateToInput, dateToCheckbox);
+    }
+
+    syncTime(timeFromCheckbox, dateFromInput, dateFromCheckbox);
+    syncTime(timeToCheckbox, dateToInput, dateToCheckbox);
 });
 </script>
 

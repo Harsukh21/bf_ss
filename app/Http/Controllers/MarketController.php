@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Carbon\Carbon;
 
 class MarketController extends Controller
 {
@@ -178,13 +179,73 @@ class MarketController extends Controller
             $query->where('isPreBet', true);
         }
 
-        // Date range filter - using marketTime from market_lists table
-        if ($request->filled('date_from')) {
-            $query->where('marketTime', '>=', $request->date_from . ' 00:00:00');
+        // Date & time filter - using marketTime from market_lists table
+        $timezone = config('app.timezone', 'UTC');
+        $dateFromEnabled = $request->boolean('date_from_enabled');
+        $dateToEnabled = $request->boolean('date_to_enabled');
+        $timeFromEnabled = $request->boolean('time_from_enabled');
+        $timeToEnabled = $request->boolean('time_to_enabled');
+
+        $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
+
+        $startDateTime = null;
+        $endDateTime = null;
+
+        if ($dateFromEnabled && $request->filled('date_from')) {
+            $timeComponent = '00:00:00';
+
+            if ($timeFromEnabled && $request->filled('time_from')) {
+                foreach ($timeFormats as $format) {
+                    try {
+                        $timeComponent = Carbon::createFromFormat($format, $request->time_from)->format('H:i:s');
+                        break;
+                    } catch (\Exception $e) {
+                        continue;
+                    }
+                }
+            }
+
+            try {
+                $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $request->date_from . ' ' . $timeComponent, $timezone);
+            } catch (\Exception $e) {
+                $startDateTime = Carbon::now($timezone)->startOfDay();
+            }
         }
 
-        if ($request->filled('date_to')) {
-            $query->where('marketTime', '<=', $request->date_to . ' 23:59:59');
+        if ($dateToEnabled && $request->filled('date_to')) {
+            $timeComponent = '23:59:59';
+
+            if ($timeToEnabled && $request->filled('time_to')) {
+                foreach ($timeFormats as $format) {
+                    try {
+                        $timeComponent = Carbon::createFromFormat($format, $request->time_to)->format('H:i:s');
+                        break;
+                    } catch (\Exception $e) {
+                        continue;
+                    }
+                }
+            }
+
+            try {
+                $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $request->date_to . ' ' . $timeComponent, $timezone);
+            } catch (\Exception $e) {
+                $endDateTime = Carbon::now($timezone)->endOfDay();
+            }
+        }
+
+        if ($startDateTime && $endDateTime) {
+            if ($endDateTime->lt($startDateTime)) {
+                $endDateTime = $startDateTime->copy()->endOfDay();
+            }
+
+            $query->whereBetween('marketTime', [
+                $startDateTime->format('Y-m-d H:i:s'),
+                $endDateTime->format('Y-m-d H:i:s'),
+            ]);
+        } elseif ($startDateTime) {
+            $query->where('marketTime', '>=', $startDateTime->format('Y-m-d H:i:s'));
+        } elseif ($endDateTime) {
+            $query->where('marketTime', '<=', $endDateTime->format('Y-m-d H:i:s'));
         }
 
         // Search filter
@@ -229,12 +290,20 @@ class MarketController extends Controller
             $activeFilters['Pre-bet'] = 'Yes';
         }
 
-        if ($request->filled('date_from')) {
+        if ($request->boolean('date_from_enabled') && $request->filled('date_from')) {
             $activeFilters['From Date'] = $request->date_from;
         }
 
-        if ($request->filled('date_to')) {
+        if ($request->boolean('date_to_enabled') && $request->filled('date_to')) {
             $activeFilters['To Date'] = $request->date_to;
+        }
+
+        if ($request->boolean('time_from_enabled') && $request->boolean('date_from_enabled') && $request->filled('time_from')) {
+            $activeFilters['From Time'] = $request->time_from;
+        }
+
+        if ($request->boolean('time_to_enabled') && $request->boolean('date_to_enabled') && $request->filled('time_to')) {
+            $activeFilters['To Time'] = $request->time_to;
         }
 
         if ($request->filled('search')) {
