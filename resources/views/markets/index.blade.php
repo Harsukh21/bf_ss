@@ -326,6 +326,17 @@
                         </span>
                     @endif
                 </button>
+                @if(count($activeFilters) > 0)
+                <button 
+                    type="button"
+                    onclick="clearAllFilters()"
+                    class="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    Clear Filters
+                </button>
+                @endif
             </div>
 
             <a 
