@@ -111,6 +111,73 @@
         position: relative;
     }
 
+    .time-picker-input-wrapper {
+        position: relative;
+    }
+
+    .time-picker-input {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 2.75rem 0.75rem 0.9rem;
+        background-color: #ffffff;
+        border: 1px solid #d1d5db;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        color: #111827;
+        transition: all 0.15s ease-in-out;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .time-picker-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .time-picker-input::placeholder {
+        color: #9ca3af;
+        font-weight: 500;
+    }
+
+    .dark .time-picker-input {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: #f3f4f6;
+    }
+
+    .dark .time-picker-input::placeholder {
+        color: #9ca3af;
+    }
+
+    .time-picker-input-icon {
+        position: absolute;
+        top: 50%;
+        right: 0.9rem;
+        transform: translateY(-50%);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 9999px;
+        background-color: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        color: #4b5563;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .time-picker-input-icon:hover {
+        background-color: #e5e7eb;
+    }
+
+    .dark .time-picker-input-icon {
+        background-color: #4b5563;
+        border-color: #4b5563;
+        color: #d1d5db;
+    }
+
     .time-picker-button {
         width: 100%;
         display: flex;
@@ -755,7 +822,15 @@
             <!-- Date Picker -->
             <div class="mb-4 filter-field-group">
                 <div class="filter-field-title">Select Date</div>
-                <input type="date" name="filter_date" value="{{ request('filter_date', $defaultFilterDate) }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                <input
+                    type="text"
+                    name="filter_date"
+                    value="{{ request('filter_date', $defaultFilterDate) }}"
+                    placeholder="DD/MM/YYYY"
+                    maxlength="10"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 js-date-input">
             </div>
 
             <!-- Time Range -->
@@ -766,12 +841,23 @@
                         <div class="time-block-header">From</div>
                         <div class="time-picker-panel">
                             <input type="hidden" name="time_from" x-ref="hidden">
-                            <button type="button" class="time-picker-button" :class="{ 'placeholder': !isComplete }" @click="toggle">
-                                <span x-text="display"></span>
-                                <svg class="time-picker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </button>
+                            <div class="time-picker-input-wrapper">
+                                <input
+                                    type="text"
+                                    x-ref="input"
+                                    x-model="textValue"
+                                    placeholder="HH:MM:SS AM/PM"
+                                    class="time-picker-input"
+                                    @focus="open = true; scrollToActive()"
+                                    @input="handleManualInput"
+                                    @keydown.enter.prevent="confirm()"
+                                />
+                                <button type="button" class="time-picker-input-icon" @click.prevent="toggle()">
+                                    <svg class="time-picker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
+                            </div>
                             <div class="time-picker-dropdown" x-cloak x-show="open" x-transition @click.away="close()">
                                 <div class="time-picker-grid">
                                     <div class="time-picker-column">
@@ -819,12 +905,23 @@
                         <div class="time-block-header">To</div>
                         <div class="time-picker-panel">
                             <input type="hidden" name="time_to" x-ref="hidden">
-                            <button type="button" class="time-picker-button" :class="{ 'placeholder': !isComplete }" @click="toggle">
-                                <span x-text="display"></span>
-                                <svg class="time-picker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </button>
+                            <div class="time-picker-input-wrapper">
+                                <input
+                                    type="text"
+                                    x-ref="input"
+                                    x-model="textValue"
+                                    placeholder="HH:MM:SS AM/PM"
+                                    class="time-picker-input"
+                                    @focus="open = true; scrollToActive()"
+                                    @input="handleManualInput"
+                                    @keydown.enter.prevent="confirm()"
+                                />
+                                <button type="button" class="time-picker-input-icon" @click.prevent="toggle()">
+                                    <svg class="time-picker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
+                            </div>
                             <div class="time-picker-dropdown" x-cloak x-show="open" x-transition @click.away="close()">
                                 <div class="time-picker-grid">
                                     <div class="time-picker-column">
@@ -897,26 +994,41 @@ window.timePickerComponent = function(initialValue, initiallyEnabled = false) {
         periods: ['AM', 'PM'],
         selection: { hour: '', minute: '', second: '', period: 'AM' },
         enabled: initiallyEnabled,
+        textValue: '',
         init() {
-            this.setFromString(initialValue);
+            const normalized = (initialValue || '').toString();
+            if (normalized) {
+                this.setFromString(normalized, { preserveOnInvalid: true });
+            } else if (this.$refs.hidden) {
+                this.$refs.hidden.value = '';
+            }
+
             this.$watch('enabled', () => {
                 this.updateHidden();
             });
         },
         get display() {
-            if (this.selection.hour && this.selection.minute) {
-                const second = this.selection.second || '00';
-                return `${this.selection.hour}:${this.selection.minute}:${second} ${this.selection.period}`;
-            }
-            return 'Select time';
+            return this.formatValue() || 'Select time';
         },
         get isComplete() {
             return this.selection.hour && this.selection.minute && this.selection.period;
         },
+        formatValue() {
+            if (!this.selection.hour || !this.selection.minute || !this.selection.period) {
+                return '';
+            }
+            const second = this.selection.second || '00';
+            return `${this.selection.hour}:${this.selection.minute}:${second} ${this.selection.period}`;
+        },
         toggle() {
             this.open = !this.open;
             if (this.open) {
-                this.scrollToActive();
+                this.$nextTick(() => {
+                    if (this.$refs.input) {
+                        this.$refs.input.focus();
+                    }
+                    this.scrollToActive();
+                });
             }
         },
         close() {
@@ -952,11 +1064,14 @@ window.timePickerComponent = function(initialValue, initiallyEnabled = false) {
         },
         updateHidden() {
             if (this.enabled && this.isComplete) {
-                const value = `${this.selection.hour}:${this.selection.minute}:${this.selection.second || '00'} ${this.selection.period}`;
+                const value = this.formatValue();
                 this.$refs.hidden.value = value;
+                this.textValue = value;
+                return value;
             } else {
                 this.$refs.hidden.value = '';
             }
+            return null;
         },
         confirm() {
             if (this.isComplete) {
@@ -967,19 +1082,25 @@ window.timePickerComponent = function(initialValue, initiallyEnabled = false) {
         clear(skipClose = false) {
             this.selection = { hour: '', minute: '', second: '', period: 'AM' };
             this.$refs.hidden.value = '';
+            this.textValue = '';
             if (!skipClose) {
                 this.close();
             }
             this.updateHidden();
         },
-        setFromString(value) {
+        setFromString(value, options = {}) {
+            const { preserveOnInvalid = false } = options;
             const trimmed = (value || '').trim();
             if (!trimmed) {
                 this.clear(true);
-                return;
+                if (!preserveOnInvalid) {
+                    this.textValue = '';
+                }
+                return true;
             }
 
-            const match = trimmed.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+            const normalized = trimmed.toUpperCase();
+            const match = normalized.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/);
             if (match) {
                 let hour = parseInt(match[1], 10);
                 const minute = match[2];
@@ -1000,9 +1121,75 @@ window.timePickerComponent = function(initialValue, initiallyEnabled = false) {
                 this.selection.minute = minute;
                 this.selection.second = second;
                 this.selection.period = period;
-                this.updateHidden();
-            } else {
+
+                this.ensureDefaults();
+                const formatted = this.updateHidden() || this.formatValue();
+                if (formatted) {
+                    this.textValue = formatted;
+                }
+                return true;
+            }
+
+            if (!preserveOnInvalid) {
                 this.clear(true);
+            }
+            return false;
+        },
+        handleManualInput() {
+            let raw = (this.textValue || '').toUpperCase();
+
+            // Keep only digits, spaces, A, P, M, and colons
+            raw = raw.replace(/[^0-9APM: ]/g, '');
+
+            // Determine desired period if user typed AM/PM (partial allowed)
+            let period = '';
+            if (raw.includes('PM')) {
+                period = 'PM';
+            } else if (raw.includes('AM')) {
+                period = 'AM';
+            } else {
+                const letterTrail = raw.replace(/[^AP]/g, '');
+                if (letterTrail.endsWith('P')) {
+                    period = 'PM';
+                } else if (letterTrail.endsWith('A')) {
+                    period = 'AM';
+                }
+            }
+
+            // Extract up to 6 digits for HHMMSS
+            const digits = raw.replace(/[^0-9]/g, '').slice(0, 6);
+            let formatted = '';
+
+            if (digits.length >= 2) {
+                formatted = digits.slice(0, 2);
+                const minutePart = digits.slice(2, 4);
+                formatted += ':' + minutePart;
+
+                const secondPart = digits.slice(4, 6);
+                if (digits.length > 4) {
+                    formatted += ':' + secondPart;
+                }
+            } else {
+                formatted = digits;
+            }
+
+            // Handle partial seconds formatting (e.g., HH:MM:S)
+            if (digits.length === 5) {
+                formatted = `${digits.slice(0, 2)}:${digits.slice(2, 4)}:${digits.slice(4)}`;
+            }
+
+            if (digits.length >= 6 && formatted.length && period) {
+                formatted = formatted.split(' ')[0] + ' ' + period;
+            } else {
+                formatted = formatted.split(' ')[0];
+            }
+
+            this.textValue = formatted.trim();
+
+            if (!this.setFromString(this.textValue, { preserveOnInvalid: true })) {
+                if (this.$refs.hidden) {
+                    this.$refs.hidden.value = '';
+                }
             }
         },
         scrollToActive() {
@@ -1020,6 +1207,65 @@ window.timePickerComponent = function(initialValue, initiallyEnabled = false) {
         }
     };
 };
+
+function formatDateInputValue(raw) {
+    const digits = (raw || '').replace(/[^0-9]/g, '').slice(0, 8);
+    let formatted = '';
+
+    if (digits.length >= 2) {
+        formatted = digits.slice(0, 2);
+    } else {
+        formatted = digits;
+    }
+
+    if (digits.length >= 3) {
+        formatted += '/' + digits.slice(2, 4);
+    } else if (digits.length > 2) {
+        formatted += '/' + digits.slice(2);
+    }
+
+    if (digits.length >= 5) {
+        formatted += '/' + digits.slice(4, 8);
+    } else if (digits.length > 4) {
+        formatted += '/' + digits.slice(4);
+    }
+
+    return formatted;
+}
+
+function isValidDateValue(value) {
+    const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!match) {
+        return false;
+    }
+
+    const day = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10);
+    const year = parseInt(match[3], 10);
+
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+        return false;
+    }
+
+    const date = new Date(year, month - 1, day);
+    return (
+        date.getFullYear() === year &&
+        date.getMonth() === month - 1 &&
+        date.getDate() === day
+    );
+}
+
+function handleDateInput(event) {
+    const formatted = formatDateInputValue(event.target.value);
+    event.target.value = formatted;
+}
+
+function handleDateBlur(event) {
+    const value = event.target.value;
+    if (value && !isValidDateValue(value)) {
+        event.target.value = '';
+    }
+}
 
 const events = @json($events);
 
@@ -1073,7 +1319,7 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// Searchable Event Dropdown
+// Searchable Event Dropdown & Date Input handlers
 document.addEventListener('DOMContentLoaded', function() {
     const eventSearch = document.getElementById('eventSearch');
     const eventDropdown = document.getElementById('eventDropdown');
@@ -1131,6 +1377,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!eventSearch.contains(e.target) && !eventDropdown.contains(e.target)) {
             eventDropdown.classList.add('hidden');
         }
+    });
+
+    document.querySelectorAll('.js-date-input').forEach(input => {
+        input.value = formatDateInputValue(input.value);
+        input.addEventListener('input', handleDateInput);
+        input.addEventListener('blur', handleDateBlur);
     });
 });
 

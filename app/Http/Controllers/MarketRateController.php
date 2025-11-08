@@ -60,6 +60,7 @@ class MarketRateController extends Controller
         $eventInfo = null;
         $availableMarketNames = collect([]);
         $ratesTableNotFound = false;
+        $timezone = config('app.timezone', 'UTC');
         
         if ($selectedEventId) {
             // Check if table exists for this event
@@ -80,14 +81,14 @@ class MarketRateController extends Controller
                 }
 
                 // Apply date and time filters
-                $timezone = config('app.timezone', 'UTC');
                 $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
                 $startDateTime = null;
                 $endDateTime = null;
 
                 if ($request->filled('filter_date')) {
-                    try {
-                        $baseDate = Carbon::createFromFormat('Y-m-d', $request->get('filter_date'), $timezone);
+                    $parsedDate = $this->parseFilterDate($request->get('filter_date'), $timezone);
+                    if ($parsedDate) {
+                        $baseDate = $parsedDate->copy();
                         $startDateTime = $baseDate->copy()->startOfDay();
                         $endDateTime = $baseDate->copy()->endOfDay();
 
@@ -126,9 +127,6 @@ class MarketRateController extends Controller
                         if ($startDateTime && $endDateTime && $endDateTime->lt($startDateTime)) {
                             $endDateTime = $startDateTime->copy()->endOfDay();
                         }
-                    } catch (Exception $e) {
-                        $startDateTime = null;
-                        $endDateTime = null;
                     }
                 }
 
@@ -170,7 +168,12 @@ class MarketRateController extends Controller
 
             if ($eventInfo) {
                 $dateSource = $eventInfo->marketTime ?? ($eventInfo->createdAt ?? null);
-                $eventInfo->formattedDate = $dateSource ? Carbon::parse($dateSource)->timezone(config('app.timezone', 'UTC'))->format('M d, Y h:i A') : null;
+                if ($dateSource) {
+                    $parsedSource = Carbon::parse($dateSource)->timezone($timezone);
+                    $eventInfo->formattedDate = $parsedSource->format('M d, Y h:i A');
+                } else {
+                    $eventInfo->formattedDate = null;
+                }
             }
         }
 
@@ -180,7 +183,7 @@ class MarketRateController extends Controller
             $rawDate = $eventInfo->marketTime ?? ($eventInfo->createdAt ?? null);
             if ($rawDate) {
                 try {
-                    $defaultFilterDate = Carbon::parse($rawDate, config('app.timezone', 'UTC'))->format('Y-m-d');
+                    $defaultFilterDate = Carbon::parse($rawDate)->timezone($timezone)->format('d/m/Y');
                 } catch (Exception $e) {
                     $defaultFilterDate = null;
                 }
@@ -345,8 +348,9 @@ class MarketRateController extends Controller
         $endDateTime = null;
 
         if ($request->filled('filter_date')) {
-            try {
-                $baseDate = Carbon::createFromFormat('Y-m-d', $request->get('filter_date'), $timezone);
+            $parsedDate = $this->parseFilterDate($request->get('filter_date'), $timezone);
+            if ($parsedDate) {
+                $baseDate = $parsedDate->copy();
                 $startDateTime = $baseDate->copy()->startOfDay();
                 $endDateTime = $baseDate->copy()->endOfDay();
 
@@ -385,9 +389,6 @@ class MarketRateController extends Controller
                 if ($startDateTime && $endDateTime && $endDateTime->lt($startDateTime)) {
                     $endDateTime = $startDateTime->copy()->endOfDay();
                 }
-            } catch (Exception $e) {
-                $startDateTime = null;
-                $endDateTime = null;
             }
         }
 
@@ -496,5 +497,35 @@ class MarketRateController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Normalize date input into a Carbon instance.
+     */
+    private function parseFilterDate(?string $value, string $timezone): ?Carbon
+    {
+        if (!$value) {
+            return null;
+        }
+
+        $normalized = trim($value);
+        if ($normalized === '') {
+            return null;
+        }
+
+        $formats = ['d/m/Y', 'd-m-Y', 'Y-m-d'];
+
+        foreach ($formats as $format) {
+            try {
+                $date = Carbon::createFromFormat($format, $normalized, $timezone);
+                if ($date !== false) {
+                    return $date;
+                }
+            } catch (Exception $e) {
+                continue;
+            }
+        }
+
+        return null;
     }
 }
