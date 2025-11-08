@@ -90,6 +90,8 @@ class EventController extends Controller
             ]
         );
 
+        $paginatedEvents->appends($request->query());
+
         // Get sport configuration
         $sportConfig = config('sports.sports');
         
