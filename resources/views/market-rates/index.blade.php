@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Market Rates')
+@section('title', 'SS Rates List')
 
 @push('css')
 <style>
@@ -69,7 +69,7 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                        Market Rates List
+                        SS Rates List
                         @if($selectedEventId && $eventInfo)
                             <span class="text-lg font-normal text-gray-600 dark:text-gray-400">
                                 - {{ $eventInfo->eventName }}
@@ -78,9 +78,9 @@
                     </h1>
                     <p class="text-gray-600 dark:text-gray-400 mt-1">
                         @if($selectedEventId)
-                            Viewing market rates for selected event
+                            Viewing SS rates for selected event
                         @else
-                            Select an event to view market rates
+                            Select an event to view SS rates
                         @endif
                     </p>
                 </div>
@@ -186,7 +186,7 @@
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
             <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Select Event</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Choose an event to view its market rates</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Choose an event to view its SS rates</p>
             </div>
             <div class="p-6">
                 <form method="GET" action="{{ route('market-rates.index') }}" id="eventSelectionForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
@@ -227,7 +227,7 @@
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                         <div class="flex justify-between items-center">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                                Market Rates ({{ $marketRates->total() }} total)
+                                SS Rates ({{ $marketRates->total() }} total)
                             </h3>
                         </div>
                     </div>
@@ -381,9 +381,9 @@
                         <svg class="mx-auto h-12 w-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Market Rates Table Not Found</h3>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">SS Rates Table Not Found</h3>
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            The market rates table for <strong>{{ $eventInfo->eventName }}</strong> does not exist in the database.
+                            The SS rates table for <strong>{{ $eventInfo->eventName }}</strong> does not exist in the database.
                         </p>
                         <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
                             Event ID: {{ $selectedEventId }}
@@ -400,12 +400,12 @@
                         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                         </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No market rates found</h3>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No SS rates found</h3>
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            No market rates data available for <strong>{{ $eventInfo->eventName }}</strong>.
+                            No SS rates data available for <strong>{{ $eventInfo->eventName }}</strong>.
                         </p>
                         <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                            The market rates table exists but contains no data.
+                            The SS rates table exists but contains no data.
                         </p>
                     </div>
                 </div>
@@ -438,7 +438,7 @@
                     </svg>
                     <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Select an Event</h3>
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Please select an event from the dropdown above to view its market rates.
+                        Please select an event from the dropdown above to view its SS rates.
                     </p>
                 </div>
             </div>
