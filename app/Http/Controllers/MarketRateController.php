@@ -174,13 +174,35 @@ class MarketRateController extends Controller
             }
         }
 
+        $defaultFilterDate = null;
+
+        if ($eventInfo) {
+            $rawDate = $eventInfo->marketTime ?? ($eventInfo->createdAt ?? null);
+            if ($rawDate) {
+                try {
+                    $defaultFilterDate = Carbon::parse($rawDate, config('app.timezone', 'UTC'))->format('Y-m-d');
+                } catch (Exception $e) {
+                    $defaultFilterDate = null;
+                }
+            }
+        }
+
         $filterCount = 0;
         if ($request->filled('market_name')) $filterCount++;
         if ($request->filled('filter_date')) $filterCount++;
         if ($request->filled('time_from')) $filterCount++;
         if ($request->filled('time_to')) $filterCount++;
 
-        return view('market-rates.index', compact('marketRates', 'events', 'selectedEventId', 'eventInfo', 'availableMarketNames', 'ratesTableNotFound', 'filterCount'));
+        return view('market-rates.index', compact(
+            'marketRates',
+            'events',
+            'selectedEventId',
+            'eventInfo',
+            'availableMarketNames',
+            'ratesTableNotFound',
+            'filterCount',
+            'defaultFilterDate'
+        ));
     }
 
     /**
