@@ -65,7 +65,9 @@ class EventController extends Controller
         $this->applyFilters($query, $request);
 
         $hasCustomDateFilter = $request->boolean('event_date_from_enabled') || $request->boolean('event_date_to_enabled');
-        if (!$hasCustomDateFilter) {
+        $isRecentlyAdded = $request->boolean('recently_added');
+
+        if (!$hasCustomDateFilter && !$isRecentlyAdded) {
             $timezone = config('app.timezone', 'UTC');
             $startDate = Carbon::now($timezone)->startOfDay();
             $endDate = Carbon::now($timezone)->addDay()->endOfDay();
@@ -310,7 +312,9 @@ class EventController extends Controller
             $query->where('popular', $request->boolean('popular'));
         }
 
-        if ($request->boolean('recently_added')) {
+        $isRecentlyAdded = $request->boolean('recently_added');
+
+        if ($isRecentlyAdded) {
             $query->where('isRecentlyAdded', true);
         }
 
@@ -374,14 +378,39 @@ class EventController extends Controller
                 $endDateTime = $startDateTime->copy()->endOfDay();
             }
 
-            $query->whereBetween('marketTime', [
-                $startDateTime->format('Y-m-d H:i:s'),
-                $endDateTime->format('Y-m-d H:i:s'),
-            ]);
+            $start = $startDateTime->format('Y-m-d H:i:s');
+            $end = $endDateTime->format('Y-m-d H:i:s');
+
+            if ($isRecentlyAdded) {
+                $query->where(function ($q) use ($start, $end) {
+                    $q->whereBetween('createdAt', [$start, $end])
+                      ->orWhereBetween('created_at', [$start, $end]);
+                });
+            } else {
+                $query->whereBetween('marketTime', [$start, $end]);
+            }
         } elseif ($startDateTime) {
-            $query->where('marketTime', '>=', $startDateTime->format('Y-m-d H:i:s'));
+            $start = $startDateTime->format('Y-m-d H:i:s');
+
+            if ($isRecentlyAdded) {
+                $query->where(function ($q) use ($start) {
+                    $q->where('createdAt', '>=', $start)
+                      ->orWhere('created_at', '>=', $start);
+                });
+            } else {
+                $query->where('marketTime', '>=', $start);
+            }
         } elseif ($endDateTime) {
-            $query->where('marketTime', '<=', $endDateTime->format('Y-m-d H:i:s'));
+            $end = $endDateTime->format('Y-m-d H:i:s');
+
+            if ($isRecentlyAdded) {
+                $query->where(function ($q) use ($end) {
+                    $q->where('createdAt', '<=', $end)
+                      ->orWhere('created_at', '<=', $end);
+                });
+            } else {
+                $query->where('marketTime', '<=', $end);
+            }
         }
     }
 

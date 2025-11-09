@@ -88,6 +88,20 @@ class MarketController extends Controller
         // Apply optimized filters with raw DB queries
         $this->applyFilters($query, $request);
 
+        $hasCustomDateFilter = $request->boolean('date_from_enabled') || $request->boolean('date_to_enabled');
+        $isRecentlyAdded = $request->boolean('recently_added');
+
+        if (!$hasCustomDateFilter && !$isRecentlyAdded) {
+            $timezone = config('app.timezone', 'UTC');
+            $startDate = Carbon::now($timezone)->startOfDay();
+            $endDate = Carbon::now($timezone)->addDay()->endOfDay();
+
+            $query->whereBetween('marketTime', [
+                $startDate->format('Y-m-d H:i:s'),
+                $endDate->format('Y-m-d H:i:s'),
+            ]);
+        }
+
         // Get total count for pagination
         $totalCount = $query->count();
 
@@ -302,7 +316,9 @@ class MarketController extends Controller
             $query->where('isPreBet', true);
         }
 
-        if ($request->boolean('recently_added')) {
+        $isRecentlyAdded = $request->boolean('recently_added');
+
+        if ($isRecentlyAdded) {
             $query->where('isRecentlyAdded', true);
         }
 
@@ -365,14 +381,17 @@ class MarketController extends Controller
                 $endDateTime = $startDateTime->copy()->endOfDay();
             }
 
-            $query->whereBetween('marketTime', [
+            $column = $isRecentlyAdded ? 'created_at' : 'marketTime';
+            $query->whereBetween($column, [
                 $startDateTime->format('Y-m-d H:i:s'),
                 $endDateTime->format('Y-m-d H:i:s'),
             ]);
         } elseif ($startDateTime) {
-            $query->where('marketTime', '>=', $startDateTime->format('Y-m-d H:i:s'));
+            $column = $isRecentlyAdded ? 'created_at' : 'marketTime';
+            $query->where($column, '>=', $startDateTime->format('Y-m-d H:i:s'));
         } elseif ($endDateTime) {
-            $query->where('marketTime', '<=', $endDateTime->format('Y-m-d H:i:s'));
+            $column = $isRecentlyAdded ? 'created_at' : 'marketTime';
+            $query->where($column, '<=', $endDateTime->format('Y-m-d H:i:s'));
         }
 
         // Search filter
