@@ -118,17 +118,136 @@ class MarketController extends Controller
         // Get active filters for display
         $activeFilters = $this->getActiveFilters($request);
 
-        return view('markets.index', compact(
-            'paginatedMarkets',
-            'sports',
-            'tournaments',
-            'marketTypes',
-            'activeFilters',
-            'tournamentsBySport',
-            'marketTypesByTournament',
-            'eventsByTournament',
-            'marketTypesByEvent'
-        ));
+        return view('markets.index', [
+            'paginatedMarkets' => $paginatedMarkets,
+            'sports' => $sports,
+            'tournaments' => $tournaments,
+            'marketTypes' => $marketTypes,
+            'activeFilters' => $activeFilters,
+            'tournamentsBySport' => $tournamentsBySport,
+            'marketTypesByTournament' => $marketTypesByTournament,
+            'eventsByTournament' => $eventsByTournament,
+            'marketTypesByEvent' => $marketTypesByEvent,
+            'pageTitle' => 'Market List',
+            'pageHeading' => 'Market List',
+            'pageSubheading' => 'Browse markets today and tomorrow',
+        ]);
+    }
+
+    public function all(Request $request)
+    {
+        $sports = Cache::remember('markets.sports', 300, function () {
+            return DB::table('market_lists')
+                ->select('sportName')
+                ->distinct()
+                ->orderBy('sportName')
+                ->pluck('sportName');
+        });
+
+        $tournaments = Cache::remember('markets.tournaments', 300, function () {
+            return DB::table('market_lists')
+                ->select('tournamentsName', 'sportName')
+                ->distinct()
+                ->orderBy('tournamentsName')
+                ->get();
+        });
+
+        $marketTypeRecords = Cache::remember('markets.market_names', 300, function () {
+            return DB::table('market_lists')
+                ->select('marketName', 'tournamentsName', 'eventName')
+                ->distinct()
+                ->orderBy('marketName')
+                ->get();
+        });
+
+        $marketTypes = $marketTypeRecords;
+
+        $tournamentsBySport = Cache::remember('markets.tournaments_by_sport', 300, function () {
+            return DB::table('market_lists')
+                ->select('tournamentsName', 'sportName')
+                ->distinct()
+                ->orderBy('tournamentsName')
+                ->get()
+                ->groupBy('sportName');
+        });
+
+        $marketTypesByTournament = Cache::remember('markets.types_by_tournament', 300, function () use ($marketTypeRecords) {
+            return $marketTypeRecords->groupBy('tournamentsName');
+        });
+
+        $eventsByTournament = Cache::remember('markets.events_by_tournament', 300, function () {
+            return DB::table('market_lists')
+                ->select('eventName', 'tournamentsName')
+                ->distinct()
+                ->orderBy('eventName')
+                ->get()
+                ->groupBy('tournamentsName');
+        });
+
+        $marketTypesByEvent = $marketTypeRecords->groupBy('eventName');
+
+        $query = DB::table('market_lists')
+            ->select([
+                'id',
+                '_id',
+                'eventName',
+                'exEventId',
+                'exMarketId',
+                'isPreBet',
+                'marketName',
+                'marketTime',
+                'sportName',
+                'tournamentsName',
+                'type',
+                'isLive',
+                'status',
+                'created_at'
+            ]);
+
+        $this->applyFilters($query, $request);
+
+        $totalCount = $query->count();
+
+        $page = $request->get('page', 1);
+        $perPage = 15;
+        $offset = ($page - 1) * $perPage;
+
+        $markets = $query
+            ->orderBy('marketTime', 'desc')
+            ->orderBy('id', 'desc')
+            ->offset($offset)
+            ->limit($perPage)
+            ->get();
+
+        $paginatedMarkets = new LengthAwarePaginator(
+            $markets,
+            $totalCount,
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'pageName' => 'page',
+            ]
+        );
+
+        $paginatedMarkets->appends($request->query());
+
+        $activeFilters = $this->getActiveFilters($request);
+
+        return view('markets.all', [
+            'paginatedMarkets' => $paginatedMarkets,
+            'sports' => $sports,
+            'tournaments' => $tournaments,
+            'marketTypes' => $marketTypes,
+            'activeFilters' => $activeFilters,
+            'tournamentsBySport' => $tournamentsBySport,
+            'marketTypesByTournament' => $marketTypesByTournament,
+            'eventsByTournament' => $eventsByTournament,
+            'marketTypesByEvent' => $marketTypesByEvent,
+            'pageTitle' => 'All Markets List',
+            'pageHeading' => 'All Markets List',
+            'pageSubheading' => 'Browse every market without date limits',
+        ]);
     }
 
     public function show($id)

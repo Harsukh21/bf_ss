@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Market List')
+@section('title', $pageTitle ?? 'Market List')
 
 @push('css')
 <style>
@@ -305,10 +305,8 @@
         <!-- Header Section -->
     <div class="sm:flex sm:items-center sm:justify-between mb-6 gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Market List</h1>
-            <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                Browse markets today and tomorrow
-            </p>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $pageHeading ?? 'Market List' }}</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">{{ $pageSubheading ?? 'Browse markets today and tomorrow' }}</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:flex-none flex items-center gap-3 w-full sm:w-auto">
             <div class="flex items-center gap-3">

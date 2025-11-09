@@ -63,6 +63,18 @@ class EventController extends Controller
         // Apply optimized filters with raw DB queries
         $this->applyFilters($query, $request);
 
+        $hasCustomDateFilter = $request->boolean('event_date_from_enabled') || $request->boolean('event_date_to_enabled');
+        if (!$hasCustomDateFilter) {
+            $timezone = config('app.timezone', 'UTC');
+            $startDate = Carbon::now($timezone)->startOfDay();
+            $endDate = Carbon::now($timezone)->addDay()->endOfDay();
+
+            $query->whereBetween('marketTime', [
+                $startDate->format('Y-m-d H:i:s'),
+                $endDate->format('Y-m-d H:i:s'),
+            ]);
+        }
+
         // Get total count for pagination
         $totalCount = (clone $query)->count();
         
@@ -94,14 +106,104 @@ class EventController extends Controller
 
         // Get sport configuration
         $sportConfig = config('sports.sports');
-        
-        return view('events.index', compact(
-            'paginatedEvents',
-            'sports',
-            'tournaments',
-            'sportConfig',
-            'tournamentsBySport'
-        ));
+
+        return view('events.index', [
+            'paginatedEvents' => $paginatedEvents,
+            'sports' => $sports,
+            'tournaments' => $tournaments,
+            'sportConfig' => $sportConfig,
+            'tournamentsBySport' => $tournamentsBySport,
+            'pageTitle' => 'Event List',
+            'pageHeading' => 'Event List',
+            'pageSubheading' => 'Browse events today and tomorrow',
+        ]);
+    }
+
+    public function all(Request $request)
+    {
+        $sports = Cache::remember('events.sports', 300, function () {
+            return DB::table('events')
+                ->select('sportId')
+                ->distinct()
+                ->orderBy('sportId')
+                ->pluck('sportId');
+        });
+
+        $tournaments = Cache::remember('events.tournaments', 300, function () {
+            return DB::table('events')
+                ->select('tournamentsId', 'tournamentsName', 'sportId')
+                ->distinct()
+                ->orderBy('tournamentsName')
+                ->get();
+        });
+
+        $tournamentsBySport = Cache::remember('events.tournaments_by_sport', 300, function () {
+            return DB::table('events')
+                ->select('tournamentsId', 'tournamentsName', 'sportId')
+                ->distinct()
+                ->orderBy('tournamentsName')
+                ->get()
+                ->groupBy('sportId');
+        });
+
+        $query = DB::table('events')
+            ->select([
+                'id',
+                'eventId',
+                'sportId',
+                'tournamentsId',
+                'tournamentsName',
+                'eventName',
+                'highlight',
+                'quicklink',
+                'popular',
+                'IsSettle',
+                'IsVoid',
+                'IsUnsettle',
+                'dataSwitch',
+                'marketTime',
+                'createdAt'
+            ]);
+
+        $this->applyFilters($query, $request);
+
+        $totalCount = (clone $query)->count();
+
+        $page = $request->get('page', 1);
+        $perPage = 20;
+        $offset = ($page - 1) * $perPage;
+
+        $events = $query->orderBy('marketTime', 'desc')
+                       ->orderBy('id', 'desc')
+                       ->offset($offset)
+                       ->limit($perPage)
+                       ->get();
+
+        $paginatedEvents = new \Illuminate\Pagination\LengthAwarePaginator(
+            $events,
+            $totalCount,
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'pageName' => 'page',
+            ]
+        );
+
+        $paginatedEvents->appends($request->query());
+
+        $sportConfig = config('sports.sports');
+
+        return view('events.all', [
+            'paginatedEvents' => $paginatedEvents,
+            'sports' => $sports,
+            'tournaments' => $tournaments,
+            'sportConfig' => $sportConfig,
+            'tournamentsBySport' => $tournamentsBySport,
+            'pageTitle' => 'All Events List',
+            'pageHeading' => 'All Events List',
+            'pageSubheading' => 'Browse every scheduled event without date limits',
+        ]);
     }
 
     /**

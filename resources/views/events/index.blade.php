@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Event List')
+@section('title', $pageTitle ?? 'Event List')
 
 @push('css')
 <style>
@@ -379,8 +379,8 @@
         <div class="mb-6">
             <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Event List</h1>
-                    <p class="text-gray-600 dark:text-gray-400 mt-1">Browse events today and tomorrow</p>
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $pageHeading ?? 'Event List' }}</h1>
+                    <p class="text-gray-600 dark:text-gray-400 mt-1">{{ $pageSubheading ?? 'Browse events today and tomorrow' }}</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     @php
