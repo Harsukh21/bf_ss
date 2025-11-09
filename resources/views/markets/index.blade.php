@@ -437,6 +437,20 @@
             </div>
         </div>
 
+        <!-- Recently Added Switcher -->
+        <div class="mb-6">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">Recently Added</span>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Toggle to highlight the newest markets (feature coming soon).</p>
+                </div>
+                <button type="button" class="relative inline-flex items-center h-7 rounded-full w-14 transition-colors duration-200 ease-in-out bg-gray-300 dark:bg-gray-600 cursor-not-allowed opacity-60" aria-pressed="false" title="Coming soon">
+                    <span class="sr-only">Toggle recently added filter</span>
+                    <span class="inline-block w-6 h-6 transform bg-white dark:bg-gray-200 rounded-full translate-x-1 transition-transform duration-200 ease-in-out"></span>
+                </button>
+            </div>
+        </div>
+
         <!-- Markets Table -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
