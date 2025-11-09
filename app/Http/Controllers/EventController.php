@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Carbon\Carbon;
+use Exception;
 
 class EventController extends Controller
 {
@@ -54,6 +56,7 @@ class EventController extends Controller
                 'IsVoid',
                 'IsUnsettle',
                 'dataSwitch',
+                'marketTime',
                 'createdAt'
             ]);
 
@@ -69,7 +72,7 @@ class EventController extends Controller
         $offset = ($page - 1) * $perPage;
 
         // Get paginated results using raw query
-        $events = $query->orderBy('createdAt', 'desc')
+        $events = $query->orderBy('marketTime', 'desc')
                        ->orderBy('id', 'desc')
                        ->offset($offset)
                        ->limit($perPage)
@@ -87,10 +90,18 @@ class EventController extends Controller
             ]
         );
 
+        $paginatedEvents->appends($request->query());
+
         // Get sport configuration
         $sportConfig = config('sports.sports');
         
-        return view('events.index', compact('paginatedEvents', 'sports', 'tournaments', 'sportConfig', 'tournamentsBySport'));
+        return view('events.index', compact(
+            'paginatedEvents',
+            'sports',
+            'tournaments',
+            'sportConfig',
+            'tournamentsBySport'
+        ));
     }
 
     /**
@@ -158,14 +169,30 @@ class EventController extends Controller
         // Optimized status filtering with raw queries
         if ($request->filled('status')) {
             switch ($request->status) {
+                case 'upcoming':
+                    $query->where('marketTime', '>', Carbon::now());
+                    break;
+                case 'in_play':
+                    // In-play: marketTime passed but event not settled/voided yet
+                    $query->where('marketTime', '<=', Carbon::now())
+                          ->where('IsSettle', 0)
+                          ->where('IsVoid', 0)
+                          ->where('IsUnsettle', 0);
+                    break;
                 case 'settled':
                     $query->where('IsSettle', 1)->where('IsVoid', 0);
                     break;
-                case 'void':
-                    $query->where('IsVoid', 1);
-                    break;
                 case 'unsettled':
                     $query->where('IsUnsettle', 1)->where('IsSettle', 0)->where('IsVoid', 0);
+                    break;
+                case 'closed':
+                    // Closed: event finished but not settled (manual assumption)
+                    $query->where('IsSettle', 0)
+                          ->where('IsVoid', 0)
+                          ->where('marketTime', '<=', Carbon::now());
+                    break;
+                case 'voided':
+                    $query->where('IsVoid', 1);
                     break;
             }
         }
@@ -179,13 +206,74 @@ class EventController extends Controller
             $query->where('popular', $request->boolean('popular'));
         }
 
-        // Date range filtering
-        if ($request->filled('date_from')) {
-            $query->where('createdAt', '>=', $request->date_from . ' 00:00:00');
+        $timezone = config('app.timezone', 'UTC');
+        $dateFromEnabled = $request->boolean('event_date_from_enabled');
+        $dateToEnabled = $request->boolean('event_date_to_enabled');
+        $timeFromEnabled = $request->boolean('time_from_enabled');
+        $timeToEnabled = $request->boolean('time_to_enabled');
+
+        $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
+
+        $startDateTime = null;
+        $endDateTime = null;
+
+        if ($dateFromEnabled && $request->filled('event_date_from')) {
+            $dateFrom = $request->event_date_from;
+            $timeComponent = '00:00:00';
+
+            if ($timeFromEnabled) {
+                foreach ($timeFormats as $format) {
+                    try {
+                        $timeComponent = Carbon::createFromFormat($format, $request->time_from)->format('H:i:s');
+                        break;
+                    } catch (Exception $e) {
+                        continue;
+                    }
+                }
+            }
+
+            try {
+                $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom . ' ' . $timeComponent, $timezone);
+            } catch (Exception $e) {
+                $startDateTime = Carbon::now($timezone)->startOfDay();
+            }
         }
 
-        if ($request->filled('date_to')) {
-            $query->where('createdAt', '<=', $request->date_to . ' 23:59:59');
+        if ($dateToEnabled && $request->filled('event_date_to')) {
+            $dateTo = $request->event_date_to;
+            $timeComponent = '23:59:59';
+
+            if ($timeToEnabled) {
+                foreach ($timeFormats as $format) {
+                    try {
+                        $timeComponent = Carbon::createFromFormat($format, $request->time_to)->format('H:i:s');
+                        break;
+                    } catch (Exception $e) {
+                        continue;
+                    }
+                }
+            }
+
+            try {
+                $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo . ' ' . $timeComponent, $timezone);
+            } catch (Exception $e) {
+                $endDateTime = Carbon::now($timezone)->endOfDay();
+            }
+        }
+
+        if ($startDateTime && $endDateTime) {
+            if ($endDateTime->lt($startDateTime)) {
+                $endDateTime = $startDateTime->copy()->endOfDay();
+            }
+
+            $query->whereBetween('marketTime', [
+                $startDateTime->format('Y-m-d H:i:s'),
+                $endDateTime->format('Y-m-d H:i:s'),
+            ]);
+        } elseif ($startDateTime) {
+            $query->where('marketTime', '>=', $startDateTime->format('Y-m-d H:i:s'));
+        } elseif ($endDateTime) {
+            $query->where('marketTime', '<=', $endDateTime->format('Y-m-d H:i:s'));
         }
     }
 
@@ -293,5 +381,107 @@ class EventController extends Controller
             ->get();
 
         return response()->json($events);
+    }
+
+    /**
+     * Export events to CSV with filters applied
+     */
+    public function export(Request $request)
+    {
+        // Build the same query as index but without pagination
+        $query = DB::table('events')
+            ->select([
+                'id',
+                'eventId',
+                'sportId',
+                'tournamentsId',
+                'tournamentsName',
+                'eventName',
+                'highlight',
+                'quicklink',
+                'popular',
+                'IsSettle',
+                'IsVoid',
+                'IsUnsettle',
+                'dataSwitch',
+                'marketTime',
+                'createdAt'
+            ]);
+
+        // Apply the same filters
+        $this->applyFilters($query, $request);
+
+        // Get all results (no pagination)
+        $events = $query->orderBy('createdAt', 'desc')
+                       ->orderBy('id', 'desc')
+                       ->get();
+
+        // Get sport configuration for display
+        $sportConfig = config('sports.sports');
+
+        // Prepare CSV data
+        $filename = 'events_export_' . date('Y-m-d_His') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($events, $sportConfig) {
+            $file = fopen('php://output', 'w');
+            
+            // Add CSV headers
+            fputcsv($file, [
+                'ID',
+                'Event ID',
+                'Sport',
+                'Tournament ID',
+                'Tournament Name',
+                'Event Name',
+                'Highlight',
+                'Quicklink',
+                'Popular',
+                'Status',
+                'Data Switch',
+                'Event Time',
+                'Created At'
+            ]);
+
+            // Add data rows
+            foreach ($events as $event) {
+                // Determine status
+                $status = 'Unsettled';
+                if ($event->IsVoid) {
+                    $status = 'Void';
+                } elseif ($event->IsSettle) {
+                    $status = 'Settled';
+                } elseif ($event->IsUnsettle) {
+                    $status = 'Unsettled';
+                }
+
+                // Get sport name from config
+                $sportName = $sportConfig[$event->sportId] ?? $event->sportId;
+
+                fputcsv($file, [
+                    $event->id,
+                    $event->eventId,
+                    $sportName,
+                    $event->tournamentsId,
+                    $event->tournamentsName,
+                    $event->eventName,
+                    $event->highlight ? 'Yes' : 'No',
+                    $event->quicklink ? 'Yes' : 'No',
+                    $event->popular ? 'Yes' : 'No',
+                    $status,
+                    $event->dataSwitch ? 'On' : 'Off',
+                    $event->marketTime,
+                    $event->createdAt
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

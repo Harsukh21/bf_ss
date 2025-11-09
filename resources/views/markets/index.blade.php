@@ -43,42 +43,310 @@
         opacity: 1;
         visibility: visible;
     }
+
+    .filter-field-group {
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1rem 1.25rem;
+    }
+
+    .dark .filter-field-group {
+        background-color: rgba(55, 65, 81, 0.6);
+        border-color: #4b5563;
+    }
+
+    .filter-field-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+
+    .dark .filter-field-title {
+        color: #e5e7eb;
+    }
+
+    .filter-field-row {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+    }
+
+    .filter-field-label {
+        width: 3.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #6b7280;
+        letter-spacing: 0.04em;
+    }
+
+    .dark .filter-field-label {
+        color: #9ca3af;
+    }
+
+    .filter-field-apply {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #4b5563;
+    }
+
+    .dark .filter-field-apply {
+        color: #d1d5db;
+    }
+
+    .filter-field-apply input {
+        margin-right: 0.4rem;
+    }
+
+    .time-range-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .time-block {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .time-block-header {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #6b7280;
+        letter-spacing: 0.04em;
+    }
+
+    .dark .time-block-header {
+        color: #9ca3af;
+    }
+
+    .time-picker-panel {
+        position: relative;
+    }
+
+    .time-picker-button {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.55rem 0.75rem;
+        border-radius: 0.75rem;
+        border: 1px solid #d1d5db;
+        background-color: #fff;
+        color: #111827;
+        font-size: 0.875rem;
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .time-picker-button:disabled {
+        cursor: not-allowed;
+        background-color: #f3f4f6;
+        color: #9ca3af;
+    }
+
+    .time-picker-button.placeholder {
+        color: #9ca3af;
+    }
+
+    .time-picker-button:hover:not(:disabled) {
+        border-color: #2563eb;
+        background-color: #eff6ff;
+    }
+
+    .time-picker-icon {
+        width: 1rem;
+        height: 1rem;
+        color: #9ca3af;
+    }
+
+    .time-picker-dropdown {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        left: 0;
+        width: 100%;
+        z-index: 50;
+        background-color: #fff;
+        border-radius: 0.75rem;
+        box-shadow: 0 15px 35px rgba(59, 130, 246, 0.15);
+        border: 1px solid rgba(59, 130, 246, 0.15);
+        padding: 1rem;
+    }
+
+    .dark .time-picker-dropdown {
+        background-color: #1f2937;
+        border-color: rgba(59, 130, 246, 0.35);
+        box-shadow: 0 15px 35px rgba(30, 64, 175, 0.35);
+    }
+
+    .time-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    .time-picker-column p {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+
+    .dark .time-picker-column p {
+        color: #9ca3af;
+    }
+
+    .time-picker-options {
+        display: grid;
+        gap: 0.35rem;
+        max-height: 160px;
+        overflow-y: auto;
+        padding-right: 0.35rem;
+    }
+
+    .time-picker-option {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.45rem 0.5rem;
+        border-radius: 0.65rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #1f2937;
+        background-color: #f3f4f6;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .time-picker-option:hover {
+        background-color: #e0ecff;
+        color: #1d4ed8;
+    }
+
+    .time-picker-option.active {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    .dark .time-picker-option {
+        background-color: rgba(55, 65, 81, 0.6);
+        color: #e5e7eb;
+    }
+
+    .dark .time-picker-option:hover {
+        background-color: rgba(59, 130, 246, 0.35);
+        color: #bfdbfe;
+    }
+
+    .dark .time-picker-option.active {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(29, 78, 216, 0.95));
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    }
+
+    .time-picker-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+    }
+
+    .time-picker-action {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.45rem 1rem;
+        border-radius: 0.65rem;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+    }
+
+    .time-picker-action:hover {
+        border-color: #2563eb;
+        background-color: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .time-picker-action.primary {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+    }
+
+    .time-picker-action.primary:hover:not(:disabled) {
+        background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    }
+
+    .time-picker-action.primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    .timepicker-hint {
+        font-size: 0.7rem;
+        color: #9ca3af;
+        margin: 0;
+    }
+
+    .dark .timepicker-hint {
+        color: #9ca3af;
+    }
 </style>
 @endpush
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
         <!-- Header Section -->
-    <div class="sm:flex sm:items-center sm:justify-between mb-6">
+    <div class="sm:flex sm:items-center sm:justify-between mb-6 gap-3">
         <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Market List</h1>
             <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                Manage and filter betting markets
+                Browse markets today and tomorrow
             </p>
         </div>
-        <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none flex gap-3">
+        <div class="mt-4 sm:mt-0 sm:flex-none flex items-center gap-3 w-full sm:w-auto">
+            <div class="flex items-center gap-3">
+                <button 
+                    type="button" 
+                    onclick="toggleFilter()"
+                    class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"></path>
+                    </svg>
+                    Filters
+                    @if(count($activeFilters) > 0)
+                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                            {{ count($activeFilters) }}
+                        </span>
+                    @endif
+                </button>
+                @if(count($activeFilters) > 0)
+                <button 
+                    type="button"
+                    onclick="clearAllFilters()"
+                    class="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    Clear Filters
+                </button>
+                @endif
+            </div>
+
             <a 
                 href="{{ route('markets.export', request()->query()) }}"
-                class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto">
+                class="ml-auto inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
                 Export CSV
             </a>
-            <button 
-                type="button" 
-                onclick="toggleFilter()"
-                class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto">
-                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"></path>
-                </svg>
-                Filters
-                @if(count($activeFilters) > 0)
-                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                        {{ count($activeFilters) }}
-                    </span>
-                @endif
-            </button>
         </div>
     </div>
 
@@ -166,6 +434,20 @@
                         <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ DB::table('market_lists')->where('isLive', false)->where('isPreBet', false)->count() }}</p>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Recently Added Switcher -->
+        <div class="mb-6">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">Recently Added</span>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Toggle to highlight the newest markets (feature coming soon).</p>
+                </div>
+                <button type="button" class="relative inline-flex items-center h-7 rounded-full w-14 transition-colors duration-200 ease-in-out bg-gray-300 dark:bg-gray-600 cursor-not-allowed opacity-60" aria-pressed="false" title="Coming soon">
+                    <span class="sr-only">Toggle recently added filter</span>
+                    <span class="inline-block w-6 h-6 transform bg-white dark:bg-gray-200 rounded-full translate-x-1 transition-transform duration-200 ease-in-out"></span>
+                </button>
             </div>
         </div>
 
@@ -268,16 +550,46 @@
                                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 mb-1 w-fit">
                                                 {{ $market->type }}
                                             </span>
-                                            @if($market->isLive)
-                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 w-fit">
+                                            @php
+                                                $rawStatus = $market->status;
+                                                if (is_null($rawStatus) || $rawStatus === '') {
+                                                    if ($market->isLive) {
+                                                        $rawStatus = 'Live';
+                                                    } elseif ($market->isPreBet) {
+                                                        $rawStatus = 'Pre-bet';
+                                                    } else {
+                                                        $rawStatus = 'Scheduled';
+                                                    }
+                                                }
+
+                                                $normalizedStatus = strtolower(trim($rawStatus));
+                                                $normalizedStatus = str_replace(['_', '-'], ' ', $normalizedStatus);
+                                                $statusLabel = ucwords($normalizedStatus);
+
+                                                $statusClassMap = [
+                                                    'open' => 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300',
+                                                    'scheduled' => 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300',
+                                                    'live' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
+                                                    'in play' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
+                                                    'suspended' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
+                                                    'pre bet' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
+                                                    'pre-bet' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
+                                                    'closed' => 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
+                                                    'settled' => 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300',
+                                                    'void' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
+                                                    'voided' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
+                                                    'cancelled' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
+                                                ];
+
+                                                $statusBadgeClass = $statusClassMap[$normalizedStatus] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+                                                $showPulse = in_array($normalizedStatus, ['live', 'in play']);
+                                            @endphp
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full w-fit {{ $statusBadgeClass }}">
+                                                @if($showPulse)
                                                     <span class="w-2 h-2 bg-red-400 rounded-full mr-1 animate-pulse"></span>
-                                                    Live
-                                                </span>
-                                            @elseif($market->isPreBet)
-                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 w-fit">Pre-bet</span>
-                                            @else
-                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 w-fit">Scheduled</span>
-                                            @endif
+                                                @endif
+                                                {{ $statusLabel }}
+                                            </span>
                                         </div>
                                     </td>
                                 </tr>
@@ -322,6 +634,55 @@
         </div>
 
         <form method="GET" action="{{ route('markets.index') }}">
+            @php
+                $timeFromRaw = request('time_from');
+                $timeToRaw = request('time_to');
+
+                $timeFormats = ['h:i:s A', 'H:i:s', 'h:i A', 'H:i'];
+
+                $timeFromDisplay = null;
+                if ($timeFromRaw) {
+                    foreach ($timeFormats as $format) {
+                        try {
+                            $timeFromDisplay = \Carbon\Carbon::createFromFormat($format, $timeFromRaw)->format('h:i:s A');
+                            break;
+                        } catch (\Exception $e) {
+                            $timeFromDisplay = $timeFromRaw;
+                        }
+                    }
+                }
+
+                $timeToDisplay = null;
+                if ($timeToRaw) {
+                    foreach ($timeFormats as $format) {
+                        try {
+                            $timeToDisplay = \Carbon\Carbon::createFromFormat($format, $timeToRaw)->format('h:i:s A');
+                            break;
+                        } catch (\Exception $e) {
+                            $timeToDisplay = $timeToRaw;
+                        }
+                    }
+                }
+
+                $timeFromValue = $timeFromDisplay;
+                $timeToValue = $timeToDisplay;
+
+                $defaultPickerTime = \Carbon\Carbon::now(config('app.timezone', 'UTC'))->format('h:i:s A');
+
+                if(!$timeFromValue) {
+                    $timeFromValue = $defaultPickerTime;
+                }
+
+                if(!$timeToValue) {
+                    $timeToValue = $defaultPickerTime;
+                }
+
+                $dateFromEnabled = request()->boolean('date_from_enabled') && request()->filled('date_from');
+                $dateToEnabled = request()->boolean('date_to_enabled') && request()->filled('date_to');
+
+                $timeFromEnabled = request()->boolean('time_from_enabled') && $dateFromEnabled && !empty($timeFromRaw);
+                $timeToEnabled = request()->boolean('time_to_enabled') && $dateToEnabled && !empty($timeToRaw);
+            @endphp
             <!-- Search -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
@@ -358,16 +719,34 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Market Type -->
+
+            <!-- Event -->
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Market Type</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Event</label>
+                <div class="relative">
+                    <input type="text" id="eventSearch" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Click to see all events or search..." autocomplete="off">
+                    <select name="event_name" id="eventSelect" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 absolute inset-0 opacity-0 pointer-events-none">
+                        <option value="">-- Select Event --</option>
+                        @foreach($eventsByTournament as $tournamentName => $events)
+                            @foreach($events as $event)
+                                <option value="{{ $event->eventName }}" data-tournament="{{ $tournamentName }}" {{ request('event_name') == $event->eventName ? 'selected' : '' }}>{{ $event->eventName }}</option>
+                            @endforeach
+                        @endforeach
+                    </select>
+                    <div id="eventDropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-y-auto hidden tournament-dropdown-scrollable">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Market</label>
                 <div class="relative">
                     <input type="text" id="marketTypeSearch" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Click to see all types or search..." autocomplete="off">
-                    <select name="type" id="marketTypeSelect" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 absolute inset-0 opacity-0 pointer-events-none">
-                        <option value="">-- Select Type --</option>
+                    <select name="market_name" id="marketTypeSelect" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 absolute inset-0 opacity-0 pointer-events-none">
+                        <option value="">-- Select Market --</option>
                         @foreach($marketTypes as $type)
-                            <option value="{{ $type->type }}" data-tournament="{{ $type->tournamentsName }}" {{ request('type') == $type->type ? 'selected' : '' }}>{{ $type->type }}</option>
+                            <option value="{{ $type->marketName }}" data-tournament="{{ $type->tournamentsName }}" {{ request('market_name') == $type->marketName ? 'selected' : '' }}>{{ $type->marketName }}</option>
                         @endforeach
                     </select>
                     <div id="marketTypeDropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-y-auto hidden tournament-dropdown-scrollable">
@@ -393,18 +772,168 @@
             </div>
             
             <!-- Date Range -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date Range</label>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <input type="date" name="date_from" value="{{ request('date_from') }}"
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+            <div class="mb-4 filter-field-group">
+                <div class="filter-field-title">Event Date Range</div>
+                <div class="space-y-3">
+                    <div class="filter-field-row">
+                        <span class="filter-field-label">From</span>
+                        <input type="date" name="date_from" value="{{ request('date_from') }}" placeholder="Select start date" class="js-market-date-from flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+                        <label class="filter-field-apply">
+                            <input type="checkbox" name="date_from_enabled" value="1" {{ $dateFromEnabled ? 'checked' : '' }} class="js-market-date-from-enabled h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                            Apply
+                        </label>
                     </div>
-                    <div>
-                        <input type="date" name="date_to" value="{{ request('date_to') }}"
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                    <div class="filter-field-row">
+                        <span class="filter-field-label">To</span>
+                        <input type="date" name="date_to" value="{{ request('date_to') }}" placeholder="Select end date" class="js-market-date-to flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+                        <label class="filter-field-apply">
+                            <input type="checkbox" name="date_to_enabled" value="1" {{ $dateToEnabled ? 'checked' : '' }} class="js-market-date-to-enabled h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                            Apply
+                        </label>
                     </div>
                 </div>
+            </div>
+
+            <!-- Event Time Range (12-hour format) -->
+            <div class="mb-4 filter-field-group">
+                <div class="filter-field-title">Event Time Range (12-hour format)</div>
+                <div class="time-range-container space-y-3">
+                    <div class="time-block" x-data="timePickerComponent('{{ $timeFromValue }}', {{ $timeFromEnabled ? 'true' : 'false' }})" x-init="init()" x-on:keydown.escape.window="close()">
+                        <div class="flex items-center justify-between">
+                            <div class="time-block-header">From</div>
+                            <label class="inline-flex items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                                <input type="checkbox" name="time_from_enabled" value="1" x-model="enabled" @change="updateHidden()" class="js-market-time-from-enabled h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <span class="ml-2">Apply</span>
+                            </label>
+                        </div>
+                        <div class="time-picker-panel">
+                            <input type="hidden" name="time_from" x-ref="hidden" :disabled="!enabled">
+                            <button type="button" class="time-picker-button" :class="{ 'placeholder': !isComplete, 'opacity-60': !enabled }" :disabled="!enabled" @click="toggle">
+                                <span x-text="display"></span>
+                                <svg class="time-picker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </button>
+                            <div class="time-picker-dropdown" x-show="open">
+                                <div class="time-picker-grid">
+                                    <div class="time-picker-column">
+                                        <p>Hour</p>
+                                        <div class="time-picker-options">
+                                            <template x-for="hour in hours" :key="hour">
+                                                <button type="button" class="time-picker-option" @click="setHour(hour)" :class="{ 'active': selection.hour === hour }">
+                                                    <span x-text="hour"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>Minute</p>
+                                        <div class="time-picker-options">
+                                            <template x-for="minute in minutes" :key="minute">
+                                                <button type="button" class="time-picker-option" @click="setMinute(minute)" :class="{ 'active': selection.minute === minute }">
+                                                    <span x-text="minute"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>Second</p>
+                                        <div class="time-picker-options">
+                                            <template x-for="second in seconds" :key="second">
+                                                <button type="button" class="time-picker-option" @click="setSecond(second)" :class="{ 'active': selection.second === second }">
+                                                    <span x-text="second"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>Period</p>
+                                        <div class="time-picker-options">
+                                            <template x-for="period in periods" :key="period">
+                                                <button type="button" class="time-picker-option" @click="setPeriod(period)" :class="{ 'active': selection.period === period }">
+                                                    <span x-text="period"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="time-picker-actions">
+                                    <button type="button" class="time-picker-action" @click="confirm">OK</button>
+                                    <button type="button" class="time-picker-action" @click="clear">Clear</button>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="timepicker-hint">Example: 02:30:00 PM</p>
+                    </div>
+                    <div class="time-block" x-data="timePickerComponent('{{ $timeToValue }}', {{ $timeToEnabled ? 'true' : 'false' }})" x-init="init()" x-on:keydown.escape.window="close()">
+                        <div class="flex items-center justify-between">
+                            <div class="time-block-header">To</div>
+                            <label class="inline-flex items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                                <input type="checkbox" name="time_to_enabled" value="1" x-model="enabled" @change="updateHidden()" class="js-market-time-to-enabled h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <span class="ml-2">Apply</span>
+                            </label>
+                        </div>
+                        <div class="time-picker-panel">
+                            <input type="hidden" name="time_to" x-ref="hidden" :disabled="!enabled">
+                            <button type="button" class="time-picker-button" :class="{ 'placeholder': !isComplete, 'opacity-60': !enabled }" :disabled="!enabled" @click="toggle">
+                                <span x-text="display"></span>
+                                <svg class="time-picker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </button>
+                            <div class="time-picker-dropdown" x-show="open">
+                                <div class="time-picker-grid">
+                                    <div class="time-picker-column">
+                                        <p>Hour</p>
+                                        <div class="time-picker-options">
+                                            <template x-for="hour in hours" :key="hour">
+                                                <button type="button" class="time-picker-option" @click="setHour(hour)" :class="{ 'active': selection.hour === hour }">
+                                                    <span x-text="hour"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>Minute</p>
+                                        <div class="time-picker-options">
+                                            <template x-for="minute in minutes" :key="minute">
+                                                <button type="button" class="time-picker-option" @click="setMinute(minute)" :class="{ 'active': selection.minute === minute }">
+                                                    <span x-text="minute"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>Second</p>
+                                        <div class="time-picker-options">
+                                            <template x-for="second in seconds" :key="second">
+                                                <button type="button" class="time-picker-option" @click="setSecond(second)" :class="{ 'active': selection.second === second }">
+                                                    <span x-text="second"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>Period</p>
+                                        <div class="time-picker-options">
+                                            <template x-for="period in periods" :key="period">
+                                                <button type="button" class="time-picker-option" @click="setPeriod(period)" :class="{ 'active': selection.period === period }">
+                                                    <span x-text="period"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="time-picker-actions">
+                                    <button type="button" class="time-picker-action" @click="confirm">OK</button>
+                                    <button type="button" class="time-picker-action" @click="clear">Clear</button>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="timepicker-hint">Example: 11:45:30 PM</p>
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Times apply to the selected date range.</p>
             </div>
 
             <!-- Filter Actions -->
@@ -425,9 +954,144 @@
 
 @push('scripts')
 <script>
+window.timePickerComponent = function(initialValue, initiallyEnabled = false) {
+    return {
+        open: false,
+        hours: Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')),
+        minutes: Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')),
+        seconds: Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')),
+        periods: ['AM', 'PM'],
+        selection: { hour: '', minute: '', second: '', period: 'AM' },
+        enabled: initiallyEnabled,
+        init() {
+            this.setFromString(initialValue);
+            this.$watch('enabled', () => {
+                this.updateHidden();
+            });
+        },
+        get display() {
+            if (this.selection.hour && this.selection.minute) {
+                const second = this.selection.second || '00';
+                return `${this.selection.hour}:${this.selection.minute}:${second} ${this.selection.period}`;
+            }
+            return 'Select time';
+        },
+        get isComplete() {
+            return this.selection.hour && this.selection.minute && this.selection.period;
+        },
+        toggle() {
+            this.open = !this.open;
+            if (this.open) {
+                this.scrollToActive();
+            }
+        },
+        close() {
+            this.open = false;
+        },
+        setHour(hour) {
+            this.selection.hour = hour;
+            this.ensureDefaults();
+            this.updateHidden();
+        },
+        setMinute(minute) {
+            this.selection.minute = minute;
+            this.ensureDefaults();
+            this.updateHidden();
+        },
+        setSecond(second) {
+            this.selection.second = second;
+            this.ensureDefaults();
+            this.updateHidden();
+        },
+        setPeriod(period) {
+            this.selection.period = period;
+            this.ensureDefaults();
+            this.updateHidden();
+        },
+        ensureDefaults() {
+            if (!this.selection.period) {
+                this.selection.period = 'AM';
+            }
+            if (!this.selection.second) {
+                this.selection.second = '00';
+            }
+        },
+        updateHidden() {
+            if (this.enabled && this.isComplete) {
+                const value = `${this.selection.hour}:${this.selection.minute}:${this.selection.second || '00'} ${this.selection.period}`;
+                this.$refs.hidden.value = value;
+            } else {
+                this.$refs.hidden.value = '';
+            }
+        },
+        confirm() {
+            if (this.isComplete) {
+                this.updateHidden();
+                this.close();
+            }
+        },
+        clear(skipClose = false) {
+            this.selection = { hour: '', minute: '', second: '', period: 'AM' };
+            this.$refs.hidden.value = '';
+            if (!skipClose) {
+                this.close();
+            }
+            this.updateHidden();
+        },
+        setFromString(value) {
+            const trimmed = (value || '').trim();
+            if (!trimmed) {
+                this.clear(true);
+                return;
+            }
+
+            const match = trimmed.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+            if (match) {
+                let hour = parseInt(match[1], 10);
+                const minute = match[2];
+                const second = (match[3] || '00').padStart(2, '0');
+                let period = match[4] ? match[4].toUpperCase() : null;
+
+                if (!period) {
+                    period = hour >= 12 ? 'PM' : 'AM';
+                }
+
+                if (hour === 0) {
+                    hour = 12;
+                } else if (hour > 12) {
+                    hour -= 12;
+                }
+
+                this.selection.hour = String(hour).padStart(2, '0');
+                this.selection.minute = minute;
+                this.selection.second = second;
+                this.selection.period = period;
+                this.updateHidden();
+            } else {
+                this.clear(true);
+            }
+        },
+        scrollToActive() {
+            this.$nextTick(() => {
+                ['hourOptions', 'minuteOptions', 'secondOptions', 'periodOptions'].forEach(refName => {
+                    const container = this.$refs[refName];
+                    if (container) {
+                        const active = container.querySelector('.time-picker-option.active');
+                        if (active && active.scrollIntoView) {
+                            active.scrollIntoView({ block: 'center' });
+                        }
+                    }
+                });
+            });
+        }
+    };
+};
+
 // Pass data to JavaScript
 const tournamentsBySport = @json($tournamentsBySport);
 const marketTypesByTournament = @json($marketTypesByTournament);
+const eventsByTournament = @json($eventsByTournament);
+const marketTypesByEvent = @json($marketTypesByEvent);
 
 function toggleFilter() {
     const drawer = document.getElementById('filterDrawer');
@@ -461,8 +1125,11 @@ function removeFilter(filterKey) {
         case 'Tournament':
             params.delete('tournament');
             break;
-        case 'Type':
-            params.delete('type');
+        case 'Event':
+            params.delete('event_name');
+            break;
+        case 'Market':
+            params.delete('market_name');
             break;
         case 'Live':
             params.delete('is_live');
@@ -472,9 +1139,23 @@ function removeFilter(filterKey) {
             break;
         case 'From Date':
             params.delete('date_from');
+            params.delete('date_from_enabled');
+            params.delete('time_from');
+            params.delete('time_from_enabled');
             break;
         case 'To Date':
             params.delete('date_to');
+            params.delete('date_to_enabled');
+            params.delete('time_to');
+            params.delete('time_to_enabled');
+            break;
+        case 'From Time':
+            params.delete('time_from');
+            params.delete('time_from_enabled');
+            break;
+        case 'To Time':
+            params.delete('time_to');
+            params.delete('time_to_enabled');
             break;
         case 'Search':
             params.delete('search');
@@ -501,6 +1182,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const tournamentSelect = document.getElementById('tournamentSelect');
     const tournamentSearch = document.getElementById('tournamentSearch');
     const tournamentDropdown = document.getElementById('tournamentDropdown');
+    const eventSelect = document.getElementById('eventSelect');
+    const eventSearch = document.getElementById('eventSearch');
+    const eventDropdown = document.getElementById('eventDropdown');
     const marketTypeSelect = document.getElementById('marketTypeSelect');
     const marketTypeSearch = document.getElementById('marketTypeSearch');
     const marketTypeDropdown = document.getElementById('marketTypeDropdown');
@@ -520,6 +1204,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     updateTournamentInputDisplay();
+    
+    // Update event input display
+    function updateEventInputDisplay() {
+        const selectedOption = eventSelect.options[eventSelect.selectedIndex];
+        if (selectedOption && selectedOption.value !== '') {
+            eventSearch.value = selectedOption.text;
+            eventSearch.classList.add('text-gray-900', 'dark:text-gray-100');
+            eventSearch.classList.remove('text-gray-400', 'dark:text-gray-500');
+        } else {
+            eventSearch.value = '';
+        }
+    }
+    
+    updateEventInputDisplay();
     
     // Update market type input display
     function updateMarketTypeInputDisplay() {
@@ -547,11 +1245,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 tournamentSelect.value = '';
                 updateTournamentInputDisplay();
             }
-            // Also clear market type when sport is cleared
-            marketTypeSelect.value = '';
-            updateMarketTypeInputDisplay();
-            marketTypeSearch.value = '';
-            marketTypeDropdown.classList.add('hidden');
+            // Also clear event when sport is cleared
+            eventSelect.value = '';
+            updateEventInputDisplay();
+            eventDropdown.classList.add('hidden');
+            filterMarketTypesByEvent(null, false);
             return;
         }
         
@@ -571,15 +1269,85 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!selectedTournamentSport || selectedTournamentSport !== sportName) {
                 tournamentSelect.value = '';
                 updateTournamentInputDisplay();
-                // Also clear market type when tournament is cleared
-                marketTypeSelect.value = '';
-                updateMarketTypeInputDisplay();
-                marketTypeSearch.value = '';
-                marketTypeDropdown.classList.add('hidden');
+                // Also clear event when tournament is cleared
+                eventSelect.value = '';
+                updateEventInputDisplay();
+                eventDropdown.classList.add('hidden');
+                filterMarketTypesByEvent(null, false);
             }
         }
     }
     
+    // Filter events based on selected tournament
+    function filterEventsByTournament(tournamentName, preserveSelection = false) {
+        const allEvents = Array.from(eventSelect.options);
+        
+        if (!tournamentName) {
+            allEvents.forEach(option => {
+                option.style.display = '';
+            });
+            if (!preserveSelection && !isFirstLoad) {
+                eventSelect.value = '';
+                updateEventInputDisplay();
+                filterMarketTypesByEvent(null, false);
+            }
+            return;
+        }
+        
+        allEvents.forEach(option => {
+            const optionTournament = option.getAttribute('data-tournament');
+            if (optionTournament === tournamentName || option.value === '') {
+                option.style.display = '';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+        
+        if (!preserveSelection && !isFirstLoad) {
+            const selectedEvent = eventSelect.options[eventSelect.selectedIndex];
+            const selectedEventTournament = selectedEvent ? selectedEvent.getAttribute('data-tournament') : null;
+            
+            if (!selectedEventTournament || selectedEventTournament !== tournamentName) {
+                eventSelect.value = '';
+                updateEventInputDisplay();
+                filterMarketTypesByEvent(null, false);
+            }
+        }
+    }
+
+    // Filter market types based on selected event (fallback to tournament)
+    function filterMarketTypesByEvent(eventName, preserveSelection = false) {
+        const allMarketTypes = Array.from(marketTypeSelect.options);
+
+        if (!eventName) {
+            filterMarketTypesByTournament(tournamentSelect.value, preserveSelection);
+            return;
+        }
+
+        const allowedTypes = (marketTypesByEvent[eventName] || []).map(item => item.marketName);
+
+        allMarketTypes.forEach(option => {
+            if (option.value === '') {
+                option.style.display = '';
+                return;
+            }
+
+            if (allowedTypes.includes(option.value)) {
+                option.style.display = '';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+
+        if (!preserveSelection && !isFirstLoad) {
+            const selectedType = marketTypeSelect.options[marketTypeSelect.selectedIndex];
+            if (!selectedType || !allowedTypes.includes(selectedType.value)) {
+                marketTypeSelect.value = '';
+                updateMarketTypeInputDisplay();
+            }
+        }
+    }
+
     // Filter market types based on selected tournament
     function filterMarketTypesByTournament(tournamentName, preserveSelection = false) {
         const allMarketTypes = Array.from(marketTypeSelect.options);
@@ -672,26 +1440,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 tournamentSearch.value = name;
                 tournamentDropdown.classList.add('hidden');
                 
-                // Filter market types based on selected tournament
+                // Filter events based on selected tournament
                 isFirstLoad = true;
-                filterMarketTypesByTournament(value, false);
+                filterEventsByTournament(value, false);
                 isFirstLoad = false;
                 
-                // Clear market type selection if it doesn't belong to this tournament
-                marketTypeSelect.value = '';
-                updateMarketTypeInputDisplay();
-                marketTypeSearch.value = '';
-                marketTypeDropdown.classList.add('hidden');
+                // Clear event selection if it doesn't belong to this tournament
+                eventSelect.value = '';
+                updateEventInputDisplay();
+                eventDropdown.classList.add('hidden');
+                filterMarketTypesByEvent(null, false);
             });
         });
     }
     
-    // Market Type dropdown functionality
-    function showMarketTypeDropdown() {
-        const searchTerm = marketTypeSearch.value.trim().toLowerCase();
+    // Event dropdown functionality
+    function showEventDropdown() {
+        const searchTerm = eventSearch.value.trim().toLowerCase();
         const selectedTournament = tournamentSelect.value;
         
-        let filteredOptions = Array.from(marketTypeSelect.options).filter(option => {
+        let filteredOptions = Array.from(eventSelect.options).filter(option => {
             if (selectedTournament) {
                 const optionTournament = option.getAttribute('data-tournament');
                 if (optionTournament !== selectedTournament && option.value !== '') {
@@ -710,12 +1478,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         if (filteredOptions.length === 0) {
-            marketTypeDropdown.innerHTML = `
+            eventDropdown.innerHTML = `
                 <div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-                    No market types found
+                    No events found
                 </div>
             `;
-            marketTypeDropdown.classList.remove('hidden');
+            eventDropdown.classList.remove('hidden');
             return;
         }
         
@@ -723,7 +1491,7 @@ document.addEventListener('DOMContentLoaded', function() {
         filteredOptions.forEach(option => {
             const optionValue = option.value;
             const optionName = option.text;
-            const isSelected = marketTypeSelect.value === optionValue;
+            const isSelected = eventSelect.value === optionValue;
             dropdownHTML += `
                 <div class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer ${isSelected ? 'bg-blue-100 dark:bg-blue-900/20 font-medium' : ''}" data-value="${optionValue}" data-name="${optionName}">
                     ${optionName}
@@ -731,17 +1499,19 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         });
         
-        marketTypeDropdown.innerHTML = dropdownHTML;
-        marketTypeDropdown.classList.remove('hidden');
+        eventDropdown.innerHTML = dropdownHTML;
+        eventDropdown.classList.remove('hidden');
         
-        marketTypeDropdown.querySelectorAll('div[data-value]').forEach(item => {
+        eventDropdown.querySelectorAll('div[data-value]').forEach(item => {
             item.addEventListener('click', function() {
                 const value = this.getAttribute('data-value');
                 const name = this.getAttribute('data-name');
                 
-                marketTypeSelect.value = value;
-                marketTypeSearch.value = name;
-                marketTypeDropdown.classList.add('hidden');
+                eventSelect.value = value;
+                eventSearch.value = name;
+                eventDropdown.classList.add('hidden');
+                filterMarketTypesByEvent(value, false);
+                updateMarketTypeInputDisplay();
             });
         });
     }
@@ -753,6 +1523,9 @@ document.addEventListener('DOMContentLoaded', function() {
         filterTournamentsBySport(selectedSport, false);
         tournamentSearch.value = '';
         tournamentDropdown.classList.add('hidden');
+        filterEventsByTournament('', false);
+        filterMarketTypesByEvent(null, false);
+        updateMarketTypeInputDisplay();
     });
     
     tournamentSearch.addEventListener('focus', function() {
@@ -762,19 +1535,28 @@ document.addEventListener('DOMContentLoaded', function() {
     tournamentSearch.addEventListener('input', function() {
         showTournamentDropdown();
     });
-    
-    marketTypeSearch.addEventListener('focus', function() {
-        showMarketTypeDropdown();
+
+    eventSelect.addEventListener('change', function() {
+        const selectedEvent = this.value;
+        filterMarketTypesByEvent(selectedEvent, false);
+        updateMarketTypeInputDisplay();
     });
-    
-    marketTypeSearch.addEventListener('input', function() {
-        showMarketTypeDropdown();
+
+    eventSearch.addEventListener('focus', function() {
+        showEventDropdown();
+    });
+
+    eventSearch.addEventListener('input', function() {
+        showEventDropdown();
     });
     
     // Hide dropdowns when clicking outside
     document.addEventListener('click', function(event) {
         if (!tournamentSearch.contains(event.target) && !tournamentDropdown.contains(event.target)) {
             tournamentDropdown.classList.add('hidden');
+        }
+        if (!eventSearch.contains(event.target) && !eventDropdown.contains(event.target)) {
+            eventDropdown.classList.add('hidden');
         }
         if (!marketTypeSearch.contains(event.target) && !marketTypeDropdown.contains(event.target)) {
             marketTypeDropdown.classList.add('hidden');
@@ -784,14 +1566,75 @@ document.addEventListener('DOMContentLoaded', function() {
     // Apply initial filters
     const initialSport = sportSelect.value;
     const initialTournament = tournamentSelect.value;
+    const initialEvent = eventSelect.value;
     
     if (initialSport) {
         filterTournamentsBySport(initialSport, true);
     }
     
     if (initialTournament) {
+        filterEventsByTournament(initialTournament, true);
+    }
+
+    if (initialEvent) {
+        filterMarketTypesByEvent(initialEvent, true);
+    } else if (initialTournament) {
         filterMarketTypesByTournament(initialTournament, true);
     }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const dateFromInput = document.querySelector('.js-market-date-from');
+    const dateFromCheckbox = document.querySelector('.js-market-date-from-enabled');
+    const dateToInput = document.querySelector('.js-market-date-to');
+    const dateToCheckbox = document.querySelector('.js-market-date-to-enabled');
+    const timeFromCheckbox = document.querySelector('.js-market-time-from-enabled');
+    const timeToCheckbox = document.querySelector('.js-market-time-to-enabled');
+
+    function syncDate(input, checkbox) {
+        if (!input || !checkbox) return;
+        const hasValue = Boolean(input.value);
+        checkbox.disabled = !hasValue;
+        if (!hasValue && checkbox.checked) {
+            checkbox.checked = false;
+            checkbox.dispatchEvent(new Event('change'));
+        }
+    }
+
+    function syncTime(timeCheckbox, relatedDateInput, relatedDateCheckbox) {
+        if (!timeCheckbox || !relatedDateInput || !relatedDateCheckbox) return;
+        const allowed = Boolean(relatedDateInput.value) && relatedDateCheckbox.checked && !relatedDateCheckbox.disabled;
+        timeCheckbox.disabled = !allowed;
+        if (!allowed && timeCheckbox.checked) {
+            timeCheckbox.checked = false;
+            timeCheckbox.dispatchEvent(new Event('change'));
+        }
+    }
+
+    if (dateFromInput && dateFromCheckbox) {
+        dateFromInput.addEventListener('input', () => {
+            syncDate(dateFromInput, dateFromCheckbox);
+            syncTime(timeFromCheckbox, dateFromInput, dateFromCheckbox);
+        });
+        dateFromCheckbox.addEventListener('change', () => {
+            syncTime(timeFromCheckbox, dateFromInput, dateFromCheckbox);
+        });
+        syncDate(dateFromInput, dateFromCheckbox);
+    }
+
+    if (dateToInput && dateToCheckbox) {
+        dateToInput.addEventListener('input', () => {
+            syncDate(dateToInput, dateToCheckbox);
+            syncTime(timeToCheckbox, dateToInput, dateToCheckbox);
+        });
+        dateToCheckbox.addEventListener('change', () => {
+            syncTime(timeToCheckbox, dateToInput, dateToCheckbox);
+        });
+        syncDate(dateToInput, dateToCheckbox);
+    }
+
+    syncTime(timeFromCheckbox, dateFromInput, dateFromCheckbox);
+    syncTime(timeToCheckbox, dateToInput, dateToCheckbox);
 });
 </script>
 

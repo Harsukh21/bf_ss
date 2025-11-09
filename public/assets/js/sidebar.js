@@ -31,6 +31,10 @@ document.addEventListener('DOMContentLoaded', function() {
             sidebar.classList.remove('sidebar-open');
             sidebar.style.transform = 'translateX(-100%)';
             updateMainContentMargin(false);
+            const header = document.getElementById('topHeader');
+            if (header) {
+                header.style.width = '100%';
+            }
         } else {
             // On desktop, use saved state
             const shouldBeOpen = isSidebarOpen();
@@ -59,11 +63,13 @@ document.addEventListener('DOMContentLoaded', function() {
             mainContent.style.marginLeft = '256px'; // 64 * 4 = 256px
             if (header) {
                 header.style.left = '256px';
+                header.style.width = 'calc(100% - 256px)';
             }
         } else {
             mainContent.style.marginLeft = '0';
             if (header) {
                 header.style.left = '0';
+                header.style.width = '100%';
             }
         }
     }

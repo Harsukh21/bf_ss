@@ -6,6 +6,8 @@ use App\Models\MarketRate;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use Exception;
 
 class MarketRateController extends Controller
 {
@@ -15,21 +17,37 @@ class MarketRateController extends Controller
     public function index(Request $request)
     {
         // Get all available events for dropdown (from events table and market_lists)
-        $eventsFromEvents = Event::select('eventId', 'eventName', 'exEventId')->get();
+        $eventsFromEvents = Event::select('eventId', 'eventName', 'exEventId', 'marketTime', 'createdAt')
+            ->get()
+            ->map(function ($event) {
+                $dateSource = $event->marketTime ?? $event->createdAt;
+                $formattedDate = $dateSource ? Carbon::parse($dateSource)->timezone(config('app.timezone', 'UTC'))->format('M d, Y h:i A') : null;
+
+                return (object) [
+                    'eventId' => $event->eventId,
+                    'eventName' => $event->eventName,
+                    'exEventId' => $event->exEventId,
+                    'marketTime' => $dateSource ? Carbon::parse($dateSource)->format('Y-m-d H:i:s') : null,
+                    'formattedDate' => $formattedDate,
+                ];
+            });
         
         // Get events from market_lists and normalize the data structure
         $marketEvents = DB::table('market_lists')
-            ->select('exEventId', 'eventName')
+            ->select('exEventId', 'eventName', 'marketTime')
             ->whereNotIn('exEventId', $eventsFromEvents->pluck('exEventId'))
             ->distinct()
             ->get();
         
         // Convert to proper objects with consistent property names
         $eventsFromMarkets = $marketEvents->map(function ($event) {
+            $formattedDate = $event->marketTime ? Carbon::parse($event->marketTime)->timezone(config('app.timezone', 'UTC'))->format('M d, Y h:i A') : null;
             return (object) [
                 'eventId' => 'market_' . time() . '_' . rand(1000, 9999),
                 'eventName' => $event->eventName,
-                'exEventId' => $event->exEventId
+                'exEventId' => $event->exEventId,
+                'marketTime' => $event->marketTime ? Carbon::parse($event->marketTime)->format('Y-m-d H:i:s') : null,
+                'formattedDate' => $formattedDate,
             ];
         });
         
@@ -42,6 +60,7 @@ class MarketRateController extends Controller
         $eventInfo = null;
         $availableMarketNames = collect([]);
         $ratesTableNotFound = false;
+        $timezone = config('app.timezone', 'UTC');
         
         if ($selectedEventId) {
             // Check if table exists for this event
@@ -61,23 +80,65 @@ class MarketRateController extends Controller
                     $query->where('marketName', $request->get('market_name'));
                 }
 
-                // Apply status filter
-                if ($request->filled('status')) {
-                    if ($request->get('status') === 'inplay') {
-                        $query->where('inplay', true);
-                    } elseif ($request->get('status') === 'not_inplay') {
-                        $query->where('inplay', false);
+                // Apply date and time filters
+                $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
+                $startDateTime = null;
+                $endDateTime = null;
+
+                if ($request->filled('filter_date')) {
+                    $parsedDate = $this->parseFilterDate($request->get('filter_date'), $timezone);
+                    if ($parsedDate) {
+                        $baseDate = $parsedDate->copy();
+                        $startDateTime = $baseDate->copy()->startOfDay();
+                        $endDateTime = $baseDate->copy()->endOfDay();
+
+                        if ($request->filled('time_from')) {
+                            $timeComponent = null;
+                            foreach ($timeFormats as $format) {
+                                try {
+                                    $timeComponent = Carbon::createFromFormat($format, $request->get('time_from'), $timezone)->format('H:i:s');
+                                    break;
+                                } catch (Exception $e) {
+                                    continue;
+                                }
+                            }
+
+                            if ($timeComponent) {
+                                $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $baseDate->format('Y-m-d') . ' ' . $timeComponent, $timezone);
+                            }
+                        }
+
+                        if ($request->filled('time_to')) {
+                            $timeComponent = null;
+                            foreach ($timeFormats as $format) {
+                                try {
+                                    $timeComponent = Carbon::createFromFormat($format, $request->get('time_to'), $timezone)->format('H:i:s');
+                                    break;
+                                } catch (Exception $e) {
+                                    continue;
+                                }
+                            }
+
+                            if ($timeComponent) {
+                                $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $baseDate->format('Y-m-d') . ' ' . $timeComponent, $timezone);
+                            }
+                        }
+
+                        if ($startDateTime && $endDateTime && $endDateTime->lt($startDateTime)) {
+                            $endDateTime = $startDateTime->copy()->endOfDay();
+                        }
                     }
                 }
 
-                // Apply date range filter
-                if ($request->filled('date_from')) {
-                    $dateFrom = \Carbon\Carbon::parse($request->get('date_from'))->setTimezone('Asia/Kolkata');
-                    $query->where('created_at', '>=', $dateFrom);
-                }
-                if ($request->filled('date_to')) {
-                    $dateTo = \Carbon\Carbon::parse($request->get('date_to'))->setTimezone('Asia/Kolkata');
-                    $query->where('created_at', '<=', $dateTo);
+                if ($startDateTime && $endDateTime) {
+                    $query->whereBetween('created_at', [
+                        $startDateTime->format('Y-m-d H:i:s'),
+                        $endDateTime->format('Y-m-d H:i:s'),
+                    ]);
+                } elseif ($startDateTime) {
+                    $query->where('created_at', '>=', $startDateTime->format('Y-m-d H:i:s'));
+                } elseif ($endDateTime) {
+                    $query->where('created_at', '<=', $endDateTime->format('Y-m-d H:i:s'));
                 }
 
                 $marketRates = $query->latest('created_at')->paginate(10);
@@ -91,7 +152,7 @@ class MarketRateController extends Controller
             if (!$eventInfo) {
                 $marketEventInfo = DB::table('market_lists')
                     ->where('exEventId', $selectedEventId)
-                    ->select('eventName', 'exEventId')
+                    ->select('eventName', 'exEventId', 'marketTime')
                     ->selectRaw("'market_list' as source")
                     ->first();
                 if ($marketEventInfo) {
@@ -99,13 +160,52 @@ class MarketRateController extends Controller
                     $eventInfo = (object) [
                         'eventName' => $marketEventInfo->eventName,
                         'exEventId' => $marketEventInfo->exEventId,
-                        'source' => $marketEventInfo->source
+                        'source' => $marketEventInfo->source,
+                        'marketTime' => $marketEventInfo->marketTime ?? null,
                     ];
+                }
+            }
+
+            if ($eventInfo) {
+                $dateSource = $eventInfo->marketTime ?? ($eventInfo->createdAt ?? null);
+                if ($dateSource) {
+                    $parsedSource = Carbon::parse($dateSource)->timezone($timezone);
+                    $eventInfo->formattedDate = $parsedSource->format('M d, Y h:i A');
+                } else {
+                    $eventInfo->formattedDate = null;
                 }
             }
         }
 
-        return view('market-rates.index', compact('marketRates', 'events', 'selectedEventId', 'eventInfo', 'availableMarketNames', 'ratesTableNotFound'));
+        $defaultFilterDate = null;
+
+        if ($eventInfo) {
+            $rawDate = $eventInfo->marketTime ?? ($eventInfo->createdAt ?? null);
+            if ($rawDate) {
+                try {
+                    $defaultFilterDate = Carbon::parse($rawDate)->timezone($timezone)->format('d/m/Y');
+                } catch (Exception $e) {
+                    $defaultFilterDate = null;
+                }
+            }
+        }
+
+        $filterCount = 0;
+        if ($request->filled('market_name')) $filterCount++;
+        if ($request->filled('filter_date')) $filterCount++;
+        if ($request->filled('time_from')) $filterCount++;
+        if ($request->filled('time_to')) $filterCount++;
+
+        return view('market-rates.index', compact(
+            'marketRates',
+            'events',
+            'selectedEventId',
+            'eventInfo',
+            'availableMarketNames',
+            'ratesTableNotFound',
+            'filterCount',
+            'defaultFilterDate'
+        ));
     }
 
     /**
@@ -241,23 +341,66 @@ class MarketRateController extends Controller
             $query->where('marketName', $request->get('market_name'));
         }
 
-        // Apply status filter
-        if ($request->filled('status')) {
-            if ($request->get('status') === 'inplay') {
-                $query->where('inplay', true);
-            } elseif ($request->get('status') === 'not_inplay') {
-                $query->where('inplay', false);
+        // Apply date and time filters
+        $timezone = config('app.timezone', 'UTC');
+        $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
+        $startDateTime = null;
+        $endDateTime = null;
+
+        if ($request->filled('filter_date')) {
+            $parsedDate = $this->parseFilterDate($request->get('filter_date'), $timezone);
+            if ($parsedDate) {
+                $baseDate = $parsedDate->copy();
+                $startDateTime = $baseDate->copy()->startOfDay();
+                $endDateTime = $baseDate->copy()->endOfDay();
+
+                if ($request->filled('time_from')) {
+                    $timeComponent = null;
+                    foreach ($timeFormats as $format) {
+                        try {
+                            $timeComponent = Carbon::createFromFormat($format, $request->get('time_from'), $timezone)->format('H:i:s');
+                            break;
+                        } catch (Exception $e) {
+                            continue;
+                        }
+                    }
+
+                    if ($timeComponent) {
+                        $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $baseDate->format('Y-m-d') . ' ' . $timeComponent, $timezone);
+                    }
+                }
+
+                if ($request->filled('time_to')) {
+                    $timeComponent = null;
+                    foreach ($timeFormats as $format) {
+                        try {
+                            $timeComponent = Carbon::createFromFormat($format, $request->get('time_to'), $timezone)->format('H:i:s');
+                            break;
+                        } catch (Exception $e) {
+                            continue;
+                        }
+                    }
+
+                    if ($timeComponent) {
+                        $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $baseDate->format('Y-m-d') . ' ' . $timeComponent, $timezone);
+                    }
+                }
+
+                if ($startDateTime && $endDateTime && $endDateTime->lt($startDateTime)) {
+                    $endDateTime = $startDateTime->copy()->endOfDay();
+                }
             }
         }
 
-        // Apply date range filter
-        if ($request->filled('date_from')) {
-            $dateFrom = \Carbon\Carbon::parse($request->get('date_from'))->setTimezone('Asia/Kolkata');
-            $query->where('created_at', '>=', $dateFrom);
-        }
-        if ($request->filled('date_to')) {
-            $dateTo = \Carbon\Carbon::parse($request->get('date_to'))->setTimezone('Asia/Kolkata');
-            $query->where('created_at', '<=', $dateTo);
+        if ($startDateTime && $endDateTime) {
+            $query->whereBetween('created_at', [
+                $startDateTime->format('Y-m-d H:i:s'),
+                $endDateTime->format('Y-m-d H:i:s'),
+            ]);
+        } elseif ($startDateTime) {
+            $query->where('created_at', '>=', $startDateTime->format('Y-m-d H:i:s'));
+        } elseif ($endDateTime) {
+            $query->where('created_at', '<=', $endDateTime->format('Y-m-d H:i:s'));
         }
 
         // Get all data (no pagination for export)
@@ -354,5 +497,35 @@ class MarketRateController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Normalize date input into a Carbon instance.
+     */
+    private function parseFilterDate(?string $value, string $timezone): ?Carbon
+    {
+        if (!$value) {
+            return null;
+        }
+
+        $normalized = trim($value);
+        if ($normalized === '') {
+            return null;
+        }
+
+        $formats = ['d/m/Y', 'd-m-Y', 'Y-m-d'];
+
+        foreach ($formats as $format) {
+            try {
+                $date = Carbon::createFromFormat($format, $normalized, $timezone);
+                if ($date !== false) {
+                    return $date;
+                }
+            } catch (Exception $e) {
+                continue;
+            }
+        }
+
+        return null;
     }
 }

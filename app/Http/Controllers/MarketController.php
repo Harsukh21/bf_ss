@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Carbon\Carbon;
 
 class MarketController extends Controller
 {
@@ -28,13 +29,15 @@ class MarketController extends Controller
                 ->get();
         });
 
-        $marketTypes = Cache::remember('markets.types', 300, function () {
+        $marketTypeRecords = Cache::remember('markets.market_names', 300, function () {
             return DB::table('market_lists')
-                ->select('type', 'tournamentsName')
+                ->select('marketName', 'tournamentsName', 'eventName')
                 ->distinct()
-                ->orderBy('type')
+                ->orderBy('marketName')
                 ->get();
         });
+
+        $marketTypes = $marketTypeRecords;
 
         // Get tournaments grouped by sport for JavaScript filtering
         $tournamentsBySport = Cache::remember('markets.tournaments_by_sport', 300, function () {
@@ -47,14 +50,20 @@ class MarketController extends Controller
         });
 
         // Get market types grouped by tournament for JavaScript filtering
-        $marketTypesByTournament = Cache::remember('markets.types_by_tournament', 300, function () {
+        $marketTypesByTournament = Cache::remember('markets.types_by_tournament', 300, function () use ($marketTypeRecords) {
+            return $marketTypeRecords->groupBy('tournamentsName');
+        });
+
+        $eventsByTournament = Cache::remember('markets.events_by_tournament', 300, function () {
             return DB::table('market_lists')
-                ->select('type', 'tournamentsName')
+                ->select('eventName', 'tournamentsName')
                 ->distinct()
-                ->orderBy('type')
+                ->orderBy('eventName')
                 ->get()
                 ->groupBy('tournamentsName');
         });
+
+        $marketTypesByEvent = $marketTypeRecords->groupBy('eventName');
 
         // Build optimized raw query with specific column selection
         $query = DB::table('market_lists')
@@ -71,6 +80,7 @@ class MarketController extends Controller
                 'tournamentsName',
                 'type',
                 'isLive',
+                'status',
                 'created_at'
             ]);
 
@@ -86,6 +96,7 @@ class MarketController extends Controller
         $offset = ($page - 1) * $perPage;
 
         $markets = $query
+            ->orderBy('marketTime', 'desc')
             ->orderBy('id', 'desc')
             ->offset($offset)
             ->limit($perPage)
@@ -114,7 +125,9 @@ class MarketController extends Controller
             'marketTypes',
             'activeFilters',
             'tournamentsBySport',
-            'marketTypesByTournament'
+            'marketTypesByTournament',
+            'eventsByTournament',
+            'marketTypesByEvent'
         ));
     }
 
@@ -143,9 +156,19 @@ class MarketController extends Controller
             $query->where('tournamentsName', $request->tournament);
         }
 
-        // Market type filter
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
+        if ($request->filled('event_name')) {
+            $query->where('eventName', $request->event_name);
+        }
+
+        // Market name filter
+        if ($request->filled('market_name')) {
+            $query->where('marketName', $request->market_name);
+        } elseif ($request->filled('type')) {
+            // Backward compatibility if legacy parameter is present
+            $query->where(function ($q) use ($request) {
+                $q->where('marketName', $request->type)
+                  ->orWhere('type', $request->type);
+            });
         }
 
         // Live filter
@@ -158,13 +181,73 @@ class MarketController extends Controller
             $query->where('isPreBet', true);
         }
 
-        // Date range filter - using marketTime from market_lists table
-        if ($request->filled('date_from')) {
-            $query->where('marketTime', '>=', $request->date_from . ' 00:00:00');
+        // Date & time filter - using marketTime from market_lists table
+        $timezone = config('app.timezone', 'UTC');
+        $dateFromEnabled = $request->boolean('date_from_enabled');
+        $dateToEnabled = $request->boolean('date_to_enabled');
+        $timeFromEnabled = $request->boolean('time_from_enabled');
+        $timeToEnabled = $request->boolean('time_to_enabled');
+
+        $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
+
+        $startDateTime = null;
+        $endDateTime = null;
+
+        if ($dateFromEnabled && $request->filled('date_from')) {
+            $timeComponent = '00:00:00';
+
+            if ($timeFromEnabled && $request->filled('time_from')) {
+                foreach ($timeFormats as $format) {
+                    try {
+                        $timeComponent = Carbon::createFromFormat($format, $request->time_from)->format('H:i:s');
+                        break;
+                    } catch (\Exception $e) {
+                        continue;
+                    }
+                }
+            }
+
+            try {
+                $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $request->date_from . ' ' . $timeComponent, $timezone);
+            } catch (\Exception $e) {
+                $startDateTime = Carbon::now($timezone)->startOfDay();
+            }
         }
 
-        if ($request->filled('date_to')) {
-            $query->where('marketTime', '<=', $request->date_to . ' 23:59:59');
+        if ($dateToEnabled && $request->filled('date_to')) {
+            $timeComponent = '23:59:59';
+
+            if ($timeToEnabled && $request->filled('time_to')) {
+                foreach ($timeFormats as $format) {
+                    try {
+                        $timeComponent = Carbon::createFromFormat($format, $request->time_to)->format('H:i:s');
+                        break;
+                    } catch (\Exception $e) {
+                        continue;
+                    }
+                }
+            }
+
+            try {
+                $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $request->date_to . ' ' . $timeComponent, $timezone);
+            } catch (\Exception $e) {
+                $endDateTime = Carbon::now($timezone)->endOfDay();
+            }
+        }
+
+        if ($startDateTime && $endDateTime) {
+            if ($endDateTime->lt($startDateTime)) {
+                $endDateTime = $startDateTime->copy()->endOfDay();
+            }
+
+            $query->whereBetween('marketTime', [
+                $startDateTime->format('Y-m-d H:i:s'),
+                $endDateTime->format('Y-m-d H:i:s'),
+            ]);
+        } elseif ($startDateTime) {
+            $query->where('marketTime', '>=', $startDateTime->format('Y-m-d H:i:s'));
+        } elseif ($endDateTime) {
+            $query->where('marketTime', '<=', $endDateTime->format('Y-m-d H:i:s'));
         }
 
         // Search filter
@@ -191,8 +274,14 @@ class MarketController extends Controller
             $activeFilters['Tournament'] = $request->tournament;
         }
 
-        if ($request->filled('type')) {
-            $activeFilters['Type'] = $request->type;
+        if ($request->filled('event_name')) {
+            $activeFilters['Event'] = $request->event_name;
+        }
+
+        if ($request->filled('market_name')) {
+            $activeFilters['Market'] = $request->market_name;
+        } elseif ($request->filled('type')) {
+            $activeFilters['Market'] = $request->type;
         }
 
         if ($request->has('is_live')) {
@@ -203,12 +292,20 @@ class MarketController extends Controller
             $activeFilters['Pre-bet'] = 'Yes';
         }
 
-        if ($request->filled('date_from')) {
+        if ($request->boolean('date_from_enabled') && $request->filled('date_from')) {
             $activeFilters['From Date'] = $request->date_from;
         }
 
-        if ($request->filled('date_to')) {
+        if ($request->boolean('date_to_enabled') && $request->filled('date_to')) {
             $activeFilters['To Date'] = $request->date_to;
+        }
+
+        if ($request->boolean('time_from_enabled') && $request->boolean('date_from_enabled') && $request->filled('time_from')) {
+            $activeFilters['From Time'] = $request->time_from;
+        }
+
+        if ($request->boolean('time_to_enabled') && $request->boolean('date_to_enabled') && $request->filled('time_to')) {
+            $activeFilters['To Time'] = $request->time_to;
         }
 
         if ($request->filled('search')) {
@@ -235,6 +332,7 @@ class MarketController extends Controller
                 'tournamentsName',
                 'type',
                 'isLive',
+                'status',
                 'created_at'
             ]);
 
@@ -272,12 +370,19 @@ class MarketController extends Controller
 
             // Add data rows
             foreach ($markets as $market) {
-                $status = 'Scheduled';
-                if ($market->isLive) {
-                    $status = 'Live';
-                } elseif ($market->isPreBet) {
-                    $status = 'Pre-bet';
+                $status = $market->status;
+
+                if (!$status) {
+                    if ($market->isLive) {
+                        $status = 'Live';
+                    } elseif ($market->isPreBet) {
+                        $status = 'Pre-bet';
+                    } else {
+                        $status = 'Scheduled';
+                    }
                 }
+
+                $status = strtoupper($status);
 
                 fputcsv($file, [
                     $market->id,

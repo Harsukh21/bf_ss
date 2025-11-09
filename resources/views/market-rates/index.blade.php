@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Market Rates')
+@section('title', 'SS Rates List')
 
 @push('css')
 <style>
@@ -59,6 +59,326 @@
             opacity: 1;
         }
     }
+
+    .filter-field-group {
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1rem 1.25rem;
+    }
+
+    .dark .filter-field-group {
+        background-color: rgba(55, 65, 81, 0.6);
+        border-color: #4b5563;
+    }
+
+    .filter-field-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+
+    .dark .filter-field-title {
+        color: #e5e7eb;
+    }
+
+    .time-range-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .time-block {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .time-block-header {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #6b7280;
+        letter-spacing: 0.04em;
+    }
+
+    .dark .time-block-header {
+        color: #9ca3af;
+    }
+
+    .time-picker-panel {
+        position: relative;
+    }
+
+    .time-picker-input-wrapper {
+        position: relative;
+    }
+
+    .time-picker-input {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 2.75rem 0.75rem 0.9rem;
+        background-color: #ffffff;
+        border: 1px solid #d1d5db;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        color: #111827;
+        transition: all 0.15s ease-in-out;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .time-picker-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .time-picker-input::placeholder {
+        color: #9ca3af;
+        font-weight: 500;
+    }
+
+    .dark .time-picker-input {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: #f3f4f6;
+    }
+
+    .dark .time-picker-input::placeholder {
+        color: #9ca3af;
+    }
+
+    .time-picker-input-icon {
+        position: absolute;
+        top: 50%;
+        right: 0.9rem;
+        transform: translateY(-50%);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 9999px;
+        background-color: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        color: #4b5563;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .time-picker-input-icon:hover {
+        background-color: #e5e7eb;
+    }
+
+    .dark .time-picker-input-icon {
+        background-color: #4b5563;
+        border-color: #4b5563;
+        color: #d1d5db;
+    }
+
+    .time-picker-button {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 0.9rem;
+        background-color: #ffffff;
+        border: 1px solid #d1d5db;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        color: #111827;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .time-picker-button.placeholder {
+        color: #9ca3af;
+        font-weight: 500;
+    }
+
+    .time-picker-button:hover {
+        border-color: #2563eb;
+    }
+
+    .dark .time-picker-button {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: #f3f4f6;
+    }
+
+    .dark .time-picker-button.placeholder {
+        color: #9ca3af;
+        font-weight: 500;
+    }
+
+    .time-picker-icon {
+        width: 1rem;
+        height: 1rem;
+        color: #6b7280;
+    }
+
+    .time-picker-dropdown {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        left: 0;
+        width: 100%;
+        background: #ffffff;
+        border-radius: 0.75rem;
+        box-shadow: 0 15px 35px rgba(15, 23, 42, 0.15);
+        padding: 1rem;
+        z-index: 50;
+    }
+
+    .dark .time-picker-dropdown {
+        background: #1f2937;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
+        border: 1px solid #374151;
+    }
+
+    .time-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.85rem;
+    }
+
+    .time-picker-column {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .time-picker-column p {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .dark .time-picker-column p {
+        color: #9ca3af;
+    }
+
+    .time-picker-options {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.35rem;
+        max-height: 12rem;
+        overflow-y: auto;
+        padding-right: 0.25rem;
+    }
+
+    .time-picker-options-minute,
+    .time-picker-options-second {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .time-picker-options-period {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .time-picker-option {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.55rem 0.65rem;
+        background-color: #f3f4f6;
+        border-radius: 0.65rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #1f2937;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .time-picker-option:hover {
+        background-color: #e5e7eb;
+    }
+
+    .time-picker-option.active {
+        background-color: #2563eb;
+        color: #ffffff;
+        box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+    }
+
+    .dark .time-picker-option {
+        background-color: #374151;
+        color: #f3f4f6;
+        border: 1px solid #4b5563;
+    }
+
+    .dark .time-picker-option:hover {
+        background-color: #4b5563;
+    }
+
+    .dark .time-picker-option.active {
+        background-color: #2563eb;
+        border-color: #2563eb;
+        box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+    }
+
+    .time-picker-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 1rem;
+        gap: 0.75rem;
+    }
+
+    .time-picker-action {
+        flex: 1;
+        padding: 0.55rem 0.75rem;
+        border-radius: 0.75rem;
+        border: 1px solid #d1d5db;
+        background-color: #f9fafb;
+        font-weight: 600;
+        color: #1f2937;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .time-picker-action:hover {
+        background-color: #e5e7eb;
+    }
+
+    .time-picker-action.primary {
+        background-color: #2563eb;
+        border-color: #2563eb;
+        color: #ffffff;
+    }
+
+    .time-picker-action.primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .dark .time-picker-action {
+        border-color: #4b5563;
+        background-color: #374151;
+        color: #f3f4f6;
+    }
+
+    .dark .time-picker-action:hover {
+        background-color: #4b5563;
+    }
+
+    .dark .time-picker-action.primary {
+        background-color: #2563eb;
+        border-color: #2563eb;
+    }
+
+    .timepicker-hint {
+        font-size: 0.7rem;
+        color: #9ca3af;
+        margin: 0;
+    }
+
+    .dark .timepicker-hint {
+        color: #9ca3af;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
 </style>
 @endpush
 
@@ -69,7 +389,7 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                        Market Rates List
+                        SS Rates List
                         @if($selectedEventId && $eventInfo)
                             <span class="text-lg font-normal text-gray-600 dark:text-gray-400">
                                 - {{ $eventInfo->eventName }}
@@ -78,19 +398,13 @@
                     </h1>
                     <p class="text-gray-600 dark:text-gray-400 mt-1">
                         @if($selectedEventId)
-                            Viewing market rates for selected event
+                            Viewing SS rates for selected event
                         @else
-                            Select an event to view market rates
+                            Select an event to view SS rates
                         @endif
                     </p>
                 </div>
-                <div class="flex space-x-3">
-                    @php
-                        $filterCount = 0;
-                        if(request('market_name')) $filterCount++;
-                        if(request('status')) $filterCount++;
-                        if(request('date_from') || request('date_to')) $filterCount++;
-                    @endphp
+                <div class="flex flex-wrap items-center gap-3">
                     <button onclick="toggleFilterDrawer()" class="bg-primary-600 dark:bg-primary-700 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:hover:bg-primary-800 transition-colors flex items-center relative" @if(!$selectedEventId) disabled @endif>
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
@@ -109,7 +423,7 @@
                         </a>
                     @endif
                     @if($selectedEventId && $marketRates->count() > 0)
-                        <a href="{{ route('market-rates.export', request()->all()) }}" class="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-800 transition-colors flex items-center">
+                        <a href="{{ route('market-rates.export', request()->all()) }}" class="ml-auto bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-800 transition-colors flex items-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
@@ -119,6 +433,49 @@
                 </div>
             </div>
         </div>
+
+        <!-- Active Filters Display -->
+        @if($filterCount > 0 && $selectedEventId)
+        <div class="mb-6">
+            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                        </svg>
+                        <span class="text-sm font-medium text-blue-900 dark:text-blue-100">Active Filters ({{ $filterCount }}):</span>
+                    </div>
+                    <a href="{{ route('market-rates.index', ['exEventId' => $selectedEventId]) }}" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">Clear All</a>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    @if(request('market_name'))
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                            Market: {{ request('market_name') }}
+                            <button onclick="removeFilter('market_name')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
+                        </span>
+                    @endif
+                    @if(request('filter_date'))
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                            Date: {{ request('filter_date') }}
+                            <button onclick="removeFilter('filter_date')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
+                        </span>
+                    @endif
+                    @if(request('time_from'))
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                            From Time: {{ request('time_from') }}
+                            <button onclick="removeFilter('time_from')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
+                        </span>
+                    @endif
+                    @if(request('time_to'))
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                            To Time: {{ request('time_to') }}
+                            <button onclick="removeFilter('time_to')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
+                        </span>
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endif
 
         <!-- Validation Alert -->
         <div id="validation-alert" class="hidden mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 px-4 py-3 rounded-md animate-slide-in">
@@ -149,7 +506,7 @@
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
             <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Select Event</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Choose an event to view its market rates</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Choose an event to view its SS rates</p>
             </div>
             <div class="p-6">
                 <form method="GET" action="{{ route('market-rates.index') }}" id="eventSelectionForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
@@ -161,7 +518,7 @@
                                id="eventSearch" 
                                placeholder="Search events..." 
                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-                               value="{{ $eventInfo->eventName ?? '' }}"
+                               value="{{ $eventInfo ? trim($eventInfo->eventName . ($eventInfo->formattedDate ?? false ? ' - ' . $eventInfo->formattedDate : '')) : '' }}"
                                autocomplete="off">
                         <input type="hidden" name="exEventId" id="exEventId" value="{{ $selectedEventId }}" required>
                         
@@ -190,7 +547,7 @@
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                         <div class="flex justify-between items-center">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                                Market Rates ({{ $marketRates->total() }} total)
+                                SS Rates ({{ $marketRates->total() }} total)
                             </h3>
                         </div>
                     </div>
@@ -269,7 +626,17 @@
                                                                             <td class="py-1 text-right">
                                                                                 @if(is_array($availableToLay) && count($availableToLay) > 0)
                                                                                     @php
-                                                                                        $bestLay = is_array($availableToLay[0]) ? $availableToLay[0] : (array) $availableToLay[0];
+                                                                                        // Find the LAY entry with maximum price value (best lay odds)
+                                                                                        $maxLayPrice = 0;
+                                                                                        $bestLay = null;
+                                                                                        foreach ($availableToLay as $lay) {
+                                                                                            $lay = is_array($lay) ? $lay : (array) $lay;
+                                                                                            $layPriceValue = $lay['price'] ?? 0;
+                                                                                            if ($layPriceValue > $maxLayPrice) {
+                                                                                                $maxLayPrice = $layPriceValue;
+                                                                                                $bestLay = $lay;
+                                                                                            }
+                                                                                        }
                                                                                         $layOdds = $bestLay['price'] ?? 0;
                                                                                         $laySize = $bestLay['size'] ?? 0;
                                                                                     @endphp
@@ -334,9 +701,9 @@
                         <svg class="mx-auto h-12 w-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Market Rates Table Not Found</h3>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">SS Rates Table Not Found</h3>
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            The market rates table for <strong>{{ $eventInfo->eventName }}</strong> does not exist in the database.
+                            The SS rates table for <strong>{{ $eventInfo->eventName }}</strong> does not exist in the database.
                         </p>
                         <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
                             Event ID: {{ $selectedEventId }}
@@ -353,12 +720,12 @@
                         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                         </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No market rates found</h3>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No SS rates found</h3>
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            No market rates data available for <strong>{{ $eventInfo->eventName }}</strong>.
+                            No SS rates data available for <strong>{{ $eventInfo->eventName }}</strong>.
                         </p>
                         <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                            The market rates table exists but contains no data.
+                            The SS rates table exists but contains no data.
                         </p>
                     </div>
                 </div>
@@ -391,7 +758,7 @@
                     </svg>
                     <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Select an Event</h3>
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Please select an event from the dropdown above to view its market rates.
+                        Please select an event from the dropdown above to view its SS rates.
                     </p>
                 </div>
             </div>
@@ -413,6 +780,33 @@
         
         <form method="GET" action="{{ route('market-rates.index') }}">
             <input type="hidden" name="exEventId" value="{{ $selectedEventId }}">
+            @php
+                $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
+                $timeFromValue = request('time_from');
+                $timeToValue = request('time_to');
+
+                if ($timeFromValue) {
+                    foreach ($timeFormats as $format) {
+                        try {
+                            $timeFromValue = \Carbon\Carbon::createFromFormat($format, $timeFromValue)->format('h:i:s A');
+                            break;
+                        } catch (\Exception $e) {
+                            continue;
+                        }
+                    }
+                }
+
+                if ($timeToValue) {
+                    foreach ($timeFormats as $format) {
+                        try {
+                            $timeToValue = \Carbon\Carbon::createFromFormat($format, $timeToValue)->format('h:i:s A');
+                            break;
+                        } catch (\Exception $e) {
+                            continue;
+                        }
+                    }
+                }
+            @endphp
             
             <!-- Market Type -->
             <div class="mb-4">
@@ -425,31 +819,154 @@
                 </select>
             </div>
             
-            <!-- Status -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
-                <select name="status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    <option value="">All Status</option>
-                    <option value="inplay" {{ request('status') == 'inplay' ? 'selected' : '' }}>In Play</option>
-                    <option value="not_inplay" {{ request('status') == 'not_inplay' ? 'selected' : '' }}>Not In Play</option>
-                </select>
+            <!-- Date Picker -->
+            <div class="mb-4 filter-field-group">
+                <div class="filter-field-title">Select Date</div>
+                <input
+                    type="text"
+                    name="filter_date"
+                    value="{{ request('filter_date', $defaultFilterDate) }}"
+                    placeholder="DD/MM/YYYY"
+                    maxlength="10"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 js-date-input">
             </div>
-            
-            <!-- Date Range -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date Range</label>
-                <div class="grid grid-cols-1 gap-2">
-                    <div>
-                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">From</label>
-                        <input type="datetime-local" name="date_from" value="{{ request('date_from') }}" 
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+
+            <!-- Time Range -->
+            <div class="mb-4 filter-field-group">
+                <div class="filter-field-title">SS Time Range (12-hour format)</div>
+                <div class="time-range-container">
+                    <div class="time-block" x-data="timePickerComponent('{{ $timeFromValue ?? '' }}', true)" x-init="init()" x-on:keydown.escape.window="close()">
+                        <div class="time-block-header">From</div>
+                        <div class="time-picker-panel">
+                            <input type="hidden" name="time_from" x-ref="hidden">
+                            <div class="time-picker-input-wrapper">
+                                <input
+                                    type="text"
+                                    x-ref="input"
+                                    x-model="textValue"
+                                    placeholder="HH:MM:SS AM/PM"
+                                    class="time-picker-input"
+                                    @focus="open = true; scrollToActive()"
+                                    @input="handleManualInput"
+                                    @keydown.enter.prevent="confirm()"
+                                />
+                                <button type="button" class="time-picker-input-icon" @click.prevent="toggle()">
+                                    <svg class="time-picker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="time-picker-dropdown" x-cloak x-show="open" x-transition @click.away="close()">
+                                <div class="time-picker-grid">
+                                    <div class="time-picker-column">
+                                        <p>Hour</p>
+                                        <div class="time-picker-options time-picker-options-hour" x-ref="hourOptions">
+                                            <template x-for="hour in hours" :key="'from-hour-' + hour">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.hour === hour }" @click="setHour(hour)" x-text="hour"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>Minute</p>
+                                        <div class="time-picker-options time-picker-options-minute" x-ref="minuteOptions">
+                                            <template x-for="minute in minutes" :key="'from-minute-' + minute">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.minute === minute }" @click="setMinute(minute)" x-text="minute"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>Second</p>
+                                        <div class="time-picker-options time-picker-options-second" x-ref="secondOptions">
+                                            <template x-for="second in seconds" :key="'from-second-' + second">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.second === second }" @click="setSecond(second)" x-text="second"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>AM / PM</p>
+                                        <div class="time-picker-options time-picker-options-period" x-ref="periodOptions">
+                                            <template x-for="period in periods" :key="'from-period-' + period">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.period === period }" @click="setPeriod(period)" x-text="period"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="time-picker-actions">
+                                    <button type="button" class="time-picker-action" @click="clear()">Clear</button>
+                                    <button type="button" class="time-picker-action primary" :disabled="!isComplete" @click="confirm()">Done</button>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="timepicker-hint">Example: 02:30:00 PM</p>
                     </div>
-                    <div>
-                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">To</label>
-                        <input type="datetime-local" name="date_to" value="{{ request('date_to') }}" 
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <div class="time-block" x-data="timePickerComponent('{{ $timeToValue ?? '' }}', true)" x-init="init()" x-on:keydown.escape.window="close()">
+                        <div class="time-block-header">To</div>
+                        <div class="time-picker-panel">
+                            <input type="hidden" name="time_to" x-ref="hidden">
+                            <div class="time-picker-input-wrapper">
+                                <input
+                                    type="text"
+                                    x-ref="input"
+                                    x-model="textValue"
+                                    placeholder="HH:MM:SS AM/PM"
+                                    class="time-picker-input"
+                                    @focus="open = true; scrollToActive()"
+                                    @input="handleManualInput"
+                                    @keydown.enter.prevent="confirm()"
+                                />
+                                <button type="button" class="time-picker-input-icon" @click.prevent="toggle()">
+                                    <svg class="time-picker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="time-picker-dropdown" x-cloak x-show="open" x-transition @click.away="close()">
+                                <div class="time-picker-grid">
+                                    <div class="time-picker-column">
+                                        <p>Hour</p>
+                                        <div class="time-picker-options time-picker-options-hour" x-ref="hourOptions">
+                                            <template x-for="hour in hours" :key="'to-hour-' + hour">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.hour === hour }" @click="setHour(hour)" x-text="hour"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>Minute</p>
+                                        <div class="time-picker-options time-picker-options-minute" x-ref="minuteOptions">
+                                            <template x-for="minute in minutes" :key="'to-minute-' + minute">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.minute === minute }" @click="setMinute(minute)" x-text="minute"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>Second</p>
+                                        <div class="time-picker-options time-picker-options-second" x-ref="secondOptions">
+                                            <template x-for="second in seconds" :key="'to-second-' + second">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.second === second }" @click="setSecond(second)" x-text="second"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="time-picker-column">
+                                        <p>AM / PM</p>
+                                        <div class="time-picker-options time-picker-options-period" x-ref="periodOptions">
+                                            <template x-for="period in periods" :key="'to-period-' + period">
+                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.period === period }" @click="setPeriod(period)" x-text="period"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="time-picker-actions">
+                                    <button type="button" class="time-picker-action" @click="clear()">Clear</button>
+                                    <button type="button" class="time-picker-action primary" :disabled="!isComplete" @click="confirm()">Done</button>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="timepicker-hint">Example: 11:45:30 PM</p>
                     </div>
                 </div>
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Times apply to the selected date.</p>
             </div>
             
             <!-- Filter Buttons -->
@@ -468,6 +985,288 @@
 
 @push('js')
 <script>
+window.timePickerComponent = function(initialValue, initiallyEnabled = false) {
+    return {
+        open: false,
+        hours: Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')),
+        minutes: Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')),
+        seconds: Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')),
+        periods: ['AM', 'PM'],
+        selection: { hour: '', minute: '', second: '', period: 'AM' },
+        enabled: initiallyEnabled,
+        textValue: '',
+        init() {
+            const normalized = (initialValue || '').toString();
+            if (normalized) {
+                this.setFromString(normalized, { preserveOnInvalid: true });
+            } else if (this.$refs.hidden) {
+                this.$refs.hidden.value = '';
+            }
+
+            this.$watch('enabled', () => {
+                this.updateHidden();
+            });
+        },
+        get display() {
+            return this.formatValue() || 'Select time';
+        },
+        get isComplete() {
+            return this.selection.hour && this.selection.minute && this.selection.period;
+        },
+        formatValue() {
+            if (!this.selection.hour || !this.selection.minute || !this.selection.period) {
+                return '';
+            }
+            const second = this.selection.second || '00';
+            return `${this.selection.hour}:${this.selection.minute}:${second} ${this.selection.period}`;
+        },
+        toggle() {
+            this.open = !this.open;
+            if (this.open) {
+                this.$nextTick(() => {
+                    if (this.$refs.input) {
+                        this.$refs.input.focus();
+                    }
+                    this.scrollToActive();
+                });
+            }
+        },
+        close() {
+            this.open = false;
+        },
+        setHour(hour) {
+            this.selection.hour = hour;
+            this.ensureDefaults();
+            this.updateHidden();
+        },
+        setMinute(minute) {
+            this.selection.minute = minute;
+            this.ensureDefaults();
+            this.updateHidden();
+        },
+        setSecond(second) {
+            this.selection.second = second;
+            this.ensureDefaults();
+            this.updateHidden();
+        },
+        setPeriod(period) {
+            this.selection.period = period;
+            this.ensureDefaults();
+            this.updateHidden();
+        },
+        ensureDefaults() {
+            if (!this.selection.period) {
+                this.selection.period = 'AM';
+            }
+            if (!this.selection.second) {
+                this.selection.second = '00';
+            }
+        },
+        updateHidden() {
+            if (this.enabled && this.isComplete) {
+                const value = this.formatValue();
+                this.$refs.hidden.value = value;
+                this.textValue = value;
+                return value;
+            } else {
+                this.$refs.hidden.value = '';
+            }
+            return null;
+        },
+        confirm() {
+            if (this.isComplete) {
+                this.updateHidden();
+                this.close();
+            }
+        },
+        clear(skipClose = false) {
+            this.selection = { hour: '', minute: '', second: '', period: 'AM' };
+            this.$refs.hidden.value = '';
+            this.textValue = '';
+            if (!skipClose) {
+                this.close();
+            }
+            this.updateHidden();
+        },
+        setFromString(value, options = {}) {
+            const { preserveOnInvalid = false } = options;
+            const trimmed = (value || '').trim();
+            if (!trimmed) {
+                this.clear(true);
+                if (!preserveOnInvalid) {
+                    this.textValue = '';
+                }
+                return true;
+            }
+
+            const normalized = trimmed.toUpperCase();
+            const match = normalized.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/);
+            if (match) {
+                let hour = parseInt(match[1], 10);
+                const minute = match[2];
+                const second = (match[3] || '00').padStart(2, '0');
+                let period = match[4] ? match[4].toUpperCase() : null;
+
+                if (!period) {
+                    period = hour >= 12 ? 'PM' : 'AM';
+                }
+
+                if (hour === 0) {
+                    hour = 12;
+                } else if (hour > 12) {
+                    hour -= 12;
+                }
+
+                this.selection.hour = String(hour).padStart(2, '0');
+                this.selection.minute = minute;
+                this.selection.second = second;
+                this.selection.period = period;
+
+                this.ensureDefaults();
+                const formatted = this.updateHidden() || this.formatValue();
+                if (formatted) {
+                    this.textValue = formatted;
+                }
+                return true;
+            }
+
+            if (!preserveOnInvalid) {
+                this.clear(true);
+            }
+            return false;
+        },
+        handleManualInput() {
+            let raw = (this.textValue || '').toUpperCase();
+
+            // Keep only digits, spaces, A, P, M, and colons
+            raw = raw.replace(/[^0-9APM: ]/g, '');
+
+            // Determine desired period if user typed AM/PM (partial allowed)
+            let period = '';
+            if (raw.includes('PM')) {
+                period = 'PM';
+            } else if (raw.includes('AM')) {
+                period = 'AM';
+            } else {
+                const letterTrail = raw.replace(/[^AP]/g, '');
+                if (letterTrail.endsWith('P')) {
+                    period = 'PM';
+                } else if (letterTrail.endsWith('A')) {
+                    period = 'AM';
+                }
+            }
+
+            // Extract up to 6 digits for HHMMSS
+            const digits = raw.replace(/[^0-9]/g, '').slice(0, 6);
+            let formatted = '';
+
+            if (digits.length >= 2) {
+                formatted = digits.slice(0, 2);
+                const minutePart = digits.slice(2, 4);
+                formatted += ':' + minutePart;
+
+                const secondPart = digits.slice(4, 6);
+                if (digits.length > 4) {
+                    formatted += ':' + secondPart;
+                }
+            } else {
+                formatted = digits;
+            }
+
+            // Handle partial seconds formatting (e.g., HH:MM:S)
+            if (digits.length === 5) {
+                formatted = `${digits.slice(0, 2)}:${digits.slice(2, 4)}:${digits.slice(4)}`;
+            }
+
+            if (digits.length >= 6 && formatted.length && period) {
+                formatted = formatted.split(' ')[0] + ' ' + period;
+            } else {
+                formatted = formatted.split(' ')[0];
+            }
+
+            this.textValue = formatted.trim();
+
+            if (!this.setFromString(this.textValue, { preserveOnInvalid: true })) {
+                if (this.$refs.hidden) {
+                    this.$refs.hidden.value = '';
+                }
+            }
+        },
+        scrollToActive() {
+            this.$nextTick(() => {
+                ['hourOptions', 'minuteOptions', 'secondOptions', 'periodOptions'].forEach(refName => {
+                    const container = this.$refs[refName];
+                    if (container) {
+                        const active = container.querySelector('.time-picker-option.active');
+                        if (active && active.scrollIntoView) {
+                            active.scrollIntoView({ block: 'center' });
+                        }
+                    }
+                });
+            });
+        }
+    };
+};
+
+function formatDateInputValue(raw) {
+    const digits = (raw || '').replace(/[^0-9]/g, '').slice(0, 8);
+    let formatted = '';
+
+    if (digits.length >= 2) {
+        formatted = digits.slice(0, 2);
+    } else {
+        formatted = digits;
+    }
+
+    if (digits.length >= 3) {
+        formatted += '/' + digits.slice(2, 4);
+    } else if (digits.length > 2) {
+        formatted += '/' + digits.slice(2);
+    }
+
+    if (digits.length >= 5) {
+        formatted += '/' + digits.slice(4, 8);
+    } else if (digits.length > 4) {
+        formatted += '/' + digits.slice(4);
+    }
+
+    return formatted;
+}
+
+function isValidDateValue(value) {
+    const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!match) {
+        return false;
+    }
+
+    const day = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10);
+    const year = parseInt(match[3], 10);
+
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+        return false;
+    }
+
+    const date = new Date(year, month - 1, day);
+    return (
+        date.getFullYear() === year &&
+        date.getMonth() === month - 1 &&
+        date.getDate() === day
+    );
+}
+
+function handleDateInput(event) {
+    const formatted = formatDateInputValue(event.target.value);
+    event.target.value = formatted;
+}
+
+function handleDateBlur(event) {
+    const value = event.target.value;
+    if (value && !isValidDateValue(value)) {
+        event.target.value = '';
+    }
+}
+
 const events = @json($events);
 
 function toggleFilterDrawer() {
@@ -520,7 +1319,7 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// Searchable Event Dropdown
+// Searchable Event Dropdown & Date Input handlers
 document.addEventListener('DOMContentLoaded', function() {
     const eventSearch = document.getElementById('eventSearch');
     const eventDropdown = document.getElementById('eventDropdown');
@@ -545,14 +1344,21 @@ document.addEventListener('DOMContentLoaded', function() {
         filteredEvents.slice(0, 20).forEach(event => {
             const div = document.createElement('div');
             div.className = 'px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-sm text-gray-900 dark:text-gray-100';
-            div.innerHTML = `${event.eventName} <span class="text-gray-400 dark:text-gray-500">(${event.eventId})</span>`;
-            
+            div.innerHTML = `
+                <div class="flex flex-col">
+                    <span class="font-medium">${event.eventName}</span>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">ID: ${event.eventId}</span>
+                    ${event.formattedDate ? `<span class="text-xs text-gray-500 dark:text-gray-400">${event.formattedDate}</span>` : ''}
+                </div>
+            `;
+
             div.addEventListener('click', function() {
                 exEventIdInput.value = event.exEventId;
-                eventSearch.value = event.eventName;
+                const displayValue = event.formattedDate ? `${event.eventName} - ${event.formattedDate}` : event.eventName;
+                eventSearch.value = displayValue;
                 eventDropdown.classList.add('hidden');
             });
-            
+
             eventDropdown.appendChild(div);
         });
     }
@@ -572,7 +1378,34 @@ document.addEventListener('DOMContentLoaded', function() {
             eventDropdown.classList.add('hidden');
         }
     });
+
+    document.querySelectorAll('.js-date-input').forEach(input => {
+        input.value = formatDateInputValue(input.value);
+        input.addEventListener('input', handleDateInput);
+        input.addEventListener('blur', handleDateBlur);
+    });
 });
+
+// Remove individual filter
+function removeFilter(filterName) {
+    const url = new URL(window.location);
+    const exEventId = url.searchParams.get('exEventId');
+    
+    if (filterName === 'filter_date') {
+        url.searchParams.delete('time_from');
+        url.searchParams.delete('time_to');
+    }
+
+    // Remove the filter parameter
+    url.searchParams.delete(filterName);
+    
+    // Ensure exEventId is preserved
+    if (exEventId) {
+        url.searchParams.set('exEventId', exEventId);
+    }
+    
+    window.location.href = url.toString();
+}
 </script>
 @endpush
 @endsection
