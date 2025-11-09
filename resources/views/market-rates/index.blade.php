@@ -7,8 +7,8 @@
     .filter-drawer {
         position: fixed;
         top: 0;
-        right: -500px;
-        width: 500px;
+        right: -600px;
+        width: 560px;
         height: 100vh;
         background: white;
         box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
@@ -89,13 +89,58 @@
         gap: 0.75rem;
     }
 
-    .time-block {
+    .time-input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .js-time-input-container {
+        position: relative;
+    }
+
+    .time-input-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .js-time-input-container.open .js-time-dropdown {
+        display: block;
+    }
+
+    .time-dropdown {
+        display: none;
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        left: 0;
+        width: 100%;
+        background: #ffffff;
+        border: 1px solid #d1d5db;
+        border-radius: 0.75rem;
+        box-shadow: 0 15px 35px rgba(15, 23, 42, 0.15);
+        padding: 1rem;
+        z-index: 70;
+    }
+
+    .dark .time-dropdown {
+        background: #1f2937;
+        border-color: #4b5563;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
+    }
+
+    .time-dropdown-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    .time-dropdown-column {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
     }
 
-    .time-block-header {
+    .time-dropdown-column p {
         font-size: 0.75rem;
         font-weight: 600;
         text-transform: uppercase;
@@ -103,229 +148,82 @@
         letter-spacing: 0.04em;
     }
 
-    .dark .time-block-header {
+    .dark .time-dropdown-column p {
         color: #9ca3af;
     }
 
-    .time-picker-panel {
-        position: relative;
-    }
-
-    .time-picker-input-wrapper {
-        position: relative;
-    }
-
-    .time-picker-input {
-        width: 100%;
+    .time-dropdown-options {
         display: flex;
-        align-items: center;
-        padding: 0.75rem 2.75rem 0.75rem 0.9rem;
-        background-color: #ffffff;
-        border: 1px solid #d1d5db;
-        border-radius: 0.75rem;
-        font-weight: 600;
-        color: #111827;
-        transition: all 0.15s ease-in-out;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-    }
-
-    .time-picker-input:focus {
-        outline: none;
-        border-color: #2563eb;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-    }
-
-    .time-picker-input::placeholder {
-        color: #9ca3af;
-        font-weight: 500;
-    }
-
-    .dark .time-picker-input {
-        background-color: #374151;
-        border-color: #4b5563;
-        color: #f3f4f6;
-    }
-
-    .dark .time-picker-input::placeholder {
-        color: #9ca3af;
-    }
-
-    .time-picker-input-icon {
-        position: absolute;
-        top: 50%;
-        right: 0.9rem;
-        transform: translateY(-50%);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 2rem;
-        height: 2rem;
-        border-radius: 9999px;
-        background-color: #f3f4f6;
-        border: 1px solid #e5e7eb;
-        color: #4b5563;
-        transition: all 0.15s ease-in-out;
-    }
-
-    .time-picker-input-icon:hover {
-        background-color: #e5e7eb;
-    }
-
-    .dark .time-picker-input-icon {
-        background-color: #4b5563;
-        border-color: #4b5563;
-        color: #d1d5db;
-    }
-
-    .time-picker-button {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.75rem 0.9rem;
-        background-color: #ffffff;
-        border: 1px solid #d1d5db;
-        border-radius: 0.75rem;
-        font-weight: 600;
-        color: #111827;
-        transition: all 0.15s ease-in-out;
-    }
-
-    .time-picker-button.placeholder {
-        color: #9ca3af;
-        font-weight: 500;
-    }
-
-    .time-picker-button:hover {
-        border-color: #2563eb;
-    }
-
-    .dark .time-picker-button {
-        background-color: #374151;
-        border-color: #4b5563;
-        color: #f3f4f6;
-    }
-
-    .dark .time-picker-button.placeholder {
-        color: #9ca3af;
-        font-weight: 500;
-    }
-
-    .time-picker-icon {
-        width: 1rem;
-        height: 1rem;
-        color: #6b7280;
-    }
-
-    .time-picker-dropdown {
-        position: absolute;
-        top: calc(100% + 0.5rem);
-        left: 0;
-        width: 100%;
-        background: #ffffff;
-        border-radius: 0.75rem;
-        box-shadow: 0 15px 35px rgba(15, 23, 42, 0.15);
-        padding: 1rem;
-        z-index: 50;
-    }
-
-    .dark .time-picker-dropdown {
-        background: #1f2937;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
-        border: 1px solid #374151;
-    }
-
-    .time-picker-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 0.85rem;
-    }
-
-    .time-picker-column {
-        display: flex;
-        flex-direction: column;
-        gap: 0.6rem;
-    }
-
-    .time-picker-column p {
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: #6b7280;
-        margin: 0;
-    }
-
-    .dark .time-picker-column p {
-        color: #9ca3af;
-    }
-
-    .time-picker-options {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        flex-wrap: wrap;
         gap: 0.35rem;
-        max-height: 12rem;
+        max-height: 11rem;
         overflow-y: auto;
-        padding-right: 0.25rem;
     }
 
-    .time-picker-options-minute,
-    .time-picker-options-second {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+    .time-dropdown-options--compact {
+        gap: 0.25rem;
     }
 
-    .time-picker-options-period {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .time-dropdown-options--period {
+        gap: 0.5rem;
+        flex-wrap: nowrap;
     }
 
-    .time-picker-option {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.55rem 0.65rem;
+    .time-dropdown-option {
+        flex: 0 0 calc(33.33% - 0.35rem);
+        padding: 0.5rem 0.4rem;
         background-color: #f3f4f6;
         border-radius: 0.65rem;
         font-size: 0.8rem;
         font-weight: 600;
         color: #1f2937;
+        border: 1px solid transparent;
         transition: all 0.15s ease-in-out;
     }
 
-    .time-picker-option:hover {
+    .time-dropdown-options--compact .time-dropdown-option {
+        flex: 0 0 calc(25% - 0.25rem);
+    }
+
+    .time-dropdown-options--period .time-dropdown-option {
+        flex: 1 1 auto;
+        text-transform: uppercase;
+    }
+
+    .time-dropdown-option:hover {
         background-color: #e5e7eb;
     }
 
-    .time-picker-option.active {
+    .time-dropdown-option.active {
         background-color: #2563eb;
         color: #ffffff;
         box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
     }
 
-    .dark .time-picker-option {
+    .dark .time-dropdown-option {
         background-color: #374151;
         color: #f3f4f6;
-        border: 1px solid #4b5563;
+        border-color: #4b5563;
     }
 
-    .dark .time-picker-option:hover {
+    .dark .time-dropdown-option:hover {
         background-color: #4b5563;
     }
 
-    .dark .time-picker-option.active {
+    .dark .time-dropdown-option.active {
         background-color: #2563eb;
         border-color: #2563eb;
         box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
     }
 
-    .time-picker-actions {
+    .time-dropdown-actions {
         display: flex;
         justify-content: space-between;
-        margin-top: 1rem;
         gap: 0.75rem;
+        margin-top: 1rem;
     }
 
-    .time-picker-action {
+    .time-dropdown-action {
         flex: 1;
         padding: 0.55rem 0.75rem;
         border-radius: 0.75rem;
@@ -336,44 +234,76 @@
         transition: all 0.15s ease-in-out;
     }
 
-    .time-picker-action:hover {
+    .time-dropdown-action:hover:not(:disabled) {
         background-color: #e5e7eb;
     }
 
-    .time-picker-action.primary {
+    .time-dropdown-action.primary {
         background-color: #2563eb;
         border-color: #2563eb;
         color: #ffffff;
     }
 
-    .time-picker-action.primary:disabled {
+    .time-dropdown-action.primary:disabled {
         opacity: 0.5;
         cursor: not-allowed;
     }
 
-    .dark .time-picker-action {
+    .dark .time-dropdown-action {
         border-color: #4b5563;
         background-color: #374151;
         color: #f3f4f6;
     }
 
-    .dark .time-picker-action:hover {
-        background-color: #4b5563;
+    .time-input-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #6b7280;
+        letter-spacing: 0.04em;
     }
 
-    .dark .time-picker-action.primary {
-        background-color: #2563eb;
+    .dark .time-input-label {
+        color: #9ca3af;
+    }
+
+    .time-input-field {
+        width: 100%;
+        padding: 0.6rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #111827;
+        background-color: #ffffff;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+    .time-input-field:focus {
+        outline: none;
         border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
 
-    .timepicker-hint {
+    .time-input-field.invalid {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+    }
+
+    .dark .time-input-field {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: #f3f4f6;
+    }
+
+    .time-input-error {
         font-size: 0.7rem;
-        color: #9ca3af;
-        margin: 0;
+        color: #ef4444;
+        display: none;
     }
 
-    .dark .timepicker-hint {
-        color: #9ca3af;
+    .time-input-error.active {
+        display: block;
     }
 
     [x-cloak] {
@@ -837,133 +767,103 @@
             <div class="mb-4 filter-field-group">
                 <div class="filter-field-title">SS Time Range (12-hour format)</div>
                 <div class="time-range-container">
-                    <div class="time-block" x-data="timePickerComponent('{{ $timeFromValue ?? '' }}', true)" x-init="init()" x-on:keydown.escape.window="close()">
-                        <div class="time-block-header">From</div>
-                        <div class="time-picker-panel">
-                            <input type="hidden" name="time_from" x-ref="hidden">
-                            <div class="time-picker-input-wrapper">
-                                <input
-                                    type="text"
-                                    x-ref="input"
-                                    x-model="textValue"
-                                    placeholder="HH:MM:SS AM/PM"
-                                    class="time-picker-input"
-                                    @focus="open = true; scrollToActive()"
-                                    @input="handleManualInput"
-                                    @keydown.enter.prevent="confirm()"
-                                />
-                                <button type="button" class="time-picker-input-icon" @click.prevent="toggle()">
-                                    <svg class="time-picker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <div class="time-picker-dropdown" x-cloak x-show="open" x-transition @click.away="close()">
-                                <div class="time-picker-grid">
-                                    <div class="time-picker-column">
+                    <div class="time-input-group js-time-input-container">
+                        <span class="time-input-label">From</span>
+                        <div class="time-input-wrapper">
+                            <input type="text" name="time_from" value="{{ $timeFromValue ?? '' }}" class="time-input-field js-time-input" placeholder="HH:MM:SS AM/PM" autocomplete="off">
+                            <div class="time-dropdown js-time-dropdown">
+                                <div class="time-dropdown-grid">
+                                    <div class="time-dropdown-column">
                                         <p>Hour</p>
-                                        <div class="time-picker-options time-picker-options-hour" x-ref="hourOptions">
-                                            <template x-for="hour in hours" :key="'from-hour-' + hour">
-                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.hour === hour }" @click="setHour(hour)" x-text="hour"></button>
-                                            </template>
+                                        <div class="time-dropdown-options" data-unit="hour">
+                                            @for ($i = 1; $i <= 12; $i++)
+                                                @php $hourValue = str_pad($i, 2, '0', STR_PAD_LEFT); @endphp
+                                                <button type="button" class="time-dropdown-option" data-unit="hour" data-value="{{ $hourValue }}">{{ $hourValue }}</button>
+                                            @endfor
                                         </div>
                                     </div>
-                                    <div class="time-picker-column">
+                                    <div class="time-dropdown-column">
                                         <p>Minute</p>
-                                        <div class="time-picker-options time-picker-options-minute" x-ref="minuteOptions">
-                                            <template x-for="minute in minutes" :key="'from-minute-' + minute">
-                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.minute === minute }" @click="setMinute(minute)" x-text="minute"></button>
-                                            </template>
+                                        <div class="time-dropdown-options time-dropdown-options--compact" data-unit="minute">
+                                            @for ($i = 0; $i < 60; $i += 5)
+                                                @php $minuteValue = str_pad($i, 2, '0', STR_PAD_LEFT); @endphp
+                                                <button type="button" class="time-dropdown-option" data-unit="minute" data-value="{{ $minuteValue }}">{{ $minuteValue }}</button>
+                                            @endfor
                                         </div>
                                     </div>
-                                    <div class="time-picker-column">
+                                    <div class="time-dropdown-column">
                                         <p>Second</p>
-                                        <div class="time-picker-options time-picker-options-second" x-ref="secondOptions">
-                                            <template x-for="second in seconds" :key="'from-second-' + second">
-                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.second === second }" @click="setSecond(second)" x-text="second"></button>
-                                            </template>
+                                        <div class="time-dropdown-options time-dropdown-options--compact" data-unit="second">
+                                            @for ($i = 0; $i < 60; $i += 5)
+                                                @php $secondValue = str_pad($i, 2, '0', STR_PAD_LEFT); @endphp
+                                                <button type="button" class="time-dropdown-option" data-unit="second" data-value="{{ $secondValue }}">{{ $secondValue }}</button>
+                                            @endfor
                                         </div>
                                     </div>
-                                    <div class="time-picker-column">
+                                    <div class="time-dropdown-column">
                                         <p>AM / PM</p>
-                                        <div class="time-picker-options time-picker-options-period" x-ref="periodOptions">
-                                            <template x-for="period in periods" :key="'from-period-' + period">
-                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.period === period }" @click="setPeriod(period)" x-text="period"></button>
-                                            </template>
+                                        <div class="time-dropdown-options time-dropdown-options--period" data-unit="period">
+                                            <button type="button" class="time-dropdown-option" data-unit="period" data-value="AM">AM</button>
+                                            <button type="button" class="time-dropdown-option" data-unit="period" data-value="PM">PM</button>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="time-picker-actions">
-                                    <button type="button" class="time-picker-action" @click="clear()">Clear</button>
-                                    <button type="button" class="time-picker-action primary" :disabled="!isComplete" @click="confirm()">Done</button>
+                                <div class="time-dropdown-actions">
+                                    <button type="button" class="time-dropdown-action js-time-dropdown-clear">Clear</button>
+                                    <button type="button" class="time-dropdown-action primary js-time-dropdown-apply" disabled>Apply</button>
                                 </div>
                             </div>
                         </div>
-                        <p class="timepicker-hint">Example: 02:30:00 PM</p>
+                        <p class="time-input-error js-time-error">Please enter time in HH:MM:SS AM/PM format.</p>
                     </div>
-                    <div class="time-block" x-data="timePickerComponent('{{ $timeToValue ?? '' }}', true)" x-init="init()" x-on:keydown.escape.window="close()">
-                        <div class="time-block-header">To</div>
-                        <div class="time-picker-panel">
-                            <input type="hidden" name="time_to" x-ref="hidden">
-                            <div class="time-picker-input-wrapper">
-                                <input
-                                    type="text"
-                                    x-ref="input"
-                                    x-model="textValue"
-                                    placeholder="HH:MM:SS AM/PM"
-                                    class="time-picker-input"
-                                    @focus="open = true; scrollToActive()"
-                                    @input="handleManualInput"
-                                    @keydown.enter.prevent="confirm()"
-                                />
-                                <button type="button" class="time-picker-input-icon" @click.prevent="toggle()">
-                                    <svg class="time-picker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <div class="time-picker-dropdown" x-cloak x-show="open" x-transition @click.away="close()">
-                                <div class="time-picker-grid">
-                                    <div class="time-picker-column">
+                    <div class="time-input-group js-time-input-container">
+                        <span class="time-input-label">To</span>
+                        <div class="time-input-wrapper">
+                            <input type="text" name="time_to" value="{{ $timeToValue ?? '' }}" class="time-input-field js-time-input" placeholder="HH:MM:SS AM/PM" autocomplete="off">
+                            <div class="time-dropdown js-time-dropdown">
+                                <div class="time-dropdown-grid">
+                                    <div class="time-dropdown-column">
                                         <p>Hour</p>
-                                        <div class="time-picker-options time-picker-options-hour" x-ref="hourOptions">
-                                            <template x-for="hour in hours" :key="'to-hour-' + hour">
-                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.hour === hour }" @click="setHour(hour)" x-text="hour"></button>
-                                            </template>
+                                        <div class="time-dropdown-options" data-unit="hour">
+                                            @for ($i = 1; $i <= 12; $i++)
+                                                @php $hourValue = str_pad($i, 2, '0', STR_PAD_LEFT); @endphp
+                                                <button type="button" class="time-dropdown-option" data-unit="hour" data-value="{{ $hourValue }}">{{ $hourValue }}</button>
+                                            @endfor
                                         </div>
                                     </div>
-                                    <div class="time-picker-column">
+                                    <div class="time-dropdown-column">
                                         <p>Minute</p>
-                                        <div class="time-picker-options time-picker-options-minute" x-ref="minuteOptions">
-                                            <template x-for="minute in minutes" :key="'to-minute-' + minute">
-                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.minute === minute }" @click="setMinute(minute)" x-text="minute"></button>
-                                            </template>
+                                        <div class="time-dropdown-options time-dropdown-options--compact" data-unit="minute">
+                                            @for ($i = 0; $i < 60; $i += 5)
+                                                @php $minuteValue = str_pad($i, 2, '0', STR_PAD_LEFT); @endphp
+                                                <button type="button" class="time-dropdown-option" data-unit="minute" data-value="{{ $minuteValue }}">{{ $minuteValue }}</button>
+                                            @endfor
                                         </div>
                                     </div>
-                                    <div class="time-picker-column">
+                                    <div class="time-dropdown-column">
                                         <p>Second</p>
-                                        <div class="time-picker-options time-picker-options-second" x-ref="secondOptions">
-                                            <template x-for="second in seconds" :key="'to-second-' + second">
-                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.second === second }" @click="setSecond(second)" x-text="second"></button>
-                                            </template>
+                                        <div class="time-dropdown-options time-dropdown-options--compact" data-unit="second">
+                                            @for ($i = 0; $i < 60; $i += 5)
+                                                @php $secondValue = str_pad($i, 2, '0', STR_PAD_LEFT); @endphp
+                                                <button type="button" class="time-dropdown-option" data-unit="second" data-value="{{ $secondValue }}">{{ $secondValue }}</button>
+                                            @endfor
                                         </div>
                                     </div>
-                                    <div class="time-picker-column">
+                                    <div class="time-dropdown-column">
                                         <p>AM / PM</p>
-                                        <div class="time-picker-options time-picker-options-period" x-ref="periodOptions">
-                                            <template x-for="period in periods" :key="'to-period-' + period">
-                                                <button type="button" class="time-picker-option" :class="{ 'active': selection.period === period }" @click="setPeriod(period)" x-text="period"></button>
-                                            </template>
+                                        <div class="time-dropdown-options time-dropdown-options--period" data-unit="period">
+                                            <button type="button" class="time-dropdown-option" data-unit="period" data-value="AM">AM</button>
+                                            <button type="button" class="time-dropdown-option" data-unit="period" data-value="PM">PM</button>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="time-picker-actions">
-                                    <button type="button" class="time-picker-action" @click="clear()">Clear</button>
-                                    <button type="button" class="time-picker-action primary" :disabled="!isComplete" @click="confirm()">Done</button>
+                                <div class="time-dropdown-actions">
+                                    <button type="button" class="time-dropdown-action js-time-dropdown-clear">Clear</button>
+                                    <button type="button" class="time-dropdown-action primary js-time-dropdown-apply" disabled>Apply</button>
                                 </div>
                             </div>
                         </div>
-                        <p class="timepicker-hint">Example: 11:45:30 PM</p>
+                        <p class="time-input-error js-time-error">Please enter time in HH:MM:SS AM/PM format.</p>
                     </div>
                 </div>
                 <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Times apply to the selected date.</p>
@@ -985,228 +885,288 @@
 
 @push('js')
 <script>
-window.timePickerComponent = function(initialValue, initiallyEnabled = false) {
-    return {
-        open: false,
-        hours: Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')),
-        minutes: Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')),
-        seconds: Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')),
-        periods: ['AM', 'PM'],
-        selection: { hour: '', minute: '', second: '', period: 'AM' },
-        enabled: initiallyEnabled,
-        textValue: '',
-        init() {
-            const normalized = (initialValue || '').toString();
-            if (normalized) {
-                this.setFromString(normalized, { preserveOnInvalid: true });
-            } else if (this.$refs.hidden) {
-                this.$refs.hidden.value = '';
-            }
+function formatTimeValue(rawValue) {
+    if (!rawValue) {
+        return '';
+    }
 
-            this.$watch('enabled', () => {
-                this.updateHidden();
-            });
-        },
-        get display() {
-            return this.formatValue() || 'Select time';
-        },
-        get isComplete() {
-            return this.selection.hour && this.selection.minute && this.selection.period;
-        },
-        formatValue() {
-            if (!this.selection.hour || !this.selection.minute || !this.selection.period) {
-                return '';
-            }
-            const second = this.selection.second || '00';
-            return `${this.selection.hour}:${this.selection.minute}:${second} ${this.selection.period}`;
-        },
-        toggle() {
-            this.open = !this.open;
-            if (this.open) {
-                this.$nextTick(() => {
-                    if (this.$refs.input) {
-                        this.$refs.input.focus();
-                    }
-                    this.scrollToActive();
-                });
-            }
-        },
-        close() {
-            this.open = false;
-        },
-        setHour(hour) {
-            this.selection.hour = hour;
-            this.ensureDefaults();
-            this.updateHidden();
-        },
-        setMinute(minute) {
-            this.selection.minute = minute;
-            this.ensureDefaults();
-            this.updateHidden();
-        },
-        setSecond(second) {
-            this.selection.second = second;
-            this.ensureDefaults();
-            this.updateHidden();
-        },
-        setPeriod(period) {
-            this.selection.period = period;
-            this.ensureDefaults();
-            this.updateHidden();
-        },
-        ensureDefaults() {
-            if (!this.selection.period) {
-                this.selection.period = 'AM';
-            }
-            if (!this.selection.second) {
-                this.selection.second = '00';
-            }
-        },
-        updateHidden() {
-            if (this.enabled && this.isComplete) {
-                const value = this.formatValue();
-                this.$refs.hidden.value = value;
-                this.textValue = value;
-                return value;
-            } else {
-                this.$refs.hidden.value = '';
-            }
-            return null;
-        },
-        confirm() {
-            if (this.isComplete) {
-                this.updateHidden();
-                this.close();
-            }
-        },
-        clear(skipClose = false) {
-            this.selection = { hour: '', minute: '', second: '', period: 'AM' };
-            this.$refs.hidden.value = '';
-            this.textValue = '';
-            if (!skipClose) {
-                this.close();
-            }
-            this.updateHidden();
-        },
-        setFromString(value, options = {}) {
-            const { preserveOnInvalid = false } = options;
-            const trimmed = (value || '').trim();
-            if (!trimmed) {
-                this.clear(true);
-                if (!preserveOnInvalid) {
-                    this.textValue = '';
-                }
-                return true;
-            }
+    const cleaned = rawValue.toUpperCase().trim();
+    const match = cleaned.match(/^(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)$/);
 
-            const normalized = trimmed.toUpperCase();
-            const match = normalized.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/);
-            if (match) {
-                let hour = parseInt(match[1], 10);
-                const minute = match[2];
-                const second = (match[3] || '00').padStart(2, '0');
-                let period = match[4] ? match[4].toUpperCase() : null;
+    if (!match) {
+        return null;
+    }
 
-                if (!period) {
-                    period = hour >= 12 ? 'PM' : 'AM';
-                }
+    let hour = parseInt(match[1], 10);
+    const minute = parseInt(match[2], 10);
+    const second = parseInt(match[3], 10);
+    const period = match[4].toUpperCase();
 
-                if (hour === 0) {
-                    hour = 12;
-                } else if (hour > 12) {
-                    hour -= 12;
-                }
+    if (hour < 1 || hour > 12) {
+        return null;
+    }
 
-                this.selection.hour = String(hour).padStart(2, '0');
-                this.selection.minute = minute;
-                this.selection.second = second;
-                this.selection.period = period;
+    if (isNaN(minute) || minute < 0 || minute > 59) {
+        return null;
+    }
 
-                this.ensureDefaults();
-                const formatted = this.updateHidden() || this.formatValue();
-                if (formatted) {
-                    this.textValue = formatted;
-                }
-                return true;
-            }
+    if (isNaN(second) || second < 0 || second > 59) {
+        return null;
+    }
 
-            if (!preserveOnInvalid) {
-                this.clear(true);
-            }
-            return false;
-        },
-        handleManualInput() {
-            let raw = (this.textValue || '').toUpperCase();
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')} ${period}`;
+}
 
-            // Keep only digits, spaces, A, P, M, and colons
-            raw = raw.replace(/[^0-9APM: ]/g, '');
+function formatPartialTime(rawValue) {
+    if (!rawValue) {
+        return '';
+    }
 
-            // Determine desired period if user typed AM/PM (partial allowed)
-            let period = '';
-            if (raw.includes('PM')) {
-                period = 'PM';
-            } else if (raw.includes('AM')) {
-                period = 'AM';
-            } else {
-                const letterTrail = raw.replace(/[^AP]/g, '');
-                if (letterTrail.endsWith('P')) {
-                    period = 'PM';
-                } else if (letterTrail.endsWith('A')) {
-                    period = 'AM';
-                }
-            }
+    const upperRaw = rawValue.toUpperCase();
+    const digits = upperRaw.replace(/[^0-9]/g, '').slice(0, 6);
 
-            // Extract up to 6 digits for HHMMSS
-            const digits = raw.replace(/[^0-9]/g, '').slice(0, 6);
-            let formatted = '';
+    const hour = digits.slice(0, 2);
+    const minute = digits.slice(2, 4);
+    const second = digits.slice(4, 6);
 
-            if (digits.length >= 2) {
-                formatted = digits.slice(0, 2);
-                const minutePart = digits.slice(2, 4);
-                formatted += ':' + minutePart;
+    let result = '';
 
-                const secondPart = digits.slice(4, 6);
-                if (digits.length > 4) {
-                    formatted += ':' + secondPart;
-                }
-            } else {
-                formatted = digits;
-            }
-
-            // Handle partial seconds formatting (e.g., HH:MM:S)
-            if (digits.length === 5) {
-                formatted = `${digits.slice(0, 2)}:${digits.slice(2, 4)}:${digits.slice(4)}`;
-            }
-
-            if (digits.length >= 6 && formatted.length && period) {
-                formatted = formatted.split(' ')[0] + ' ' + period;
-            } else {
-                formatted = formatted.split(' ')[0];
-            }
-
-            this.textValue = formatted.trim();
-
-            if (!this.setFromString(this.textValue, { preserveOnInvalid: true })) {
-                if (this.$refs.hidden) {
-                    this.$refs.hidden.value = '';
-                }
-            }
-        },
-        scrollToActive() {
-            this.$nextTick(() => {
-                ['hourOptions', 'minuteOptions', 'secondOptions', 'periodOptions'].forEach(refName => {
-                    const container = this.$refs[refName];
-                    if (container) {
-                        const active = container.querySelector('.time-picker-option.active');
-                        if (active && active.scrollIntoView) {
-                            active.scrollIntoView({ block: 'center' });
-                        }
-                    }
-                });
-            });
+    if (hour.length) {
+        result += hour;
+        if (hour.length === 2) {
+            result += ':';
         }
-    };
-};
+    }
+
+    if (minute.length) {
+        result += minute;
+        if (minute.length === 2) {
+            result += ':';
+        }
+    }
+
+    if (second.length) {
+        result += second;
+    }
+
+    let suffix = '';
+    const suffixRaw = upperRaw.replace(/[^APM]/g, '');
+    if (suffixRaw.startsWith('PM')) {
+        suffix = 'PM';
+    } else if (suffixRaw.startsWith('AM')) {
+        suffix = 'AM';
+    } else if (suffixRaw.startsWith('P')) {
+        suffix = 'P';
+    } else if (suffixRaw.startsWith('A')) {
+        suffix = 'A';
+    }
+
+    if (suffix) {
+        let trimmedResult = result.trim();
+        while (trimmedResult.endsWith(':')) {
+            trimmedResult = trimmedResult.slice(0, -1);
+        }
+
+        result = trimmedResult ? `${trimmedResult} ${suffix}` : suffix;
+    }
+
+    return result;
+}
+
+function setupTimeInputs() {
+    if (!window.__timeDropdownOutsideHandler) {
+        document.addEventListener('click', event => {
+            document.querySelectorAll('.js-time-input-container.open').forEach(container => {
+                if (!container.contains(event.target)) {
+                    container.classList.remove('open');
+                    const inputEl = container.querySelector('.js-time-input');
+                    if (inputEl) {
+                        inputEl.dispatchEvent(new Event('blur'));
+                    }
+                }
+            });
+        });
+        window.__timeDropdownOutsideHandler = true;
+    }
+
+    document.querySelectorAll('.js-time-input-container').forEach(container => {
+        const input = container.querySelector('.js-time-input');
+        const dropdown = container.querySelector('.js-time-dropdown');
+        const errorEl = container.querySelector('.js-time-error');
+        const optionButtons = dropdown ? dropdown.querySelectorAll('.time-dropdown-option') : [];
+        const applyBtn = dropdown ? dropdown.querySelector('.js-time-dropdown-apply') : null;
+        const clearBtn = dropdown ? dropdown.querySelector('.js-time-dropdown-clear') : null;
+
+        if (!input) {
+            return;
+        }
+
+        const state = {
+            hour: '',
+            minute: '',
+            second: '',
+            period: ''
+        };
+
+        const resetState = () => {
+            state.hour = '';
+            state.minute = '';
+            state.second = '';
+            state.period = '';
+        };
+
+        const showError = () => {
+            input.classList.add('invalid');
+            if (errorEl) {
+                errorEl.classList.add('active');
+            }
+        };
+
+        const hideError = () => {
+            input.classList.remove('invalid');
+            if (errorEl) {
+                errorEl.classList.remove('active');
+            }
+        };
+
+        const isStateComplete = () => state.hour && state.minute && state.second && state.period;
+
+        const updateApplyButton = () => {
+            if (applyBtn) {
+                applyBtn.disabled = !isStateComplete();
+            }
+        };
+
+        const updateActiveOptions = () => {
+            optionButtons.forEach(btn => {
+                const unit = btn.dataset.unit;
+                const value = btn.dataset.value;
+                btn.classList.toggle('active', state[unit] === value);
+            });
+            updateApplyButton();
+        };
+
+        const syncStateFromInput = () => {
+            resetState();
+            const formatted = formatTimeValue(input.value);
+            if (formatted) {
+                const [timePart, period] = formatted.split(' ');
+                const [hour, minute, second] = timePart.split(':');
+                state.hour = hour || '';
+                state.minute = minute || '';
+                state.second = second || '';
+                state.period = period || '';
+            }
+            updateActiveOptions();
+        };
+
+        input.addEventListener('input', () => {
+            const formatted = formatPartialTime(input.value);
+            input.value = formatted;
+            input.setSelectionRange(input.value.length, input.value.length);
+            hideError();
+
+            if (dropdown && container.classList.contains('open')) {
+                const normalized = formatTimeValue(input.value);
+                if (normalized) {
+                    const [timePart, period] = normalized.split(' ');
+                    const [hour, minute, second] = timePart.split(':');
+                    state.hour = hour;
+                    state.minute = minute;
+                    state.second = second;
+                    state.period = period;
+                } else {
+                    resetState();
+                }
+                updateActiveOptions();
+            }
+        });
+
+        input.addEventListener('focus', () => {
+            if (dropdown) {
+                container.classList.add('open');
+                syncStateFromInput();
+            }
+        });
+
+        input.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                container.classList.remove('open');
+                input.blur();
+            }
+        });
+
+        if (dropdown) {
+            dropdown.addEventListener('mousedown', event => {
+                event.preventDefault();
+            });
+
+            optionButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const unit = btn.dataset.unit;
+                    const value = btn.dataset.value;
+                    if (!unit) {
+                        return;
+                    }
+
+                    state[unit] = value;
+                    updateActiveOptions();
+                });
+            });
+
+            if (applyBtn) {
+                applyBtn.addEventListener('click', () => {
+                    if (!isStateComplete()) {
+                        showError();
+                        return;
+                    }
+
+                    const combinedValue = `${state.hour}:${state.minute}:${state.second} ${state.period}`;
+                    input.value = combinedValue;
+                    hideError();
+                    container.classList.remove('open');
+                    input.dispatchEvent(new Event('blur'));
+                });
+            }
+
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    resetState();
+                    updateActiveOptions();
+                    input.value = '';
+                    hideError();
+                    container.classList.remove('open');
+                });
+            }
+        }
+
+        input.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (container.classList.contains('open')) {
+                    return;
+                }
+
+                const formatted = formatTimeValue(input.value);
+
+                if (input.value.trim() === '') {
+                    hideError();
+                    resetState();
+                    updateActiveOptions();
+                    return;
+                }
+
+                if (!formatted) {
+                    showError();
+                    return;
+                }
+
+                input.value = formatted;
+                hideError();
+                syncStateFromInput();
+            }, 120);
+        });
+    });
+}
 
 function formatDateInputValue(raw) {
     const digits = (raw || '').replace(/[^0-9]/g, '').slice(0, 8);
@@ -1327,6 +1287,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (!eventSearch || !eventDropdown || !exEventIdInput) return;
     
+    setupTimeInputs();
+
     function populateDropdown(searchTerm = '') {
         eventDropdown.innerHTML = '';
         
