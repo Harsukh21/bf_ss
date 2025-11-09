@@ -536,16 +536,46 @@
                                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 mb-1 w-fit">
                                                 {{ $market->type }}
                                             </span>
-                                            @if($market->isLive)
-                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 w-fit">
+                                            @php
+                                                $rawStatus = $market->status;
+                                                if (is_null($rawStatus) || $rawStatus === '') {
+                                                    if ($market->isLive) {
+                                                        $rawStatus = 'Live';
+                                                    } elseif ($market->isPreBet) {
+                                                        $rawStatus = 'Pre-bet';
+                                                    } else {
+                                                        $rawStatus = 'Scheduled';
+                                                    }
+                                                }
+
+                                                $normalizedStatus = strtolower(trim($rawStatus));
+                                                $normalizedStatus = str_replace(['_', '-'], ' ', $normalizedStatus);
+                                                $statusLabel = ucwords($normalizedStatus);
+
+                                                $statusClassMap = [
+                                                    'open' => 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300',
+                                                    'scheduled' => 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300',
+                                                    'live' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
+                                                    'in play' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
+                                                    'suspended' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
+                                                    'pre bet' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
+                                                    'pre-bet' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
+                                                    'closed' => 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
+                                                    'settled' => 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300',
+                                                    'void' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
+                                                    'voided' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
+                                                    'cancelled' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
+                                                ];
+
+                                                $statusBadgeClass = $statusClassMap[$normalizedStatus] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+                                                $showPulse = in_array($normalizedStatus, ['live', 'in play']);
+                                            @endphp
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full w-fit {{ $statusBadgeClass }}">
+                                                @if($showPulse)
                                                     <span class="w-2 h-2 bg-red-400 rounded-full mr-1 animate-pulse"></span>
-                                                    Live
-                                                </span>
-                                            @elseif($market->isPreBet)
-                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 w-fit">Pre-bet</span>
-                                            @else
-                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 w-fit">Scheduled</span>
-                                            @endif
+                                                @endif
+                                                {{ $statusLabel }}
+                                            </span>
                                         </div>
                                     </td>
                                 </tr>

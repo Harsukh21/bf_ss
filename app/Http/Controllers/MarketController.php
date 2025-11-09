@@ -80,6 +80,7 @@ class MarketController extends Controller
                 'tournamentsName',
                 'type',
                 'isLive',
+                'status',
                 'created_at'
             ]);
 
@@ -331,6 +332,7 @@ class MarketController extends Controller
                 'tournamentsName',
                 'type',
                 'isLive',
+                'status',
                 'created_at'
             ]);
 
@@ -368,12 +370,19 @@ class MarketController extends Controller
 
             // Add data rows
             foreach ($markets as $market) {
-                $status = 'Scheduled';
-                if ($market->isLive) {
-                    $status = 'Live';
-                } elseif ($market->isPreBet) {
-                    $status = 'Pre-bet';
+                $status = $market->status;
+
+                if (!$status) {
+                    if ($market->isLive) {
+                        $status = 'Live';
+                    } elseif ($market->isPreBet) {
+                        $status = 'Pre-bet';
+                    } else {
+                        $status = 'Scheduled';
+                    }
                 }
+
+                $status = strtoupper($status);
 
                 fputcsv($file, [
                     $market->id,
