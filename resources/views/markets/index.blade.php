@@ -307,7 +307,7 @@
         <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Market List</h1>
             <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                Manage and filter betting markets
+                Browse markets today and tomorrow
             </p>
         </div>
         <div class="mt-4 sm:mt-0 sm:flex-none flex items-center gap-3 w-full sm:w-auto">

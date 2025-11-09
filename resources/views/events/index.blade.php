@@ -380,7 +380,7 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Event List</h1>
-                    <p class="text-gray-600 dark:text-gray-400 mt-1">Manage and view all events</p>
+                    <p class="text-gray-600 dark:text-gray-400 mt-1">Browse events today and tomorrow</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     @php
