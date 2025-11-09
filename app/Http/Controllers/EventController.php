@@ -56,6 +56,7 @@ class EventController extends Controller
                 'IsVoid',
                 'IsUnsettle',
                 'dataSwitch',
+                'isRecentlyAdded',
                 'marketTime',
                 'createdAt'
             ]);
@@ -161,6 +162,7 @@ class EventController extends Controller
                 'IsVoid',
                 'IsUnsettle',
                 'dataSwitch',
+                'isRecentlyAdded',
                 'marketTime',
                 'createdAt'
             ]);
@@ -306,6 +308,10 @@ class EventController extends Controller
 
         if ($request->filled('popular')) {
             $query->where('popular', $request->boolean('popular'));
+        }
+
+        if ($request->boolean('recently_added')) {
+            $query->where('isRecentlyAdded', true);
         }
 
         $timezone = config('app.timezone', 'UTC');
@@ -506,6 +512,7 @@ class EventController extends Controller
                 'IsVoid',
                 'IsUnsettle',
                 'dataSwitch',
+                'isRecentlyAdded',
                 'marketTime',
                 'createdAt'
             ]);
@@ -514,7 +521,7 @@ class EventController extends Controller
         $this->applyFilters($query, $request);
 
         // Get all results (no pagination)
-        $events = $query->orderBy('createdAt', 'desc')
+        $events = $query->orderBy('marketTime', 'desc')
                        ->orderBy('id', 'desc')
                        ->get();
 

@@ -302,6 +302,11 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+    @php
+        $isMarketsAllRoute = request()->routeIs('markets.all');
+        $marketsBaseRoute = $isMarketsAllRoute ? route('markets.all') : route('markets.index');
+        $marketsRecentlyAddedActive = request()->boolean('recently_added');
+    @endphp
         <!-- Header Section -->
     <div class="sm:flex sm:items-center sm:justify-between mb-6 gap-3">
         <div>
@@ -440,12 +445,31 @@
             <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                     <span class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">Recently Added</span>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Toggle to highlight the newest markets (feature coming soon).</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Show only markets flagged as recently added.</p>
                 </div>
-                <button type="button" class="relative inline-flex items-center h-7 rounded-full w-14 transition-colors duration-200 ease-in-out bg-gray-300 dark:bg-gray-600 cursor-not-allowed opacity-60" aria-pressed="false" title="Coming soon">
-                    <span class="sr-only">Toggle recently added filter</span>
-                    <span class="inline-block w-6 h-6 transform bg-white dark:bg-gray-200 rounded-full translate-x-1 transition-transform duration-200 ease-in-out"></span>
-                </button>
+                <form method="GET" action="{{ $marketsBaseRoute }}">
+                    @if($marketsRecentlyAddedActive)
+                        <input type="hidden" name="recently_added" value="1">
+                    @endif
+                    @foreach(request()->except(['page', 'recently_added']) as $param => $value)
+                        @if(is_array($value))
+                            @foreach($value as $singleValue)
+                                <input type="hidden" name="{{ $param }}[]" value="{{ $singleValue }}">
+                            @endforeach
+                        @else
+                            <input type="hidden" name="{{ $param }}" value="{{ $value }}">
+                        @endif
+                    @endforeach
+                    @unless($marketsRecentlyAddedActive)
+                        <input type="hidden" name="recently_added" value="1">
+                    @endunless
+                    <button type="submit" class="relative inline-flex items-center h-7 rounded-full w-14 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 {{ $marketsRecentlyAddedActive ? 'bg-primary-600 dark:bg-primary-500' : 'bg-gray-300 dark:bg-gray-600' }}" aria-pressed="{{ $marketsRecentlyAddedActive ? 'true' : 'false' }}">
+                        <span class="sr-only">Toggle recently added filter</span>
+                        <span class="absolute left-1 text-xs font-semibold uppercase tracking-wide {{ $marketsRecentlyAddedActive ? 'text-white' : 'text-gray-600 dark:text-gray-300' }}">On</span>
+                        <span class="absolute right-1 text-xs font-semibold uppercase tracking-wide {{ $marketsRecentlyAddedActive ? 'text-white/60' : 'text-white' }}">Off</span>
+                        <span class="inline-block w-6 h-6 transform bg-white dark:bg-gray-200 rounded-full transition-transform duration-200 ease-in-out {{ $marketsRecentlyAddedActive ? 'translate-x-7' : 'translate-x-1' }}"></span>
+                    </button>
+                </form>
             </div>
         </div>
 
@@ -631,7 +655,10 @@
             </button>
         </div>
 
-        <form method="GET" action="{{ route('markets.index') }}">
+        <form method="GET" action="{{ $marketsBaseRoute }}">
+            @if($marketsRecentlyAddedActive)
+                <input type="hidden" name="recently_added" value="1">
+            @endif
             @php
                 $timeFromRaw = request('time_from');
                 $timeToRaw = request('time_to');
@@ -1090,6 +1117,7 @@ const tournamentsBySport = @json($tournamentsBySport);
 const marketTypesByTournament = @json($marketTypesByTournament);
 const eventsByTournament = @json($eventsByTournament);
 const marketTypesByEvent = @json($marketTypesByEvent);
+const marketsBaseRoute = '{{ $marketsBaseRoute }}';
 
 function toggleFilter() {
     const drawer = document.getElementById('filterDrawer');
@@ -1107,8 +1135,7 @@ function toggleFilter() {
 }
 
 function clearAllFilters() {
-    // Redirect to markets index without any query parameters
-    window.location.href = '{{ route("markets.index") }}';
+    window.location.href = marketsBaseRoute;
 }
 
 function removeFilter(filterKey) {
@@ -1158,7 +1185,12 @@ function removeFilter(filterKey) {
         case 'Search':
             params.delete('search');
             break;
+        case 'Recently Added':
+            params.delete('recently_added');
+            break;
     }
+    
+    params.delete('page');
     
     // Redirect with updated parameters
     window.location.href = url.pathname + (params.toString() ? '?' + params.toString() : '');

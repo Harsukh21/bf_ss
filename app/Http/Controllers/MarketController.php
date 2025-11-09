@@ -80,6 +80,7 @@ class MarketController extends Controller
                 'tournamentsName',
                 'type',
                 'isLive',
+                'isRecentlyAdded',
                 'status',
                 'created_at'
             ]);
@@ -200,6 +201,7 @@ class MarketController extends Controller
                 'tournamentsName',
                 'type',
                 'isLive',
+                'isRecentlyAdded',
                 'status',
                 'created_at'
             ]);
@@ -298,6 +300,10 @@ class MarketController extends Controller
         // Pre-bet filter
         if ($request->has('is_prebet')) {
             $query->where('isPreBet', true);
+        }
+
+        if ($request->boolean('recently_added')) {
+            $query->where('isRecentlyAdded', true);
         }
 
         // Date & time filter - using marketTime from market_lists table
@@ -411,6 +417,10 @@ class MarketController extends Controller
             $activeFilters['Pre-bet'] = 'Yes';
         }
 
+        if ($request->boolean('recently_added')) {
+            $activeFilters['Recently Added'] = 'Yes';
+        }
+
         if ($request->boolean('date_from_enabled') && $request->filled('date_from')) {
             $activeFilters['From Date'] = $request->date_from;
         }
@@ -451,6 +461,7 @@ class MarketController extends Controller
                 'tournamentsName',
                 'type',
                 'isLive',
+                'isRecentlyAdded',
                 'status',
                 'created_at'
             ]);
@@ -459,7 +470,9 @@ class MarketController extends Controller
         $this->applyFilters($query, $request);
 
         // Get all results (no pagination)
-        $markets = $query->orderBy('id', 'desc')->get();
+        $markets = $query->orderBy('marketTime', 'desc')
+                         ->orderBy('id', 'desc')
+                         ->get();
 
         // Prepare CSV data
         $filename = 'markets_export_' . date('Y-m-d_His') . '.csv';

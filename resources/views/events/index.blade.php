@@ -382,94 +382,114 @@
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $pageHeading ?? 'Event List' }}</h1>
                     <p class="text-gray-600 dark:text-gray-400 mt-1">{{ $pageSubheading ?? 'Browse events today and tomorrow' }}</p>
                 </div>
+                @php
+                    $isAllRoute = request()->routeIs('events.all');
+                    $baseRoute = $isAllRoute ? route('events.all') : route('events.index');
+                    $recentlyAddedActive = request()->boolean('recently_added');
+
+                    $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
+                    $defaultPickerTime = \Carbon\Carbon::now(config('app.timezone', 'UTC'))->format('h:i:s A');
+
+                    $formatTime = function ($value) use ($timeFormats) {
+                        if (!$value) {
+                            return null;
+                        }
+
+                        foreach ($timeFormats as $format) {
+                            try {
+                                return \Carbon\Carbon::createFromFormat($format, $value)->format('h:i:s A');
+                            } catch (\Exception $e) {
+                                continue;
+                            }
+                        }
+
+                        return $value;
+                    };
+
+                    $rawTimeFrom = request('time_from');
+                    $rawTimeTo = request('time_to');
+
+                    $timeFromValue = $formatTime($rawTimeFrom) ?: $defaultPickerTime;
+                    $timeToValue = $formatTime($rawTimeTo) ?: $defaultPickerTime;
+
+                    $timeFromEnabled = request()->boolean('time_from_enabled') && !empty($rawTimeFrom);
+                    $timeToEnabled = request()->boolean('time_to_enabled') && !empty($rawTimeTo);
+
+                    $dateFromEnabled = request()->boolean('event_date_from_enabled') && request()->filled('event_date_from');
+                    $dateToEnabled = request()->boolean('event_date_to_enabled') && request()->filled('event_date_to');
+
+                    $activeFilters = [];
+
+                    if (request('search')) {
+                        $activeFilters[] = ['label' => 'Search', 'value' => request('search'), 'remove' => ['search']];
+                    }
+
+                    if (request('sport')) {
+                        $activeFilters[] = ['label' => 'Sport', 'value' => $sportConfig[request('sport')] ?? ('ID: ' . request('sport')), 'remove' => ['sport']];
+                    }
+
+                    if (request('tournament')) {
+                        $tournamentName = \App\Models\Event::where('tournamentsId', request('tournament'))->value('tournamentsName');
+                        $activeFilters[] = ['label' => 'Tournament', 'value' => $tournamentName ?? request('tournament'), 'remove' => ['tournament']];
+                    }
+
+                    if (request('status')) {
+                        $activeFilters[] = ['label' => 'Status', 'value' => ucfirst(str_replace('_', ' ', request('status'))), 'remove' => ['status']];
+                    }
+
+                    if ($dateFromEnabled) {
+                        try {
+                            $formattedDate = \Carbon\Carbon::parse(request('event_date_from'))->format('M d, Y');
+                        } catch (\Exception $e) {
+                            $formattedDate = request('event_date_from');
+                        }
+                        $activeFilters[] = ['label' => 'From Date', 'value' => $formattedDate, 'remove' => ['event_date_from', 'event_date_from_enabled']];
+                    }
+
+                    if ($dateToEnabled) {
+                        try {
+                            $formattedDate = \Carbon\Carbon::parse(request('event_date_to'))->format('M d, Y');
+                        } catch (\Exception $e) {
+                            $formattedDate = request('event_date_to');
+                        }
+                        $activeFilters[] = ['label' => 'To Date', 'value' => $formattedDate, 'remove' => ['event_date_to', 'event_date_to_enabled']];
+                    }
+
+                    if ($timeFromEnabled) {
+                        $activeFilters[] = ['label' => 'From Time', 'value' => $formatTime($rawTimeFrom), 'remove' => ['time_from', 'time_from_enabled']];
+                    }
+
+                    if ($timeToEnabled) {
+                        $activeFilters[] = ['label' => 'To Time', 'value' => $formatTime($rawTimeTo), 'remove' => ['time_to', 'time_to_enabled']];
+                    }
+
+                    if ($recentlyAddedActive) {
+                        $activeFilters[] = ['label' => 'Recently Added', 'value' => 'On', 'remove' => ['recently_added']];
+                    }
+
+                    if (request()->has('highlight')) {
+                        $activeFilters[] = ['label' => 'Highlight', 'value' => request()->boolean('highlight') ? 'Yes' : 'No', 'remove' => ['highlight']];
+                    }
+
+                    if (request()->has('popular')) {
+                        $activeFilters[] = ['label' => 'Popular', 'value' => request()->boolean('popular') ? 'Yes' : 'No', 'remove' => ['popular']];
+                    }
+
+                    $filterCount = count($activeFilters);
+                @endphp
                 <div class="flex flex-wrap items-center gap-3">
-                    @php
-                        $filterCount = 0;
-                        if(request('search')) $filterCount++;
-                        if(request('sport')) $filterCount++;
-                        if(request('tournament')) $filterCount++;
-                        if(request('status')) $filterCount++;
-                        if(request('event_date')) $filterCount++;
-                        if((request()->filled('time_from_hour') && request()->filled('time_from_minute') && request()->filled('time_from_second')) || request()->filled('time_from')) $filterCount++;
-                        if((request()->filled('time_to_hour') && request()->filled('time_to_minute') && request()->filled('time_to_second')) || request()->filled('time_to')) $filterCount++;
-
-                        $timeFromRaw = request('time_from');
-                        if (!$timeFromRaw && request()->filled('time_from_hour') && request()->filled('time_from_minute') && request()->filled('time_from_second')) {
-                            $timeFromRaw = sprintf('%02d:%02d:%02d %s',
-                                (int) request('time_from_hour'),
-                                (int) request('time_from_minute'),
-                                (int) request('time_from_second'),
-                                strtoupper(request('time_from_ampm', 'AM'))
-                            );
-                        }
-
-                        $timeToRaw = request('time_to');
-                        if (!$timeToRaw && request()->filled('time_to_hour') && request()->filled('time_to_minute') && request()->filled('time_to_second')) {
-                            $timeToRaw = sprintf('%02d:%02d:%02d %s',
-                                (int) request('time_to_hour'),
-                                (int) request('time_to_minute'),
-                                (int) request('time_to_second'),
-                                strtoupper(request('time_to_ampm', 'PM'))
-                            );
-                        }
-
-                        $timeFormats = ['h:i:s A', 'H:i:s', 'h:i A', 'H:i'];
-
-                        $timeFromDisplay = null;
-                        if ($timeFromRaw) {
-                            foreach ($timeFormats as $format) {
-                                try {
-                                    $timeFromDisplay = \Carbon\Carbon::createFromFormat($format, $timeFromRaw)->format('h:i:s A');
-                                    break;
-                                } catch (\Exception $e) {
-                                    $timeFromDisplay = $timeFromRaw;
-                                }
-                            }
-                        }
-
-                        $timeToDisplay = null;
-                        if ($timeToRaw) {
-                            foreach ($timeFormats as $format) {
-                                try {
-                                    $timeToDisplay = \Carbon\Carbon::createFromFormat($format, $timeToRaw)->format('h:i:s A');
-                                    break;
-                                } catch (\Exception $e) {
-                                    $timeToDisplay = $timeToRaw;
-                                }
-                            }
-                        }
-
-                        $timeFromValue = $timeFromDisplay;
-                        $timeToValue = $timeToDisplay;
-
-                        $defaultPickerTime = \Carbon\Carbon::now(config('app.timezone', 'UTC'))->format('h:i:s A');
-
-                        if(!$timeFromValue) {
-                            $timeFromValue = $defaultPickerTime;
-                        }
-
-                        if(!$timeToValue) {
-                            $timeToValue = $defaultPickerTime;
-                        }
-
-                        $timeFromEnabled = request()->filled('time_from') || (request()->filled('time_from_hour') && request()->filled('time_from_minute'));
-                        $timeToEnabled = request()->filled('time_to') || (request()->filled('time_to_hour') && request()->filled('time_to_minute'));
-
-                        $dateFromEnabled = request()->filled('event_date_from');
-                        $dateToEnabled = request()->filled('event_date_to');
-                    @endphp
                     <button onclick="toggleFilterDrawer()" class="bg-primary-600 dark:bg-primary-700 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:hover:bg-primary-800 transition-colors flex items-center relative">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
-                        </svg>
-                        Filters
-                        @if($filterCount > 0)
-                            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">{{ $filterCount }}</span>
-                        @endif
-                    </button>
+                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                         </svg>
+                         Filters
+                         @if($filterCount > 0)
+                             <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">{{ $filterCount }}</span>
+                         @endif
+                     </button>
 
                     @if($filterCount > 0)
-                        <a href="{{ route('events.index') }}" class="bg-red-500 dark:bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-600 dark:hover:bg-red-700 transition-colors flex items-center">
+                        <a href="{{ $baseRoute }}" class="bg-red-500 dark:bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-600 dark:hover:bg-red-700 transition-colors flex items-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
@@ -500,119 +520,18 @@
                         </svg>
                         <span class="text-sm font-medium text-blue-900 dark:text-blue-100">Active Filters ({{ $filterCount }}):</span>
                     </div>
-                    <a href="{{ route('events.index') }}" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">Clear All</a>
+                    <a href="{{ $baseRoute }}" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">Clear All</a>
                 </div>
                 <div class="mt-2 flex flex-wrap gap-2">
-                    @if(request('search'))
+                    @foreach($activeFilters as $filter)
                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-                            Search: "{{ request('search') }}"
-                            <button onclick="removeFilter('search')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
+                            {{ $filter['label'] }}: {{ $filter['value'] }}
+                            @php
+                                $removals = implode(',', $filter['remove']);
+                            @endphp
+                            <button type="button" onclick="removeFilter('{{ $removals }}')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
                         </span>
-                    @endif
-                    @if(request('sport'))
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-                            Sport: {{ $sportConfig[request('sport')] ?? 'Unknown Sport (ID: ' . request('sport') . ')' }}
-                            <button onclick="removeFilter('sport')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
-                        </span>
-                    @endif
-                    @if(request('tournament'))
-                        @php
-                            $tournamentName = \App\Models\Event::where('tournamentsId', request('tournament'))->first()?->tournamentsName ?? request('tournament');
-                        @endphp
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-                            Tournament: {{ $tournamentName }}
-                            <button onclick="removeFilter('tournament')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
-                        </span>
-                    @endif
-                    @if(request('status'))
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-                            Status: {{ ucfirst(request('status')) }}
-                            <button onclick="removeFilter('status')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
-                        </span>
-                    @endif
-                    @if(request('event_date'))
-                        @php
-                            $eventDateDisplay = null;
-                            try {
-                                $eventDateDisplay = \Carbon\Carbon::parse(request('event_date'))->format('M d, Y');
-                            } catch (\Exception $e) {
-                                $eventDateDisplay = request('event_date');
-                            }
-                        @endphp
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-                            Date: {{ $eventDateDisplay }}
-                            <button onclick="removeFilter('event_date')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
-                        </span>
-                    @endif
-                    @php
-                        $timeFromDisplay = null;
-                        if(request()->filled('time_from_hour') && request()->filled('time_from_minute') && request()->filled('time_from_second')) {
-                            $hour = str_pad((int) request('time_from_hour'), 2, '0', STR_PAD_LEFT);
-                            $minute = str_pad((int) request('time_from_minute'), 2, '0', STR_PAD_LEFT);
-                            $second = str_pad((int) request('time_from_second'), 2, '0', STR_PAD_LEFT);
-                            $ampm = strtoupper(request('time_from_ampm', 'AM'));
-                            if (!in_array($ampm, ['AM', 'PM'])) {
-                                $ampm = 'AM';
-                            }
-                            $fromString = $hour . ':' . $minute . ':' . $second . ' ' . $ampm;
-                            try {
-                                $timeFromDisplay = \Carbon\Carbon::createFromFormat('h:i:s A', $fromString)->format('h:i:s A');
-                            } catch (\Exception $e) {
-                                $timeFromDisplay = $fromString;
-                            }
-                        }
-                        if(!$timeFromDisplay && request()->filled('time_from')) {
-                            $fallbackFormats = ['H:i:s', 'h:i:s A', 'H:i', 'h:i A'];
-                            foreach ($fallbackFormats as $format) {
-                                try {
-                                    $timeFromDisplay = \Carbon\Carbon::createFromFormat($format, request('time_from'))->format('h:i:s A');
-                                    break;
-                                } catch (\Exception $e) {
-                                    $timeFromDisplay = request('time_from');
-                                }
-                            }
-                        }
- 
-                        $timeToDisplay = null;
-                        if(request()->filled('time_to_hour') && request()->filled('time_to_minute') && request()->filled('time_to_second')) {
-                            $hour = str_pad((int) request('time_to_hour'), 2, '0', STR_PAD_LEFT);
-                            $minute = str_pad((int) request('time_to_minute'), 2, '0', STR_PAD_LEFT);
-                            $second = str_pad((int) request('time_to_second'), 2, '0', STR_PAD_LEFT);
-                            $ampm = strtoupper(request('time_to_ampm', 'PM'));
-                            if (!in_array($ampm, ['AM', 'PM'])) {
-                                $ampm = 'PM';
-                            }
-                            $toString = $hour . ':' . $minute . ':' . $second . ' ' . $ampm;
-                            try {
-                                $timeToDisplay = \Carbon\Carbon::createFromFormat('h:i:s A', $toString)->format('h:i:s A');
-                            } catch (\Exception $e) {
-                                $timeToDisplay = $toString;
-                            }
-                        }
-                        if(!$timeToDisplay && request()->filled('time_to')) {
-                            $fallbackFormats = ['H:i:s', 'h:i:s A', 'H:i', 'h:i A'];
-                            foreach ($fallbackFormats as $format) {
-                                try {
-                                    $timeToDisplay = \Carbon\Carbon::createFromFormat($format, request('time_to'))->format('h:i:s A');
-                                    break;
-                                } catch (\Exception $e) {
-                                    $timeToDisplay = request('time_to');
-                                }
-                            }
-                        }
-                    @endphp
-                    @if($timeFromDisplay)
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-                            Time From: {{ $timeFromDisplay }}
-                            <button onclick="removeTimeFilter('from')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
-                        </span>
-                    @endif
-                    @if($timeToDisplay)
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-                            Time To: {{ $timeToDisplay }}
-                            <button onclick="removeTimeFilter('to')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
-                        </span>
-                    @endif
+                    @endforeach
                 </div>
             </div>
         </div>
@@ -681,12 +600,28 @@
             <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                     <span class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">Recently Added</span>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Toggle to highlight the newest events (feature coming soon).</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Show only events flagged as recently added.</p>
                 </div>
-                <button type="button" class="relative inline-flex items-center h-7 rounded-full w-14 transition-colors duration-200 ease-in-out bg-gray-300 dark:bg-gray-600 cursor-not-allowed opacity-60" aria-pressed="false" title="Coming soon">
-                    <span class="sr-only">Toggle recently added filter</span>
-                    <span class="inline-block w-6 h-6 transform bg-white dark:bg-gray-200 rounded-full translate-x-1 transition-transform duration-200 ease-in-out"></span>
-                </button>
+                <form method="GET" action="{{ $baseRoute }}" class="flex items-center gap-3">
+                    @foreach(request()->except(['page', 'recently_added']) as $param => $value)
+                        @if(is_array($value))
+                            @foreach($value as $singleValue)
+                                <input type="hidden" name="{{ $param }}[]" value="{{ $singleValue }}">
+                            @endforeach
+                        @else
+                            <input type="hidden" name="{{ $param }}" value="{{ $value }}">
+                        @endif
+                    @endforeach
+                    @unless($recentlyAddedActive)
+                        <input type="hidden" name="recently_added" value="1">
+                    @endunless
+                    <button type="submit" class="relative inline-flex items-center h-7 rounded-full w-14 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 {{ $recentlyAddedActive ? 'bg-primary-600 dark:bg-primary-500' : 'bg-gray-300 dark:bg-gray-600' }}" aria-pressed="{{ $recentlyAddedActive ? 'true' : 'false' }}">
+                        <span class="sr-only">Toggle recently added filter</span>
+                        <span class="absolute left-1 text-xs font-semibold uppercase tracking-wide {{ $recentlyAddedActive ? 'text-white' : 'text-gray-600 dark:text-gray-300' }}">On</span>
+                        <span class="absolute right-1 text-xs font-semibold uppercase tracking-wide {{ $recentlyAddedActive ? 'text-white/60' : 'text-white' }}">Off</span>
+                        <span class="inline-block w-6 h-6 transform bg-white dark:bg-gray-200 rounded-full transition-transform duration-200 ease-in-out {{ $recentlyAddedActive ? 'translate-x-7' : 'translate-x-1' }}"></span>
+                    </button>
+                </form>
             </div>
         </div>
 
@@ -831,7 +766,10 @@
             </button>
         </div>
         
-        <form method="GET" action="{{ route('events.index') }}">
+        <form method="GET" action="{{ $baseRoute }}">
+            @if($recentlyAddedActive)
+                <input type="hidden" name="recently_added" value="1">
+            @endif
             <!-- Search -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
@@ -1037,7 +975,7 @@
                 <button type="submit" class="flex-1 bg-primary-600 dark:bg-primary-700 text-white py-2 px-4 rounded-lg hover:bg-primary-700 dark:hover:bg-primary-800 transition-colors">
                     Apply Filters
                 </button>
-                <a href="{{ route('events.index') }}" class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition-colors text-center">
+                <a href="{{ $baseRoute }}" class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition-colors text-center">
                     Clear
                 </a>
             </div>
@@ -1193,41 +1131,23 @@ function toggleFilterDrawer() {
 }
 
 // Remove individual filter
-function removeFilter(filterName) {
-    const url = new URL(window.location);
-    url.searchParams.delete(filterName);
-    if (filterName === 'event_date') {
-        ['time_from_hour','time_from_minute','time_from_second','time_from_ampm','time_from',
-         'time_to_hour','time_to_minute','time_to_second','time_to_ampm','time_to'].forEach(param => url.searchParams.delete(param));
-    }
-    const exEventId = url.searchParams.get('exEventId');
-    if (exEventId) {
-        url.searchParams.set('exEventId', exEventId);
-    }
-    window.location.href = url.toString();
-}
+function removeFilter(paramList) {
+    const url = new URL(window.location.href);
+    const paramsToRemove = (paramList || '').split(',').map(param => param.trim()).filter(Boolean);
 
-// Remove time filter
-function removeTimeFilter(type) {
-    const url = new URL(window.location);
-    if (type === 'from') {
-        url.searchParams.delete('time_from_hour');
-        url.searchParams.delete('time_from_minute');
-        url.searchParams.delete('time_from_second');
-        url.searchParams.delete('time_from_ampm');
-        url.searchParams.delete('time_from');
-    } else { // type === 'to'
-        url.searchParams.delete('time_to_hour');
-        url.searchParams.delete('time_to_minute');
-        url.searchParams.delete('time_to_second');
-        url.searchParams.delete('time_to_ampm');
-        url.searchParams.delete('time_to');
-    }
     const exEventId = url.searchParams.get('exEventId');
+
+    paramsToRemove.forEach(param => {
+        url.searchParams.delete(param);
+    });
+
     if (exEventId) {
         url.searchParams.set('exEventId', exEventId);
     }
-    window.location.href = url.toString();
+
+    url.searchParams.delete('page');
+
+    window.location.href = url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '');
 }
 
 // Close drawer on escape key
