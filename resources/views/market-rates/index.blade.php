@@ -3,6 +3,7 @@
 @section('title', 'SS Rates List')
 
 @push('css')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
     .filter-drawer {
         position: fixed;
@@ -884,6 +885,7 @@
 @endif
 
 @push('js')
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
 function formatTimeValue(rawValue) {
     if (!rawValue) {
@@ -1272,6 +1274,41 @@ function formatDateInputValue(raw) {
     return formatted;
 }
 
+function getDateTokenCount(value, caretIndex) {
+    if (!value || caretIndex <= 0) {
+        return 0;
+    }
+    const preview = value.slice(0, caretIndex);
+    return preview.replace(/[^0-9]/g, '').length;
+}
+
+function setDateCaretFromTokenCount(input, tokenCount) {
+    if (!input) {
+        return;
+    }
+
+    if (!tokenCount) {
+        input.setSelectionRange(0, 0);
+        return;
+    }
+
+    const value = input.value;
+    let seen = 0;
+    let position = value.length;
+
+    for (let i = 0; i < value.length; i++) {
+        if (/[0-9]/.test(value[i])) {
+            seen++;
+            if (seen === tokenCount) {
+                position = i + 1;
+                break;
+            }
+        }
+    }
+
+    input.setSelectionRange(position, position);
+}
+
 function isValidDateValue(value) {
     const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
     if (!match) {
@@ -1295,15 +1332,60 @@ function isValidDateValue(value) {
 }
 
 function handleDateInput(event) {
-    const formatted = formatDateInputValue(event.target.value);
-    event.target.value = formatted;
+    const input = event.target;
+    if (typeof input.__lastValidDateValue === 'undefined') {
+        input.__lastValidDateValue = formatDateInputValue(input.value);
+        input.__lastValidDateTokens = getDateTokenCount(
+            input.__lastValidDateValue,
+            (input.__lastValidDateValue || '').length
+        );
+    }
+
+    const rawValue = input.value;
+    const caretIndex = input.selectionStart || 0;
+    const caretTokenCount = getDateTokenCount(rawValue, caretIndex);
+    const formatted = formatDateInputValue(rawValue);
+
+    input.value = formatted;
+    setDateCaretFromTokenCount(input, caretTokenCount);
+
+    const digits = formatted.replace(/[^0-9]/g, '');
+    const dayValue = digits.slice(0, 2);
+    const monthValue = digits.slice(2, 4);
+    const lastChar = rawValue.charAt(caretIndex - 1);
+
+    const maybeInvalid =
+        (monthValue.length === 2 && (parseInt(monthValue, 10) < 1 || parseInt(monthValue, 10) > 12)) ||
+        (dayValue.length === 2 && (parseInt(dayValue, 10) < 1 || parseInt(dayValue, 10) > 31));
+
+    if (maybeInvalid && /\d/.test(lastChar)) {
+        input.value = input.__lastValidDateValue || '';
+        setDateCaretFromTokenCount(input, input.__lastValidDateTokens || 0);
+        return;
+    }
+
+    input.__lastValidDateValue = input.value;
+    input.__lastValidDateTokens = getDateTokenCount(
+        input.value,
+        input.selectionStart || input.value.length
+    );
 }
 
 function handleDateBlur(event) {
-    const value = event.target.value;
+    const input = event.target;
+    const value = input.value;
     if (value && !isValidDateValue(value)) {
-        event.target.value = '';
+        input.value = '';
+        input.__lastValidDateValue = '';
+        input.__lastValidDateTokens = 0;
+        return;
     }
+
+    input.__lastValidDateValue = input.value;
+    input.__lastValidDateTokens = getDateTokenCount(
+        input.value,
+        input.value.length
+    );
 }
 
 const events = @json($events);
@@ -1422,8 +1504,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.querySelectorAll('.js-date-input').forEach(input => {
         input.value = formatDateInputValue(input.value);
+        input.__lastValidDateValue = input.value || '';
+        input.__lastValidDateTokens = getDateTokenCount(input.value || '', (input.value || '').length);
         input.addEventListener('input', handleDateInput);
         input.addEventListener('blur', handleDateBlur);
+
+        if (typeof flatpickr !== 'undefined') {
+            flatpickr(input, {
+                dateFormat: 'd/m/Y',
+                allowInput: true,
+                defaultDate: input.value || null,
+                disableMobile: true,
+                onChange: function(selectedDates, dateStr) {
+                    input.value = dateStr;
+                    input.__lastValidDateValue = dateStr;
+                    input.__lastValidDateTokens = getDateTokenCount(dateStr, dateStr.length);
+                }
+            });
+        }
     });
 });
 
