@@ -100,6 +100,15 @@ class MarketController extends Controller
                 $startDate->format('Y-m-d H:i:s'),
                 $endDate->format('Y-m-d H:i:s'),
             ]);
+        } elseif (!$hasCustomDateFilter && $isRecentlyAdded) {
+            $timezone = config('app.timezone', 'UTC');
+            $startDate = Carbon::now($timezone)->startOfDay();
+            $endDate = Carbon::now($timezone)->addDay()->endOfDay();
+
+            $query->whereBetween('marketTime', [
+                $startDate->format('Y-m-d H:i:s'),
+                $endDate->format('Y-m-d H:i:s'),
+            ]);
         }
 
         // Get total count for pagination
@@ -145,7 +154,7 @@ class MarketController extends Controller
             'marketTypesByEvent' => $marketTypesByEvent,
             'pageTitle' => 'Market List',
             'pageHeading' => 'Market List',
-            'pageSubheading' => 'Browse markets today and tomorrow',
+            'pageSubheading' => 'Market for today and tomorrow are shown here.',
         ]);
     }
 

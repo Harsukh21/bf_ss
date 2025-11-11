@@ -76,6 +76,15 @@ class EventController extends Controller
                 $startDate->format('Y-m-d H:i:s'),
                 $endDate->format('Y-m-d H:i:s'),
             ]);
+        } elseif (!$hasCustomDateFilter && $isRecentlyAdded) {
+            $timezone = config('app.timezone', 'UTC');
+            $startDate = Carbon::now($timezone)->startOfDay();
+            $endDate = Carbon::now($timezone)->addDay()->endOfDay();
+
+            $query->whereBetween('marketTime', [
+                $startDate->format('Y-m-d H:i:s'),
+                $endDate->format('Y-m-d H:i:s'),
+            ]);
         }
 
         // Get total count for pagination
@@ -118,7 +127,7 @@ class EventController extends Controller
             'tournamentsBySport' => $tournamentsBySport,
             'pageTitle' => 'Event List',
             'pageHeading' => 'Event List',
-            'pageSubheading' => 'Browse events today and tomorrow',
+            'pageSubheading' => 'Events for today and tomorrow are shown here.',
         ]);
     }
 
