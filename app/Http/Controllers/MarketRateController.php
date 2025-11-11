@@ -233,6 +233,10 @@ class MarketRateController extends Controller
 
         $eventInfo = Event::where('exEventId', $selectedEventId)->first();
 
+        $marketListStatus = DB::table('market_lists')
+            ->where('exMarketId', $marketRate->exMarketId)
+            ->value('status');
+
         // Get next and previous market rates for navigation (filtered by marketName)
         // Ensure we only get records with the exact same marketName
         $allMarketRates = MarketRate::forEvent($selectedEventId)
@@ -289,7 +293,8 @@ class MarketRateController extends Controller
             'nextMarketRate',
             'gridEnabled',
             'gridCountValue',
-            'gridMarketRates'
+            'gridMarketRates',
+            'marketListStatus'
         ));
     }
 

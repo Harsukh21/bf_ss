@@ -256,17 +256,44 @@
             <div class="mb-2 flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
                 <div class="flex space-x-4">
                     <div>
+                        @php
+                            $statusLabelRaw = $marketListStatus ?? ($marketRate->isCompleted ? 'Completed' : ($marketRate->inplay ? 'In Play' : 'Upcoming'));
+                            $statusLabelTrimmed = is_string($statusLabelRaw) ? trim($statusLabelRaw) : '';
+                            $statusLabel = $statusLabelTrimmed !== '' ? ucwords(strtolower($statusLabelTrimmed)) : 'Upcoming';
+                            $normalizedStatus = strtolower(str_replace(['_', '-'], ' ', $statusLabel));
+                            $badgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
+                            $showPulse = false;
+
+                            switch ($normalizedStatus) {
+                                case 'completed':
+                                    $badgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
+                                    break;
+                                case 'in play':
+                                    $badgeClasses = 'inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
+                                    $showPulse = true;
+                                    break;
+                                case 'closed':
+                                    $badgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+                                    break;
+                                case 'void':
+                                case 'voided':
+                                    $badgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300';
+                                    break;
+                                case 'suspended':
+                                    $badgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300';
+                                    break;
+                                default:
+                                    // keep default classes
+                                    break;
+                            }
+                        @endphp
                         <span class="font-medium">Status:</span>
-                            @if($marketRate->isCompleted)
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">Completed</span>
-                            @elseif($marketRate->inplay)
-                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">
-                                    <span class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
-                                    In Play
-                                </span>
-                            @else
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">Upcoming</span>
+                        <span class="{{ $badgeClasses }}">
+                            @if($showPulse)
+                                <span class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
                             @endif
+                            {{ $statusLabel }}
+                        </span>
                     </div>
                 </div>
             </div>
