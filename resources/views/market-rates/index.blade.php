@@ -973,6 +973,43 @@ function formatPartialTime(rawValue) {
     return result;
 }
 
+function getTimeTokenCount(value, caretIndex) {
+    if (!value || caretIndex <= 0) {
+        return 0;
+    }
+
+    const preview = value.slice(0, caretIndex);
+    return preview.replace(/[^0-9APMapm]/g, '').length;
+}
+
+function setCaretFromTokenCount(input, tokenCount) {
+    if (!input) {
+        return;
+    }
+
+    if (!tokenCount) {
+        input.setSelectionRange(0, 0);
+        return;
+    }
+
+    const value = input.value;
+    let seen = 0;
+    let position = value.length;
+
+    for (let i = 0; i < value.length; i++) {
+        const char = value[i];
+        if (/[0-9APM]/.test(char)) {
+            seen++;
+            if (seen === tokenCount) {
+                position = i + 1;
+                break;
+            }
+        }
+    }
+
+    input.setSelectionRange(position, position);
+}
+
 function setupTimeInputs() {
     if (!window.__timeDropdownOutsideHandler) {
         document.addEventListener('click', event => {
@@ -1061,9 +1098,11 @@ function setupTimeInputs() {
         };
 
         input.addEventListener('input', () => {
-            const formatted = formatPartialTime(input.value);
+            const rawValue = input.value;
+            const caretTokenCount = getTimeTokenCount(rawValue, input.selectionStart || 0);
+            const formatted = formatPartialTime(rawValue);
             input.value = formatted;
-            input.setSelectionRange(input.value.length, input.value.length);
+            setCaretFromTokenCount(input, caretTokenCount);
             hideError();
 
             if (dropdown && container.classList.contains('open')) {
