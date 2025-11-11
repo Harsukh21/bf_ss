@@ -1042,7 +1042,18 @@ function setupTimeInputs() {
             hour: '',
             minute: '',
             second: '',
-            period: ''
+            period: '',
+            lastValidValue: input.value || '',
+            lastValidTokenCount: getTimeTokenCount(input.value || '', (input.value || '').length)
+        };
+
+        const setLastValid = (value, caretTokens = null) => {
+            state.lastValidValue = value || '';
+            if (typeof caretTokens === 'number') {
+                state.lastValidTokenCount = Math.max(0, caretTokens);
+            } else {
+                state.lastValidTokenCount = getTimeTokenCount(state.lastValidValue, state.lastValidValue.length);
+            }
         };
 
         const resetState = () => {
@@ -1095,15 +1106,41 @@ function setupTimeInputs() {
                 state.period = period || '';
             }
             updateActiveOptions();
+            setLastValid(input.value, getTimeTokenCount(input.value, input.value.length));
         };
 
-        input.addEventListener('input', () => {
+        input.addEventListener('input', event => {
             const rawValue = input.value;
-            const caretTokenCount = getTimeTokenCount(rawValue, input.selectionStart || 0);
+            const rawCaret = event.target.selectionStart || 0;
+            const caretTokenCount = getTimeTokenCount(rawValue, rawCaret);
             const formatted = formatPartialTime(rawValue);
+
             input.value = formatted;
             setCaretFromTokenCount(input, caretTokenCount);
             hideError();
+
+            // Basic range validation on partial input
+            const tokens = input.value.replace(/[^0-9]/g, '');
+            const currentHour = tokens.slice(0, 2);
+            const currentMinute = tokens.slice(2, 4);
+            const currentSecond = tokens.slice(4, 6);
+            const lastChar = rawValue.charAt(rawCaret - 1);
+
+            const maybeInvalid =
+                (currentHour.length === 2 && parseInt(currentHour, 10) > 12) ||
+                (currentMinute.length === 2 && parseInt(currentMinute, 10) > 59) ||
+                (currentSecond.length === 2 && parseInt(currentSecond, 10) > 59);
+
+            if (maybeInvalid) {
+                const isDigit = /\d/.test(lastChar);
+                if (isDigit) {
+                    input.value = state.lastValidValue || '';
+                    setCaretFromTokenCount(input, state.lastValidTokenCount || 0);
+                }
+                return;
+            }
+
+            setLastValid(input.value, getTimeTokenCount(input.value, input.selectionStart || input.value.length));
 
             if (dropdown && container.classList.contains('open')) {
                 const normalized = formatTimeValue(input.value);
@@ -1163,6 +1200,7 @@ function setupTimeInputs() {
                     const combinedValue = `${state.hour}:${state.minute}:${state.second} ${state.period}`;
                     input.value = combinedValue;
                     hideError();
+                    setLastValid(input.value, getTimeTokenCount(input.value, input.value.length));
                     container.classList.remove('open');
                     input.dispatchEvent(new Event('blur'));
                 });
@@ -1174,6 +1212,7 @@ function setupTimeInputs() {
                     updateActiveOptions();
                     input.value = '';
                     hideError();
+                     setLastValid('', 0);
                     container.classList.remove('open');
                 });
             }
@@ -1202,6 +1241,7 @@ function setupTimeInputs() {
                 input.value = formatted;
                 hideError();
                 syncStateFromInput();
+                setLastValid(input.value, getTimeTokenCount(input.value, input.value.length));
             }, 120);
         });
     });
