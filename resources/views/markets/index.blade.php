@@ -448,9 +448,6 @@
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Show only markets flagged as recently added.</p>
                 </div>
                 <form method="GET" action="{{ $marketsBaseRoute }}">
-                    @if($marketsRecentlyAddedActive)
-                        <input type="hidden" name="recently_added" value="1">
-                    @endif
                     @foreach(request()->except(['page', 'recently_added']) as $param => $value)
                         @if(is_array($value))
                             @foreach($value as $singleValue)
