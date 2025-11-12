@@ -96,8 +96,10 @@ class EventController extends Controller
         $offset = ($page - 1) * $perPage;
 
         // Get paginated results using raw query
-        $events = $query->orderBy('marketTime', 'desc')
-                       ->orderBy('id', 'desc')
+        $orderDirection = $isRecentlyAdded ? 'desc' : 'asc';
+
+        $events = $query->orderBy('marketTime', $orderDirection)
+                       ->orderBy('id', $orderDirection)
                        ->offset($offset)
                        ->limit($perPage)
                        ->get();

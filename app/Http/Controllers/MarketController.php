@@ -120,8 +120,8 @@ class MarketController extends Controller
         $offset = ($page - 1) * $perPage;
 
         $markets = $query
-            ->orderBy('marketTime', 'desc')
-            ->orderBy('id', 'desc')
+            ->orderBy('marketTime', 'asc')
+            ->orderBy('id', 'asc')
             ->offset($offset)
             ->limit($perPage)
             ->get();
