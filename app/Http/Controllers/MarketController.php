@@ -478,6 +478,15 @@ class MarketController extends Controller
             $bindings[] = $dateFilters['end'];
         }
 
+        if ($request->filled('search')) {
+            $conditions[] = '('
+                . $this->quoteColumn('eventName') . " ILIKE ? OR "
+                . $this->quoteColumn('marketName') . " ILIKE ?)";
+            $searchBinding = '%' . $request->search . '%';
+            $bindings[] = $searchBinding;
+            $bindings[] = $searchBinding;
+        }
+
         return [
             'conditions' => $conditions,
             'bindings' => $bindings,
