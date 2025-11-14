@@ -446,19 +446,23 @@
                         break;
                 }
             @endphp
-            <div class="mt-4 px-3 py-2 bg-gray-50 dark:bg-gray-900/40 rounded-lg text-sm text-gray-700 dark:text-gray-300 screenshot-meta">
-                <span class="font-medium">Status:</span>
-                <span class="{{ $summaryBadgeClasses }}">
-                    @if($summaryPulse)
-                        <span class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
-                    @endif
-                    {{ $summaryStatus }}
-                </span>
-                @if(!empty($marketListWinnerType))
-                    <span class="ml-4 font-medium">Winner:</span>
-                    <span class="text-gray-900 dark:text-gray-100">
-                        {{ $marketListSelectionName ?? $marketListWinnerType }}
+            <div class="mt-4 px-4 py-3 bg-gray-50 dark:bg-gray-900/40 rounded-lg text-sm text-gray-700 dark:text-gray-300 screenshot-meta flex flex-wrap items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="font-medium">Status:</span>
+                    <span class="{{ $summaryBadgeClasses }}">
+                        @if($summaryPulse)
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
+                        @endif
+                        {{ $summaryStatus }}
                     </span>
+                </div>
+                @if(!empty($marketListWinnerType))
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium">Winner:</span>
+                        <span class="text-gray-900 dark:text-gray-100">
+                            {{ $marketListSelectionName ?? $marketListWinnerType }}
+                        </span>
+                    </div>
                 @endif
             </div>
         @else
