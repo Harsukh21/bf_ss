@@ -751,7 +751,7 @@
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $event->eventName }}</div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">ID: {{ $event->eventId }}</div>
                                         @if(!empty($event->exEventId))
-                                            <div class="text-xs text-gray-400 dark:text-gray-500">Exch ID: {{ $event->exEventId }}</div>
+                                            <div class="text-xs text-gray-400 dark:text-gray-500">Exch Event ID: {{ $event->exEventId }}</div>
                                         @endif
                                         <div class="mt-2">
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300">
