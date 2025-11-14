@@ -296,8 +296,10 @@
                         </span>
                         @if(!empty($marketListWinnerType))
                             <span class="ml-3 text-sm text-gray-600 dark:text-gray-400">
-                                Winner Type:
-                                <span class="font-semibold text-gray-900 dark:text-gray-100">{{ $marketListWinnerType }}</span>
+                                Winner:
+                                <span class="font-semibold text-gray-900 dark:text-gray-100">
+                                    {{ $marketListSelectionName ?? $marketListWinnerType }}
+                                </span>
                             </span>
                         @endif
                     </div>

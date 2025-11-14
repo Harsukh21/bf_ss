@@ -68,7 +68,7 @@ class MarketRateController extends Controller
                 $query = MarketRate::forEvent($selectedEventId);
                 $latestMarketList = DB::table('market_lists')
                     ->where('exEventId', $selectedEventId)
-                    ->select('exMarketId', 'winnerType', 'status')
+                    ->select('exMarketId', 'winnerType', 'status', 'selectionName')
                     ->get()
                     ->keyBy('exMarketId');
                 
@@ -151,6 +151,7 @@ class MarketRateController extends Controller
                     $meta = $latestMarketList->get($rate->exMarketId);
                     $rate->marketListStatus = $meta->status ?? null;
                     $rate->marketListWinnerType = $meta->winnerType ?? null;
+                    $rate->marketListSelectionName = $meta->selectionName ?? null;
                     return $rate;
                 });
             } else {
@@ -246,11 +247,12 @@ class MarketRateController extends Controller
 
         $marketListMeta = DB::table('market_lists')
             ->where('exMarketId', $marketRate->exMarketId)
-            ->select('status', 'winnerType')
+            ->select('status', 'winnerType', 'selectionName')
             ->first();
 
         $marketListStatus = $marketListMeta->status ?? null;
         $marketListWinnerType = $marketListMeta->winnerType ?? null;
+        $marketListSelectionName = $marketListMeta->selectionName ?? null;
 
         // Get next and previous market rates for navigation (filtered by marketName)
         // Ensure we only get records with the exact same marketName
@@ -310,7 +312,8 @@ class MarketRateController extends Controller
             'gridCountValue',
             'gridMarketRates',
             'marketListStatus',
-            'marketListWinnerType'
+            'marketListWinnerType',
+            'marketListSelectionName'
         ));
     }
 
