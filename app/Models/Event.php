@@ -21,6 +21,7 @@ class Event extends Model
         'IsVoid',
         'IsUnsettle',
         'dataSwitch',
+        'marketTime',
         'createdAt',
     ];
 

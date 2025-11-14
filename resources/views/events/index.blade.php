@@ -711,7 +711,18 @@
                                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
-                                                {{ $event->marketTime ? \Carbon\Carbon::parse($event->marketTime)->format('M d, Y h:i A') : 'N/A' }}
+                                                @if($event->marketTime)
+                                                    {{ \Carbon\Carbon::parse($event->marketTime)->format('M d, Y h:i A') }}
+                                                @else
+                                                    <button 
+                                                        type="button"
+                                                        class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 update-market-time-btn"
+                                                        data-event-id="{{ $event->id }}"
+                                                        data-ex-event-id="{{ $event->exEventId ?? '' }}"
+                                                        data-update-url="{{ route('events.update-market-time', $event->id) }}">
+                                                        Update Time
+                                                    </button>
+                                                @endif
                                             </span>
                                         </div>
                                     </td>
@@ -1319,6 +1330,62 @@ document.addEventListener('DOMContentLoaded', function() {
     if (initialSport) {
         filterTournamentsBySport(initialSport, true);
     }
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    document.body.addEventListener('click', async function(event) {
+        const button = event.target.closest('.update-market-time-btn');
+        if (!button) {
+            return;
+        }
+
+        event.preventDefault();
+        if (button.dataset.loading === 'true') {
+            return;
+        }
+
+        const eventId = button.getAttribute('data-event-id');
+        if (!eventId) {
+            return;
+        }
+
+        const updateUrl = button.getAttribute('data-update-url') || `/events/${eventId}/update-market-time`;
+
+        button.dataset.loading = 'true';
+        const originalText = button.textContent;
+        button.textContent = 'Updating...';
+        button.classList.add('opacity-70', 'pointer-events-none');
+
+        try {
+            const response = await fetch(updateUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({})
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Failed to update time');
+            }
+
+            const formatted = document.createElement('span');
+            formatted.textContent = data.marketTime;
+            formatted.className = 'text-xs font-medium text-white';
+            button.parentNode.replaceChild(formatted, button);
+        } catch (error) {
+            console.error(error);
+            button.textContent = 'Retry';
+            alert(error.message || 'Unable to update time. Please try again.');
+            button.classList.remove('opacity-70', 'pointer-events-none');
+            button.dataset.loading = 'false';
+            return;
+        }
+    });
 });
 
 document.addEventListener('DOMContentLoaded', function() {

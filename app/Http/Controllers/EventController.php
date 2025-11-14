@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use Exception;
+use App\Models\Event;
 
 class EventController extends Controller
 {
@@ -177,7 +178,8 @@ class EventController extends Controller
         ];
         $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
 
-        $filterSql = $this->buildEventFilterSql($request, ['conditions' => [], 'bindings' => []]);
+        $defaultDateFilters = $this->getDefaultEventDateConditions($request);
+        $filterSql = $this->buildEventFilterSql($request, $defaultDateFilters);
         $filterSql = $this->buildEventFilterSql($request, ['conditions' => [], 'bindings' => []]);
         $whereSql = !empty($filterSql['conditions'])
             ? ' WHERE ' . implode(' AND ', $filterSql['conditions'])
@@ -579,31 +581,31 @@ class EventController extends Controller
      */
     public function export(Request $request)
     {
-        // Build the same query as index but without pagination
-        $query = DB::table('events')
-            ->select([
-                'id',
-                'eventId',
-                'sportId',
-                'tournamentsId',
-                'tournamentsName',
-                'eventName',
-                'highlight',
-                'quicklink',
-                'popular',
-                'IsSettle',
-                'IsVoid',
-                'IsUnsettle',
-                'dataSwitch',
-                'isRecentlyAdded',
-                'marketTime',
-                'createdAt'
-            ]);
+        $selectColumns = [
+            'id',
+            'eventId',
+            'sportId',
+            'tournamentsId',
+            'tournamentsName',
+            'eventName',
+            'highlight',
+            'quicklink',
+            'popular',
+            'IsSettle',
+            'IsVoid',
+            'IsUnsettle',
+            'dataSwitch',
+            'isRecentlyAdded',
+            'marketTime',
+            'createdAt'
+        ];
+        $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
 
-        // Apply the same filters
-        $this->applyFilters($query, $request);
+        $filterSql = $this->buildEventFilterSql($request, ['conditions' => [], 'bindings' => []]);
+        $whereSql = !empty($filterSql['conditions'])
+            ? ' WHERE ' . implode(' AND ', $filterSql['conditions'])
+            : '';
 
-        // Get all results (no pagination)
         $dataSql = sprintf(
             'SELECT %s FROM events%s ORDER BY %s DESC, %s DESC',
             $selectList,
@@ -681,5 +683,42 @@ class EventController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Update missing market time from market_lists
+     */
+    public function updateMarketTime(Request $request, Event $event)
+    {
+        if (!$event->exEventId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Event does not have an external ID to match.'
+            ], 422);
+        }
+
+        $marketTime = DB::table('market_lists')
+            ->where('exEventId', $event->exEventId)
+            ->orderBy('marketTime', 'asc')
+            ->value('marketTime');
+
+        if (!$marketTime) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No matching market time found for this event.'
+            ], 404);
+        }
+
+        DB::table('events')
+            ->where('id', $event->id)
+            ->update([
+                'marketTime' => $marketTime,
+                'updated_at' => now(),
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'marketTime' => Carbon::parse($marketTime)->timezone(config('app.timezone', 'UTC'))->format('M d, Y h:i A'),
+        ]);
     }
 }
