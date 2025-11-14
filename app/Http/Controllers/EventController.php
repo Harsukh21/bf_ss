@@ -44,6 +44,7 @@ class EventController extends Controller
         $selectColumns = [
             'id',
             'eventId',
+            'exEventId',
             'sportId',
             'tournamentsId',
             'tournamentsName',
@@ -118,7 +119,7 @@ class EventController extends Controller
 
         // Get sport configuration
         $sportConfig = config('sports.sports');
-
+        
         return view('events.index', [
             'paginatedEvents' => $paginatedEvents,
             'sports' => $sports,
@@ -161,6 +162,7 @@ class EventController extends Controller
         $selectColumns = [
             'id',
             'eventId',
+            'exEventId',
             'sportId',
             'tournamentsId',
             'tournamentsName',

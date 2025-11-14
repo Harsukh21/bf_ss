@@ -1,3 +1,47 @@
+@push('css')
+<style>
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    min-width: 260px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: #fff;
+    background: rgba(31, 41, 55, 0.95);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 2000;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast-notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast-notification.toast-success {
+    background: rgba(5, 150, 105, 0.95);
+}
+
+.toast-notification.toast-error {
+    background: rgba(220, 38, 38, 0.95);
+}
+
+.toast-notification button {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+}
+</style>
+@endpush
 @extends('layouts.app')
 
 @section('title', $pageTitle ?? 'Event List')
@@ -706,19 +750,23 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $event->eventName }}</div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">ID: {{ $event->eventId }}</div>
+                                        @if(!empty($event->exEventId))
+                                            <div class="text-xs text-gray-400 dark:text-gray-500">Exch ID: {{ $event->exEventId }}</div>
+                                        @endif
                                         <div class="mt-2">
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300">
                                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
                                                 @if($event->marketTime)
-                                                    {{ \Carbon\Carbon::parse($event->marketTime)->format('M d, Y h:i A') }}
+                                                    <span class="inline-flex items-center px-3 py-1 text-xs font-semibold text-white rounded-full bg-indigo-500 updated-market-time">
+                                                        {{ \Carbon\Carbon::parse($event->marketTime)->format('M d, Y h:i A') }}
+                                                    </span>
                                                 @else
                                                     <button 
                                                         type="button"
                                                         class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 update-market-time-btn"
                                                         data-event-id="{{ $event->id }}"
-                                                        data-ex-event-id="{{ $event->exEventId ?? '' }}"
                                                         data-update-url="{{ route('events.update-market-time', $event->id) }}">
                                                         Update Time
                                                     </button>
@@ -1333,6 +1381,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
+    function showToast(message, type = 'error') {
+        let toast = document.querySelector('.toast-notification');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.innerHTML = `
+                <span class="toast-message"></span>
+                <button type="button" aria-label="Close">&times;</button>
+            `;
+            document.body.appendChild(toast);
+        }
+
+        toast.classList.remove('toast-success', 'toast-error');
+        toast.classList.add(type === 'success' ? 'toast-success' : 'toast-error');
+        toast.querySelector('.toast-message').textContent = message;
+
+        const closeBtn = toast.querySelector('button');
+        closeBtn.onclick = () => {
+            toast.classList.remove('show');
+        };
+
+        toast.classList.add('show');
+
+        clearTimeout(toast.hideTimeout);
+        toast.hideTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
     document.body.addEventListener('click', async function(event) {
         const button = event.target.closest('.update-market-time-btn');
         if (!button) {
@@ -1373,14 +1448,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(data.message || 'Failed to update time');
             }
 
-            const formatted = document.createElement('span');
-            formatted.textContent = data.marketTime;
-            formatted.className = 'text-xs font-medium text-white';
-            button.parentNode.replaceChild(formatted, button);
+            const badge = document.createElement('span');
+            badge.className = 'inline-flex items-center px-3 py-1 text-xs font-semibold text-white rounded-full bg-indigo-500 updated-market-time';
+            badge.textContent = data.marketTime;
+            button.replaceWith(badge);
+            showToast('Market time updated successfully.', 'success');
         } catch (error) {
             console.error(error);
             button.textContent = 'Retry';
-            alert(error.message || 'Unable to update time. Please try again.');
+            showToast(error.message || 'Unable to update time. Please try again.', 'error');
             button.classList.remove('opacity-70', 'pointer-events-none');
             button.dataset.loading = 'false';
             return;
@@ -1470,6 +1546,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .tournament-dropdown-scrollable::-webkit-scrollbar-thumb:hover {
     background: #555;
+}
+
+.updated-market-time {
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .dark .tournament-dropdown-scrollable::-webkit-scrollbar-thumb {
