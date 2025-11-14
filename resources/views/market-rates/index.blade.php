@@ -598,7 +598,19 @@
                                                 </div>
                                                 <!-- Status Badge -->
                                                 <div>
-                                                    @if($rate->inplay)
+                                                    @php
+                                                        $winnerType = $rate->marketListWinnerType ?? null;
+                                                        $statusLabel = $rate->marketListStatus ?? null;
+                                                    @endphp
+                                                    @if(!empty($winnerType))
+                                                        <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300">
+                                                            Winner: {{ $winnerType }}
+                                                        </span>
+                                                    @elseif(!empty($statusLabel))
+                                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 dark:bg-gray-900/30 text-gray-800 dark:text-gray-200">
+                                                            {{ ucfirst(strtolower($statusLabel)) }}
+                                                        </span>
+                                                    @elseif($rate->inplay)
                                                         <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">
                                                             <span class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
                                                             In Play

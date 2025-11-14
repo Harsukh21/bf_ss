@@ -66,6 +66,11 @@ class MarketRateController extends Controller
             // Check if table exists for this event
             if (MarketRate::tableExistsForEvent($selectedEventId)) {
                 $query = MarketRate::forEvent($selectedEventId);
+                $latestMarketList = DB::table('market_lists')
+                    ->where('exEventId', $selectedEventId)
+                    ->select('exMarketId', 'winnerType', 'status')
+                    ->get()
+                    ->keyBy('exMarketId');
                 
                 // Get available market names for the dropdown
                 $availableMarketNames = MarketRate::forEvent($selectedEventId)
@@ -142,6 +147,12 @@ class MarketRateController extends Controller
                 }
 
                 $marketRates = $query->latest('created_at')->paginate(10);
+                $marketRates->getCollection()->transform(function ($rate) use ($latestMarketList) {
+                    $meta = $latestMarketList->get($rate->exMarketId);
+                    $rate->marketListStatus = $meta->status ?? null;
+                    $rate->marketListWinnerType = $meta->winnerType ?? null;
+                    return $rate;
+                });
             } else {
                 // Table does not exist for this event
                 $ratesTableNotFound = true;
@@ -233,9 +244,13 @@ class MarketRateController extends Controller
 
         $eventInfo = Event::where('exEventId', $selectedEventId)->first();
 
-        $marketListStatus = DB::table('market_lists')
+        $marketListMeta = DB::table('market_lists')
             ->where('exMarketId', $marketRate->exMarketId)
-            ->value('status');
+            ->select('status', 'winnerType')
+            ->first();
+
+        $marketListStatus = $marketListMeta->status ?? null;
+        $marketListWinnerType = $marketListMeta->winnerType ?? null;
 
         // Get next and previous market rates for navigation (filtered by marketName)
         // Ensure we only get records with the exact same marketName
@@ -294,7 +309,8 @@ class MarketRateController extends Controller
             'gridEnabled',
             'gridCountValue',
             'gridMarketRates',
-            'marketListStatus'
+            'marketListStatus',
+            'marketListWinnerType'
         ));
     }
 
