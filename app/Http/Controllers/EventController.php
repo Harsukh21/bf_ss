@@ -40,55 +40,45 @@ class EventController extends Controller
                 ->groupBy('sportId');
         });
 
-        // Build optimized raw query with specific column selection
-        $query = DB::table('events')
-            ->select([
-                'id',
-                'eventId',
-                'sportId',
-                'tournamentsId',
-                'tournamentsName',
-                'eventName',
-                'highlight',
-                'quicklink',
-                'popular',
-                'IsSettle',
-                'IsVoid',
-                'IsUnsettle',
-                'dataSwitch',
-                'isRecentlyAdded',
-                'marketTime',
-                'createdAt'
-            ]);
+        $selectColumns = [
+            'id',
+            'eventId',
+            'sportId',
+            'tournamentsId',
+            'tournamentsName',
+            'eventName',
+            'highlight',
+            'quicklink',
+            'popular',
+            'IsSettle',
+            'IsVoid',
+            'IsUnsettle',
+            'dataSwitch',
+            'isRecentlyAdded',
+            'marketTime',
+            'createdAt'
+        ];
+        $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
 
-        // Apply optimized filters with raw DB queries
-        $this->applyFilters($query, $request);
+        $hasCustomDateFilter =
+            $request->boolean('event_date_from_enabled') ||
+            $request->boolean('event_date_to_enabled') ||
+            $request->boolean('time_from_enabled') ||
+            $request->boolean('time_to_enabled');
 
-        $hasCustomDateFilter = $request->boolean('event_date_from_enabled') || $request->boolean('event_date_to_enabled');
         $isRecentlyAdded = $request->boolean('recently_added');
 
-        if (!$hasCustomDateFilter && !$isRecentlyAdded) {
-            $timezone = config('app.timezone', 'UTC');
-            $startDate = Carbon::now($timezone)->startOfDay();
-            $endDate = Carbon::now($timezone)->addDay()->endOfDay();
+        $defaultDateFilters = $this->getDefaultEventDateConditions($request);
 
-            $query->whereBetween('marketTime', [
-                $startDate->format('Y-m-d H:i:s'),
-                $endDate->format('Y-m-d H:i:s'),
-            ]);
-        } elseif (!$hasCustomDateFilter && $isRecentlyAdded) {
-            $timezone = config('app.timezone', 'UTC');
-            $startDate = Carbon::now($timezone)->startOfDay();
-            $endDate = Carbon::now($timezone)->addDay()->endOfDay();
-
-            $query->whereBetween('marketTime', [
-                $startDate->format('Y-m-d H:i:s'),
-                $endDate->format('Y-m-d H:i:s'),
-            ]);
-        }
+        $filterSql = $this->buildEventFilterSql($request, $defaultDateFilters);
+        $whereSql = !empty($filterSql['conditions'])
+            ? ' WHERE ' . implode(' AND ', $filterSql['conditions'])
+            : '';
 
         // Get total count for pagination
-        $totalCount = (clone $query)->count();
+        $countSql = "SELECT COUNT(*) AS total FROM events{$whereSql}";
+        $totalCountResult = DB::selectOne($countSql, $filterSql['bindings']);
+        $totalCount = $totalCountResult ? (int) $totalCountResult->total : 0;
         
         // Apply pagination manually for better performance
         $page = $request->get('page', 1);
@@ -98,11 +88,18 @@ class EventController extends Controller
         // Get paginated results using raw query
         $orderDirection = $isRecentlyAdded ? 'desc' : 'asc';
 
-        $events = $query->orderBy('marketTime', $orderDirection)
-                       ->orderBy('id', $orderDirection)
-                       ->offset($offset)
-                       ->limit($perPage)
-                       ->get();
+        $dataSql = sprintf(
+            'SELECT %s FROM events%s ORDER BY %s %s, %s %s LIMIT ? OFFSET ?',
+            $selectList,
+            $whereSql,
+            $this->quoteColumn('marketTime'),
+            strtoupper($orderDirection),
+            $this->quoteColumn('id'),
+            strtoupper($orderDirection)
+        );
+
+        $dataBindings = array_merge($filterSql['bindings'], [$perPage, $offset]);
+        $events = collect(DB::select($dataSql, $dataBindings));
 
         // Create pagination object manually
         $paginatedEvents = new \Illuminate\Pagination\LengthAwarePaginator(
@@ -160,39 +157,50 @@ class EventController extends Controller
                 ->groupBy('sportId');
         });
 
-        $query = DB::table('events')
-            ->select([
-                'id',
-                'eventId',
-                'sportId',
-                'tournamentsId',
-                'tournamentsName',
-                'eventName',
-                'highlight',
-                'quicklink',
-                'popular',
-                'IsSettle',
-                'IsVoid',
-                'IsUnsettle',
-                'dataSwitch',
-                'isRecentlyAdded',
-                'marketTime',
-                'createdAt'
-            ]);
+        $selectColumns = [
+            'id',
+            'eventId',
+            'sportId',
+            'tournamentsId',
+            'tournamentsName',
+            'eventName',
+            'highlight',
+            'quicklink',
+            'popular',
+            'IsSettle',
+            'IsVoid',
+            'IsUnsettle',
+            'dataSwitch',
+            'isRecentlyAdded',
+            'marketTime',
+            'createdAt'
+        ];
+        $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
 
-        $this->applyFilters($query, $request);
+        $filterSql = $this->buildEventFilterSql($request, ['conditions' => [], 'bindings' => []]);
+        $filterSql = $this->buildEventFilterSql($request, ['conditions' => [], 'bindings' => []]);
+        $whereSql = !empty($filterSql['conditions'])
+            ? ' WHERE ' . implode(' AND ', $filterSql['conditions'])
+            : '';
 
-        $totalCount = (clone $query)->count();
+        $countSql = "SELECT COUNT(*) AS total FROM events{$whereSql}";
+        $totalCountResult = DB::selectOne($countSql, $filterSql['bindings']);
+        $totalCount = $totalCountResult ? (int) $totalCountResult->total : 0;
 
         $page = $request->get('page', 1);
         $perPage = 20;
         $offset = ($page - 1) * $perPage;
 
-        $events = $query->orderBy('marketTime', 'desc')
-                       ->orderBy('id', 'desc')
-                       ->offset($offset)
-                       ->limit($perPage)
-                       ->get();
+        $dataSql = sprintf(
+            'SELECT %s FROM events%s ORDER BY %s DESC, %s DESC LIMIT ? OFFSET ?',
+            $selectList,
+            $whereSql,
+            $this->quoteColumn('marketTime'),
+            $this->quoteColumn('id')
+        );
+
+        $dataBindings = array_merge($filterSql['bindings'], [$perPage, $offset]);
+        $events = collect(DB::select($dataSql, $dataBindings));
 
         $paginatedEvents = new \Illuminate\Pagination\LengthAwarePaginator(
             $events,
@@ -263,72 +271,137 @@ class EventController extends Controller
     /**
      * Apply filters with optimized raw DB queries
      */
-    private function applyFilters($query, Request $request)
+    private function buildEventFilterSql(Request $request, array $additionalConditions = []): array
     {
-        // Optimized search with raw DB queries
+        $conditions = [];
+        $bindings = [];
+
         if ($request->filled('search')) {
-            $searchTerm = $request->search;
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('eventName', 'like', $searchTerm . '%') // Prefix search for better performance
-                  ->orWhere('tournamentsName', 'like', $searchTerm . '%');
-            });
+            $conditions[] = '(' . $this->quoteColumn('eventName') . ' ILIKE ? OR ' . $this->quoteColumn('tournamentsName') . ' ILIKE ?)';
+            $bindings[] = $request->search . '%';
+            $bindings[] = $request->search . '%';
         }
 
-        // Use exact matches for better performance
         if ($request->filled('sport')) {
-            $query->where('sportId', $request->sport);
+            $conditions[] = $this->quoteColumn('sportId') . ' = ?';
+            $bindings[] = $request->sport;
         }
 
         if ($request->filled('tournament')) {
-            $query->where('tournamentsId', $request->tournament);
+            $conditions[] = $this->quoteColumn('tournamentsId') . ' = ?';
+            $bindings[] = $request->tournament;
         }
 
-        // Optimized status filtering with raw queries
         if ($request->filled('status')) {
-            switch ($request->status) {
-                case 'upcoming':
-                    $query->where('marketTime', '>', Carbon::now());
-                    break;
-                case 'in_play':
-                    // In-play: marketTime passed but event not settled/voided yet
-                    $query->where('marketTime', '<=', Carbon::now())
-                          ->where('IsSettle', 0)
-                          ->where('IsVoid', 0)
-                          ->where('IsUnsettle', 0);
-                    break;
-                case 'settled':
-                    $query->where('IsSettle', 1)->where('IsVoid', 0);
-                    break;
-                case 'unsettled':
-                    $query->where('IsUnsettle', 1)->where('IsSettle', 0)->where('IsVoid', 0);
-                    break;
-                case 'closed':
-                    // Closed: event finished but not settled (manual assumption)
-                    $query->where('IsSettle', 0)
-                          ->where('IsVoid', 0)
-                          ->where('marketTime', '<=', Carbon::now());
-                    break;
-                case 'voided':
-                    $query->where('IsVoid', 1);
-                    break;
+            $statusCondition = $this->mapEventStatusCondition($request->status);
+            if ($statusCondition) {
+                $conditions[] = $statusCondition['sql'];
+                $bindings = array_merge($bindings, $statusCondition['bindings']);
             }
         }
 
-        // Boolean filters
         if ($request->filled('highlight')) {
-            $query->where('highlight', $request->boolean('highlight'));
+            $conditions[] = $this->quoteColumn('highlight') . ' = ?';
+            $bindings[] = $request->boolean('highlight');
         }
 
         if ($request->filled('popular')) {
-            $query->where('popular', $request->boolean('popular'));
+            $conditions[] = $this->quoteColumn('popular') . ' = ?';
+            $bindings[] = $request->boolean('popular');
         }
 
         $isRecentlyAdded = $request->boolean('recently_added');
-
         if ($isRecentlyAdded) {
-            $query->where('isRecentlyAdded', true);
+            $conditions[] = $this->quoteColumn('isRecentlyAdded') . ' = ?';
+            $bindings[] = true;
         }
 
+        $dateFilters = $this->resolveEventDateFilters($request, $isRecentlyAdded);
+        if ($dateFilters['start'] && $dateFilters['end']) {
+            $conditions[] = "{$dateFilters['column']} BETWEEN ? AND ?";
+            $bindings[] = $dateFilters['start'];
+            $bindings[] = $dateFilters['end'];
+        } elseif ($dateFilters['start']) {
+            $conditions[] = "{$dateFilters['column']} >= ?";
+            $bindings[] = $dateFilters['start'];
+        } elseif ($dateFilters['end']) {
+            $conditions[] = "{$dateFilters['column']} <= ?";
+            $bindings[] = $dateFilters['end'];
+        }
+
+        if (!empty($additionalConditions['conditions'])) {
+            $conditions = array_merge($conditions, $additionalConditions['conditions']);
+            $bindings = array_merge($bindings, $additionalConditions['bindings'] ?? []);
+        }
+
+        return [
+            'conditions' => $conditions,
+            'bindings' => $bindings,
+        ];
+    }
+
+    private function getDefaultEventDateConditions(Request $request): array
+    {
+        $hasCustomDateFilter =
+            $request->boolean('event_date_from_enabled') ||
+            $request->boolean('event_date_to_enabled') ||
+            $request->boolean('time_from_enabled') ||
+            $request->boolean('time_to_enabled');
+
+        if ($hasCustomDateFilter) {
+            return ['conditions' => [], 'bindings' => []];
+        }
+
+        $timezone = config('app.timezone', 'UTC');
+        $startDate = Carbon::now($timezone)->startOfDay();
+        $endDate = Carbon::now($timezone)->addDay()->endOfDay();
+
+        $column = $this->quoteColumn('marketTime');
+
+        return [
+            'conditions' => ["{$column} BETWEEN ? AND ?"],
+            'bindings' => [
+                $startDate->format('Y-m-d H:i:s'),
+                $endDate->format('Y-m-d H:i:s'),
+            ],
+        ];
+    }
+
+    private function mapEventStatusCondition(string $status): ?array
+    {
+        $now = Carbon::now()->format('Y-m-d H:i:s');
+
+        return match ($status) {
+            'upcoming' => [
+                'sql' => $this->quoteColumn('marketTime') . ' > ?',
+                'bindings' => [$now],
+            ],
+            'in_play' => [
+                'sql' => $this->quoteColumn('marketTime') . ' <= ? AND ' . $this->quoteColumn('IsSettle') . ' = 0 AND ' . $this->quoteColumn('IsVoid') . ' = 0 AND ' . $this->quoteColumn('IsUnsettle') . ' = 0',
+                'bindings' => [$now],
+            ],
+            'settled' => [
+                'sql' => $this->quoteColumn('IsSettle') . ' = 1 AND ' . $this->quoteColumn('IsVoid') . ' = 0',
+                'bindings' => [],
+            ],
+            'unsettled' => [
+                'sql' => $this->quoteColumn('IsUnsettle') . ' = 1 AND ' . $this->quoteColumn('IsSettle') . ' = 0 AND ' . $this->quoteColumn('IsVoid') . ' = 0',
+                'bindings' => [],
+            ],
+            'closed' => [
+                'sql' => $this->quoteColumn('IsSettle') . ' = 0 AND ' . $this->quoteColumn('IsVoid') . ' = 0 AND ' . $this->quoteColumn('marketTime') . ' <= ?',
+                'bindings' => [$now],
+            ],
+            'voided' => [
+                'sql' => $this->quoteColumn('IsVoid') . ' = 1',
+                'bindings' => [],
+            ],
+            default => null,
+        };
+    }
+
+    private function resolveEventDateFilters(Request $request, bool $isRecentlyAdded): array
+    {
         $timezone = config('app.timezone', 'UTC');
         $dateFromEnabled = $request->boolean('event_date_from_enabled');
         $dateToEnabled = $request->boolean('event_date_to_enabled');
@@ -336,15 +409,12 @@ class EventController extends Controller
         $timeToEnabled = $request->boolean('time_to_enabled');
 
         $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
-
         $startDateTime = null;
         $endDateTime = null;
 
         if ($dateFromEnabled && $request->filled('event_date_from')) {
-            $dateFrom = $request->event_date_from;
             $timeComponent = '00:00:00';
-
-            if ($timeFromEnabled) {
+            if ($timeFromEnabled && $request->filled('time_from')) {
                 foreach ($timeFormats as $format) {
                     try {
                         $timeComponent = Carbon::createFromFormat($format, $request->time_from)->format('H:i:s');
@@ -356,17 +426,15 @@ class EventController extends Controller
             }
 
             try {
-                $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom . ' ' . $timeComponent, $timezone);
+                $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $request->event_date_from . ' ' . $timeComponent, $timezone);
             } catch (Exception $e) {
                 $startDateTime = Carbon::now($timezone)->startOfDay();
             }
         }
 
         if ($dateToEnabled && $request->filled('event_date_to')) {
-            $dateTo = $request->event_date_to;
             $timeComponent = '23:59:59';
-
-            if ($timeToEnabled) {
+            if ($timeToEnabled && $request->filled('time_to')) {
                 foreach ($timeFormats as $format) {
                     try {
                         $timeComponent = Carbon::createFromFormat($format, $request->time_to)->format('H:i:s');
@@ -378,51 +446,26 @@ class EventController extends Controller
             }
 
             try {
-                $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo . ' ' . $timeComponent, $timezone);
+                $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $request->event_date_to . ' ' . $timeComponent, $timezone);
             } catch (Exception $e) {
                 $endDateTime = Carbon::now($timezone)->endOfDay();
             }
         }
 
-        if ($startDateTime && $endDateTime) {
-            if ($endDateTime->lt($startDateTime)) {
-                $endDateTime = $startDateTime->copy()->endOfDay();
-            }
-
-            $start = $startDateTime->format('Y-m-d H:i:s');
-            $end = $endDateTime->format('Y-m-d H:i:s');
-
-            if ($isRecentlyAdded) {
-                $query->where(function ($q) use ($start, $end) {
-                    $q->whereBetween('createdAt', [$start, $end])
-                      ->orWhereBetween('created_at', [$start, $end]);
-                });
-            } else {
-                $query->whereBetween('marketTime', [$start, $end]);
-            }
-        } elseif ($startDateTime) {
-            $start = $startDateTime->format('Y-m-d H:i:s');
-
-            if ($isRecentlyAdded) {
-                $query->where(function ($q) use ($start) {
-                    $q->where('createdAt', '>=', $start)
-                      ->orWhere('created_at', '>=', $start);
-                });
-            } else {
-                $query->where('marketTime', '>=', $start);
-            }
-        } elseif ($endDateTime) {
-            $end = $endDateTime->format('Y-m-d H:i:s');
-
-            if ($isRecentlyAdded) {
-                $query->where(function ($q) use ($end) {
-                    $q->where('createdAt', '<=', $end)
-                      ->orWhere('created_at', '<=', $end);
-                });
-            } else {
-                $query->where('marketTime', '<=', $end);
-            }
+        if ($startDateTime && $endDateTime && $endDateTime->lt($startDateTime)) {
+            $endDateTime = $startDateTime->copy()->endOfDay();
         }
+
+        return [
+            'start' => $startDateTime ? $startDateTime->format('Y-m-d H:i:s') : null,
+            'end' => $endDateTime ? $endDateTime->format('Y-m-d H:i:s') : null,
+            'column' => $this->quoteColumn($isRecentlyAdded ? 'createdAt' : 'marketTime'),
+        ];
+    }
+
+    private function quoteColumn(string $column): string
+    {
+        return '"' . str_replace('"', '""', $column) . '"';
     }
 
     /**
@@ -561,9 +604,15 @@ class EventController extends Controller
         $this->applyFilters($query, $request);
 
         // Get all results (no pagination)
-        $events = $query->orderBy('marketTime', 'desc')
-                       ->orderBy('id', 'desc')
-                       ->get();
+        $dataSql = sprintf(
+            'SELECT %s FROM events%s ORDER BY %s DESC, %s DESC',
+            $selectList,
+            $whereSql,
+            $this->quoteColumn('marketTime'),
+            $this->quoteColumn('id')
+        );
+
+        $events = collect(DB::select($dataSql, $filterSql['bindings']));
 
         // Get sport configuration for display
         $sportConfig = config('sports.sports');

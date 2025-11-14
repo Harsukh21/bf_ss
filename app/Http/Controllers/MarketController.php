@@ -210,39 +210,49 @@ class MarketController extends Controller
 
         $marketTypesByEvent = $marketTypeRecords->groupBy('eventName');
 
-        $query = DB::table('market_lists')
-            ->select([
-                'id',
-                '_id',
-                'eventName',
-                'exEventId',
-                'exMarketId',
-                'isPreBet',
-                'marketName',
-                'marketTime',
-                'sportName',
-                'tournamentsName',
-                'type',
-                'isLive',
-                'isRecentlyAdded',
-                'status',
-                'created_at'
-            ]);
-
-        $this->applyFilters($query, $request);
-
-        $totalCount = $query->count();
-
         $page = $request->get('page', 1);
         $perPage = 15;
         $offset = ($page - 1) * $perPage;
 
-        $markets = $query
-            ->orderBy('marketTime', 'desc')
-            ->orderBy('id', 'desc')
-            ->offset($offset)
-            ->limit($perPage)
-            ->get();
+        $selectColumns = [
+            'id',
+            '_id',
+            'eventName',
+            'exEventId',
+            'exMarketId',
+            'isPreBet',
+            'marketName',
+            'marketTime',
+            'sportName',
+            'tournamentsName',
+            'type',
+            'isLive',
+            'isRecentlyAdded',
+            'status',
+            'created_at'
+        ];
+        $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
+
+        $filters = $this->buildMarketFilterSql($request);
+        $whereSql = '';
+        if (!empty($filters['conditions'])) {
+            $whereSql = ' WHERE ' . implode(' AND ', $filters['conditions']);
+        }
+
+        $countSql = "SELECT COUNT(*) as total FROM market_lists{$whereSql}";
+        $totalCountResult = DB::selectOne($countSql, $filters['bindings']);
+        $totalCount = $totalCountResult ? (int) $totalCountResult->total : 0;
+
+        $dataSql = sprintf(
+            'SELECT %s FROM market_lists%s ORDER BY %s DESC, %s DESC LIMIT ? OFFSET ?',
+            $selectList,
+            $whereSql,
+            $this->quoteColumn('marketTime'),
+            $this->quoteColumn('id')
+        );
+
+        $dataBindings = array_merge($filters['bindings'], [$perPage, $offset]);
+        $markets = collect(DB::select($dataSql, $dataBindings));
 
         $paginatedMarkets = new LengthAwarePaginator(
             $markets,
@@ -331,76 +341,14 @@ class MarketController extends Controller
             $query->where('isRecentlyAdded', true);
         }
 
-        // Date & time filter - using marketTime from market_lists table
-        $timezone = config('app.timezone', 'UTC');
-        $dateFromEnabled = $request->boolean('date_from_enabled');
-        $dateToEnabled = $request->boolean('date_to_enabled');
-        $timeFromEnabled = $request->boolean('time_from_enabled');
-        $timeToEnabled = $request->boolean('time_to_enabled');
+        $dateFilters = $this->resolveMarketDateFilters($request, $isRecentlyAdded);
 
-        $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
-
-        $startDateTime = null;
-        $endDateTime = null;
-
-        if ($dateFromEnabled && $request->filled('date_from')) {
-            $timeComponent = '00:00:00';
-
-            if ($timeFromEnabled && $request->filled('time_from')) {
-                foreach ($timeFormats as $format) {
-                    try {
-                        $timeComponent = Carbon::createFromFormat($format, $request->time_from)->format('H:i:s');
-                        break;
-                    } catch (\Exception $e) {
-                        continue;
-                    }
-                }
-            }
-
-            try {
-                $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $request->date_from . ' ' . $timeComponent, $timezone);
-            } catch (\Exception $e) {
-                $startDateTime = Carbon::now($timezone)->startOfDay();
-            }
-        }
-
-        if ($dateToEnabled && $request->filled('date_to')) {
-            $timeComponent = '23:59:59';
-
-            if ($timeToEnabled && $request->filled('time_to')) {
-                foreach ($timeFormats as $format) {
-                    try {
-                        $timeComponent = Carbon::createFromFormat($format, $request->time_to)->format('H:i:s');
-                        break;
-                    } catch (\Exception $e) {
-                        continue;
-                    }
-                }
-            }
-
-            try {
-                $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $request->date_to . ' ' . $timeComponent, $timezone);
-            } catch (\Exception $e) {
-                $endDateTime = Carbon::now($timezone)->endOfDay();
-            }
-        }
-
-        if ($startDateTime && $endDateTime) {
-            if ($endDateTime->lt($startDateTime)) {
-                $endDateTime = $startDateTime->copy()->endOfDay();
-            }
-
-            $column = $isRecentlyAdded ? 'created_at' : 'marketTime';
-            $query->whereBetween($column, [
-                $startDateTime->format('Y-m-d H:i:s'),
-                $endDateTime->format('Y-m-d H:i:s'),
-            ]);
-        } elseif ($startDateTime) {
-            $column = $isRecentlyAdded ? 'created_at' : 'marketTime';
-            $query->where($column, '>=', $startDateTime->format('Y-m-d H:i:s'));
-        } elseif ($endDateTime) {
-            $column = $isRecentlyAdded ? 'created_at' : 'marketTime';
-            $query->where($column, '<=', $endDateTime->format('Y-m-d H:i:s'));
+        if ($dateFilters['start'] && $dateFilters['end']) {
+            $query->whereBetween($dateFilters['column'], [$dateFilters['start'], $dateFilters['end']]);
+        } elseif ($dateFilters['start']) {
+            $query->where($dateFilters['column'], '>=', $dateFilters['start']);
+        } elseif ($dateFilters['end']) {
+            $query->where($dateFilters['column'], '<=', $dateFilters['end']);
         }
 
         // Search filter
@@ -470,6 +418,140 @@ class MarketController extends Controller
         }
 
         return $activeFilters;
+    }
+
+    private function buildMarketFilterSql(Request $request): array
+    {
+        $conditions = [];
+        $bindings = [];
+
+        if ($request->filled('sport')) {
+            $conditions[] = $this->quoteColumn('sportName') . ' = ?';
+            $bindings[] = $request->sport;
+        }
+
+        if ($request->filled('tournament')) {
+            $conditions[] = $this->quoteColumn('tournamentsName') . ' = ?';
+            $bindings[] = $request->tournament;
+        }
+
+        if ($request->filled('event_name')) {
+            $conditions[] = $this->quoteColumn('eventName') . ' = ?';
+            $bindings[] = $request->event_name;
+        }
+
+        if ($request->filled('market_name')) {
+            $conditions[] = $this->quoteColumn('marketName') . ' = ?';
+            $bindings[] = $request->market_name;
+        } elseif ($request->filled('type')) {
+            $conditions[] = '(' . $this->quoteColumn('marketName') . ' = ? OR ' . $this->quoteColumn('type') . ' = ?)';
+            $bindings[] = $request->type;
+            $bindings[] = $request->type;
+        }
+
+        if ($request->has('is_live')) {
+            $conditions[] = $this->quoteColumn('isLive') . ' = ?';
+            $bindings[] = true;
+        }
+
+        if ($request->has('is_prebet')) {
+            $conditions[] = $this->quoteColumn('isPreBet') . ' = ?';
+            $bindings[] = true;
+        }
+
+        $isRecentlyAdded = $request->boolean('recently_added');
+        if ($isRecentlyAdded) {
+            $conditions[] = $this->quoteColumn('isRecentlyAdded') . ' = ?';
+            $bindings[] = true;
+        }
+
+        $dateFilters = $this->resolveMarketDateFilters($request, $isRecentlyAdded);
+        if ($dateFilters['start'] && $dateFilters['end']) {
+            $conditions[] = "{$dateFilters['column']} BETWEEN ? AND ?";
+            $bindings[] = $dateFilters['start'];
+            $bindings[] = $dateFilters['end'];
+        } elseif ($dateFilters['start']) {
+            $conditions[] = "{$dateFilters['column']} >= ?";
+            $bindings[] = $dateFilters['start'];
+        } elseif ($dateFilters['end']) {
+            $conditions[] = "{$dateFilters['column']} <= ?";
+            $bindings[] = $dateFilters['end'];
+        }
+
+        return [
+            'conditions' => $conditions,
+            'bindings' => $bindings,
+        ];
+    }
+
+    private function resolveMarketDateFilters(Request $request, bool $isRecentlyAdded): array
+    {
+        $timezone = config('app.timezone', 'UTC');
+        $dateFromEnabled = $request->boolean('date_from_enabled');
+        $dateToEnabled = $request->boolean('date_to_enabled');
+        $timeFromEnabled = $request->boolean('time_from_enabled');
+        $timeToEnabled = $request->boolean('time_to_enabled');
+
+        $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
+        $startDateTime = null;
+        $endDateTime = null;
+
+        if ($dateFromEnabled && $request->filled('date_from')) {
+            $timeComponent = '00:00:00';
+
+            if ($timeFromEnabled && $request->filled('time_from')) {
+                foreach ($timeFormats as $format) {
+                    try {
+                        $timeComponent = Carbon::createFromFormat($format, $request->time_from)->format('H:i:s');
+                        break;
+                    } catch (\Exception $e) {
+                        continue;
+                    }
+                }
+            }
+
+            try {
+                $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $request->date_from . ' ' . $timeComponent, $timezone);
+            } catch (\Exception $e) {
+                $startDateTime = Carbon::now($timezone)->startOfDay();
+            }
+        }
+
+        if ($dateToEnabled && $request->filled('date_to')) {
+            $timeComponent = '23:59:59';
+
+            if ($timeToEnabled && $request->filled('time_to')) {
+                foreach ($timeFormats as $format) {
+                    try {
+                        $timeComponent = Carbon::createFromFormat($format, $request->time_to)->format('H:i:s');
+                        break;
+                    } catch (\Exception $e) {
+                        continue;
+                    }
+                }
+            }
+
+            try {
+                $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $request->date_to . ' ' . $timeComponent, $timezone);
+            } catch (\Exception $e) {
+                $endDateTime = Carbon::now($timezone)->endOfDay();
+            }
+        }
+
+        if ($startDateTime && $endDateTime && $endDateTime->lt($startDateTime)) {
+            $endDateTime = $startDateTime->copy()->endOfDay();
+        }
+
+        return [
+            'start' => $startDateTime ? $startDateTime->format('Y-m-d H:i:s') : null,
+            'end' => $endDateTime ? $endDateTime->format('Y-m-d H:i:s') : null,
+            'column' => $this->quoteColumn($isRecentlyAdded ? 'created_at' : 'marketTime'),
+        ];
+    }
+
+    private function quoteColumn(string $column): string
+    {
+        return '"' . str_replace('"', '""', $column) . '"';
     }
 
     public function export(Request $request)
