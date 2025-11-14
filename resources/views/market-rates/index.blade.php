@@ -601,6 +601,7 @@
                                                     @php
                                                         $winnerType = $rate->marketListWinnerType ?? null;
                                                         $statusLabel = $rate->marketListStatus ?? null;
+                                    $filteredVolumeMax = request('volume_max');
                                                     @endphp
                                                     @if(!empty($winnerType))
                                                         <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300">
@@ -618,6 +619,11 @@
                                                     @else
                                                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-300">Not In Play</span>
                                                     @endif
+                                @if($filteredVolumeMax !== null)
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        Volume: {{ number_format($rate->totalMatched ?? 0, 2) }}
+                                    </div>
+                                @endif
                                                 </div>
                                             </div>
                                         </td>
@@ -880,6 +886,20 @@
                     </div>
                 </div>
                 <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Times apply to the selected date.</p>
+            </div>
+
+            <!-- Volume Filter -->
+            <div class="mb-4 filter-field-group">
+                <div class="filter-field-title">Volume (Total Matched)</div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Less Than or Equal</label>
+                <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    name="volume_max"
+                    value="{{ request('volume_max') }}"
+                    placeholder="Enter max volume"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
             </div>
             
             <!-- Filter Buttons -->

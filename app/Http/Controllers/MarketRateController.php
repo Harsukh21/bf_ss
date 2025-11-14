@@ -85,6 +85,10 @@ class MarketRateController extends Controller
                     $query->where('marketName', $request->get('market_name'));
                 }
 
+                if ($request->filled('volume_max')) {
+                    $query->where('totalMatched', '<=', (float) $request->get('volume_max'));
+                }
+
                 // Apply date and time filters
                 $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
                 $startDateTime = null;
@@ -207,6 +211,7 @@ class MarketRateController extends Controller
         if ($request->filled('filter_date')) $filterCount++;
         if ($request->filled('time_from')) $filterCount++;
         if ($request->filled('time_to')) $filterCount++;
+        if ($request->filled('volume_max')) $filterCount++;
 
         return view('market-rates.index', compact(
             'marketRates',
