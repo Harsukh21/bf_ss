@@ -462,6 +462,7 @@
                 </div>
                 @php
                     $normalizedSummaryWinner = $marketListWinnerType ? ucwords(strtolower(trim($marketListWinnerType))) : null;
+                    $summaryWinnerIsVoid = $normalizedSummaryWinner && $normalizedSummaryWinner === 'Void';
                 @endphp
                 @if(!empty($normalizedSummaryWinner))
                     <div class="flex items-center gap-2">
