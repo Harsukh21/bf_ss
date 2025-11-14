@@ -202,6 +202,48 @@
                             </table>
                         </div>
                     </div>
+                    @php
+                        $gridStatusRaw = $rate->marketListStatus ?? ($rate->isCompleted ? 'Completed' : ($rate->inplay ? 'In Play' : 'Upcoming'));
+                        $gridStatusTrimmed = is_string($gridStatusRaw) ? trim($gridStatusRaw) : '';
+                        $gridStatus = $gridStatusTrimmed !== '' ? ucwords(strtolower($gridStatusTrimmed)) : 'Upcoming';
+                        $gridNormalized = strtolower(str_replace(['_', '-'], ' ', $gridStatus));
+                        $gridBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
+                        $gridPulse = false;
+                        switch ($gridNormalized) {
+                            case 'completed':
+                                $gridBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
+                                break;
+                            case 'in play':
+                                $gridBadgeClasses = 'inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
+                                $gridPulse = true;
+                                break;
+                            case 'closed':
+                                $gridBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+                                break;
+                            case 'void':
+                            case 'voided':
+                                $gridBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300';
+                                break;
+                            case 'suspended':
+                                $gridBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300';
+                                break;
+                        }
+                    @endphp
+                    <div class="mt-2 px-2 py-1 bg-gray-50 dark:bg-gray-900/30 rounded text-[11px] text-gray-700 dark:text-gray-300">
+                        <span class="font-medium">Status:</span>
+                        <span class="{{ $gridBadgeClasses }}">
+                            @if($gridPulse)
+                                <span class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
+                            @endif
+                            {{ $gridStatus }}
+                        </span>
+                        @if(!empty($rate->marketListWinnerType))
+                            <span class="ml-2 font-medium">Winner:</span>
+                            <span class="text-gray-900 dark:text-gray-100">
+                                {{ $rate->marketListSelectionName ?? $rate->marketListWinnerType }}
+                            </span>
+                        @endif
+                    </div>
                 </div>
                 @endif
             @endforeach

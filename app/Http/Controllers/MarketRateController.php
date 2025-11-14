@@ -304,6 +304,20 @@ class MarketRateController extends Controller
                         return $item->marketName === $marketRate->marketName;
                     }))
                     ->values();
+
+                $gridMeta = DB::table('market_lists')
+                    ->whereIn('exMarketId', $gridMarketRates->pluck('exMarketId')->filter()->all())
+                    ->select('exMarketId', 'status', 'winnerType', 'selectionName')
+                    ->get()
+                    ->keyBy('exMarketId');
+
+                $gridMarketRates = $gridMarketRates->map(function ($rate) use ($gridMeta) {
+                    $meta = $gridMeta->get($rate->exMarketId);
+                    $rate->marketListStatus = $meta->status ?? null;
+                    $rate->marketListWinnerType = $meta->winnerType ?? null;
+                    $rate->marketListSelectionName = $meta->selectionName ?? null;
+                    return $rate;
+                });
             }
         }
 
