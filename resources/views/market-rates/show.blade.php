@@ -456,11 +456,14 @@
                         {{ $summaryStatus }}
                     </span>
                 </div>
-                @if(!empty($marketListWinnerType))
+                @php
+                    $normalizedSummaryWinner = $marketListWinnerType ? ucwords(strtolower(trim($marketListWinnerType))) : null;
+                @endphp
+                @if(!empty($normalizedSummaryWinner))
                     <div class="flex items-center gap-2">
                         <span class="font-medium">Winner:</span>
                         <span class="text-gray-900 dark:text-gray-100">
-                            {{ $marketListSelectionName ?? $marketListWinnerType }}
+                            {{ $marketListSelectionName ?? $normalizedSummaryWinner ?? 'Void' }}
                         </span>
                     </div>
                 @endif
