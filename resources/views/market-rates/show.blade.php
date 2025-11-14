@@ -237,10 +237,14 @@
                             @endif
                             {{ $gridStatus }}
                         </span>
-                        @if(!empty($rate->marketListWinnerType))
+                        @php
+                            $gridWinnerNormalized = $rate->marketListWinnerType ? ucwords(strtolower(trim($rate->marketListWinnerType))) : null;
+                            $gridWinnerIsVoid = $gridWinnerNormalized && $gridWinnerNormalized === 'Void';
+                        @endphp
+                        @if(!empty($gridWinnerNormalized))
                             <span class="ml-2 font-medium">Winner:</span>
                             <span class="text-gray-900 dark:text-gray-100">
-                                {{ $rate->marketListSelectionName ?? $rate->marketListWinnerType }}
+                                {{ $gridWinnerIsVoid ? 'Void' : ($rate->marketListSelectionName ?? $gridWinnerNormalized) }}
                             </span>
                         @endif
                     </div>
@@ -463,7 +467,7 @@
                     <div class="flex items-center gap-2">
                         <span class="font-medium">Winner:</span>
                         <span class="text-gray-900 dark:text-gray-100">
-                            {{ $marketListSelectionName ?? $normalizedSummaryWinner ?? 'Void' }}
+                            {{ $summaryWinnerIsVoid ? 'Void' : ($marketListSelectionName ?? $normalizedSummaryWinner) }}
                         </span>
                     </div>
                 @endif

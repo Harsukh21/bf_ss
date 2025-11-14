@@ -600,13 +600,15 @@
                                                 <div>
                                                     @php
                                                         $winnerTypeRaw = $rate->marketListWinnerType ?? null;
-                                                        $winnerType = $winnerTypeRaw ? ucwords(strtolower(trim($winnerTypeRaw))) : null;
+                                                        $winnerTypeNormalized = $winnerTypeRaw ? ucwords(strtolower(trim($winnerTypeRaw))) : null;
+                                                        $isVoidWinner = $winnerTypeNormalized && $winnerTypeNormalized === 'Void';
+                                                        $winnerType = $winnerTypeNormalized;
                                                         $statusLabel = $rate->marketListStatus ?? null;
                                                         $filteredVolumeMax = request('volume_max');
                                                     @endphp
                                                     @if(!empty($winnerType))
                                                         <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300">
-                                                            Winner: {{ $rate->marketListSelectionName ?? $winnerType ?? 'Void' }}
+                                                            Winner: {{ $isVoidWinner ? 'Void' : ($rate->marketListSelectionName ?? $winnerType) }}
                                                         </span>
                                                     @elseif(!empty($statusLabel))
                                                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 dark:bg-gray-900/30 text-gray-800 dark:text-gray-200">
