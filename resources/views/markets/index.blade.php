@@ -570,30 +570,19 @@
                                                 {{ $market->type }}
                                             </span>
                                             @php
-                                                $rawStatus = $market->status;
-                                                if ($rawStatus === null || $rawStatus === '') {
-                                                    $rawStatus = $market->isLive ? 'INPLAY' : ($market->isPreBet ? 'UPCOMING' : 'UNSETTLED');
+                                                $normalizedStatus = null;
+                                                if (!is_null($market->status)) {
+                                                    $intStatus = (int) $market->status;
+                                                    $normalizedStatus = match ($intStatus) {
+                                                        1 => 'UNSETTLED',
+                                                        2 => 'UPCOMING',
+                                                        3 => 'INPLAY',
+                                                        4 => 'SETTLED',
+                                                        5 => 'VOIDED',
+                                                        6 => 'REMOVED',
+                                                        default => null,
+                                                    };
                                                 }
-
-                                                $statusLookup = [
-                                                    '1' => 'UNSETTLED',
-                                                    '2' => 'UPCOMING',
-                                                    '3' => 'INPLAY',
-                                                    '4' => 'SETTLED',
-                                                    '5' => 'VOIDED',
-                                                    '6' => 'REMOVED',
-                                                    'UNSETTLED' => 'UNSETTLED',
-                                                    'UPCOMING' => 'UPCOMING',
-                                                    'INPLAY' => 'INPLAY',
-                                                    'IN_PLAY' => 'INPLAY',
-                                                    'SETTLED' => 'SETTLED',
-                                                    'VOIDED' => 'VOIDED',
-                                                    'VOID' => 'VOIDED',
-                                                    'REMOVED' => 'REMOVED',
-                                                ];
-
-                                                $normalizedStatus = strtoupper(str_replace(['_', '-'], '', trim((string) $rawStatus)));
-                                                $normalizedStatus = $statusLookup[$normalizedStatus] ?? $normalizedStatus;
 
                                                 $statusMeta = [
                                                     'UNSETTLED' => ['label' => 'Unsettled', 'class' => 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'],
@@ -604,8 +593,13 @@
                                                     'REMOVED' => ['label' => 'Removed', 'class' => 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300'],
                                                 ];
 
-                                                $statusBadgeClass = $statusMeta[$normalizedStatus]['class'] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
-                                                $statusLabel = $statusMeta[$normalizedStatus]['label'] ?? ucwords(strtolower($normalizedStatus));
+                                                $statusBadgeClass = $normalizedStatus && isset($statusMeta[$normalizedStatus])
+                                                    ? $statusMeta[$normalizedStatus]['class']
+                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+
+                                                $statusLabel = $normalizedStatus && isset($statusMeta[$normalizedStatus])
+                                                    ? $statusMeta[$normalizedStatus]['label']
+                                                    : 'Unknown';
                                             @endphp
                                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full w-fit {{ $statusBadgeClass }}">
                                                 {{ $statusLabel }}
