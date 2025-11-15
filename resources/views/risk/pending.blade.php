@@ -282,9 +282,7 @@
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Market</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tournament</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sport</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Market Time</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sport & Status</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -319,30 +317,35 @@
                                 <div class="font-medium">{{ $market->marketName }}</div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">ID: {{ $market->id }}</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ $market->eventName }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                <div class="font-semibold text-gray-900 dark:text-gray-100">{{ $market->eventName }}</div>
+                                @if(!empty($market->completeTime))
+                                    <span class="mt-2 inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-200">
+                                        Complete: {{ \Carbon\Carbon::parse($market->completeTime)->format('M d, Y h:i A') }}
+                                    </span>
+                                @endif
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ $market->tournamentsName }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300">
-                                    {{ $market->sportName ?? 'N/A' }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                @php
-                                    $statusMap = [
-                                        4 => ['label' => 'Settled', 'class' => 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'],
-                                        5 => ['label' => 'Voided', 'class' => 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300'],
-                                    ];
-                                    $meta = $statusMap[$market->status] ?? ['label' => 'Unknown', 'class' => 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'];
-                                @endphp
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $meta['class'] }}">{{ $meta['label'] }}</span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                {{ $market->marketTime ? \Carbon\Carbon::parse($market->marketTime)->format('M d, Y h:i A') : 'N/A' }}
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300">
+                                        {{ $market->sportName ?? 'N/A' }}
+                                    </span>
+                                    @php
+                                        $statusMap = [
+                                            4 => ['label' => 'Settled', 'class' => 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'],
+                                            5 => ['label' => 'Voided', 'class' => 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300'],
+                                        ];
+                                        $meta = $statusMap[$market->status] ?? ['label' => 'Unknown', 'class' => 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'];
+                                    @endphp
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $meta['class'] }}">{{ $meta['label'] }}</span>
+                                </div>
                             </td>
                         </tr>
                         <tr class="bg-gray-50/60 dark:bg-gray-800/70 text-xs text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700">
                             <td colspan="7" class="px-6 py-3">
                                 <div class="flex flex-wrap items-center gap-6 market-labels-wrapper" data-market-id="{{ $market->id }}" data-update-url="{{ route('risk.markets.labels', $market->id) }}">
+                                    <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Labels:</span>
                                     @foreach($labelStates as $key => $value)
                                         @php $checkboxId = "market-option-{$market->id}-{$key}"; @endphp
                                         <label for="{{ $checkboxId }}" class="inline-flex items-center gap-2">

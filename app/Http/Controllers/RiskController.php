@@ -45,20 +45,22 @@ class RiskController extends Controller
     {
         $query = DB::table('market_lists')
             ->select([
-                'id',
-                'marketName',
-                'eventName',
-                'tournamentsName',
-                'sportName',
-                'status',
-                'winnerType',
-                'selectionName',
-                'marketTime',
-                'labels',
-                'is_done',
-                'remark',
-                'created_at',
+                'market_lists.id',
+                'market_lists.marketName',
+                'market_lists.eventName',
+                'market_lists.tournamentsName',
+                'market_lists.sportName',
+                'market_lists.status',
+                'market_lists.winnerType',
+                'market_lists.selectionName',
+                'market_lists.marketTime',
+                'market_lists.labels',
+                'market_lists.is_done',
+                'market_lists.remark',
+                'events.completeTime',
+                'market_lists.created_at',
             ])
+            ->leftJoin('events', 'events.exEventId', '=', 'market_lists.exEventId')
             ->whereIn('status', $statuses)
             ->when($onlyDone, function ($q) {
                 $q->where('is_done', true);
