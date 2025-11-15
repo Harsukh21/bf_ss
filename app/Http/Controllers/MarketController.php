@@ -641,20 +641,28 @@ class MarketController extends Controller
             ]);
 
             // Add data rows
+            $statusLookup = [
+                1 => 'UNSETTLED',
+                2 => 'UPCOMING',
+                3 => 'INPLAY',
+                4 => 'SETTLED',
+                5 => 'VOIDED',
+                6 => 'REMOVED',
+            ];
+
             foreach ($markets as $market) {
                 $status = $market->status;
-
-                if (!$status) {
+                if (!is_null($status) && isset($statusLookup[(int) $status])) {
+                    $statusLabel = $statusLookup[(int) $status];
+                } else {
                     if ($market->isLive) {
-                        $status = 'Live';
+                        $statusLabel = 'INPLAY';
                     } elseif ($market->isPreBet) {
-                        $status = 'Pre-bet';
+                        $statusLabel = 'UPCOMING';
                     } else {
-                        $status = 'Scheduled';
+                        $statusLabel = 'UNSETTLED';
                     }
                 }
-
-                $status = strtoupper($status);
 
                 fputcsv($file, [
                     $market->id,
@@ -665,7 +673,7 @@ class MarketController extends Controller
                     $market->sportName,
                     $market->tournamentsName,
                     $market->type,
-                    $status,
+                    $statusLabel,
                     $market->marketTime,
                     $market->created_at
                 ]);
