@@ -571,42 +571,43 @@
                                             </span>
                                             @php
                                                 $rawStatus = $market->status;
-                                                if (is_null($rawStatus) || $rawStatus === '') {
-                                                    if ($market->isLive) {
-                                                        $rawStatus = 'Live';
-                                                    } elseif ($market->isPreBet) {
-                                                        $rawStatus = 'Pre-bet';
-                                                    } else {
-                                                        $rawStatus = 'Scheduled';
-                                                    }
+                                                if ($rawStatus === null || $rawStatus === '') {
+                                                    $rawStatus = $market->isLive ? 'INPLAY' : ($market->isPreBet ? 'UPCOMING' : 'UNSETTLED');
                                                 }
 
-                                                $normalizedStatus = strtolower(trim($rawStatus));
-                                                $normalizedStatus = str_replace(['_', '-'], ' ', $normalizedStatus);
-                                                $statusLabel = ucwords($normalizedStatus);
-
-                                                $statusClassMap = [
-                                                    'open' => 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300',
-                                                    'scheduled' => 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300',
-                                                    'live' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
-                                                    'in play' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
-                                                    'suspended' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
-                                                    'pre bet' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
-                                                    'pre-bet' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
-                                                    'closed' => 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
-                                                    'settled' => 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300',
-                                                    'void' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
-                                                    'voided' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
-                                                    'cancelled' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
+                                                $statusLookup = [
+                                                    '1' => 'UNSETTLED',
+                                                    '2' => 'UPCOMING',
+                                                    '3' => 'INPLAY',
+                                                    '4' => 'SETTLED',
+                                                    '5' => 'VOIDED',
+                                                    '6' => 'REMOVED',
+                                                    'UNSETTLED' => 'UNSETTLED',
+                                                    'UPCOMING' => 'UPCOMING',
+                                                    'INPLAY' => 'INPLAY',
+                                                    'IN_PLAY' => 'INPLAY',
+                                                    'SETTLED' => 'SETTLED',
+                                                    'VOIDED' => 'VOIDED',
+                                                    'VOID' => 'VOIDED',
+                                                    'REMOVED' => 'REMOVED',
                                                 ];
 
-                                                $statusBadgeClass = $statusClassMap[$normalizedStatus] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
-                                                $showPulse = in_array($normalizedStatus, ['live', 'in play']);
+                                                $normalizedStatus = strtoupper(str_replace(['_', '-'], '', trim((string) $rawStatus)));
+                                                $normalizedStatus = $statusLookup[$normalizedStatus] ?? $normalizedStatus;
+
+                                                $statusMeta = [
+                                                    'UNSETTLED' => ['label' => 'Unsettled', 'class' => 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'],
+                                                    'UPCOMING' => ['label' => 'Upcoming', 'class' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300'],
+                                                    'INPLAY' => ['label' => 'In Play', 'class' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'],
+                                                    'SETTLED' => ['label' => 'Settled', 'class' => 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'],
+                                                    'VOIDED' => ['label' => 'Voided', 'class' => 'bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200'],
+                                                    'REMOVED' => ['label' => 'Removed', 'class' => 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300'],
+                                                ];
+
+                                                $statusBadgeClass = $statusMeta[$normalizedStatus]['class'] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+                                                $statusLabel = $statusMeta[$normalizedStatus]['label'] ?? ucwords(strtolower($normalizedStatus));
                                             @endphp
                                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full w-fit {{ $statusBadgeClass }}">
-                                                @if($showPulse)
-                                                    <span class="w-2 h-2 bg-red-400 rounded-full mr-1 animate-pulse"></span>
-                                                @endif
                                                 {{ $statusLabel }}
                                             </span>
                                         </div>
