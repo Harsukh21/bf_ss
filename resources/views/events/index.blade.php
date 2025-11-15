@@ -418,6 +418,25 @@
 @endpush
 
 @section('content')
+@php
+    $statusOptions = $statusOptions ?? [
+        1 => 'Unsettled',
+        2 => 'Upcoming',
+        3 => 'In Play',
+        4 => 'Settled',
+        5 => 'Voided',
+        6 => 'Removed',
+    ];
+
+    $statusBadgeMeta = [
+        1 => ['label' => 'Unsettled', 'class' => 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'],
+        2 => ['label' => 'Upcoming', 'class' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300'],
+        3 => ['label' => 'In Play', 'class' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'],
+        4 => ['label' => 'Settled', 'class' => 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'],
+        5 => ['label' => 'Voided', 'class' => 'bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200'],
+        6 => ['label' => 'Removed', 'class' => 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300'],
+    ];
+@endphp
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
         <!-- Header -->
         <div class="mb-6">
@@ -477,8 +496,10 @@
                         $activeFilters[] = ['label' => 'Tournament', 'value' => $tournamentName ?? request('tournament'), 'remove' => ['tournament']];
                     }
 
-                    if (request('status')) {
-                        $activeFilters[] = ['label' => 'Status', 'value' => ucfirst(str_replace('_', ' ', request('status'))), 'remove' => ['status']];
+                    if (request()->filled('status')) {
+                        $statusValue = (int) request('status');
+                        $statusLabel = $statusOptions[$statusValue] ?? request('status');
+                        $activeFilters[] = ['label' => 'Status', 'value' => $statusLabel, 'remove' => ['status']];
                     }
 
                     if ($dateFromEnabled) {
@@ -783,12 +804,24 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        @if($event->IsSettle)
+                                        @php
+                                            $matchOddsStatus = isset($event->matchOddsStatus) ? (int) $event->matchOddsStatus : null;
+                                            $statusInfo = $matchOddsStatus && isset($statusBadgeMeta[$matchOddsStatus])
+                                                ? $statusBadgeMeta[$matchOddsStatus]
+                                                : null;
+                                        @endphp
+                                        @if($statusInfo)
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $statusInfo['class'] }}">
+                                                {{ $statusInfo['label'] }}
+                                            </span>
+                                        @elseif($event->IsSettle)
                                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">Settled</span>
                                         @elseif($event->IsVoid)
                                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300">Void</span>
                                         @elseif($event->IsUnsettle)
                                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">Unsettled</span>
+                                        @else
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">Unknown</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -871,12 +904,11 @@
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
                 <select name="status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     <option value="">All Status</option>
-                    <option value="upcoming" {{ request('status') == 'upcoming' ? 'selected' : '' }}>Upcoming</option>
-                    <option value="in_play" {{ request('status') == 'in_play' ? 'selected' : '' }}>In-Play</option>
-                    <option value="settled" {{ request('status') == 'settled' ? 'selected' : '' }}>Settled</option>
-                    <option value="unsettled" {{ request('status') == 'unsettled' ? 'selected' : '' }}>Unsettled</option>
-                    <option value="closed" {{ request('status') == 'closed' ? 'selected' : '' }}>Closed</option>
-                    <option value="voided" {{ request('status') == 'voided' ? 'selected' : '' }}>Voided</option>
+                    @foreach($statusOptions as $value => $label)
+                        <option value="{{ $value }}" {{ (string) request('status') === (string) $value ? 'selected' : '' }}>
+                            {{ $label }}
+                        </option>
+                    @endforeach
                 </select>
             </div>
             

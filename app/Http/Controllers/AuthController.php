@@ -90,34 +90,28 @@ class AuthController extends Controller
         $timezone = config('app.timezone', 'UTC');
         $now = Carbon::now($timezone);
 
+        $statusMap = $this->getEventStatusMap();
+        $statusStyles = $this->getEventStatusStyles();
+        $matchOddsExpr = $this->getMatchOddsStatusExpression('e');
+
+        $statusCounts = DB::table('events as e')
+            ->selectRaw($matchOddsExpr . ' as match_status, COUNT(*) as total')
+            ->groupBy('match_status')
+            ->pluck('total', 'match_status')
+            ->filter(fn ($_, $status) => !is_null($status))
+            ->mapWithKeys(fn ($count, $status) => [(int) $status => $count])
+            ->toArray();
+
+        $totalEvents = DB::table('events')->count();
+
         $eventStats = [
-            'total' => DB::table('events')->count(),
-            'upcoming' => DB::table('events')
-                ->whereNotNull('marketTime')
-                ->where('marketTime', '>', $now)
-                ->count(),
-            'in_play' => DB::table('events')
-                ->whereNotNull('marketTime')
-                ->where('marketTime', '<=', $now)
-                ->where('IsSettle', 0)
-                ->where('IsVoid', 0)
-                ->where('IsUnsettle', 0)
-                ->count(),
-            'settled' => DB::table('events')
-                ->where('IsSettle', 1)
-                ->where('IsVoid', 0)
-                ->count(),
-            'unsettled' => DB::table('events')
-                ->where('IsUnsettle', 1)
-                ->where('IsSettle', 0)
-                ->where('IsVoid', 0)
-                ->count(),
-            'closed' => DB::table('events')
-                ->where('isCompleted', true)
-                ->count(),
-            'voided' => DB::table('events')
-                ->where('IsVoid', 1)
-                ->count(),
+            'total' => $totalEvents,
+            'unsettled' => $statusCounts[1] ?? 0,
+            'upcoming' => $statusCounts[2] ?? 0,
+            'in_play' => $statusCounts[3] ?? 0,
+            'settled' => $statusCounts[4] ?? 0,
+            'voided' => $statusCounts[5] ?? 0,
+            'removed' => $statusCounts[6] ?? 0,
         ];
 
         $flagCounts = [
@@ -146,33 +140,38 @@ class AuthController extends Controller
                 'popular',
                 'marketTime',
                 'createdAt',
+                DB::raw($this->getMatchOddsStatusExpression('events') . ' as "matchOddsStatus"'),
             ])
             ->orderByRaw('COALESCE("marketTime", "createdAt") DESC')
             ->limit(5)
             ->get()
-            ->map(function ($event) use ($now, $timezone) {
+            ->map(function ($event) use ($now, $timezone, $statusStyles) {
                 $eventTime = $event->marketTime ? Carbon::parse($event->marketTime, $timezone) : null;
-                $status = 'Scheduled';
-                $statusClass = 'bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-200';
+                $matchStatus = $event->matchOddsStatus !== null ? (int) $event->matchOddsStatus : null;
 
-                if ($event->IsVoid) {
-                    $status = 'Voided';
-                    $statusClass = 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300';
-                } elseif ($event->IsSettle) {
-                    $status = 'Settled';
-                    $statusClass = 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
-                } elseif ($event->isCompleted) {
-                    $status = 'Closed';
-                    $statusClass = 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300';
-                } elseif ($event->IsUnsettle) {
-                    $status = 'Unsettled';
-                    $statusClass = 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
-                } elseif ($eventTime && $eventTime->gt($now)) {
-                    $status = 'Upcoming';
-                    $statusClass = 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300';
-                } elseif ($eventTime && $eventTime->lte($now)) {
-                    $status = 'In-Play';
-                    $statusClass = 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300';
+                if ($matchStatus && isset($statusStyles[$matchStatus])) {
+                    $status = $statusStyles[$matchStatus]['label'];
+                    $statusClass = $statusStyles[$matchStatus]['badge'];
+                } else {
+                    $status = 'Unknown';
+                    $statusClass = 'bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-200';
+
+                    if ($event->IsVoid) {
+                        $status = 'Voided';
+                        $statusClass = 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300';
+                    } elseif ($event->IsSettle) {
+                        $status = 'Settled';
+                        $statusClass = 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
+                    } elseif ($event->IsUnsettle) {
+                        $status = 'Unsettled';
+                        $statusClass = 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
+                    } elseif ($eventTime && $eventTime->gt($now)) {
+                        $status = 'Upcoming';
+                        $statusClass = 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300';
+                    } elseif ($eventTime && $eventTime->lte($now)) {
+                        $status = 'In-Play';
+                        $statusClass = 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300';
+                    }
                 }
 
                 $event->status_label = $status;
@@ -184,38 +183,27 @@ class AuthController extends Controller
                 return $event;
             });
 
-        $statusBreakdown = [
-            [
-                'label' => 'Upcoming',
-                'count' => $eventStats['upcoming'],
-                'color' => 'bg-blue-500',
-            ],
-            [
-                'label' => 'In-Play',
-                'count' => $eventStats['in_play'],
-                'color' => 'bg-purple-500',
-            ],
-            [
-                'label' => 'Settled',
-                'count' => $eventStats['settled'],
-                'color' => 'bg-green-500',
-            ],
-            [
-                'label' => 'Unsettled',
-                'count' => $eventStats['unsettled'],
-                'color' => 'bg-yellow-500',
-            ],
-            [
-                'label' => 'Closed',
-                'count' => $eventStats['closed'],
-                'color' => 'bg-indigo-500',
-            ],
-            [
-                'label' => 'Voided',
-                'count' => $eventStats['voided'],
-                'color' => 'bg-red-500',
-            ],
-        ];
+        $statusBreakdown = collect($statusStyles)
+            ->map(function ($style, $statusId) use ($eventStats) {
+                $keyMap = [
+                    1 => 'unsettled',
+                    2 => 'upcoming',
+                    3 => 'in_play',
+                    4 => 'settled',
+                    5 => 'voided',
+                    6 => 'removed',
+                ];
+
+                $statKey = $keyMap[$statusId] ?? null;
+
+                return [
+                    'label' => $style['label'],
+                    'count' => $statKey ? ($eventStats[$statKey] ?? 0) : 0,
+                    'color' => $style['dot'],
+                ];
+            })
+            ->values()
+            ->all();
 
         return response()
             ->view('dashboard', [
@@ -224,12 +212,73 @@ class AuthController extends Controller
                 'marketStats' => $marketStats,
                 'recentEvents' => $recentEvents,
                 'statusBreakdown' => $statusBreakdown,
+                'statusStyles' => $statusStyles,
             ])
             ->withHeaders([
                 'Cache-Control' => 'no-cache, no-store, must-revalidate, max-age=0',
                 'Pragma' => 'no-cache',
                 'Expires' => 'Sat, 01 Jan 1990 00:00:00 GMT'
             ]);
+    }
+
+    private function getEventStatusMap(): array
+    {
+        return [
+            1 => 'Unsettled',
+            2 => 'Upcoming',
+            3 => 'In Play',
+            4 => 'Settled',
+            5 => 'Voided',
+            6 => 'Removed',
+        ];
+    }
+
+    private function getEventStatusStyles(): array
+    {
+        return [
+            1 => [
+                'label' => 'Unsettled',
+                'badge' => 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300',
+                'dot' => 'bg-purple-500',
+            ],
+            2 => [
+                'label' => 'Upcoming',
+                'badge' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
+                'dot' => 'bg-yellow-500',
+            ],
+            3 => [
+                'label' => 'In Play',
+                'badge' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
+                'dot' => 'bg-red-500',
+            ],
+            4 => [
+                'label' => 'Settled',
+                'badge' => 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300',
+                'dot' => 'bg-green-500',
+            ],
+            5 => [
+                'label' => 'Voided',
+                'badge' => 'bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
+                'dot' => 'bg-gray-500',
+            ],
+            6 => [
+                'label' => 'Removed',
+                'badge' => 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300',
+                'dot' => 'bg-orange-500',
+            ],
+        ];
+    }
+
+    private function getMatchOddsStatusExpression(string $eventAlias = 'events'): string
+    {
+        $quotedAlias = '"' . str_replace('"', '""', $eventAlias) . '"';
+
+        return '(SELECT ml."status"
+            FROM market_lists ml
+            WHERE ml."type" = \'match_odds\'
+              AND ml."exEventId" = ' . $quotedAlias . '."exEventId"
+            ORDER BY ml."id" DESC
+            LIMIT 1)';
     }
 }
 

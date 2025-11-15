@@ -61,6 +61,7 @@ class EventController extends Controller
             'createdAt'
         ];
         $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
+        $selectList .= ', ' . $this->getMatchOddsStatusSelect();
 
         $hasCustomDateFilter =
             $request->boolean('event_date_from_enabled') ||
@@ -125,6 +126,7 @@ class EventController extends Controller
             'sports' => $sports,
             'tournaments' => $tournaments,
             'sportConfig' => $sportConfig,
+            'statusOptions' => $this->getEventStatusMap(),
             'tournamentsBySport' => $tournamentsBySport,
             'pageTitle' => 'Event List',
             'pageHeading' => 'Event List',
@@ -179,6 +181,7 @@ class EventController extends Controller
             'createdAt'
         ];
         $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
+        $selectList .= ', ' . $this->getMatchOddsStatusSelect();
 
         $defaultDateFilters = $this->getDefaultEventDateConditions($request);
         $filterSql = $this->buildEventFilterSql($request, $defaultDateFilters);
@@ -226,6 +229,7 @@ class EventController extends Controller
             'sports' => $sports,
             'tournaments' => $tournaments,
             'sportConfig' => $sportConfig,
+            'statusOptions' => $this->getEventStatusMap(),
             'tournamentsBySport' => $tournamentsBySport,
             'pageTitle' => 'All Events List',
             'pageHeading' => 'All Events List',
@@ -373,35 +377,51 @@ class EventController extends Controller
 
     private function mapEventStatusCondition(string $status): ?array
     {
-        $now = Carbon::now()->format('Y-m-d H:i:s');
+        $statusValue = (int) $status;
+        $statusMap = $this->getEventStatusMap();
 
-        return match ($status) {
-            'upcoming' => [
-                'sql' => $this->quoteColumn('marketTime') . ' > ?',
-                'bindings' => [$now],
-            ],
-            'in_play' => [
-                'sql' => $this->quoteColumn('marketTime') . ' <= ? AND ' . $this->quoteColumn('IsSettle') . ' = 0 AND ' . $this->quoteColumn('IsVoid') . ' = 0 AND ' . $this->quoteColumn('IsUnsettle') . ' = 0',
-                'bindings' => [$now],
-            ],
-            'settled' => [
-                'sql' => $this->quoteColumn('IsSettle') . ' = 1 AND ' . $this->quoteColumn('IsVoid') . ' = 0',
-                'bindings' => [],
-            ],
-            'unsettled' => [
-                'sql' => $this->quoteColumn('IsUnsettle') . ' = 1 AND ' . $this->quoteColumn('IsSettle') . ' = 0 AND ' . $this->quoteColumn('IsVoid') . ' = 0',
-                'bindings' => [],
-            ],
-            'closed' => [
-                'sql' => $this->quoteColumn('IsSettle') . ' = 0 AND ' . $this->quoteColumn('IsVoid') . ' = 0 AND ' . $this->quoteColumn('marketTime') . ' <= ?',
-                'bindings' => [$now],
-            ],
-            'voided' => [
-                'sql' => $this->quoteColumn('IsVoid') . ' = 1',
-                'bindings' => [],
-            ],
-            default => null,
-        };
+        if (!array_key_exists($statusValue, $statusMap)) {
+            return null;
+        }
+
+        $eventExEventColumn = $this->quoteColumn('exEventId');
+
+        $sql = 'EXISTS (
+            SELECT 1
+            FROM market_lists ml_status
+            WHERE ml_status."exEventId" = ' . $eventExEventColumn . '
+              AND ml_status."type" = ?
+              AND ml_status."status" = ?
+        )';
+
+        return [
+            'sql' => $sql,
+            'bindings' => ['match_odds', $statusValue],
+        ];
+    }
+
+    private function getEventStatusMap(): array
+    {
+        return [
+            1 => 'Unsettled',
+            2 => 'Upcoming',
+            3 => 'In Play',
+            4 => 'Settled',
+            5 => 'Voided',
+            6 => 'Removed',
+        ];
+    }
+
+    private function getMatchOddsStatusSelect(): string
+    {
+        $eventExEventColumn = $this->quoteColumn('exEventId');
+
+        return '(SELECT ml."status"
+            FROM market_lists ml
+            WHERE ml."type" = \'match_odds\'
+              AND ml."exEventId" = ' . $eventExEventColumn . '
+            ORDER BY ml."id" DESC
+            LIMIT 1) AS "matchOddsStatus"';
     }
 
     private function resolveEventDateFilters(Request $request, bool $isRecentlyAdded): array
@@ -602,6 +622,7 @@ class EventController extends Controller
             'createdAt'
         ];
         $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
+        $selectList .= ', ' . $this->getMatchOddsStatusSelect();
 
         $filterSql = $this->buildEventFilterSql($request, ['conditions' => [], 'bindings' => []]);
         $whereSql = !empty($filterSql['conditions'])
@@ -620,6 +641,7 @@ class EventController extends Controller
 
         // Get sport configuration for display
         $sportConfig = config('sports.sports');
+        $statusMap = $this->getEventStatusMap();
 
         // Prepare CSV data
         $filename = 'events_export_' . date('Y-m-d_His') . '.csv';
@@ -629,7 +651,7 @@ class EventController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($events, $sportConfig) {
+        $callback = function() use ($events, $sportConfig, $statusMap) {
             $file = fopen('php://output', 'w');
             
             // Add CSV headers
@@ -651,15 +673,10 @@ class EventController extends Controller
 
             // Add data rows
             foreach ($events as $event) {
-                // Determine status
-                $status = 'Unsettled';
-                if ($event->IsVoid) {
-                    $status = 'Void';
-                } elseif ($event->IsSettle) {
-                    $status = 'Settled';
-                } elseif ($event->IsUnsettle) {
-                    $status = 'Unsettled';
-                }
+                $statusValue = isset($event->matchOddsStatus) ? (int) $event->matchOddsStatus : null;
+                $status = $statusValue && isset($statusMap[$statusValue])
+                    ? $statusMap[$statusValue]
+                    : 'Unknown';
 
                 // Get sport name from config
                 $sportName = $sportConfig[$event->sportId] ?? $event->sportId;
