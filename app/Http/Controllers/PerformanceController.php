@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class PerformanceController extends Controller
 {
@@ -16,6 +17,7 @@ class PerformanceController extends Controller
         $diskInfo = $this->getDiskInfo();
         $networkInfo = $this->getNetworkInfo();
         $processInfo = $this->getProcessInfo();
+        $rateTableStats = $this->getRateTableStats();
 
         return view('performance.index', compact(
             'systemInfo',
@@ -24,7 +26,8 @@ class PerformanceController extends Controller
             'memoryInfo',
             'diskInfo',
             'networkInfo',
-            'processInfo'
+            'processInfo',
+            'rateTableStats'
         ));
     }
 
@@ -39,6 +42,7 @@ class PerformanceController extends Controller
         $memoryInfo = $this->getMemoryInfo();
         $diskInfo = $this->getDiskInfo();
         $databaseInfo = $this->getDatabaseInfo();
+        $rateTableStats = $this->getRateTableStats();
         
         // Calculate CPU usage percentage from load average
         $cpuUsage = 0;
@@ -83,6 +87,7 @@ class PerformanceController extends Controller
                 'total' => $this->getRequestStats()['total'] ?? 0,
                 'average_time' => $this->getRequestStats()['average_time'] ?? 0,
             ],
+            'rate_tables' => $rateTableStats['summary'] ?? null,
             'timestamp' => now()->format('H:i:s'),
             'uptime' => $systemInfo['uptime'] ?? 'N/A'
         ]);
@@ -304,6 +309,62 @@ class PerformanceController extends Controller
         }
         
         return ['total' => 'N/A', 'available' => 'N/A', 'used' => 'N/A', 'usage_percentage' => 0];
+    }
+
+    private function getRateTableStats(): array
+    {
+        $connection = DB::connection();
+        if ($connection->getDriverName() !== 'pgsql') {
+            return [
+                'summary' => null,
+                'top_tables' => [],
+            ];
+        }
+
+        return Cache::remember('performance.rate_tables', 60, function () {
+            $summary = DB::selectOne('
+                SELECT COUNT(*) AS total_tables,
+                       COALESCE(SUM(pg_total_relation_size(relid)), 0) AS total_size_bytes,
+                       COALESCE(SUM(n_live_tup), 0) AS total_rows
+                FROM pg_stat_user_tables
+                WHERE relname LIKE \'market_rates_%\'
+            ');
+
+            $topTables = DB::select('
+                SELECT relname,
+                       pg_total_relation_size(relid) AS total_size_bytes,
+                       n_live_tup,
+                       last_vacuum,
+                       last_autovacuum
+                FROM pg_stat_user_tables
+                WHERE relname LIKE \'market_rates_%\'
+                ORDER BY total_size_bytes DESC
+                LIMIT 10
+            ');
+
+            $summaryData = [
+                'total_tables' => (int) ($summary->total_tables ?? 0),
+                'total_size_bytes' => (int) ($summary->total_size_bytes ?? 0),
+                'total_rows' => (int) ($summary->total_rows ?? 0),
+                'total_size' => $this->formatBytes($summary->total_size_bytes ?? 0),
+            ];
+
+            $topTablesData = collect($topTables)->map(function ($table) {
+                return [
+                    'name' => $table->relname,
+                    'size_bytes' => (int) $table->total_size_bytes,
+                    'size' => $this->formatBytes($table->total_size_bytes),
+                    'rows' => (int) $table->n_live_tup,
+                    'last_vacuum' => $table->last_vacuum,
+                    'last_autovacuum' => $table->last_autovacuum,
+                ];
+            })->toArray();
+
+            return [
+                'summary' => $summaryData,
+                'top_tables' => $topTablesData,
+            ];
+        });
     }
 
     private function formatBytes($bytes, $precision = 2)

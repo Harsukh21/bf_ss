@@ -63,12 +63,6 @@ class EventController extends Controller
         $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
         $selectList .= ', ' . $this->getMatchOddsStatusSelect();
 
-        $hasCustomDateFilter =
-            $request->boolean('event_date_from_enabled') ||
-            $request->boolean('event_date_to_enabled') ||
-            $request->boolean('time_from_enabled') ||
-            $request->boolean('time_to_enabled');
-
         $isRecentlyAdded = $request->boolean('recently_added');
 
         $defaultDateFilters = $this->getDefaultEventDateConditions($request);
@@ -82,6 +76,8 @@ class EventController extends Controller
         $countSql = "SELECT COUNT(*) AS total FROM events{$whereSql}";
         $totalCountResult = DB::selectOne($countSql, $filterSql['bindings']);
         $totalCount = $totalCountResult ? (int) $totalCountResult->total : 0;
+
+        $statusSummary = $this->fetchEventStatusSummary($whereSql, $filterSql['bindings']);
         
         // Apply pagination manually for better performance
         $page = $request->get('page', 1);
@@ -131,6 +127,7 @@ class EventController extends Controller
             'pageTitle' => 'Event List',
             'pageHeading' => 'Event List',
             'pageSubheading' => 'Events for today and tomorrow are shown here.',
+            'statusSummary' => $statusSummary,
         ]);
     }
 
@@ -183,9 +180,8 @@ class EventController extends Controller
         $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
         $selectList .= ', ' . $this->getMatchOddsStatusSelect();
 
-        $defaultDateFilters = $this->getDefaultEventDateConditions($request);
+        $defaultDateFilters = ['conditions' => [], 'bindings' => []];
         $filterSql = $this->buildEventFilterSql($request, $defaultDateFilters);
-        $filterSql = $this->buildEventFilterSql($request, ['conditions' => [], 'bindings' => []]);
         $whereSql = !empty($filterSql['conditions'])
             ? ' WHERE ' . implode(' AND ', $filterSql['conditions'])
             : '';
@@ -223,6 +219,7 @@ class EventController extends Controller
         $paginatedEvents->appends($request->query());
 
         $sportConfig = config('sports.sports');
+        $statusSummary = $this->fetchEventStatusSummary($whereSql, $filterSql['bindings']);
 
         return view('events.all', [
             'paginatedEvents' => $paginatedEvents,
@@ -234,6 +231,7 @@ class EventController extends Controller
             'pageTitle' => 'All Events List',
             'pageHeading' => 'All Events List',
             'pageSubheading' => 'Browse every scheduled event without date limits',
+            'statusSummary' => $statusSummary,
         ]);
     }
 
@@ -414,14 +412,81 @@ class EventController extends Controller
 
     private function getMatchOddsStatusSelect(): string
     {
-        $eventExEventColumn = $this->quoteColumn('exEventId');
+        return $this->getEffectiveEventStatusExpression() . ' AS "matchOddsStatus"';
+    }
+
+    private function getMatchOddsStatusExpression(?string $tableAlias = null): string
+    {
+        if ($tableAlias) {
+            $column = '"' . str_replace('"', '""', $tableAlias) . '"."exEventId"';
+        } else {
+            $column = $this->quoteColumn('exEventId');
+        }
 
         return '(SELECT ml."status"
             FROM market_lists ml
             WHERE ml."type" = \'match_odds\'
-              AND ml."exEventId" = ' . $eventExEventColumn . '
+              AND ml."exEventId" = ' . $column . '
             ORDER BY ml."id" DESC
-            LIMIT 1) AS "matchOddsStatus"';
+            LIMIT 1)';
+    }
+
+    private function getEffectiveEventStatusExpression(?string $tableAlias = null): string
+    {
+        $matchStatusExpr = $this->getMatchOddsStatusExpression($tableAlias);
+
+        $column = function (string $columnName) use ($tableAlias): string {
+            if ($tableAlias) {
+                return '"' . str_replace('"', '""', $tableAlias) . '"."' . str_replace('"', '""', $columnName) . '"';
+            }
+            return $this->quoteColumn($columnName);
+        };
+
+        return sprintf(
+            'COALESCE(
+                %s,
+                CASE
+                    WHEN %s = 1 THEN 4
+                    WHEN %s = 1 THEN 5
+                    WHEN %s = 1 THEN 1
+                    ELSE NULL
+                END
+            )',
+            $matchStatusExpr,
+            $column('IsSettle'),
+            $column('IsVoid'),
+            $column('IsUnsettle')
+        );
+    }
+
+    private function fetchEventStatusSummary(string $whereSql, array $bindings): array
+    {
+        $statusExpr = $this->getEffectiveEventStatusExpression();
+
+        $statusSql = sprintf(
+            'SELECT match_status, COUNT(*) AS total FROM (
+                SELECT %s AS match_status FROM events%s
+            ) AS status_source
+            GROUP BY match_status',
+            $statusExpr,
+            $whereSql
+        );
+
+        $rows = DB::select($statusSql, $bindings);
+
+        $counts = [];
+        foreach ($rows as $row) {
+            if ($row->match_status !== null) {
+                $counts[(int) $row->match_status] = (int) $row->total;
+            }
+        }
+
+        $summary = [];
+        foreach ($this->getEventStatusMap() as $statusId => $label) {
+            $summary[$statusId] = $counts[$statusId] ?? 0;
+        }
+
+        return $summary;
     }
 
     private function resolveEventDateFilters(Request $request, bool $isRecentlyAdded): array

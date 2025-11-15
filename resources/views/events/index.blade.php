@@ -428,6 +428,8 @@
         6 => 'Removed',
     ];
 
+    $statusSummary = $statusSummary ?? [];
+
     $statusBadgeMeta = [
         1 => ['label' => 'Unsettled', 'class' => 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'],
         2 => ['label' => 'Upcoming', 'class' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300'],
@@ -435,6 +437,15 @@
         4 => ['label' => 'Settled', 'class' => 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'],
         5 => ['label' => 'Voided', 'class' => 'bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200'],
         6 => ['label' => 'Removed', 'class' => 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300'],
+    ];
+
+    $statusCardStyles = [
+        1 => ['iconBg' => 'bg-purple-100 dark:bg-purple-900/20', 'iconColor' => 'text-purple-600 dark:text-purple-300'],
+        2 => ['iconBg' => 'bg-yellow-100 dark:bg-yellow-900/20', 'iconColor' => 'text-yellow-600 dark:text-yellow-300'],
+        3 => ['iconBg' => 'bg-red-100 dark:bg-red-900/20', 'iconColor' => 'text-red-600 dark:text-red-300'],
+        4 => ['iconBg' => 'bg-green-100 dark:bg-green-900/20', 'iconColor' => 'text-green-600 dark:text-green-300'],
+        5 => ['iconBg' => 'bg-gray-200 dark:bg-gray-700/50', 'iconColor' => 'text-gray-700 dark:text-gray-200'],
+        6 => ['iconBg' => 'bg-orange-100 dark:bg-orange-900/20', 'iconColor' => 'text-orange-600 dark:text-orange-300'],
     ];
 @endphp
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
@@ -602,62 +613,40 @@
         </div>
         @endif
 
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <!-- Status Summary Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 md:gap-6 mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
                 <div class="flex items-center">
-                    <div class="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
                     </div>
-                    <div class="ml-4">
+                    <div class="ml-3">
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Events</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $paginatedEvents->total() }}</p>
+                        <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($paginatedEvents->total()) }}</p>
                     </div>
                 </div>
             </div>
-            
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                        <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Settled</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ \App\Models\Event::where('IsSettle', 1)->count() }}</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
-                        <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Unsettled</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ \App\Models\Event::where('IsUnsettle', 1)->count() }}</p>
+            @foreach($statusBadgeMeta as $statusId => $meta)
+                @php
+                    $count = $statusSummary[$statusId] ?? 0;
+                    $cardStyle = $statusCardStyles[$statusId] ?? ['iconBg' => 'bg-gray-200 dark:bg-gray-700/50', 'iconColor' => 'text-gray-600 dark:text-gray-300'];
+                @endphp
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+                    <div class="flex items-center">
+                        <div class="p-2 rounded-lg {{ $cardStyle['iconBg'] }}">
+                            <svg class="w-5 h-5 {{ $cardStyle['iconColor'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ $meta['label'] }}</p>
+                            <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($count) }}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
-                        <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Void</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ \App\Models\Event::where('IsVoid', 1)->count() }}</p>
-                    </div>
-                </div>
-            </div>
+            @endforeach
         </div>
 
         <!-- Recently Added Switcher -->
@@ -806,23 +795,24 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @php
                                             $matchOddsStatus = isset($event->matchOddsStatus) ? (int) $event->matchOddsStatus : null;
+
+                                            if (!$matchOddsStatus) {
+                                                if ($event->IsSettle) {
+                                                    $matchOddsStatus = 4;
+                                                } elseif ($event->IsVoid) {
+                                                    $matchOddsStatus = 5;
+                                                } elseif ($event->IsUnsettle) {
+                                                    $matchOddsStatus = 1;
+                                                }
+                                            }
+
                                             $statusInfo = $matchOddsStatus && isset($statusBadgeMeta[$matchOddsStatus])
                                                 ? $statusBadgeMeta[$matchOddsStatus]
                                                 : null;
                                         @endphp
-                                        @if($statusInfo)
-                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $statusInfo['class'] }}">
-                                                {{ $statusInfo['label'] }}
-                                            </span>
-                                        @elseif($event->IsSettle)
-                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">Settled</span>
-                                        @elseif($event->IsVoid)
-                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300">Void</span>
-                                        @elseif($event->IsUnsettle)
-                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">Unsettled</span>
-                                        @else
-                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">Unknown</span>
-                                        @endif
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $statusInfo['class'] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200' }}">
+                                            {{ $statusInfo['label'] ?? 'Unknown' }}
+                                        </span>
                                     </td>
                                 </tr>
                             @endforeach
