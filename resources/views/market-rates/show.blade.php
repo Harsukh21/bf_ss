@@ -202,6 +202,52 @@
                             </table>
                         </div>
                     </div>
+                    @php
+                        $gridStatusRaw = $rate->marketListStatus ?? ($rate->isCompleted ? 'Completed' : ($rate->inplay ? 'In Play' : 'Upcoming'));
+                        $gridStatusTrimmed = is_string($gridStatusRaw) ? trim($gridStatusRaw) : '';
+                        $gridStatus = $gridStatusTrimmed !== '' ? ucwords(strtolower($gridStatusTrimmed)) : 'Upcoming';
+                        $gridNormalized = strtolower(str_replace(['_', '-'], ' ', $gridStatus));
+                        $gridBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
+                        $gridPulse = false;
+                        switch ($gridNormalized) {
+                            case 'completed':
+                                $gridBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
+                                break;
+                            case 'in play':
+                                $gridBadgeClasses = 'inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
+                                $gridPulse = true;
+                                break;
+                            case 'closed':
+                                $gridBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+                                break;
+                            case 'void':
+                            case 'voided':
+                                $gridBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300';
+                                break;
+                            case 'suspended':
+                                $gridBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300';
+                                break;
+                        }
+                    @endphp
+                    <div class="mt-2 px-2 py-1 bg-gray-50 dark:bg-gray-900/30 rounded text-[11px] text-gray-700 dark:text-gray-300">
+                        <span class="font-medium">Status:</span>
+                        <span class="{{ $gridBadgeClasses }}">
+                            @if($gridPulse)
+                                <span class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
+                            @endif
+                            {{ $gridStatus }}
+                        </span>
+                        @php
+                            $gridWinnerNormalized = $rate->marketListWinnerType ? ucwords(strtolower(trim($rate->marketListWinnerType))) : null;
+                            $gridWinnerIsVoid = $gridWinnerNormalized && $gridWinnerNormalized === 'Void';
+                        @endphp
+                        @if(!empty($gridWinnerNormalized))
+                            <span class="ml-2 font-medium">Winner:</span>
+                            <span class="text-gray-900 dark:text-gray-100">
+                                {{ $gridWinnerIsVoid ? 'Void' : ($rate->marketListSelectionName ?? $gridWinnerNormalized) }}
+                            </span>
+                        @endif
+                    </div>
                 </div>
                 @endif
             @endforeach
@@ -252,25 +298,6 @@
             </div>
             @endunless
             
-            <!-- Market Info -->
-            <div class="mb-2 flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
-                <div class="flex space-x-4">
-                    <div>
-                        <span class="font-medium">Status:</span>
-                            @if($marketRate->isCompleted)
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">Completed</span>
-                            @elseif($marketRate->inplay)
-                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">
-                                    <span class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
-                                    In Play
-                                </span>
-                            @else
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">Upcoming</span>
-                            @endif
-                    </div>
-                </div>
-            </div>
-
             <!-- Timestamp for Screenshot -->
             <div class="mb-2">
                 <span class="text-sm text-gray-600 dark:text-gray-400">
@@ -395,6 +422,57 @@
                 </div>
             </div>
             <!-- End of Screenshot Container -->
+            @php
+                $summaryStatusRaw = $marketListStatus ?? ($marketRate->isCompleted ? 'Completed' : ($marketRate->inplay ? 'In Play' : 'Upcoming'));
+                $summaryStatusTrimmed = is_string($summaryStatusRaw) ? trim($summaryStatusRaw) : '';
+                $summaryStatus = $summaryStatusTrimmed !== '' ? ucwords(strtolower($summaryStatusTrimmed)) : 'Upcoming';
+                $summaryNormalized = strtolower(str_replace(['_', '-'], ' ', $summaryStatus));
+                $summaryBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
+                $summaryPulse = false;
+
+                switch ($summaryNormalized) {
+                    case 'completed':
+                        $summaryBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
+                        break;
+                    case 'in play':
+                        $summaryBadgeClasses = 'inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
+                        $summaryPulse = true;
+                        break;
+                    case 'closed':
+                        $summaryBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+                        break;
+                    case 'void':
+                    case 'voided':
+                        $summaryBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300';
+                        break;
+                    case 'suspended':
+                        $summaryBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300';
+                        break;
+                }
+            @endphp
+            <div class="mt-4 px-4 py-3 bg-gray-50 dark:bg-gray-900/40 rounded-lg text-sm text-gray-700 dark:text-gray-300 screenshot-meta flex flex-wrap items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="font-medium">Status:</span>
+                    <span class="{{ $summaryBadgeClasses }}">
+                        @if($summaryPulse)
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
+                        @endif
+                        {{ $summaryStatus }}
+                    </span>
+                </div>
+                @php
+                    $normalizedSummaryWinner = $marketListWinnerType ? ucwords(strtolower(trim($marketListWinnerType))) : null;
+                    $summaryWinnerIsVoid = $normalizedSummaryWinner && $normalizedSummaryWinner === 'Void';
+                @endphp
+                @if(!empty($normalizedSummaryWinner))
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium">Winner:</span>
+                        <span class="text-gray-900 dark:text-gray-100">
+                            {{ $summaryWinnerIsVoid ? 'Void' : ($marketListSelectionName ?? $normalizedSummaryWinner) }}
+                        </span>
+                    </div>
+                @endif
+            </div>
         @else
             <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
                 <div class="px-6 py-12 text-center">

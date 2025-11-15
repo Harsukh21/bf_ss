@@ -80,12 +80,36 @@ class MarketController extends Controller
                 'tournamentsName',
                 'type',
                 'isLive',
+                'isRecentlyAdded',
                 'status',
                 'created_at'
             ]);
 
         // Apply optimized filters with raw DB queries
         $this->applyFilters($query, $request);
+
+        $hasCustomDateFilter = $request->boolean('date_from_enabled') || $request->boolean('date_to_enabled');
+        $isRecentlyAdded = $request->boolean('recently_added');
+
+        if (!$hasCustomDateFilter && !$isRecentlyAdded) {
+            $timezone = config('app.timezone', 'UTC');
+            $startDate = Carbon::now($timezone)->startOfDay();
+            $endDate = Carbon::now($timezone)->addDay()->endOfDay();
+
+            $query->whereBetween('marketTime', [
+                $startDate->format('Y-m-d H:i:s'),
+                $endDate->format('Y-m-d H:i:s'),
+            ]);
+        } elseif (!$hasCustomDateFilter && $isRecentlyAdded) {
+            $timezone = config('app.timezone', 'UTC');
+            $startDate = Carbon::now($timezone)->startOfDay();
+            $endDate = Carbon::now($timezone)->addDay()->endOfDay();
+
+            $query->whereBetween('marketTime', [
+                $startDate->format('Y-m-d H:i:s'),
+                $endDate->format('Y-m-d H:i:s'),
+            ]);
+        }
 
         // Get total count for pagination
         $totalCount = $query->count();
@@ -96,8 +120,8 @@ class MarketController extends Controller
         $offset = ($page - 1) * $perPage;
 
         $markets = $query
-            ->orderBy('marketTime', 'desc')
-            ->orderBy('id', 'desc')
+            ->orderBy('marketTime', 'asc')
+            ->orderBy('id', 'asc')
             ->offset($offset)
             ->limit($perPage)
             ->get();
@@ -118,17 +142,147 @@ class MarketController extends Controller
         // Get active filters for display
         $activeFilters = $this->getActiveFilters($request);
 
-        return view('markets.index', compact(
-            'paginatedMarkets',
-            'sports',
-            'tournaments',
-            'marketTypes',
-            'activeFilters',
-            'tournamentsBySport',
-            'marketTypesByTournament',
-            'eventsByTournament',
-            'marketTypesByEvent'
-        ));
+        return view('markets.index', [
+            'paginatedMarkets' => $paginatedMarkets,
+            'sports' => $sports,
+            'tournaments' => $tournaments,
+            'marketTypes' => $marketTypes,
+            'activeFilters' => $activeFilters,
+            'tournamentsBySport' => $tournamentsBySport,
+            'marketTypesByTournament' => $marketTypesByTournament,
+            'eventsByTournament' => $eventsByTournament,
+            'marketTypesByEvent' => $marketTypesByEvent,
+            'pageTitle' => 'Market List',
+            'pageHeading' => 'Market List',
+            'pageSubheading' => 'Market for today and tomorrow are shown here.',
+        ]);
+    }
+
+    public function all(Request $request)
+    {
+        $sports = Cache::remember('markets.sports', 300, function () {
+            return DB::table('market_lists')
+                ->select('sportName')
+                ->distinct()
+                ->orderBy('sportName')
+                ->pluck('sportName');
+        });
+
+        $tournaments = Cache::remember('markets.tournaments', 300, function () {
+            return DB::table('market_lists')
+                ->select('tournamentsName', 'sportName')
+                ->distinct()
+                ->orderBy('tournamentsName')
+                ->get();
+        });
+
+        $marketTypeRecords = Cache::remember('markets.market_names', 300, function () {
+            return DB::table('market_lists')
+                ->select('marketName', 'tournamentsName', 'eventName')
+                ->distinct()
+                ->orderBy('marketName')
+                ->get();
+        });
+
+        $marketTypes = $marketTypeRecords;
+
+        $tournamentsBySport = Cache::remember('markets.tournaments_by_sport', 300, function () {
+            return DB::table('market_lists')
+                ->select('tournamentsName', 'sportName')
+                ->distinct()
+                ->orderBy('tournamentsName')
+                ->get()
+                ->groupBy('sportName');
+        });
+
+        $marketTypesByTournament = Cache::remember('markets.types_by_tournament', 300, function () use ($marketTypeRecords) {
+            return $marketTypeRecords->groupBy('tournamentsName');
+        });
+
+        $eventsByTournament = Cache::remember('markets.events_by_tournament', 300, function () {
+            return DB::table('market_lists')
+                ->select('eventName', 'tournamentsName')
+                ->distinct()
+                ->orderBy('eventName')
+                ->get()
+                ->groupBy('tournamentsName');
+        });
+
+        $marketTypesByEvent = $marketTypeRecords->groupBy('eventName');
+
+        $page = $request->get('page', 1);
+        $perPage = 15;
+        $offset = ($page - 1) * $perPage;
+
+        $selectColumns = [
+            'id',
+            '_id',
+            'eventName',
+            'exEventId',
+            'exMarketId',
+            'isPreBet',
+            'marketName',
+            'marketTime',
+            'sportName',
+            'tournamentsName',
+            'type',
+            'isLive',
+            'isRecentlyAdded',
+            'status',
+            'created_at'
+        ];
+        $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
+
+        $filters = $this->buildMarketFilterSql($request);
+        $whereSql = '';
+        if (!empty($filters['conditions'])) {
+            $whereSql = ' WHERE ' . implode(' AND ', $filters['conditions']);
+        }
+
+        $countSql = "SELECT COUNT(*) as total FROM market_lists{$whereSql}";
+        $totalCountResult = DB::selectOne($countSql, $filters['bindings']);
+        $totalCount = $totalCountResult ? (int) $totalCountResult->total : 0;
+
+        $dataSql = sprintf(
+            'SELECT %s FROM market_lists%s ORDER BY %s DESC, %s DESC LIMIT ? OFFSET ?',
+            $selectList,
+            $whereSql,
+            $this->quoteColumn('marketTime'),
+            $this->quoteColumn('id')
+        );
+
+        $dataBindings = array_merge($filters['bindings'], [$perPage, $offset]);
+        $markets = collect(DB::select($dataSql, $dataBindings));
+
+        $paginatedMarkets = new LengthAwarePaginator(
+            $markets,
+            $totalCount,
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'pageName' => 'page',
+            ]
+        );
+
+        $paginatedMarkets->appends($request->query());
+
+        $activeFilters = $this->getActiveFilters($request);
+
+        return view('markets.all', [
+            'paginatedMarkets' => $paginatedMarkets,
+            'sports' => $sports,
+            'tournaments' => $tournaments,
+            'marketTypes' => $marketTypes,
+            'activeFilters' => $activeFilters,
+            'tournamentsBySport' => $tournamentsBySport,
+            'marketTypesByTournament' => $marketTypesByTournament,
+            'eventsByTournament' => $eventsByTournament,
+            'marketTypesByEvent' => $marketTypesByEvent,
+            'pageTitle' => 'All Markets List',
+            'pageHeading' => 'All Markets List',
+            'pageSubheading' => 'Browse every market without date limits',
+        ]);
     }
 
     public function show($id)
@@ -181,7 +335,166 @@ class MarketController extends Controller
             $query->where('isPreBet', true);
         }
 
-        // Date & time filter - using marketTime from market_lists table
+        $isRecentlyAdded = $request->boolean('recently_added');
+
+        if ($isRecentlyAdded) {
+            $query->where('isRecentlyAdded', true);
+        }
+
+        $dateFilters = $this->resolveMarketDateFilters($request, $isRecentlyAdded);
+
+        if ($dateFilters['start'] && $dateFilters['end']) {
+            $query->whereBetween($dateFilters['column'], [$dateFilters['start'], $dateFilters['end']]);
+        } elseif ($dateFilters['start']) {
+            $query->where($dateFilters['column'], '>=', $dateFilters['start']);
+        } elseif ($dateFilters['end']) {
+            $query->where($dateFilters['column'], '<=', $dateFilters['end']);
+        }
+
+        // Search filter
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('marketName', 'ILIKE', "%{$searchTerm}%")
+                  ->orWhere('eventName', 'ILIKE', "%{$searchTerm}%")
+                  ->orWhere('sportName', 'ILIKE', "%{$searchTerm}%")
+                  ->orWhere('tournamentsName', 'ILIKE', "%{$searchTerm}%");
+            });
+        }
+    }
+
+    private function getActiveFilters(Request $request)
+    {
+        $activeFilters = [];
+
+        if ($request->filled('sport')) {
+            $activeFilters['Sport'] = $request->sport;
+        }
+
+        if ($request->filled('tournament')) {
+            $activeFilters['Tournament'] = $request->tournament;
+        }
+
+        if ($request->filled('event_name')) {
+            $activeFilters['Event'] = $request->event_name;
+        }
+
+        if ($request->filled('market_name')) {
+            $activeFilters['Market'] = $request->market_name;
+        } elseif ($request->filled('type')) {
+            $activeFilters['Market'] = $request->type;
+        }
+
+        if ($request->has('is_live')) {
+            $activeFilters['Live'] = 'Yes';
+        }
+
+        if ($request->has('is_prebet')) {
+            $activeFilters['Pre-bet'] = 'Yes';
+        }
+
+        if ($request->boolean('recently_added')) {
+            $activeFilters['Recently Added'] = 'Yes';
+        }
+
+        if ($request->boolean('date_from_enabled') && $request->filled('date_from')) {
+            $activeFilters['From Date'] = $request->date_from;
+        }
+
+        if ($request->boolean('date_to_enabled') && $request->filled('date_to')) {
+            $activeFilters['To Date'] = $request->date_to;
+        }
+
+        if ($request->boolean('time_from_enabled') && $request->boolean('date_from_enabled') && $request->filled('time_from')) {
+            $activeFilters['From Time'] = $request->time_from;
+        }
+
+        if ($request->boolean('time_to_enabled') && $request->boolean('date_to_enabled') && $request->filled('time_to')) {
+            $activeFilters['To Time'] = $request->time_to;
+        }
+
+        if ($request->filled('search')) {
+            $activeFilters['Search'] = $request->search;
+        }
+
+        return $activeFilters;
+    }
+
+    private function buildMarketFilterSql(Request $request): array
+    {
+        $conditions = [];
+        $bindings = [];
+
+        if ($request->filled('sport')) {
+            $conditions[] = $this->quoteColumn('sportName') . ' = ?';
+            $bindings[] = $request->sport;
+        }
+
+        if ($request->filled('tournament')) {
+            $conditions[] = $this->quoteColumn('tournamentsName') . ' = ?';
+            $bindings[] = $request->tournament;
+        }
+
+        if ($request->filled('event_name')) {
+            $conditions[] = $this->quoteColumn('eventName') . ' = ?';
+            $bindings[] = $request->event_name;
+        }
+
+        if ($request->filled('market_name')) {
+            $conditions[] = $this->quoteColumn('marketName') . ' = ?';
+            $bindings[] = $request->market_name;
+        } elseif ($request->filled('type')) {
+            $conditions[] = '(' . $this->quoteColumn('marketName') . ' = ? OR ' . $this->quoteColumn('type') . ' = ?)';
+            $bindings[] = $request->type;
+            $bindings[] = $request->type;
+        }
+
+        if ($request->has('is_live')) {
+            $conditions[] = $this->quoteColumn('isLive') . ' = ?';
+            $bindings[] = true;
+        }
+
+        if ($request->has('is_prebet')) {
+            $conditions[] = $this->quoteColumn('isPreBet') . ' = ?';
+            $bindings[] = true;
+        }
+
+        $isRecentlyAdded = $request->boolean('recently_added');
+        if ($isRecentlyAdded) {
+            $conditions[] = $this->quoteColumn('isRecentlyAdded') . ' = ?';
+            $bindings[] = true;
+        }
+
+        $dateFilters = $this->resolveMarketDateFilters($request, $isRecentlyAdded);
+        if ($dateFilters['start'] && $dateFilters['end']) {
+            $conditions[] = "{$dateFilters['column']} BETWEEN ? AND ?";
+            $bindings[] = $dateFilters['start'];
+            $bindings[] = $dateFilters['end'];
+        } elseif ($dateFilters['start']) {
+            $conditions[] = "{$dateFilters['column']} >= ?";
+            $bindings[] = $dateFilters['start'];
+        } elseif ($dateFilters['end']) {
+            $conditions[] = "{$dateFilters['column']} <= ?";
+            $bindings[] = $dateFilters['end'];
+        }
+
+        if ($request->filled('search')) {
+            $conditions[] = '('
+                . $this->quoteColumn('eventName') . " ILIKE ? OR "
+                . $this->quoteColumn('marketName') . " ILIKE ?)";
+            $searchBinding = '%' . $request->search . '%';
+            $bindings[] = $searchBinding;
+            $bindings[] = $searchBinding;
+        }
+
+        return [
+            'conditions' => $conditions,
+            'bindings' => $bindings,
+        ];
+    }
+
+    private function resolveMarketDateFilters(Request $request, bool $isRecentlyAdded): array
+    {
         $timezone = config('app.timezone', 'UTC');
         $dateFromEnabled = $request->boolean('date_from_enabled');
         $dateToEnabled = $request->boolean('date_to_enabled');
@@ -189,7 +502,6 @@ class MarketController extends Controller
         $timeToEnabled = $request->boolean('time_to_enabled');
 
         $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
-
         $startDateTime = null;
         $endDateTime = null;
 
@@ -235,84 +547,20 @@ class MarketController extends Controller
             }
         }
 
-        if ($startDateTime && $endDateTime) {
-            if ($endDateTime->lt($startDateTime)) {
-                $endDateTime = $startDateTime->copy()->endOfDay();
-            }
-
-            $query->whereBetween('marketTime', [
-                $startDateTime->format('Y-m-d H:i:s'),
-                $endDateTime->format('Y-m-d H:i:s'),
-            ]);
-        } elseif ($startDateTime) {
-            $query->where('marketTime', '>=', $startDateTime->format('Y-m-d H:i:s'));
-        } elseif ($endDateTime) {
-            $query->where('marketTime', '<=', $endDateTime->format('Y-m-d H:i:s'));
+        if ($startDateTime && $endDateTime && $endDateTime->lt($startDateTime)) {
+            $endDateTime = $startDateTime->copy()->endOfDay();
         }
 
-        // Search filter
-        if ($request->filled('search')) {
-            $searchTerm = $request->search;
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('marketName', 'ILIKE', "%{$searchTerm}%")
-                  ->orWhere('eventName', 'ILIKE', "%{$searchTerm}%")
-                  ->orWhere('sportName', 'ILIKE', "%{$searchTerm}%")
-                  ->orWhere('tournamentsName', 'ILIKE', "%{$searchTerm}%");
-            });
-        }
+        return [
+            'start' => $startDateTime ? $startDateTime->format('Y-m-d H:i:s') : null,
+            'end' => $endDateTime ? $endDateTime->format('Y-m-d H:i:s') : null,
+            'column' => $this->quoteColumn($isRecentlyAdded ? 'created_at' : 'marketTime'),
+        ];
     }
 
-    private function getActiveFilters(Request $request)
+    private function quoteColumn(string $column): string
     {
-        $activeFilters = [];
-
-        if ($request->filled('sport')) {
-            $activeFilters['Sport'] = $request->sport;
-        }
-
-        if ($request->filled('tournament')) {
-            $activeFilters['Tournament'] = $request->tournament;
-        }
-
-        if ($request->filled('event_name')) {
-            $activeFilters['Event'] = $request->event_name;
-        }
-
-        if ($request->filled('market_name')) {
-            $activeFilters['Market'] = $request->market_name;
-        } elseif ($request->filled('type')) {
-            $activeFilters['Market'] = $request->type;
-        }
-
-        if ($request->has('is_live')) {
-            $activeFilters['Live'] = 'Yes';
-        }
-
-        if ($request->has('is_prebet')) {
-            $activeFilters['Pre-bet'] = 'Yes';
-        }
-
-        if ($request->boolean('date_from_enabled') && $request->filled('date_from')) {
-            $activeFilters['From Date'] = $request->date_from;
-        }
-
-        if ($request->boolean('date_to_enabled') && $request->filled('date_to')) {
-            $activeFilters['To Date'] = $request->date_to;
-        }
-
-        if ($request->boolean('time_from_enabled') && $request->boolean('date_from_enabled') && $request->filled('time_from')) {
-            $activeFilters['From Time'] = $request->time_from;
-        }
-
-        if ($request->boolean('time_to_enabled') && $request->boolean('date_to_enabled') && $request->filled('time_to')) {
-            $activeFilters['To Time'] = $request->time_to;
-        }
-
-        if ($request->filled('search')) {
-            $activeFilters['Search'] = $request->search;
-        }
-
-        return $activeFilters;
+        return '"' . str_replace('"', '""', $column) . '"';
     }
 
     public function export(Request $request)
@@ -332,6 +580,7 @@ class MarketController extends Controller
                 'tournamentsName',
                 'type',
                 'isLive',
+                'isRecentlyAdded',
                 'status',
                 'created_at'
             ]);
@@ -340,7 +589,9 @@ class MarketController extends Controller
         $this->applyFilters($query, $request);
 
         // Get all results (no pagination)
-        $markets = $query->orderBy('id', 'desc')->get();
+        $markets = $query->orderBy('marketTime', 'desc')
+                         ->orderBy('id', 'desc')
+                         ->get();
 
         // Prepare CSV data
         $filename = 'markets_export_' . date('Y-m-d_His') . '.csv';

@@ -41,14 +41,17 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
     
     // Events
     Route::get('/events', [EventController::class, 'index'])->name('events.index');
+    Route::get('/events/all', [EventController::class, 'all'])->name('events.all');
     Route::get('/events/export', [EventController::class, 'export'])->name('events.export');
     Route::get('/events/{id}', [EventController::class, 'show'])->name('events.show');
     Route::post('/events/bulk-update', [EventController::class, 'bulkUpdate'])->name('events.bulk-update');
+    Route::post('/events/{event}/update-market-time', [EventController::class, 'updateMarketTime'])->name('events.update-market-time');
     Route::get('/events/stats', [EventController::class, 'getStats'])->name('events.stats');
     Route::get('/events/search', [EventController::class, 'search'])->name('events.search');
 
     // Markets
     Route::get('/markets', [MarketController::class, 'index'])->name('markets.index');
+    Route::get('/markets/all', [MarketController::class, 'all'])->name('markets.all');
     Route::get('/markets/export', [MarketController::class, 'export'])->name('markets.export');
     Route::get('/markets/{id}', [MarketController::class, 'show'])->name('markets.show');
 

@@ -66,6 +66,11 @@ class MarketRateController extends Controller
             // Check if table exists for this event
             if (MarketRate::tableExistsForEvent($selectedEventId)) {
                 $query = MarketRate::forEvent($selectedEventId);
+                $latestMarketList = DB::table('market_lists')
+                    ->where('exEventId', $selectedEventId)
+                    ->select('exMarketId', 'winnerType', 'status', 'selectionName')
+                    ->get()
+                    ->keyBy('exMarketId');
                 
                 // Get available market names for the dropdown
                 $availableMarketNames = MarketRate::forEvent($selectedEventId)
@@ -78,6 +83,10 @@ class MarketRateController extends Controller
                 // Apply market filter
                 if ($request->filled('market_name')) {
                     $query->where('marketName', $request->get('market_name'));
+                }
+
+                if ($request->filled('volume_max')) {
+                    $query->where('totalMatched', '<=', (float) $request->get('volume_max'));
                 }
 
                 // Apply date and time filters
@@ -142,6 +151,13 @@ class MarketRateController extends Controller
                 }
 
                 $marketRates = $query->latest('created_at')->paginate(10);
+                $marketRates->getCollection()->transform(function ($rate) use ($latestMarketList) {
+                    $meta = $latestMarketList->get($rate->exMarketId);
+                    $rate->marketListStatus = $meta->status ?? null;
+                    $rate->marketListWinnerType = $meta->winnerType ?? null;
+                    $rate->marketListSelectionName = $meta->selectionName ?? null;
+                    return $rate;
+                });
             } else {
                 // Table does not exist for this event
                 $ratesTableNotFound = true;
@@ -195,6 +211,7 @@ class MarketRateController extends Controller
         if ($request->filled('filter_date')) $filterCount++;
         if ($request->filled('time_from')) $filterCount++;
         if ($request->filled('time_to')) $filterCount++;
+        if ($request->filled('volume_max')) $filterCount++;
 
         return view('market-rates.index', compact(
             'marketRates',
@@ -232,6 +249,15 @@ class MarketRateController extends Controller
         }
 
         $eventInfo = Event::where('exEventId', $selectedEventId)->first();
+
+        $marketListMeta = DB::table('market_lists')
+            ->where('exMarketId', $marketRate->exMarketId)
+            ->select('status', 'winnerType', 'selectionName')
+            ->first();
+
+        $marketListStatus = $marketListMeta->status ?? null;
+        $marketListWinnerType = $marketListMeta->winnerType ?? null;
+        $marketListSelectionName = $marketListMeta->selectionName ?? null;
 
         // Get next and previous market rates for navigation (filtered by marketName)
         // Ensure we only get records with the exact same marketName
@@ -278,6 +304,20 @@ class MarketRateController extends Controller
                         return $item->marketName === $marketRate->marketName;
                     }))
                     ->values();
+
+                $gridMeta = DB::table('market_lists')
+                    ->whereIn('exMarketId', $gridMarketRates->pluck('exMarketId')->filter()->all())
+                    ->select('exMarketId', 'status', 'winnerType', 'selectionName')
+                    ->get()
+                    ->keyBy('exMarketId');
+
+                $gridMarketRates = $gridMarketRates->map(function ($rate) use ($gridMeta) {
+                    $meta = $gridMeta->get($rate->exMarketId);
+                    $rate->marketListStatus = $meta->status ?? null;
+                    $rate->marketListWinnerType = $meta->winnerType ?? null;
+                    $rate->marketListSelectionName = $meta->selectionName ?? null;
+                    return $rate;
+                });
             }
         }
 
@@ -289,7 +329,10 @@ class MarketRateController extends Controller
             'nextMarketRate',
             'gridEnabled',
             'gridCountValue',
-            'gridMarketRates'
+            'gridMarketRates',
+            'marketListStatus',
+            'marketListWinnerType',
+            'marketListSelectionName'
         ));
     }
 
