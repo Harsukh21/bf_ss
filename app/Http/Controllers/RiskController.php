@@ -92,6 +92,18 @@ class RiskController extends Controller
             }
         }
 
+        if ($filters['status']) {
+            $query->where('market_lists.status', $filters['status']);
+        }
+
+        if ($filters['date_from']) {
+            $query->whereDate('events.completeTime', '>=', $filters['date_from']);
+        }
+
+        if ($filters['date_to']) {
+            $query->whereDate('events.completeTime', '<=', $filters['date_to']);
+        }
+
         return $query->orderByDesc('marketTime');
     }
 
@@ -110,6 +122,11 @@ class RiskController extends Controller
             'sport' => $request->input('sport'),
             'tournament' => $request->input('tournament'),
             'labels' => $labelFilter,
+            'status' => $request->filled('status') && in_array((int) $request->input('status'), [4, 5], true)
+                ? (int) $request->input('status')
+                : null,
+            'date_from' => $request->input('date_from'),
+            'date_to' => $request->input('date_to'),
         ];
     }
 
