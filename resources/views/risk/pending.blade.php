@@ -130,17 +130,28 @@
 
 @section('content')
 @php
+    $labelOptions = [
+        '4x' => '4x',
+        'b2c' => 'B2C',
+        'b2b' => 'B2B',
+        'usdt' => 'USDT',
+    ];
+
     $activeFilters = [];
 
     $searchValue = request()->input('search');
     $sportValue = request()->input('sport');
     $tournamentValue = request()->input('tournament');
-    $limitValue = request()->input('limit');
+    $selectedLabels = collect(request()->input('labels', []))
+        ->map(fn ($value) => strtolower((string) $value))
+        ->filter(fn ($value) => array_key_exists($value, $labelOptions))
+        ->unique()
+        ->values()
+        ->all();
 
     $hasSearch = request()->has('search') && trim((string) $searchValue) !== '';
     $hasSport = request()->has('sport') && trim((string) $sportValue) !== '';
     $hasTournament = request()->has('tournament') && trim((string) $tournamentValue) !== '';
-    $hasCustomLimit = request()->has('limit') && (int) $limitValue !== 50;
 
     if ($hasSearch) {
         $activeFilters[] = ['label' => 'Search', 'value' => $searchValue, 'query' => 'search'];
@@ -151,8 +162,13 @@
     if ($hasTournament) {
         $activeFilters[] = ['label' => 'Tournament', 'value' => $tournamentValue, 'query' => 'tournament'];
     }
-    if ($hasCustomLimit) {
-        $activeFilters[] = ['label' => 'Limit', 'value' => $limitValue, 'query' => 'limit'];
+    foreach ($selectedLabels as $labelKey) {
+        $activeFilters[] = [
+            'label' => strtoupper($labelKey),
+            'value' => 'Yes',
+            'query' => 'labels',
+            'query_value' => $labelKey,
+        ];
     }
 
     $filterCount = count($activeFilters);
@@ -205,7 +221,7 @@
                 @foreach($activeFilters as $filter)
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
                         {{ $filter['label'] }}: {{ $filter['value'] }}
-                        <button onclick="removeRiskFilter('{{ $filter['query'] }}')" class="ml-2 text-blue-600 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100">&times;</button>
+                        <button onclick="removeRiskFilter('{{ $filter['query'] }}', {{ isset($filter['query_value']) ? '\'' . $filter['query_value'] . '\'' : 'null' }})" class="ml-2 text-blue-600 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100">&times;</button>
                     </span>
                 @endforeach
             </div>
@@ -355,6 +371,9 @@
                 </tbody>
             </table>
         </div>
+        <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+            {{ $markets->links() }}
+        </div>
     </div>
 </div>
 
@@ -383,8 +402,15 @@
                 <input type="text" name="tournament" value="{{ request('tournament') }}" placeholder="Tournament name" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Limit</label>
-                <input type="number" name="limit" value="{{ request('limit', 50) }}" min="10" max="500" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Labels</label>
+                <div class="grid grid-cols-2 gap-3">
+                    @foreach($labelOptions as $labelKey => $labelName)
+                        <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                            <input type="checkbox" name="labels[]" value="{{ $labelKey }}" class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500" @checked(in_array($labelKey, $selectedLabels))>
+                            <span class="uppercase">{{ $labelName }}</span>
+                        </label>
+                    @endforeach
+                </div>
             </div>
             <div class="flex items-center justify-between pt-2">
                 <button type="submit" class="inline-flex items-center px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500">Apply Filters</button>
@@ -432,9 +458,15 @@
         document.body.style.overflow = shouldOpen ? 'hidden' : '';
     }
 
-    function removeRiskFilter(param) {
+    function removeRiskFilter(param, value = null) {
         const url = new URL(window.location.href);
-        url.searchParams.delete(param);
+        if (value === null) {
+            url.searchParams.delete(param);
+        } else {
+            const remaining = url.searchParams.getAll(param).filter(v => v !== value);
+            url.searchParams.delete(param);
+            remaining.forEach(v => url.searchParams.append(param, v));
+        }
         window.location.href = url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : '');
     }
 

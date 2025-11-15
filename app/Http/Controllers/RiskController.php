@@ -10,12 +10,9 @@ class RiskController extends Controller
     public function pending(Request $request)
     {
         $filters = $this->buildFilters($request);
-        $markets = $this->fetchMarketsByStatus([4, 5], $filters, false);
-        $summary = [
-            'settled' => $markets->where('status', 4)->count(),
-            'voided' => $markets->where('status', 5)->count(),
-            'total' => $markets->count(),
-        ];
+        $baseQuery = $this->buildMarketQuery([4, 5], $filters, false);
+        $summary = $this->buildSummary($baseQuery);
+        $markets = (clone $baseQuery)->paginate(20)->withQueryString();
 
         return view('risk.pending', [
             'markets' => $markets,
@@ -28,12 +25,9 @@ class RiskController extends Controller
     public function done(Request $request)
     {
         $filters = $this->buildFilters($request);
-        $markets = $this->fetchMarketsByStatus([4, 5], $filters, true);
-        $summary = [
-            'settled' => $markets->where('status', 4)->count(),
-            'voided' => $markets->where('status', 5)->count(),
-            'total' => $markets->count(),
-        ];
+        $baseQuery = $this->buildMarketQuery([4, 5], $filters, true);
+        $summary = $this->buildSummary($baseQuery);
+        $markets = (clone $baseQuery)->paginate(20)->withQueryString();
 
         return view('risk.done', [
             'markets' => $markets,
@@ -43,7 +37,7 @@ class RiskController extends Controller
         ]);
     }
 
-    private function fetchMarketsByStatus(array $statuses, array $filters, bool $onlyDone)
+    private function buildMarketQuery(array $statuses, array $filters, bool $onlyDone)
     {
         $query = DB::table('market_lists')
             ->select([
@@ -68,9 +62,7 @@ class RiskController extends Controller
                 $q->where(function ($inner) {
                     $inner->whereNull('is_done')->orWhere('is_done', false);
                 });
-            })
-            ->orderByDesc('marketTime')
-            ->limit($filters['limit']);
+            });
 
         if ($filters['sport']) {
             $query->where('sportName', $filters['sport']);
@@ -88,16 +80,30 @@ class RiskController extends Controller
             });
         }
 
-        return $query->get();
+        if (!empty($filters['labels'])) {
+            foreach ($filters['labels'] as $labelKey) {
+                $query->whereRaw("(labels ->> ?)::boolean = true", [$labelKey]);
+            }
+        }
+
+        return $query->orderByDesc('marketTime');
     }
 
     private function buildFilters(Request $request): array
     {
+        $labelKeys = $this->getLabelKeys();
+        $labelFilter = collect($request->input('labels', []))
+            ->map(fn ($value) => strtolower((string) $value))
+            ->filter(fn ($value) => in_array($value, $labelKeys, true))
+            ->unique()
+            ->values()
+            ->all();
+
         return [
             'search' => $request->input('search'),
             'sport' => $request->input('sport'),
             'tournament' => $request->input('tournament'),
-            'limit' => (int) $request->input('limit', 50),
+            'labels' => $labelFilter,
         ];
     }
 
@@ -156,12 +162,9 @@ class RiskController extends Controller
 
     private function normalizeLabels($labels): array
     {
-        $default = [
-            '4x' => false,
-            'b2c' => false,
-            'b2b' => false,
-            'usdt' => false,
-        ];
+        $default = collect($this->getLabelKeys())
+            ->mapWithKeys(fn ($key) => [$key => false])
+            ->toArray();
 
         if (!is_array($labels)) {
             $labels = [];
@@ -172,6 +175,20 @@ class RiskController extends Controller
         }
 
         return $default;
+    }
+
+    private function getLabelKeys(): array
+    {
+        return ['4x', 'b2c', 'b2b', 'usdt'];
+    }
+
+    private function buildSummary($query): array
+    {
+        return [
+            'total' => (clone $query)->count(),
+            'settled' => (clone $query)->where('status', 4)->count(),
+            'voided' => (clone $query)->where('status', 5)->count(),
+        ];
     }
 }
 
