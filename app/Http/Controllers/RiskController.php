@@ -81,8 +81,8 @@ class RiskController extends Controller
         if ($filters['search']) {
             $term = '%' . $filters['search'] . '%';
             $query->where(function ($q) use ($term) {
-                $q->where('marketName', 'ILIKE', $term)
-                    ->orWhere('eventName', 'ILIKE', $term);
+                $q->where('market_lists.marketName', 'ILIKE', $term)
+                    ->orWhere('market_lists.eventName', 'ILIKE', $term);
             });
         }
 
