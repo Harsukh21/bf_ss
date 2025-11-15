@@ -325,6 +325,10 @@ class MarketController extends Controller
             });
         }
 
+        if ($request->filled('status')) {
+            $query->where('status', (int) $request->status);
+        }
+
         // Live filter
         if ($request->has('is_live')) {
             $query->where('isLive', true);
@@ -397,6 +401,18 @@ class MarketController extends Controller
             $activeFilters['Recently Added'] = 'Yes';
         }
 
+        if ($request->filled('status')) {
+            $statusMap = [
+                '1' => 'Unsettled',
+                '2' => 'Upcoming',
+                '3' => 'In Play',
+                '4' => 'Settled',
+                '5' => 'Voided',
+                '6' => 'Removed',
+            ];
+            $activeFilters['Status'] = $statusMap[$request->status] ?? $request->status;
+        }
+
         if ($request->boolean('date_from_enabled') && $request->filled('date_from')) {
             $activeFilters['From Date'] = $request->date_from;
         }
@@ -447,6 +463,11 @@ class MarketController extends Controller
             $conditions[] = '(' . $this->quoteColumn('marketName') . ' = ? OR ' . $this->quoteColumn('type') . ' = ?)';
             $bindings[] = $request->type;
             $bindings[] = $request->type;
+        }
+
+        if ($request->filled('status')) {
+            $conditions[] = $this->quoteColumn('status') . ' = ?';
+            $bindings[] = (int) $request->status;
         }
 
         if ($request->has('is_live')) {
