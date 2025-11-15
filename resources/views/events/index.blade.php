@@ -786,6 +786,13 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-900 dark:text-gray-100">{{ $event->tournamentsName }}</div>
+                                        @if(isset($event->market_count))
+                                            <div class="mt-1">
+                                                <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200">
+                                                    {{ number_format($event->market_count) }} markets
+                                                </span>
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">

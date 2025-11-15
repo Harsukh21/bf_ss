@@ -62,6 +62,7 @@ class EventController extends Controller
         ];
         $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
         $selectList .= ', ' . $this->getMatchOddsStatusSelect();
+        $selectList .= ', COALESCE(mc.market_count, 0) AS "market_count"';
 
         $isRecentlyAdded = $request->boolean('recently_added');
 
@@ -87,9 +88,27 @@ class EventController extends Controller
         // Get paginated results using raw query
         $orderDirection = $isRecentlyAdded ? 'desc' : 'asc';
 
+        $eventsTable = $this->quoteTable('events');
+        $marketListsTable = $this->quoteTable('market_lists');
+        $eventNameColumn = $this->quoteColumn('eventName');
+        $eventsEventName = $this->qualifyColumn('events', 'eventName');
+
         $dataSql = sprintf(
-            'SELECT %s FROM events%s ORDER BY %s %s, %s %s LIMIT ? OFFSET ?',
+            'SELECT %s FROM %s
+                LEFT JOIN (
+                    SELECT %s AS event_name_key, COUNT(*) AS market_count
+                    FROM %s
+                    GROUP BY %s
+                ) AS mc ON mc.event_name_key = %s
+                %s
+                ORDER BY %s %s, %s %s
+                LIMIT ? OFFSET ?',
             $selectList,
+            $eventsTable,
+            $eventNameColumn,
+            $marketListsTable,
+            $eventNameColumn,
+            $eventsEventName,
             $whereSql,
             $this->quoteColumn('marketTime'),
             strtoupper($orderDirection),
@@ -159,26 +178,27 @@ class EventController extends Controller
         });
 
         $selectColumns = [
-            'id',
-            'eventId',
-            'exEventId',
-            'sportId',
-            'tournamentsId',
-            'tournamentsName',
-            'eventName',
-            'highlight',
-            'quicklink',
-            'popular',
-            'IsSettle',
-            'IsVoid',
-            'IsUnsettle',
-            'dataSwitch',
-            'isRecentlyAdded',
-            'marketTime',
-            'createdAt'
+            'events."id"',
+            'events."eventId"',
+            'events."exEventId"',
+            'events."sportId"',
+            'events."tournamentsId"',
+            'events."tournamentsName"',
+            'events."eventName"',
+            'events."highlight"',
+            'events."quicklink"',
+            'events."popular"',
+            'events."IsSettle"',
+            'events."IsVoid"',
+            'events."IsUnsettle"',
+            'events."dataSwitch"',
+            'events."isRecentlyAdded"',
+            'events."marketTime"',
+            'events."createdAt"'
         ];
-        $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
+        $selectList = implode(', ', $selectColumns);
         $selectList .= ', ' . $this->getMatchOddsStatusSelect();
+        $selectList .= ', COALESCE(mc.market_count, 0) as "market_count"';
 
         $defaultDateFilters = ['conditions' => [], 'bindings' => []];
         $filterSql = $this->buildEventFilterSql($request, $defaultDateFilters);
@@ -194,9 +214,27 @@ class EventController extends Controller
         $perPage = 20;
         $offset = ($page - 1) * $perPage;
 
+        $eventsTable = $this->quoteTable('events');
+        $marketListsTable = $this->quoteTable('market_lists');
+        $eventNameColumn = $this->quoteColumn('eventName');
+        $eventsEventName = $this->qualifyColumn('events', 'eventName');
+
         $dataSql = sprintf(
-            'SELECT %s FROM events%s ORDER BY %s DESC, %s DESC LIMIT ? OFFSET ?',
+            'SELECT %s FROM %s
+                LEFT JOIN (
+                    SELECT %s AS event_name_key, COUNT(*) AS market_count
+                    FROM %s
+                    GROUP BY %s
+                ) AS mc ON mc.event_name_key = %s
+                %s
+                ORDER BY %s DESC, %s DESC
+                LIMIT ? OFFSET ?',
             $selectList,
+            $eventsTable,
+            $eventNameColumn,
+            $marketListsTable,
+            $eventNameColumn,
+            $eventsEventName,
             $whereSql,
             $this->quoteColumn('marketTime'),
             $this->quoteColumn('id')
@@ -555,6 +593,16 @@ class EventController extends Controller
     private function quoteColumn(string $column): string
     {
         return '"' . str_replace('"', '""', $column) . '"';
+    }
+
+    private function quoteTable(string $table): string
+    {
+        return '"' . str_replace('"', '""', $table) . '"';
+    }
+
+    private function qualifyColumn(string $table, string $column): string
+    {
+        return $this->quoteTable($table) . '.' . $this->quoteColumn($column);
     }
 
     /**
