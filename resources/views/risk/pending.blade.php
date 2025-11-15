@@ -395,7 +395,12 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sport</label>
-                <input type="text" name="sport" value="{{ request('sport') }}" placeholder="Sport name" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500">
+                <select id="pendingSportSelect" name="sport" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">All Sports</option>
+                    @foreach($sports as $sportId => $sportName)
+                        <option value="{{ $sportName }}" @selected(request('sport') === $sportName)>{{ $sportName }}</option>
+                    @endforeach
+                </select>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tournament</label>
@@ -438,7 +443,6 @@
 @push('scripts')
 <script>
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
     function toggleRiskFilterDrawer(forceClose = null) {
         const drawer = document.getElementById('risk-filter-drawer');
         const overlay = document.getElementById('risk-filter-overlay');

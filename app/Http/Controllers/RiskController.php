@@ -19,6 +19,8 @@ class RiskController extends Controller
             'statusFilter' => [4, 5],
             'summary' => $summary,
             'filters' => $filters,
+            'sports' => $this->getSportsList(),
+            'tournamentsBySport' => $this->getTournamentsBySport(),
         ]);
     }
 
@@ -34,6 +36,8 @@ class RiskController extends Controller
             'statusFilter' => [4, 5],
             'filters' => $filters,
             'summary' => $summary,
+            'sports' => $this->getSportsList(),
+            'tournamentsBySport' => $this->getTournamentsBySport(),
         ]);
     }
 
@@ -189,6 +193,46 @@ class RiskController extends Controller
             'settled' => (clone $query)->where('status', 4)->count(),
             'voided' => (clone $query)->where('status', 5)->count(),
         ];
+    }
+
+    private function getSportsList(): array
+    {
+        return config('sports.sports', []);
+    }
+
+    private function getTournamentsBySport(): array
+    {
+        $rows = DB::table('market_lists')
+            ->select('sportName', 'tournamentsName')
+            ->whereNotNull('sportName')
+            ->whereNotNull('tournamentsName')
+            ->groupBy('sportName', 'tournamentsName')
+            ->get();
+
+        $map = [];
+        $all = [];
+
+        foreach ($rows as $row) {
+            $sport = trim($row->sportName);
+            $tournament = trim($row->tournamentsName);
+
+            if ($sport === '' || $tournament === '') {
+                continue;
+            }
+
+            $map[$sport][] = $tournament;
+            $all[] = $tournament;
+        }
+
+        foreach ($map as $sport => $list) {
+            $map[$sport] = array_values(array_unique($list));
+            sort($map[$sport]);
+        }
+
+        $map['__all'] = array_values(array_unique($all));
+        sort($map['__all']);
+
+        return $map;
     }
 }
 
