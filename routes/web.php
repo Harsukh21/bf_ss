@@ -64,6 +64,14 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/export/csv', [MarketRateController::class, 'export'])->name('export');
     });
 
+    // Risk
+    Route::prefix('risk')->name('risk.')->group(function () {
+        Route::get('/pending', [\App\Http\Controllers\RiskController::class, 'pending'])->name('pending');
+        Route::get('/done', [\App\Http\Controllers\RiskController::class, 'done'])->name('done');
+        Route::post('/markets/{market}/labels', [\App\Http\Controllers\RiskController::class, 'updateLabels'])->name('markets.labels');
+        Route::post('/markets/{market}/done', [\App\Http\Controllers\RiskController::class, 'markDone'])->name('markets.done');
+    });
+
     // System Logs
     Route::prefix('system-logs')->name('system-logs.')->group(function () {
         Route::get('/', [SystemLogController::class, 'index'])->name('index');

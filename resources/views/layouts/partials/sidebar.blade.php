@@ -148,6 +148,39 @@
                         </a>
                     </div>
                 </div>
+
+                <!-- Risk Dropdown -->
+                <div class="relative">
+                    @php
+                        $isRiskActive = request()->routeIs('risk.*');
+                    @endphp
+                    <button onclick="toggleDropdown('risk')" class="flex items-center justify-between w-full px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ $isRiskActive ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.306 0-2.417.835-2.83 2H7a1 1 0 000 2h2.17A3.001 3.001 0 0012 14a3 3 0 002.83-2H17a1 1 0 100-2h-2.17A3.001 3.001 0 0012 8zM5 20h14a2 2 0 002-2V9a2 2 0 00-.764-1.582l-7-5.25a2 2 0 00-2.472 0l-7 5.25A2 2 0 005 9v9a2 2 0 002 2z"></path>
+                            </svg>
+                            Risk
+                        </div>
+                        <svg id="risk-arrow" class="w-4 h-4 transition-transform duration-200 {{ $isRiskActive ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    
+                    <div id="risk-dropdown" class="space-y-1 ml-4 {{ $isRiskActive ? '' : 'hidden' }}">
+                        <a href="{{ route('risk.pending') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('risk.pending') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Pending
+                        </a>
+                        <a href="{{ route('risk.done') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('risk.done') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Done
+                        </a>
+                    </div>
+                </div>
             </div>
 
             <!-- Settings Section -->
