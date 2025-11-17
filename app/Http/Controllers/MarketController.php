@@ -487,15 +487,16 @@ class MarketController extends Controller
         }
 
         $dateFilters = $this->resolveMarketDateFilters($request, $isRecentlyAdded);
+        $quotedColumn = $this->quoteColumn($dateFilters['column']);
         if ($dateFilters['start'] && $dateFilters['end']) {
-            $conditions[] = "{$dateFilters['column']} BETWEEN ? AND ?";
+            $conditions[] = "{$quotedColumn} BETWEEN ? AND ?";
             $bindings[] = $dateFilters['start'];
             $bindings[] = $dateFilters['end'];
         } elseif ($dateFilters['start']) {
-            $conditions[] = "{$dateFilters['column']} >= ?";
+            $conditions[] = "{$quotedColumn} >= ?";
             $bindings[] = $dateFilters['start'];
         } elseif ($dateFilters['end']) {
-            $conditions[] = "{$dateFilters['column']} <= ?";
+            $conditions[] = "{$quotedColumn} <= ?";
             $bindings[] = $dateFilters['end'];
         }
 
@@ -572,10 +573,12 @@ class MarketController extends Controller
             $endDateTime = $startDateTime->copy()->endOfDay();
         }
 
+        $columnName = $isRecentlyAdded ? 'created_at' : 'marketTime';
+        
         return [
             'start' => $startDateTime ? $startDateTime->format('Y-m-d H:i:s') : null,
             'end' => $endDateTime ? $endDateTime->format('Y-m-d H:i:s') : null,
-            'column' => $this->quoteColumn($isRecentlyAdded ? 'created_at' : 'marketTime'),
+            'column' => $columnName,
         ];
     }
 
