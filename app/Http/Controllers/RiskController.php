@@ -141,10 +141,6 @@ class RiskController extends Controller
             $query->where('sportName', $filters['sport']);
         }
 
-        if ($filters['tournament']) {
-            $query->where('tournamentsName', $filters['tournament']);
-        }
-
         if ($filters['search']) {
             $term = '%' . $filters['search'] . '%';
             $query->where(function ($q) use ($term) {
@@ -268,7 +264,6 @@ class RiskController extends Controller
         return [
             'search' => $request->input('search'),
             'sport' => $request->input('sport'),
-            'tournament' => $request->input('tournament'),
             'labels' => $labelFilter,
             'status' => $request->filled('status') && in_array((int) $request->input('status'), [4, 5], true)
                 ? (int) $request->input('status')
