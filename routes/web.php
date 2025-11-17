@@ -66,6 +66,7 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
 
     // Risk
     Route::prefix('risk')->name('risk.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\RiskController::class, 'index'])->name('index');
         Route::get('/pending', [\App\Http\Controllers\RiskController::class, 'pending'])->name('pending');
         Route::get('/done', [\App\Http\Controllers\RiskController::class, 'done'])->name('done');
         Route::post('/markets/{market}/labels', [\App\Http\Controllers\RiskController::class, 'updateLabels'])->name('markets.labels');

@@ -7,38 +7,104 @@ use Illuminate\Support\Facades\DB;
 
 class RiskController extends Controller
 {
-    public function pending(Request $request)
+    public function index(Request $request)
     {
         $filters = $this->buildFilters($request);
-        $baseQuery = $this->buildMarketQuery([4, 5], $filters, false);
-        $summary = $this->buildSummary($baseQuery);
-        $markets = (clone $baseQuery)->paginate(20)->withQueryString();
+        
+        // Get pending markets query (is_done = false or null)
+        $pendingQuery = $this->buildMarketQuery([4, 5], $filters, false);
+        
+        // Get done markets query (is_done = true)
+        $doneQuery = $this->buildMarketQuery([4, 5], $filters, true);
+        
+        // Apply status filter if selected (pending/done)
+        $statusFilter = $request->input('risk_status'); // 'pending' or 'done'
+        
+        $allMarkets = collect();
+        
+        if (!$statusFilter || $statusFilter === 'pending') {
+            $pendingMarkets = (clone $pendingQuery)->get();
+            foreach ($pendingMarkets as $market) {
+                $market->risk_status = 'pending';
+                $allMarkets->push($market);
+            }
+        }
+        
+        if (!$statusFilter || $statusFilter === 'done') {
+            $doneMarkets = (clone $doneQuery)->get();
+            foreach ($doneMarkets as $market) {
+                $market->risk_status = 'done';
+                $allMarkets->push($market);
+            }
+        }
+        
+        // Group by risk_status first (pending on top, done at bottom)
+        $grouped = $allMarkets->groupBy('risk_status');
+        $pendingMarkets = $grouped->get('pending', collect());
+        $doneMarkets = $grouped->get('done', collect());
+        
+        // Sort each group by close time (completeTime or marketTime) - newest first
+        $pendingMarkets = $pendingMarkets->sortBy(function ($market) {
+            $timeField = !empty($market->completeTime) ? $market->completeTime : $market->marketTime;
+            return $timeField ? strtotime($timeField) : 0;
+        }, SORT_REGULAR, true); // Descending order
+        
+        $doneMarkets = $doneMarkets->sortBy(function ($market) {
+            $timeField = !empty($market->completeTime) ? $market->completeTime : $market->marketTime;
+            return $timeField ? strtotime($timeField) : 0;
+        }, SORT_REGULAR, true); // Descending order
+        
+        // Combine: pending first, then done
+        $sortedMarkets = $pendingMarkets->concat($doneMarkets);
+        
+        // Paginate manually
+        $page = $request->get('page', 1);
+        $perPage = 20;
+        $total = $sortedMarkets->count();
+        $offset = ($page - 1) * $perPage;
+        $items = $sortedMarkets->slice($offset, $perPage)->values();
+        
+        // Build summary from both queries
+        $pendingSummary = $this->buildSummary($pendingQuery);
+        $doneSummary = $this->buildSummary($doneQuery);
+        $summary = [
+            'pending' => $pendingSummary,
+            'done' => $doneSummary,
+            'total' => $pendingSummary['total'] + $doneSummary['total'],
+        ];
+        
+        // Create paginator manually
+        $markets = new \Illuminate\Pagination\LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'pageName' => 'page',
+            ]
+        );
+        $markets->appends($request->query());
 
-        return view('risk.pending', [
+        return view('risk.index', [
             'markets' => $markets,
             'statusFilter' => [4, 5],
             'summary' => $summary,
             'filters' => $filters,
             'sports' => $this->getSportsList(),
             'tournamentsBySport' => $this->getTournamentsBySport(),
+            'riskStatusFilter' => $statusFilter,
         ]);
+    }
+
+    public function pending(Request $request)
+    {
+        return redirect()->route('risk.index', array_merge($request->query(), ['risk_status' => 'pending']));
     }
 
     public function done(Request $request)
     {
-        $filters = $this->buildFilters($request);
-        $baseQuery = $this->buildMarketQuery([4, 5], $filters, true);
-        $summary = $this->buildSummary($baseQuery);
-        $markets = (clone $baseQuery)->paginate(20)->withQueryString();
-
-        return view('risk.done', [
-            'markets' => $markets,
-            'statusFilter' => [4, 5],
-            'filters' => $filters,
-            'summary' => $summary,
-            'sports' => $this->getSportsList(),
-            'tournamentsBySport' => $this->getTournamentsBySport(),
-        ]);
+        return redirect()->route('risk.index', array_merge($request->query(), ['risk_status' => 'done']));
     }
 
     private function buildMarketQuery(array $statuses, array $filters, bool $onlyDone)
@@ -56,6 +122,7 @@ class RiskController extends Controller
                 'market_lists.marketTime',
                 'market_lists.labels',
                 'market_lists.is_done',
+                'market_lists.name',
                 'market_lists.remark',
                 'events.completeTime',
                 'market_lists.created_at',
@@ -96,15 +163,96 @@ class RiskController extends Controller
             $query->where('market_lists.status', $filters['status']);
         }
 
+        // Handle date and time filtering for completeTime
+        $timezone = config('app.timezone', 'UTC');
+        $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
+        $startDateTime = null;
+        $endDateTime = null;
+
         if ($filters['date_from']) {
-            $query->whereDate('events.completeTime', '>=', $filters['date_from']);
+            $parsedDate = $this->parseFilterDate($filters['date_from'], $timezone);
+            if ($parsedDate) {
+                $baseDate = $parsedDate->copy();
+                $startDateTime = $baseDate->copy()->startOfDay();
+
+                if ($filters['time_from']) {
+                    $timeComponent = null;
+                    foreach ($timeFormats as $format) {
+                        try {
+                            $timeComponent = \Carbon\Carbon::createFromFormat($format, $filters['time_from'], $timezone)->format('H:i:s');
+                            break;
+                        } catch (\Exception $e) {
+                            continue;
+                        }
+                    }
+
+                    if ($timeComponent) {
+                        $startDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $baseDate->format('Y-m-d') . ' ' . $timeComponent, $timezone);
+                    }
+                }
+            }
         }
 
         if ($filters['date_to']) {
+            $parsedDate = $this->parseFilterDate($filters['date_to'], $timezone);
+            if ($parsedDate) {
+                $baseDate = $parsedDate->copy();
+                $endDateTime = $baseDate->copy()->endOfDay();
+
+                if ($filters['time_to']) {
+                    $timeComponent = null;
+                    foreach ($timeFormats as $format) {
+                        try {
+                            $timeComponent = \Carbon\Carbon::createFromFormat($format, $filters['time_to'], $timezone)->format('H:i:s');
+                            break;
+                        } catch (\Exception $e) {
+                            continue;
+                        }
+                    }
+
+                    if ($timeComponent) {
+                        $endDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $baseDate->format('Y-m-d') . ' ' . $timeComponent, $timezone);
+                    }
+                }
+            }
+        }
+
+        if ($startDateTime && $endDateTime && $endDateTime->lt($startDateTime)) {
+            $endDateTime = $startDateTime->copy()->endOfDay();
+        }
+
+        if ($startDateTime && $endDateTime) {
+            $query->whereBetween('events.completeTime', [
+                $startDateTime->format('Y-m-d H:i:s'),
+                $endDateTime->format('Y-m-d H:i:s'),
+            ]);
+        } elseif ($startDateTime) {
+            $query->where('events.completeTime', '>=', $startDateTime->format('Y-m-d H:i:s'));
+        } elseif ($endDateTime) {
+            $query->where('events.completeTime', '<=', $endDateTime->format('Y-m-d H:i:s'));
+        } elseif ($filters['date_from'] && !$startDateTime) {
+            // Fallback to date-only filtering if date parsing failed
+            $query->whereDate('events.completeTime', '>=', $filters['date_from']);
+        } elseif ($filters['date_to'] && !$endDateTime) {
+            // Fallback to date-only filtering if date parsing failed
             $query->whereDate('events.completeTime', '<=', $filters['date_to']);
         }
 
         return $query->orderByDesc('marketTime');
+    }
+
+    private function parseFilterDate($dateStr, $timezone)
+    {
+        try {
+            // Try DD/MM/YYYY format first
+            if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $dateStr, $matches)) {
+                return \Carbon\Carbon::createFromDate((int) $matches[3], (int) $matches[2], (int) $matches[1], $timezone);
+            }
+            // Try YYYY-MM-DD format
+            return \Carbon\Carbon::parse($dateStr, $timezone);
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     private function buildFilters(Request $request): array
@@ -127,6 +275,9 @@ class RiskController extends Controller
                 : null,
             'date_from' => $request->input('date_from'),
             'date_to' => $request->input('date_to'),
+            'time_from' => $request->input('time_from'),
+            'time_to' => $request->input('time_to'),
+            'risk_status' => $request->input('risk_status'), // 'pending' or 'done'
         ];
     }
 
@@ -150,6 +301,7 @@ class RiskController extends Controller
     public function markDone(Request $request, int $marketId)
     {
         $request->validate([
+            'name' => ['required', 'string', 'max:255'],
             'remark' => ['required', 'string', 'max:2000'],
         ]);
 
@@ -173,6 +325,7 @@ class RiskController extends Controller
             ->where('id', $marketId)
             ->update([
                 'is_done' => true,
+                'name' => $request->input('name'),
                 'remark' => $request->input('remark'),
                 'updated_at' => now(),
             ]);
