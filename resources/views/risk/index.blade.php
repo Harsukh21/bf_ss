@@ -590,14 +590,14 @@
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" data-market-row="{{ $market->id }}">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     <button
-                                        class="mark-done-button inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed {{ $isDone ? 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300' : 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300' }}"
+                                        class="mark-done-button inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed {{ $isDone ? 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300' }}"
                                         data-market-id="{{ $market->id }}"
                                         data-market-name="{{ $market->marketName }}"
                                         data-done-url="{{ route('risk.markets.done', $market->id) }}"
                                         data-is-done="{{ $isDone ? 'true' : 'false' }}"
                                         @if($buttonDisabled) disabled @endif
                                     >
-                                        {{ $isDone ? 'Completed' : 'Done' }}
+                                        {{ $isDone ? 'Completed' : 'Pending' }}
                                     </button>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 align-top">
@@ -1147,7 +1147,7 @@
         button.disabled = true;
         button.dataset.isDone = 'true';
         button.textContent = 'Completed';
-        button.classList.remove('bg-green-100', 'text-green-700', 'dark:bg-green-900/20', 'dark:text-green-300');
+        button.classList.remove('bg-yellow-100', 'text-yellow-700', 'dark:bg-yellow-900/20', 'dark:text-yellow-300');
         button.classList.add('bg-gray-200', 'text-gray-600', 'dark:bg-gray-700', 'dark:text-gray-300');
 
         const checkboxes = document.querySelectorAll(`.market-label-checkbox[data-market-id="${marketId}"]`);
