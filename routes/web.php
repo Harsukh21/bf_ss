@@ -9,6 +9,7 @@ use App\Http\Controllers\SystemLogController;
 use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\GeneralSettingsController;
 
 // Welcome page
@@ -33,10 +34,22 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::post('/', [UserController::class, 'store'])->name('store');
         Route::get('/search', [UserController::class, 'search'])->name('search');
         Route::patch('/{user}/update-status', [UserController::class, 'updateStatus'])->name('update-status');
+        Route::patch('/{user}/update-roles', [UserController::class, 'updateRoles'])->name('update-roles');
         Route::get('/{user}', [UserController::class, 'show'])->name('show');
         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
         Route::put('/{user}', [UserController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+    });
+
+    // Roles & Permissions Management
+    Route::prefix('roles')->name('roles.')->group(function () {
+        Route::get('/', [RoleController::class, 'index'])->name('index');
+        Route::get('/create', [RoleController::class, 'create'])->name('create');
+        Route::post('/', [RoleController::class, 'store'])->name('store');
+        Route::get('/{role}', [RoleController::class, 'show'])->name('show');
+        Route::get('/{role}/edit', [RoleController::class, 'edit'])->name('edit');
+        Route::put('/{role}', [RoleController::class, 'update'])->name('update');
+        Route::delete('/{role}', [RoleController::class, 'destroy'])->name('destroy');
     });
     
     // Events

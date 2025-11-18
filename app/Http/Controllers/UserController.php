@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Role;
+use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -56,9 +58,11 @@ class UserController extends Controller
             $query->whereDate('created_at', '<=', $request->get('date_to'));
         }
 
-        $users = $query->latest()->paginate(10);
+        $users = $query->with('roles')->latest()->paginate(10);
         
-        return view('users.index', compact('users'));
+        $roles = Role::where('is_active', true)->get();
+        
+        return view('users.index', compact('users', 'roles'));
     }
 
     /**
@@ -70,7 +74,8 @@ class UserController extends Controller
             return redirect()->route('users.index')
                 ->with('error', 'You are not authorized to create users.');
         }
-        return view('users.create');
+        $roles = Role::where('is_active', true)->get();
+        return view('users.create', compact('roles'));
     }
 
     /**
@@ -101,6 +106,11 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Assign roles if provided
+        if ($request->filled('roles')) {
+            $user->assignRoles($request->roles);
+        }
+
         return redirect()->route('users.index')
             ->with('success', 'User created successfully.');
     }
@@ -110,7 +120,10 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        return view('users.show', compact('user'));
+        $user->load('roles.permissions');
+        $roles = Role::where('is_active', true)->with('permissions')->get();
+        $permissions = Permission::all()->groupBy('group');
+        return view('users.show', compact('user', 'roles', 'permissions'));
     }
 
     /**
@@ -122,7 +135,9 @@ class UserController extends Controller
             return redirect()->route('users.index')
                 ->with('error', 'You are not authorized to edit users.');
         }
-        return view('users.edit', compact('user'));
+        $user->load('roles');
+        $roles = Role::where('is_active', true)->get();
+        return view('users.edit', compact('user', 'roles'));
     }
 
     /**
@@ -180,6 +195,11 @@ class UserController extends Controller
         }
 
         $user->update($updateData);
+
+        // Update roles if provided
+        if ($request->has('roles')) {
+            $user->assignRoles($request->roles ?? []);
+        }
 
         return redirect()->route('users.index')
             ->with('success', 'User updated successfully.');
@@ -251,5 +271,26 @@ class UserController extends Controller
     public function search(Request $request)
     {
         return redirect()->route('users.index', $request->all());
+    }
+
+    /**
+     * Update user roles
+     */
+    public function updateRoles(Request $request, User $user)
+    {
+        if (!$this->isAuthorized()) {
+            return redirect()->route('users.index')
+                ->with('error', 'You are not authorized to update user roles.');
+        }
+
+        $request->validate([
+            'roles' => 'nullable|array',
+            'roles.*' => 'exists:roles,id',
+        ]);
+
+        $user->assignRoles($request->roles ?? []);
+
+        return redirect()->back()
+            ->with('success', "User '{$user->name}' roles updated successfully.");
     }
 }

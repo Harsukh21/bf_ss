@@ -199,6 +199,41 @@
                         </div>
                     </div>
 
+                    <!-- Roles & Permissions Card -->
+                    <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+                        <div class="px-4 py-5 sm:p-6">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                                Roles & Permissions
+                            </h3>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Assign Roles</label>
+                                <div class="space-y-2">
+                                    @forelse($roles as $role)
+                                        <label class="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                            <input type="checkbox" 
+                                                   name="roles[]" 
+                                                   value="{{ $role->id }}"
+                                                   {{ $user->roles->contains($role->id) ? 'checked' : '' }}
+                                                   class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700">
+                                            <div class="flex-1">
+                                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $role->name }}</div>
+                                                @if($role->description)
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ $role->description }}</div>
+                                                @endif
+                                            </div>
+                                        </label>
+                                    @empty
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">No roles available. Please create roles first.</p>
+                                    @endforelse
+                                </div>
+                                @error('roles')
+                                    <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Additional Information Card -->
                     <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
                         <div class="px-4 py-5 sm:p-6">

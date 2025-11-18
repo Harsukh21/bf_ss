@@ -50,6 +50,32 @@
                     </div>
                 </div>
 
+                @if(isset($roles) && $roles->count() > 0)
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Assign Roles</label>
+                    <div class="space-y-2">
+                        @foreach($roles as $role)
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                <input type="checkbox" 
+                                       name="roles[]" 
+                                       value="{{ $role->id }}"
+                                       {{ old('roles') && in_array($role->id, old('roles')) ? 'checked' : '' }}
+                                       class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700">
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $role->name }}</div>
+                                    @if($role->description)
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ $role->description }}</div>
+                                    @endif
+                                </div>
+                            </label>
+                        @endforeach
+                    </div>
+                    @error('roles')
+                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+                @endif
+
                 <div class="flex items-center justify-end space-x-4 pt-2">
                     <a href="{{ route('users.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">Cancel</a>
                     <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">Create User</button>

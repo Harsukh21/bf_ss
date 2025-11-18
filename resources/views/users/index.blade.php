@@ -205,6 +205,9 @@
                                 Contact Info
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Roles
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Status
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -240,6 +243,19 @@
                                     <div class="text-sm text-gray-900 dark:text-gray-100">{{ $user->email }}</div>
                                     @if($user->phone)
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ $user->phone }}</div>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @if($user->roles && $user->roles->count() > 0)
+                                        <div class="flex flex-wrap gap-1">
+                                            @foreach($user->roles as $role)
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+                                                    {{ $role->name }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-gray-400 dark:text-gray-500">No roles</span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
