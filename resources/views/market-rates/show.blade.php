@@ -111,6 +111,19 @@
                     </a>
                 </div>
             </div>
+            
+            <!-- Runner Dropdown Row -->
+            @if(isset($allRunners) && $allRunners->count() > 0)
+            <div class="mt-4 flex items-center space-x-2">
+                <label for="runnerSelect" class="text-sm font-medium text-gray-700 dark:text-gray-300">Select player or team:</label>
+                <select id="runnerSelect" class="h-9 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" style="min-width: 250px;">
+                    <option value="">All Runners</option>
+                    @foreach($allRunners as $runnerName)
+                        <option value="{{ htmlspecialchars($runnerName) }}" {{ isset($selectedRunner) && $selectedRunner === $runnerName ? 'selected' : '' }}>{{ $runnerName }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
         </div>
 
         <!-- Grid Mode: show records in 2 columns (2 rates per row) -->
@@ -153,7 +166,7 @@
                                             $laySlots = array_reverse(array_slice($availableToLay, 0, 3));
                                             $isSuspended = empty($availableToBack) && empty($availableToLay);
                                         @endphp
-                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 runner-row" data-runner-name="{{ htmlspecialchars($runnerName) }}">
                                             <td class="px-3 py-2">
                                                 <div class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ $runnerName }}</div>
                                             </td>
@@ -344,7 +357,7 @@
                                     $isSuspended = empty($availableToBack) && empty($availableToLay);
                                 @endphp
                                 
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 runner-row" data-runner-name="{{ htmlspecialchars($runnerName) }}">
                                     <!-- Runner Name -->
                                     <td class="px-6 py-4">
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -553,6 +566,57 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Runner select behavior: filter runners or update URL parameter
+    const runnerSelect = document.getElementById('runnerSelect');
+    if (runnerSelect) {
+        runnerSelect.addEventListener('change', function() {
+            const selectedRunner = this.value;
+            
+            // Get all runner rows
+            const runnerRows = document.querySelectorAll('.runner-row');
+            
+            if (!selectedRunner) {
+                // Show all runners
+                runnerRows.forEach(row => {
+                    row.style.display = '';
+                });
+            } else {
+                // Filter runners
+                runnerRows.forEach(row => {
+                    const runnerName = row.getAttribute('data-runner-name');
+                    if (runnerName === selectedRunner) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Update URL parameter without reload (optional, or reload if you prefer)
+            const url = new URL(window.location.href);
+            if (selectedRunner) {
+                url.searchParams.set('runner', encodeURIComponent(selectedRunner));
+            } else {
+                url.searchParams.delete('runner');
+            }
+            // Uncomment the line below if you want to reload on change
+            // window.location.href = url.toString();
+            window.history.replaceState({}, '', url.toString());
+        });
+        
+        // Apply filter on page load if a runner is selected
+        const selectedRunner = runnerSelect.value;
+        if (selectedRunner) {
+            const runnerRows = document.querySelectorAll('.runner-row');
+            runnerRows.forEach(row => {
+                const runnerName = row.getAttribute('data-runner-name');
+                if (runnerName !== selectedRunner) {
+                    row.style.display = 'none';
+                }
+            });
+        }
+    }
+    
     // Grid select behavior: update grid parameter and reload
     if (gridSelect) {
         gridSelect.addEventListener('change', function() {
@@ -561,6 +625,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 url.searchParams.set('grid', this.value);
             } else {
                 url.searchParams.delete('grid');
+            }
+            // Preserve runner filter when changing grid
+            const runnerSelect = document.getElementById('runnerSelect');
+            if (runnerSelect && runnerSelect.value) {
+                url.searchParams.set('runner', encodeURIComponent(runnerSelect.value));
             }
             window.location.href = url.toString();
         });

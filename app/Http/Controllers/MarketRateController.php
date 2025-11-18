@@ -259,6 +259,31 @@ class MarketRateController extends Controller
         $marketListWinnerType = $marketListMeta->winnerType ?? null;
         $marketListSelectionName = $marketListMeta->selectionName ?? null;
 
+        // Extract all unique runners from all market rates for this market
+        $allMarketRatesForRunnerList = MarketRate::forEvent($selectedEventId)
+            ->where('marketName', $marketRate->marketName)
+            ->whereNotNull('marketName')
+            ->whereNotNull('runners')
+            ->get();
+        
+        $allRunners = collect();
+        foreach ($allMarketRatesForRunnerList as $rate) {
+            $runners = is_string($rate->runners) ? json_decode($rate->runners, true) : $rate->runners;
+            if (is_array($runners)) {
+                foreach ($runners as $runner) {
+                    $runner = is_array($runner) ? $runner : (array) $runner;
+                    $runnerName = $runner['runnerName'] ?? null;
+                    if ($runnerName && !$allRunners->contains($runnerName)) {
+                        $allRunners->push($runnerName);
+                    }
+                }
+            }
+        }
+        $allRunners = $allRunners->sort()->values();
+        
+        // Get selected runner from request
+        $selectedRunner = $request->get('runner');
+
         // Get next and previous market rates for navigation (filtered by marketName)
         // Ensure we only get records with the exact same marketName
         $allMarketRates = MarketRate::forEvent($selectedEventId)
@@ -332,7 +357,9 @@ class MarketRateController extends Controller
             'gridMarketRates',
             'marketListStatus',
             'marketListWinnerType',
-            'marketListSelectionName'
+            'marketListSelectionName',
+            'allRunners',
+            'selectedRunner'
         ));
     }
 
