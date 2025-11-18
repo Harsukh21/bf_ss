@@ -717,34 +717,52 @@ class EventController extends Controller
     public function export(Request $request)
     {
         $selectColumns = [
-            'id',
-            'eventId',
-            'sportId',
-            'tournamentsId',
-            'tournamentsName',
-            'eventName',
-            'highlight',
-            'quicklink',
-            'popular',
-            'IsSettle',
-            'IsVoid',
-            'IsUnsettle',
-            'dataSwitch',
-            'isRecentlyAdded',
-            'marketTime',
-            'createdAt'
+            'events."id"',
+            'events."eventId"',
+            'events."sportId"',
+            'events."tournamentsId"',
+            'events."tournamentsName"',
+            'events."eventName"',
+            'events."highlight"',
+            'events."quicklink"',
+            'events."popular"',
+            'events."IsSettle"',
+            'events."IsVoid"',
+            'events."IsUnsettle"',
+            'events."dataSwitch"',
+            'events."isRecentlyAdded"',
+            'events."marketTime" as "marketTime"',
+            'events."createdAt"'
         ];
-        $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
+        $selectList = implode(', ', $selectColumns);
         $selectList .= ', ' . $this->getMatchOddsStatusSelect();
+        $selectList .= ', COALESCE(mc.market_count, 0) as "market_count"';
 
         $filterSql = $this->buildEventFilterSql($request, ['conditions' => [], 'bindings' => []]);
         $whereSql = !empty($filterSql['conditions'])
             ? ' WHERE ' . implode(' AND ', $filterSql['conditions'])
             : '';
 
+        $eventsTable = $this->quoteTable('events');
+        $marketListsTable = $this->quoteTable('market_lists');
+        $eventNameColumn = $this->quoteColumn('eventName');
+        $eventsEventName = $this->qualifyColumn('events', 'eventName');
+
         $dataSql = sprintf(
-            'SELECT %s FROM events%s ORDER BY %s DESC, %s DESC',
+            'SELECT %s FROM %s
+                LEFT JOIN (
+                    SELECT %s AS event_name_key, COUNT(*) AS market_count
+                    FROM %s
+                    GROUP BY %s
+                ) AS mc ON mc.event_name_key = %s
+                %s
+                ORDER BY %s DESC, %s DESC',
             $selectList,
+            $eventsTable,
+            $eventNameColumn,
+            $marketListsTable,
+            $eventNameColumn,
+            $eventsEventName,
             $whereSql,
             $this->quoteColumn('marketTime'),
             $this->quoteColumn('id')
@@ -775,13 +793,9 @@ class EventController extends Controller
                 'Tournament ID',
                 'Tournament Name',
                 'Event Name',
-                'Highlight',
-                'Quicklink',
-                'Popular',
+                'Number of Markets',
                 'Status',
-                'Data Switch',
-                'Event Time',
-                'Created At'
+                'Event Time'
             ]);
 
             // Add data rows
@@ -794,6 +808,52 @@ class EventController extends Controller
                 // Get sport name from config
                 $sportName = $sportConfig[$event->sportId] ?? $event->sportId;
 
+                // Get marketTime - PostgreSQL returns quoted columns with exact case
+                // Try accessing the property directly first
+                $marketTime = null;
+                
+                // Check all possible property name variations
+                $propertyVariations = ['marketTime', 'markettime', 'MARKETTIME', 'MarketTime'];
+                foreach ($propertyVariations as $prop) {
+                    if (property_exists($event, $prop) || isset($event->$prop)) {
+                        $marketTime = $event->$prop;
+                        break;
+                    }
+                }
+                
+                // If still not found, try array conversion (handles PostgreSQL's property visibility)
+                if (is_null($marketTime) && is_object($event)) {
+                    $eventVars = get_object_vars($event);
+                    foreach (['marketTime', 'markettime', 'MARKETTIME', 'MarketTime'] as $key) {
+                        if (isset($eventVars[$key])) {
+                            $marketTime = $eventVars[$key];
+                            break;
+                        }
+                    }
+                    
+                    // Also check for quoted property names from PostgreSQL
+                    if (is_null($marketTime)) {
+                        foreach ($eventVars as $key => $value) {
+                            if (stripos($key, 'markettime') !== false) {
+                                $marketTime = $value;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // Format the marketTime if it exists
+                if (!is_null($marketTime) && $marketTime !== '') {
+                    try {
+                        $marketTime = Carbon::parse($marketTime)->format('Y-m-d H:i:s');
+                    } catch (Exception $e) {
+                        // If parsing fails, use as is or convert to string
+                        $marketTime = (string) $marketTime;
+                    }
+                } else {
+                    $marketTime = '';
+                }
+
                 fputcsv($file, [
                     $event->id,
                     $event->eventId,
@@ -801,13 +861,9 @@ class EventController extends Controller
                     $event->tournamentsId,
                     $event->tournamentsName,
                     $event->eventName,
-                    $event->highlight ? 'Yes' : 'No',
-                    $event->quicklink ? 'Yes' : 'No',
-                    $event->popular ? 'Yes' : 'No',
+                    $event->market_count ?? 0,
                     $status,
-                    $event->dataSwitch ? 'On' : 'Off',
-                    $event->marketTime,
-                    $event->createdAt
+                    $marketTime ?? ''
                 ]);
             }
 
