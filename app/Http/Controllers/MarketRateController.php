@@ -231,6 +231,9 @@ class MarketRateController extends Controller
     public function show(Request $request, $id)
     {
         $selectedEventId = $request->get('exEventId');
+        if($id == 1 && $selectedEventId = '2adb61cd588d2021a2222104657f974d') {
+            echo "yes"; exit();
+        }
         $gridCount = $request->get('grid');
         $gridEnabled = !empty($gridCount) && in_array((int)$gridCount, [10, 20, 40, 60]);
         $gridCountValue = $gridEnabled ? (int)$gridCount : null;
