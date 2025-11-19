@@ -43,25 +43,18 @@
     <script src="https://unpkg.com/heroicons@2.0.18/24/outline/index.js" type="module"></script>
     
     <style>
-        /* Red Blinking Dot Styles */
-        .menu-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #ef4444;
-            border-radius: 50%;
-            display: inline-block;
-            animation: blink 1s infinite;
+        /* Menu Eye Icon Styles */
+        .menu-eye-icon {
+            width: 18px;
+            height: 18px;
+            color: #eab308;
             cursor: pointer;
             flex-shrink: 0;
+            transition: color 0.2s ease;
         }
 
-        @keyframes blink {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.3;
-            }
+        .menu-eye-icon:hover {
+            color: #ca8a04;
         }
 
         /* Rules Modal Styles */
@@ -440,14 +433,14 @@
             }
         });
 
-        // Handle menu dot clicks
+        // Handle menu eye icon clicks
         document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('menu-dot') || e.target.closest('.menu-dot-wrapper')) {
+            if (e.target.classList.contains('menu-eye-icon') || e.target.closest('.menu-eye-wrapper')) {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                const dot = e.target.classList.contains('menu-dot') ? e.target : e.target.closest('.menu-dot-wrapper').querySelector('.menu-dot');
-                const title = dot.getAttribute('data-modal-title');
+                const icon = e.target.classList.contains('menu-eye-icon') ? e.target : e.target.closest('.menu-eye-wrapper').querySelector('.menu-eye-icon');
+                const title = icon.getAttribute('data-modal-title');
                 
                 if (title) {
                     openRulesModal(title);

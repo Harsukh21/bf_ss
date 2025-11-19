@@ -82,8 +82,11 @@
                                 </svg>
                                 All Events List
                             </div>
-                            <span class="menu-dot-wrapper ml-auto mr-2">
-                                <span class="menu-dot" data-modal-title="Event Rules"></span>
+                            <span class="menu-eye-wrapper ml-auto mr-2">
+                                <svg class="menu-eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-modal-title="Event Rules">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
                             </span>
                         </a>
                         <a href="{{ route('events.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('events.index') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
@@ -119,8 +122,11 @@
                                 </svg>
                                 All Markets List
                             </div>
-                            <span class="menu-dot-wrapper ml-auto mr-2">
-                                <span class="menu-dot" data-modal-title="Market Rules"></span>
+                            <span class="menu-eye-wrapper ml-auto mr-2">
+                                <svg class="menu-eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-modal-title="Market Rules">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
                             </span>
                         </a>
                         <a href="{{ route('markets.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('markets.index') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
@@ -157,8 +163,11 @@
                                 </svg>
                                 SS Lists
                             </div>
-                            <span class="menu-dot-wrapper ml-auto mr-2">
-                                <span class="menu-dot" data-modal-title="SS Rules"></span>
+                            <span class="menu-eye-wrapper ml-auto mr-2">
+                                <svg class="menu-eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-modal-title="SS Rules">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
                             </span>
                         </a>
                     </div>
