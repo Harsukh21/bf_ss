@@ -425,6 +425,9 @@
         $statusMap = [4 => 'Settled', 5 => 'Voided'];
         $activeFilters[] = ['label' => 'Market Status', 'value' => $statusMap[$statusValue] ?? $statusValue, 'query' => 'status'];
     }
+    if (request('recently_added') == '1') {
+        $activeFilters[] = ['label' => 'Recently Added', 'value' => 'Within 30 min', 'query' => 'recently_added'];
+    }
     if ($hasDateFrom) {
         $activeFilters[] = ['label' => 'Complete From', 'value' => $dateFromValue . ($hasTimeFrom ? ' ' . $timeFromValue : ''), 'query' => 'date_from'];
     }
@@ -552,6 +555,33 @@
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Settled</p>
                     <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(($summary['pending']['settled'] ?? 0) + ($summary['done']['settled'] ?? 0)) }}</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recently Added Toggle -->
+    <div class="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Recently Added</span>
+                <form method="GET" action="{{ route('risk.index') }}" id="recentlyAddedForm" class="inline">
+                    @foreach(request()->except('recently_added', 'page') as $key => $value)
+                        @if(is_array($value))
+                            @foreach($value as $val)
+                                <input type="hidden" name="{{ $key }}[]" value="{{ $val }}">
+                            @endforeach
+                        @else
+                            <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                        @endif
+                    @endforeach
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="recently_added" value="1" class="sr-only peer" 
+                               @checked(request('recently_added') == '1')
+                               onchange="document.getElementById('recentlyAddedForm').submit()">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                    </label>
+                </form>
+                <span class="text-xs text-gray-500 dark:text-gray-400">(Show markets closing within 30 minutes)</span>
             </div>
         </div>
     </div>
@@ -902,6 +932,16 @@
                     </div>
                 </div>
                 <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Times apply to the selected dates (completeTime).</p>
+            </div>
+            <div>
+                <label class="flex items-center justify-between cursor-pointer">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Recently Added</span>
+                    <div class="relative inline-block w-11 h-6">
+                        <input type="checkbox" name="recently_added" value="1" class="sr-only peer" @checked(request('recently_added') == '1')>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                    </div>
+                </label>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Show markets closing within 30 minutes</p>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Labels</label>
