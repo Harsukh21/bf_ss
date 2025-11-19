@@ -975,6 +975,12 @@
                 <input type="text" id="nameInput" class="w-full border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500" placeholder="Enter your name..." required>
             </div>
             <div>
+                <label for="chorIdInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Chor ID <span class="text-red-500">*</span>
+                </label>
+                <input type="text" id="chorIdInput" class="w-full border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500" placeholder="Enter Chor ID..." required>
+            </div>
+            <div>
                 <label for="remarkInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Remark <span class="text-red-500">*</span>
                 </label>
@@ -1083,6 +1089,7 @@
     const remarkOverlay = document.getElementById('remarkModalOverlay');
     const remarkInput = document.getElementById('remarkInput');
     const nameInput = document.getElementById('nameInput');
+    const chorIdInput = document.getElementById('chorIdInput');
     const remarkMarketName = document.getElementById('remarkModalMarketName');
     const remarkCancelBtn = document.getElementById('remarkCancelBtn');
     const remarkSubmitBtn = document.getElementById('remarkSubmitBtn');
@@ -1096,6 +1103,7 @@
         remarkMarketName.textContent = `Market: ${marketName}`;
         remarkInput.value = '';
         nameInput.value = '';
+        chorIdInput.value = '';
         remarkModal.classList.add('active');
         remarkOverlay.classList.add('active');
     }
@@ -1105,6 +1113,7 @@
         activeDoneUrl = null;
         remarkInput.value = '';
         nameInput.value = '';
+        chorIdInput.value = '';
         remarkModal.classList.remove('active');
         remarkOverlay.classList.remove('active');
     }
@@ -1123,10 +1132,17 @@
         if (!activeMarketId || !activeDoneUrl) return;
         const remark = remarkInput.value.trim();
         const name = nameInput.value.trim();
+        const chorId = chorIdInput.value.trim();
         
         if (!name.length) {
             showRiskToast('Name is required', 'error');
             nameInput.focus();
+            return;
+        }
+        
+        if (!chorId.length) {
+            showRiskToast('Chor ID is required', 'error');
+            chorIdInput.focus();
             return;
         }
         
@@ -1145,7 +1161,7 @@
                 'X-CSRF-TOKEN': csrfToken,
                 'Accept': 'application/json',
             },
-            body: JSON.stringify({ remark, name }),
+            body: JSON.stringify({ remark, name, chor_id: chorId }),
         })
         .then(response => response.json())
         .then(data => {

@@ -335,6 +335,7 @@ class RiskController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'chor_id' => ['required', 'string', 'max:255'],
             'remark' => ['required', 'string', 'max:2000'],
         ]);
 
@@ -359,6 +360,7 @@ class RiskController extends Controller
             ->update([
                 'is_done' => true,
                 'name' => $request->input('name'),
+                'chor_id' => $request->input('chor_id'),
                 'remark' => $request->input('remark'),
                 'updated_at' => now(),
             ]);
