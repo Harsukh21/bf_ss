@@ -42,6 +42,79 @@
     <!-- Heroicons CDN -->
     <script src="https://unpkg.com/heroicons@2.0.18/24/outline/index.js" type="module"></script>
     
+    <style>
+        /* Red Blinking Dot Styles */
+        .menu-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            display: inline-block;
+            animation: blink 1s infinite;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        @keyframes blink {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* Rules Modal Styles */
+        .rules-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease;
+            z-index: 1050;
+        }
+
+        .rules-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .rules-modal {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1060;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        .rules-modal.active {
+            pointer-events: auto;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .rules-modal__content {
+            width: 100%;
+            max-width: 600px;
+            background: #fff;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .dark .rules-modal__content {
+            background: #1f2937;
+        }
+    </style>
+    
     @stack('css')
 </head>
 <body class="bg-white dark:bg-gray-900 min-h-screen font-sans dark-mode-transition">
@@ -63,6 +136,29 @@
 
     <!-- Sidebar Overlay (Mobile) -->
     <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden"></div>
+
+    <!-- Rules Modal -->
+    <div id="rulesModalOverlay" class="rules-modal-overlay"></div>
+    <div id="rulesModal" class="rules-modal">
+        <div class="rules-modal__content">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="rulesModalTitle" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Rules</h3>
+                <button onclick="closeRulesModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="rulesModalContent" class="space-y-4">
+                <!-- Content will be populated dynamically -->
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeRulesModal()" class="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Common JavaScript -->
     <script src="{{ asset('assets/js/app.js') }}"></script>
@@ -303,6 +399,62 @@
     
     <!-- IST Time Script -->
     <script src="{{ asset('assets/js/ist-time.js') }}"></script>
+    
+    <!-- Rules Modal JavaScript -->
+    <script>
+        function openRulesModal(title) {
+            const modal = document.getElementById('rulesModal');
+            const overlay = document.getElementById('rulesModalOverlay');
+            const modalTitle = document.getElementById('rulesModalTitle');
+            const modalContent = document.getElementById('rulesModalContent');
+            
+            modalTitle.textContent = title;
+            modalContent.innerHTML = ''; // Empty content for now
+            
+            modal.classList.add('active');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeRulesModal() {
+            const modal = document.getElementById('rulesModal');
+            const overlay = document.getElementById('rulesModalOverlay');
+            
+            modal.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Close modal when clicking overlay
+        document.getElementById('rulesModalOverlay')?.addEventListener('click', function() {
+            closeRulesModal();
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('rulesModal');
+                if (modal && modal.classList.contains('active')) {
+                    closeRulesModal();
+                }
+            }
+        });
+
+        // Handle menu dot clicks
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('menu-dot') || e.target.closest('.menu-dot-wrapper')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const dot = e.target.classList.contains('menu-dot') ? e.target : e.target.closest('.menu-dot-wrapper').querySelector('.menu-dot');
+                const title = dot.getAttribute('data-modal-title');
+                
+                if (title) {
+                    openRulesModal(title);
+                }
+            }
+        });
+    </script>
     
     @stack('js')
 </body>

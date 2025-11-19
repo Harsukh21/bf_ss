@@ -70,6 +70,106 @@
     .dark .filter-field-title {
         color: #e5e7eb;
     }
+
+    /* Event Modal Styles */
+    .event-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease;
+        z-index: 1050;
+    }
+
+    .event-modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .event-modal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1060;
+        pointer-events: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+
+    .event-modal.active {
+        pointer-events: auto;
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .event-modal__content {
+        width: 100%;
+        max-width: 600px;
+        background: #fff;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .dark .event-modal__content {
+        background: #1f2937;
+    }
+
+    /* Toggle Switch Styles */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 24px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e1;
+        transition: 0.3s;
+        border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+        background-color: #3b82f6;
+    }
+
+    input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+    }
+
+    .dark .toggle-slider {
+        background-color: #475569;
+    }
 </style>
 @endpush
 
@@ -166,23 +266,40 @@
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sport / Tournament</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">In-Play Markets</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event Time</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @foreach($events as $event)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="{{ route('events.show', $event->id) }}" class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">
-                                        View Details
-                                    </a>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="js-event-toggle" data-event-id="{{ $event->id }}" data-event-name="{{ $event->eventName }}" data-event-data="{{ json_encode([
+                                            'eventId' => $event->eventId,
+                                            'exEventId' => $event->exEventId,
+                                            'eventName' => $event->eventName,
+                                            'sportName' => $event->sportName,
+                                            'tournamentsName' => $event->tournamentsName,
+                                            'inplay_markets_count' => $event->inplay_markets_count,
+                                            'formatted_market_time' => $event->formatted_market_time,
+                                        ]) }}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {{ $event->eventName }}
-                                    </div>
-                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        ID: {{ $event->eventId }}
+                                    <div class="space-y-2">
+                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            {{ $event->eventName }}
+                                        </div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                                            ID: {{ $event->eventId }}
+                                        </div>
+                                        @if($event->formatted_market_time)
+                                            <div>
+                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-200">
+                                                    {{ $event->formatted_market_time }}
+                                                </span>
+                                            </div>
+                                        @endif
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -200,12 +317,9 @@
                                         {{ $event->inplay_markets_count }} Market(s)
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $event->formatted_market_time ?? 'N/A' }}
-                                </td>
                             </tr>
                             <tr class="bg-gray-50/60 dark:bg-gray-800/70 text-xs text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700">
-                                <td colspan="5" class="px-6 py-3">
+                                <td colspan="4" class="px-6 py-3">
                                     <div class="flex flex-wrap items-center gap-6">
                                         <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Labels:</span>
                                         @foreach($labelConfig as $labelKey => $labelName)
@@ -323,6 +437,29 @@
     </div>
 </div>
 
+<!-- Event Modal -->
+<div id="eventModalOverlay" class="event-modal-overlay"></div>
+<div id="eventModal" class="event-modal">
+    <div class="event-modal__content">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Event Details</h3>
+            <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div id="eventModalContent" class="space-y-4">
+            <!-- Content will be populated by JavaScript -->
+        </div>
+        <div class="mt-6 flex justify-end">
+            <button onclick="closeEventModal()" class="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
@@ -388,6 +525,96 @@
                 console.log(`Label ${labelKey} for event ${eventId} toggled to: ${checked}`);
             });
         });
+
+        // Handle event toggle switches
+        const eventToggles = document.querySelectorAll('.js-event-toggle');
+        eventToggles.forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                if (this.checked) {
+                    // Open modal when toggle is turned on
+                    const eventData = JSON.parse(this.getAttribute('data-event-data'));
+                    openEventModal(eventData);
+                } else {
+                    // Close modal when toggle is turned off
+                    closeEventModal();
+                }
+            });
+        });
+    });
+
+    // Event Modal Functions
+    function openEventModal(eventData) {
+        const modal = document.getElementById('eventModal');
+        const overlay = document.getElementById('eventModalOverlay');
+        const content = document.getElementById('eventModalContent');
+        
+        // Populate modal content
+        content.innerHTML = `
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Event Name</label>
+                    <p class="text-base font-semibold text-gray-900 dark:text-gray-100">${eventData.eventName || 'N/A'}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Event ID</label>
+                    <p class="text-base text-gray-900 dark:text-gray-100">${eventData.eventId || 'N/A'}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">External Event ID</label>
+                    <p class="text-base text-gray-900 dark:text-gray-100">${eventData.exEventId || 'N/A'}</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Sport</label>
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200">
+                            ${eventData.sportName || 'N/A'}
+                        </span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Tournament</label>
+                        <p class="text-base text-gray-900 dark:text-gray-100">${eventData.tournamentsName || 'N/A'}</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">In-Play Markets</label>
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200">
+                            ${eventData.inplay_markets_count || 0} Market(s)
+                        </span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Event Time</label>
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-200">
+                            ${eventData.formatted_market_time || 'N/A'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        modal.classList.add('active');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeEventModal() {
+        const modal = document.getElementById('eventModal');
+        const overlay = document.getElementById('eventModalOverlay');
+        
+        modal.classList.remove('active');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+        
+        // Uncheck all toggles
+        const toggles = document.querySelectorAll('.js-event-toggle');
+        toggles.forEach(toggle => {
+            toggle.checked = false;
+        });
+    }
+
+    // Close modal when clicking overlay
+    document.getElementById('eventModalOverlay')?.addEventListener('click', function() {
+        closeEventModal();
     });
 
     // Close drawer on Escape key
@@ -396,6 +623,11 @@
             const drawer = document.getElementById('scorecard-filter-drawer');
             if (drawer && drawer.classList.contains('open')) {
                 toggleScorecardFilterDrawer(true);
+            }
+            // Also close modal on Escape
+            const modal = document.getElementById('eventModal');
+            if (modal && modal.classList.contains('active')) {
+                closeEventModal();
             }
         }
     });
