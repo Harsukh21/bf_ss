@@ -260,11 +260,28 @@ class MarketRateController extends Controller
         $marketListSelectionName = $marketListMeta->selectionName ?? null;
 
         // Extract all unique runners from all market rates for this market
-        $allMarketRatesForRunnerList = MarketRate::forEvent($selectedEventId)
-            ->where('marketName', $marketRate->marketName)
-            ->whereNotNull('marketName')
-            ->whereNotNull('runners')
-            ->get();
+        try {
+            if (empty($marketRate->marketName)) {
+                // If marketName is null/empty, get all rates without marketName filter
+                $allMarketRatesForRunnerList = MarketRate::forEvent($selectedEventId)
+                    ->whereNull('marketName')
+                    ->whereNotNull('runners')
+                    ->get();
+            } else {
+                $allMarketRatesForRunnerList = MarketRate::forEvent($selectedEventId)
+                    ->where('marketName', $marketRate->marketName)
+                    ->whereNotNull('marketName')
+                    ->whereNotNull('runners')
+                    ->get();
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error fetching market rates for runner list: ' . $e->getMessage(), [
+                'exEventId' => $selectedEventId,
+                'marketRateId' => $id,
+                'marketName' => $marketRate->marketName ?? null
+            ]);
+            $allMarketRatesForRunnerList = collect([]);
+        }
         
         $allRunners = collect();
         foreach ($allMarketRatesForRunnerList as $rate) {
@@ -285,11 +302,31 @@ class MarketRateController extends Controller
         $selectedRunner = $request->get('runner');
         // Get next and previous market rates for navigation (filtered by marketName)
         // Ensure we only get records with the exact same marketName
-        $allMarketRates = MarketRate::forEvent($selectedEventId)
-            ->where('marketName', $marketRate->marketName)
-            ->whereNotNull('marketName')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        try {
+            // Check if marketName exists and is not null
+            if (empty($marketRate->marketName)) {
+                // If marketName is null/empty, get all rates without marketName filter
+                $allMarketRates = MarketRate::forEvent($selectedEventId)
+                    ->whereNull('marketName')
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            } else {
+                // Use PostgreSQL case-insensitive comparison for marketName
+                $allMarketRates = MarketRate::forEvent($selectedEventId)
+                    ->where('marketName', $marketRate->marketName)
+                    ->whereNotNull('marketName')
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            }
+        } catch (\Exception $e) {
+            // Fallback: if query fails, just get the current market rate
+            \Log::error('Error fetching all market rates: ' . $e->getMessage(), [
+                'exEventId' => $selectedEventId,
+                'marketRateId' => $id,
+                'marketName' => $marketRate->marketName ?? null
+            ]);
+            $allMarketRates = collect([$marketRate]);
+        }
         
         $currentIndex = $allMarketRates->search(function($item) use ($id) {
             return $item->id == $id;
@@ -310,17 +347,35 @@ class MarketRateController extends Controller
             // When grid mode is enabled, get current record + (count-1) newer records
             // All records are already filtered by marketName above
             if ($gridEnabled) {
-                $currentCreatedAt = $marketRate->created_at;
-                $additionalRecords = $gridCountValue - 1; // Subtract 1 for current record
-                
-                // Get up to (count-1) records with same marketName that are newer (created_at > current)
-                $newerRecords = MarketRate::forEvent($selectedEventId)
-                    ->where('marketName', $marketRate->marketName)
-                    ->whereNotNull('marketName')
-                    ->where('created_at', '>', $currentCreatedAt)
-                    ->orderBy('created_at', 'asc') // Order ascending to get them in chronological order
-                    ->limit($additionalRecords)
-                    ->get();
+                try {
+                    $currentCreatedAt = $marketRate->created_at;
+                    $additionalRecords = $gridCountValue - 1; // Subtract 1 for current record
+                    
+                    // Get up to (count-1) records with same marketName that are newer (created_at > current)
+                    if (empty($marketRate->marketName)) {
+                        $newerRecords = MarketRate::forEvent($selectedEventId)
+                            ->whereNull('marketName')
+                            ->where('created_at', '>', $currentCreatedAt)
+                            ->orderBy('created_at', 'asc') // Order ascending to get them in chronological order
+                            ->limit($additionalRecords)
+                            ->get();
+                    } else {
+                        $newerRecords = MarketRate::forEvent($selectedEventId)
+                            ->where('marketName', $marketRate->marketName)
+                            ->whereNotNull('marketName')
+                            ->where('created_at', '>', $currentCreatedAt)
+                            ->orderBy('created_at', 'asc') // Order ascending to get them in chronological order
+                            ->limit($additionalRecords)
+                            ->get();
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Error fetching newer records for grid: ' . $e->getMessage(), [
+                        'exEventId' => $selectedEventId,
+                        'marketRateId' => $id,
+                        'marketName' => $marketRate->marketName ?? null
+                    ]);
+                    $newerRecords = collect([]);
+                }
                 
                 // Double-check marketName matches and create collection with current record first
                 $gridMarketRates = collect([$marketRate])
