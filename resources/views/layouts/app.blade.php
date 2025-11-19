@@ -43,18 +43,29 @@
     <script src="https://unpkg.com/heroicons@2.0.18/24/outline/index.js" type="module"></script>
     
     <style>
-        /* Menu Eye Icon Styles */
-        .menu-eye-icon {
+        /* Menu Info Icon Styles */
+        .menu-info-icon {
             width: 18px;
             height: 18px;
-            color: #eab308;
             cursor: pointer;
             flex-shrink: 0;
-            transition: color 0.2s ease;
+            transition: all 0.2s ease;
         }
 
-        .menu-eye-icon:hover {
-            color: #ca8a04;
+        .menu-info-icon circle {
+            fill: #eab308;
+            transition: fill 0.2s ease;
+        }
+
+        .menu-info-icon text {
+            fill: #ffffff;
+            font-size: 12px;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+        }
+
+        .menu-info-icon:hover circle {
+            fill: #ca8a04;
         }
 
         /* Rules Modal Styles */
@@ -433,13 +444,13 @@
             }
         });
 
-        // Handle menu eye icon clicks
+        // Handle menu info icon clicks
         document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('menu-eye-icon') || e.target.closest('.menu-eye-wrapper')) {
+            if (e.target.classList.contains('menu-info-icon') || e.target.closest('.menu-info-wrapper')) {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                const icon = e.target.classList.contains('menu-eye-icon') ? e.target : e.target.closest('.menu-eye-wrapper').querySelector('.menu-eye-icon');
+                const icon = e.target.classList.contains('menu-info-icon') ? e.target : e.target.closest('.menu-info-wrapper').querySelector('.menu-info-icon');
                 const title = icon.getAttribute('data-modal-title');
                 
                 if (title) {

@@ -82,10 +82,10 @@
                                 </svg>
                                 All Events List
                             </div>
-                            <span class="menu-eye-wrapper ml-auto mr-2">
-                                <svg class="menu-eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-modal-title="Event Rules">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            <span class="menu-info-wrapper ml-auto mr-2">
+                                <svg class="menu-info-icon" width="18" height="18" viewBox="0 0 18 18" data-modal-title="Event Rules">
+                                    <circle cx="9" cy="9" r="9"/>
+                                    <text x="9" y="12.5" text-anchor="middle" font-size="12" font-weight="bold" fill="#ffffff">i</text>
                                 </svg>
                             </span>
                         </a>
@@ -122,10 +122,10 @@
                                 </svg>
                                 All Markets List
                             </div>
-                            <span class="menu-eye-wrapper ml-auto mr-2">
-                                <svg class="menu-eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-modal-title="Market Rules">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            <span class="menu-info-wrapper ml-auto mr-2">
+                                <svg class="menu-info-icon" width="18" height="18" viewBox="0 0 18 18" data-modal-title="Market Rules">
+                                    <circle cx="9" cy="9" r="9"/>
+                                    <text x="9" y="12.5" text-anchor="middle" font-size="12" font-weight="bold" fill="#ffffff">i</text>
                                 </svg>
                             </span>
                         </a>
@@ -163,10 +163,10 @@
                                 </svg>
                                 SS Lists
                             </div>
-                            <span class="menu-eye-wrapper ml-auto mr-2">
-                                <svg class="menu-eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-modal-title="SS Rules">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            <span class="menu-info-wrapper ml-auto mr-2">
+                                <svg class="menu-info-icon" width="18" height="18" viewBox="0 0 18 18" data-modal-title="SS Rules">
+                                    <circle cx="9" cy="9" r="9"/>
+                                    <text x="9" y="12.5" text-anchor="middle" font-size="12" font-weight="bold" fill="#ffffff">i</text>
                                 </svg>
                             </span>
                         </a>
