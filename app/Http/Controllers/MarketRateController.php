@@ -429,6 +429,7 @@ class MarketRateController extends Controller
         $selectedRunner = $request->get('runner');
         // Get next and previous market rates for navigation (filtered by marketName)
         // Ensure we only get records with the exact same marketName
+        // Note: For performance, we'll only fetch records around the current one (100 before, 100 after)
         try {
             \Log::info('MarketRateController@show - Fetching all market rates for navigation', [
                 'exEventId' => $selectedEventId,
@@ -436,28 +437,57 @@ class MarketRateController extends Controller
                 'marketNameEmpty' => empty($marketRate->marketName ?? null)
             ]);
             
-            // Check if marketName exists and is not null
+            // First, get the current market rate's created_at to find nearby records
+            $currentCreatedAt = $marketRate->created_at;
+            \Log::info('MarketRateController@show - Current created_at', ['created_at' => $currentCreatedAt]);
+            
+            // Build base query
+            $baseQuery = MarketRate::forEvent($selectedEventId);
+            
             if (empty($marketRate->marketName)) {
-                // If marketName is null/empty, get all rates without marketName filter
                 \Log::info('MarketRateController@show - Using whereNull for all market rates');
-                $allMarketRates = MarketRate::forEvent($selectedEventId)
-                    ->whereNull('marketName')
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+                $baseQuery->whereNull('marketName');
             } else {
-                // Use PostgreSQL case-insensitive comparison for marketName
                 \Log::info('MarketRateController@show - Using where clause for all market rates', [
                     'marketName' => $marketRate->marketName
                 ]);
-                $allMarketRates = MarketRate::forEvent($selectedEventId)
-                    ->where('marketName', $marketRate->marketName)
-                    ->whereNotNull('marketName')
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+                $baseQuery->where('marketName', $marketRate->marketName)
+                    ->whereNotNull('marketName');
             }
-            \Log::info('MarketRateController@show - All market rates fetched', [
-                'count' => $allMarketRates->count()
+            
+            // For performance, limit to 200 records around the current one (100 before + 100 after)
+            // This is enough for navigation and prevents timeout on large datasets
+            $allMarketRates = $baseQuery
+                ->where(function($q) use ($currentCreatedAt) {
+                    // Get records within a reasonable time window (e.g., 24 hours before and after)
+                    $q->whereBetween('created_at', [
+                        \Carbon\Carbon::parse($currentCreatedAt)->subHours(24),
+                        \Carbon\Carbon::parse($currentCreatedAt)->addHours(24)
+                    ]);
+                })
+                ->orderBy('created_at', 'desc')
+                ->limit(200)
+                ->get();
+                
+            \Log::info('MarketRateController@show - All market rates fetched (limited)', [
+                'count' => $allMarketRates->count(),
+                'limit_applied' => true
             ]);
+            
+            // If we don't have enough records around the current one, try to find it in the limited set
+            // If current record is not in this set, add it manually
+            $foundCurrent = $allMarketRates->contains(function($item) use ($id) {
+                return $item->id == $id;
+            });
+            
+            if (!$foundCurrent) {
+                \Log::info('MarketRateController@show - Current record not in limited set, adding it');
+                // Current record is outside the time window, add it to the collection
+                $allMarketRates->prepend($marketRate);
+                // Re-sort to maintain order
+                $allMarketRates = $allMarketRates->sortByDesc('created_at')->values();
+            }
+            
         } catch (\Exception $e) {
             // Fallback: if query fails, just get the current market rate
             \Log::error('MarketRateController@show - Error fetching all market rates', [
