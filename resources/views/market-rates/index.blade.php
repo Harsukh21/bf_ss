@@ -5,6 +5,80 @@
 @push('css')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
+    /* Page Info Icon Styles */
+    .page-info-icon {
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+        display: block;
+        vertical-align: middle;
+    }
+
+    .page-info-icon circle {
+        fill: #eab308;
+        transition: fill 0.2s ease;
+    }
+
+    .page-info-icon text {
+        fill: #ffffff;
+        font-weight: bold;
+        font-family: Arial, sans-serif;
+    }
+
+    .page-info-icon:hover circle {
+        fill: #ca8a04;
+    }
+
+    /* Rules Modal Styles */
+    .rules-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease;
+        z-index: 1050;
+    }
+
+    .rules-modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .rules-modal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1060;
+        pointer-events: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+
+    .rules-modal.active {
+        pointer-events: auto;
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .rules-modal__content {
+        width: 100%;
+        max-width: 600px;
+        background: #fff;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .dark .rules-modal__content {
+        background: #1f2937;
+    }
+
     .filter-drawer {
         position: fixed;
         top: 0;
@@ -319,8 +393,14 @@
         <div class="mb-6">
             <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                        SS Rates List
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3 leading-tight">
+                        <span>SS Rates List</span>
+                        <button onclick="openSSRulesModal()" class="flex-shrink-0 flex items-center justify-center" title="SS Rules">
+                            <svg class="page-info-icon" width="24" height="24" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="12"/>
+                                <text x="12" y="16.5" text-anchor="middle" font-size="14" font-weight="bold" fill="#ffffff">i</text>
+                            </svg>
+                        </button>
                         @if($selectedEventId && $eventInfo)
                             <span class="text-lg font-normal text-gray-600 dark:text-gray-400">
                                 - {{ $eventInfo->eventName }}
@@ -1580,6 +1660,67 @@ function removeFilter(filterName) {
     
     window.location.href = url.toString();
 }
+
+function openSSRulesModal() {
+    const modal = document.getElementById('ssRulesModal');
+    const overlay = document.getElementById('ssRulesModalOverlay');
+    const modalTitle = document.getElementById('ssRulesModalTitle');
+    const modalContent = document.getElementById('ssRulesModalContent');
+    
+    modalTitle.textContent = 'SS Rules';
+    modalContent.innerHTML = ''; // Empty content for now
+    
+    modal.classList.add('active');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeSSRulesModal() {
+    const modal = document.getElementById('ssRulesModal');
+    const overlay = document.getElementById('ssRulesModalOverlay');
+    
+    modal.classList.remove('active');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Close modal when clicking overlay
+document.getElementById('ssRulesModalOverlay')?.addEventListener('click', function() {
+    closeSSRulesModal();
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('ssRulesModal');
+        if (modal && modal.classList.contains('active')) {
+            closeSSRulesModal();
+        }
+    }
+});
 </script>
 @endpush
+
+<!-- Rules Modal -->
+<div id="ssRulesModalOverlay" class="rules-modal-overlay"></div>
+<div id="ssRulesModal" class="rules-modal">
+    <div class="rules-modal__content">
+        <div class="flex items-center justify-between mb-4">
+            <h3 id="ssRulesModalTitle" class="text-lg font-semibold text-gray-900 dark:text-gray-100">SS Rules</h3>
+            <button onclick="closeSSRulesModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div id="ssRulesModalContent" class="space-y-4">
+            <!-- Content will be populated dynamically -->
+        </div>
+        <div class="mt-6 flex justify-end">
+            <button onclick="closeSSRulesModal()" class="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
 @endsection

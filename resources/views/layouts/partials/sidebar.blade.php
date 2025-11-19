@@ -75,19 +75,11 @@
                     </button>
                     
                     <div id="events-dropdown" class="space-y-1 ml-4 {{ $isEventsActive ? '' : 'hidden' }}">
-                        <a href="{{ route('events.all') }}" class="flex items-center justify-between px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('events.all') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h18M3 12h18M3 19h18"></path>
-                                </svg>
-                                All Events List
-                            </div>
-                            <span class="menu-info-wrapper ml-auto mr-2">
-                                <svg class="menu-info-icon" width="18" height="18" viewBox="0 0 18 18" data-modal-title="Event Rules">
-                                    <circle cx="9" cy="9" r="9"/>
-                                    <text x="9" y="12.5" text-anchor="middle" font-size="12" font-weight="bold" fill="#ffffff">i</text>
-                                </svg>
-                            </span>
+                        <a href="{{ route('events.all') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('events.all') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h18M3 12h18M3 19h18"></path>
+                            </svg>
+                            All Events List
                         </a>
                         <a href="{{ route('events.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('events.index') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
                             <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -115,19 +107,11 @@
                     </button>
                     
                     <div id="markets-dropdown" class="space-y-1 ml-4 {{ $isMarketsActive ? '' : 'hidden' }}">
-                        <a href="{{ route('markets.all') }}" class="flex items-center justify-between px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('markets.all') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h18M3 12h18M3 19h18"></path>
-                                </svg>
-                                All Markets List
-                            </div>
-                            <span class="menu-info-wrapper ml-auto mr-2">
-                                <svg class="menu-info-icon" width="18" height="18" viewBox="0 0 18 18" data-modal-title="Market Rules">
-                                    <circle cx="9" cy="9" r="9"/>
-                                    <text x="9" y="12.5" text-anchor="middle" font-size="12" font-weight="bold" fill="#ffffff">i</text>
-                                </svg>
-                            </span>
+                        <a href="{{ route('markets.all') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('markets.all') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h18M3 12h18M3 19h18"></path>
+                            </svg>
+                            All Markets List
                         </a>
                         <a href="{{ route('markets.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('markets.index') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
                             <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -156,19 +140,11 @@
                     </button>
                     
                     <div id="market-rates-dropdown" class="space-y-1 ml-4 {{ $isMarketRatesActive ? '' : 'hidden' }}">
-                        <a href="{{ route('market-rates.index') }}" class="flex items-center justify-between px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('market-rates.*') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                                </svg>
-                                SS Lists
-                            </div>
-                            <span class="menu-info-wrapper ml-auto mr-2">
-                                <svg class="menu-info-icon" width="18" height="18" viewBox="0 0 18 18" data-modal-title="SS Rules">
-                                    <circle cx="9" cy="9" r="9"/>
-                                    <text x="9" y="12.5" text-anchor="middle" font-size="12" font-weight="bold" fill="#ffffff">i</text>
-                                </svg>
-                            </span>
+                        <a href="{{ route('market-rates.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('market-rates.*') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            SS Lists
                         </a>
                     </div>
                 </div>
