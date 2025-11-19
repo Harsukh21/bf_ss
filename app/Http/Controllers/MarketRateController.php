@@ -283,9 +283,6 @@ class MarketRateController extends Controller
         
         // Get selected runner from request
         $selectedRunner = $request->get('runner');
-        if($id == 1 && $selectedEventId = '2adb61cd588d2021a2222104657f974d') {
-            echo "yes"; exit();
-        }
         // Get next and previous market rates for navigation (filtered by marketName)
         // Ensure we only get records with the exact same marketName
         $allMarketRates = MarketRate::forEvent($selectedEventId)
@@ -302,6 +299,9 @@ class MarketRateController extends Controller
         $nextMarketRate = null;
         $gridMarketRates = collect();
         
+        if($id == 1 && $selectedEventId = '2adb61cd588d2021a2222104657f974d') {
+            echo "yes"; exit();
+        }
         if ($currentIndex !== false) {
             if ($currentIndex > 0) {
                 $previousMarketRate = $allMarketRates[$currentIndex - 1];
