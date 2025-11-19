@@ -10,6 +10,7 @@ use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GeneralSettingsController;
+use App\Http\Controllers\ScriptController;
 
 // Welcome page
 Route::get('/', function () {
@@ -115,3 +116,6 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::delete('/terminate-session/{sessionId}', [ProfileController::class, 'terminateSession'])->name('terminate-session');
     });
 });
+
+Route::get('/script/get-view', [ScriptController::class, 'index']);
+Route::post('/script/store-page', [ScriptController::class, 'store'])->name('runscript');
