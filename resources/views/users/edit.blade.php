@@ -246,17 +246,19 @@
                                     <label for="timezone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Timezone</label>
                                     <select id="timezone" 
                                             name="timezone" 
-                                            class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-gray-100 @error('timezone') border-red-500 @enderror">
+                                            class="timezone-select mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-gray-100 @error('timezone') border-red-500 @enderror">
                                         <option value="">Select Timezone</option>
-                                        <option value="UTC" {{ old('timezone', $user->timezone) == 'UTC' ? 'selected' : '' }}>UTC</option>
-                                        <option value="America/New_York" {{ old('timezone', $user->timezone) == 'America/New_York' ? 'selected' : '' }}>Eastern Time</option>
-                                        <option value="America/Chicago" {{ old('timezone', $user->timezone) == 'America/Chicago' ? 'selected' : '' }}>Central Time</option>
-                                        <option value="America/Denver" {{ old('timezone', $user->timezone) == 'America/Denver' ? 'selected' : '' }}>Mountain Time</option>
-                                        <option value="America/Los_Angeles" {{ old('timezone', $user->timezone) == 'America/Los_Angeles' ? 'selected' : '' }}>Pacific Time</option>
-                                        <option value="Europe/London" {{ old('timezone', $user->timezone) == 'Europe/London' ? 'selected' : '' }}>London</option>
-                                        <option value="Europe/Paris" {{ old('timezone', $user->timezone) == 'Europe/Paris' ? 'selected' : '' }}>Paris</option>
-                                        <option value="Asia/Tokyo" {{ old('timezone', $user->timezone) == 'Asia/Tokyo' ? 'selected' : '' }}>Tokyo</option>
-                                        <option value="Asia/Shanghai" {{ old('timezone', $user->timezone) == 'Asia/Shanghai' ? 'selected' : '' }}>Shanghai</option>
+                                        @php
+                                            $timezones = config('timezones.timezones', []);
+                                            $selectedTimezone = old('timezone', $user->timezone);
+                                        @endphp
+                                        @foreach($timezones as $tz => $data)
+                                            <option value="{{ $tz }}" 
+                                                    data-flag="{{ $data['flag'] }}" 
+                                                    {{ $selectedTimezone == $tz ? 'selected' : '' }}>
+                                                {{ $data['flag'] }} {{ $data['name'] }} ({{ $tz }})
+                                            </option>
+                                        @endforeach
                                     </select>
                                     @error('timezone')
                                         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -385,7 +387,61 @@
     </div>
 </div>
 
+@push('css')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<style>
+    .select2-container--bootstrap-5 .select2-selection {
+        min-height: 38px;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        background-color: #fff;
+    }
+    .dark .select2-container--bootstrap-5 .select2-selection {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: #f9fafb;
+    }
+    .select2-container--bootstrap-5 .select2-selection__rendered {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+        line-height: 36px;
+        color: #1f2937;
+    }
+    .dark .select2-container--bootstrap-5 .select2-selection__rendered {
+        color: #f9fafb;
+    }
+    .select2-container--bootstrap-5 .select2-results__option {
+        padding: 0.5rem 0.75rem;
+    }
+    .select2-container--bootstrap-5 .select2-results__option--highlighted {
+        background-color: #3b82f6;
+        color: #fff;
+    }
+    .select2-dropdown {
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+    }
+    .dark .select2-dropdown {
+        background-color: #374151;
+        border-color: #4b5563;
+    }
+    .select2-search__field {
+        padding: 0.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.25rem;
+        background-color: #fff;
+    }
+    .dark .select2-search__field {
+        background-color: #4b5563;
+        border-color: #6b7280;
+        color: #f9fafb;
+    }
+</style>
+@endpush
+
 @push('js')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     function confirmDeleteUser(userId, userName) {
         try {
@@ -476,6 +532,59 @@
         if (event.target.classList.contains('fixed') && event.target.classList.contains('inset-0')) {
             closeModal();
         }
+    });
+
+    // Initialize Select2 for timezone dropdown
+    $(document).ready(function() {
+        function formatTimezone(option) {
+        if (!option.id) {
+            return option.text;
+        }
+        var $option = $(option.element);
+        var flag = $option.data('flag');
+        var text = option.text;
+        
+        // Extract flag, name, and timezone from text
+        var parts = text.match(/^([^\s]+)\s+(.+?)\s+\((.+)\)$/);
+        if (parts) {
+            var flag = parts[1];
+            var name = parts[2];
+            var tz = parts[3];
+            return $('<span><span class="mr-2">' + flag + '</span>' + name + ' <span class="text-gray-500 text-xs">(' + tz + ')</span></span>');
+        }
+        return text;
+    }
+
+    $('#timezone').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: 'Select Timezone',
+        allowClear: true,
+        templateResult: formatTimezone,
+        templateSelection: function(option) {
+            if (!option.id) {
+                return option.text;
+            }
+            var $option = $(option.element);
+            var flag = $option.data('flag');
+            var text = option.text;
+            var parts = text.match(/^([^\s]+)\s+(.+?)\s+\((.+)\)$/);
+            if (parts) {
+                var flag = parts[1];
+                var name = parts[2];
+                return $('<span><span class="mr-2">' + flag + '</span>' + name + '</span>');
+            }
+            return text;
+        },
+        language: {
+            noResults: function() {
+                return "No timezone found";
+            },
+            searching: function() {
+                return "Searching...";
+            }
+        }
+    });
     });
 </script>
 @endpush
