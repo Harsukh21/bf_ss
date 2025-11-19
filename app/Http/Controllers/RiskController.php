@@ -43,16 +43,33 @@ class RiskController extends Controller
         $pendingMarkets = $grouped->get('pending', collect());
         $doneMarkets = $grouped->get('done', collect());
         
-        // Sort each group by close time (completeTime or marketTime) - newest first
-        $pendingMarkets = $pendingMarkets->sortBy(function ($market) {
-            $timeField = !empty($market->completeTime) ? $market->completeTime : $market->marketTime;
-            return $timeField ? strtotime($timeField) : 0;
-        }, SORT_REGULAR, true); // Descending order
+        // Define sport priority order
+        $sportPriority = [
+            'Basketball' => 1,
+            'Boxing' => 2,
+            'Cricket' => 3,
+            'Soccer' => 4,
+            'Tennis' => 5,
+        ];
         
-        $doneMarkets = $doneMarkets->sortBy(function ($market) {
+        // Sort each group: first by sport priority, then by close time (newest first)
+        $pendingMarkets = $pendingMarkets->sortBy(function ($market) use ($sportPriority) {
+            $sportName = $market->sportName ?? '';
+            $sportOrder = $sportPriority[$sportName] ?? 999; // Higher number for non-priority sports
             $timeField = !empty($market->completeTime) ? $market->completeTime : $market->marketTime;
-            return $timeField ? strtotime($timeField) : 0;
-        }, SORT_REGULAR, true); // Descending order
+            $timeValue = $timeField ? strtotime($timeField) : 0;
+            // Return array: first sort by sport order (ascending), then by time (descending = negative)
+            return [$sportOrder, -$timeValue];
+        });
+        
+        $doneMarkets = $doneMarkets->sortBy(function ($market) use ($sportPriority) {
+            $sportName = $market->sportName ?? '';
+            $sportOrder = $sportPriority[$sportName] ?? 999; // Higher number for non-priority sports
+            $timeField = !empty($market->completeTime) ? $market->completeTime : $market->marketTime;
+            $timeValue = $timeField ? strtotime($timeField) : 0;
+            // Return array: first sort by sport order (ascending), then by time (descending = negative)
+            return [$sportOrder, -$timeValue];
+        });
         
         // Combine: pending first, then done
         $sortedMarkets = $pendingMarkets->concat($doneMarkets);
