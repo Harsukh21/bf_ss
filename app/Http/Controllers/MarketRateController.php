@@ -260,11 +260,22 @@ class MarketRateController extends Controller
         $marketListSelectionName = $marketListMeta->selectionName ?? null;
 
         // Extract all unique runners from all market rates for this market
-        $allMarketRatesForRunnerList = MarketRate::forEvent($selectedEventId)
-            ->where('marketName', $marketRate->marketName)
-            ->whereNotNull('marketName')
-            ->whereNotNull('runners')
-            ->get();
+        try {
+            if (empty($marketRate->marketName)) {
+                $allMarketRatesForRunnerList = MarketRate::forEvent($selectedEventId)
+                    ->whereNull('marketName')
+                    ->whereNotNull('runners')
+                    ->get();
+            } else {
+                $allMarketRatesForRunnerList = MarketRate::forEvent($selectedEventId)
+                    ->where('marketName', $marketRate->marketName)
+                    ->whereNotNull('marketName')
+                    ->whereNotNull('runners')
+                    ->get();
+            }
+        } catch (\Exception $e) {
+            $allMarketRatesForRunnerList = collect([]);
+        }
         
         $allRunners = collect();
         foreach ($allMarketRatesForRunnerList as $rate) {
@@ -283,14 +294,43 @@ class MarketRateController extends Controller
         
         // Get selected runner from request
         $selectedRunner = $request->get('runner');
-
         // Get next and previous market rates for navigation (filtered by marketName)
-        // Ensure we only get records with the exact same marketName
-        $allMarketRates = MarketRate::forEvent($selectedEventId)
-            ->where('marketName', $marketRate->marketName)
-            ->whereNotNull('marketName')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // For performance, limit to 200 records within 24 hours around the current record
+        try {
+            $currentCreatedAt = $marketRate->created_at;
+            $baseQuery = MarketRate::forEvent($selectedEventId);
+            
+            if (empty($marketRate->marketName)) {
+                $baseQuery->whereNull('marketName');
+            } else {
+                $baseQuery->where('marketName', $marketRate->marketName)
+                    ->whereNotNull('marketName');
+            }
+            
+            // Limit to 200 records within 24 hours to prevent timeout on large datasets
+            $allMarketRates = $baseQuery
+                ->where(function($q) use ($currentCreatedAt) {
+                    $q->whereBetween('created_at', [
+                        Carbon::parse($currentCreatedAt)->subHours(24),
+                        Carbon::parse($currentCreatedAt)->addHours(24)
+                    ]);
+                })
+                ->orderBy('created_at', 'desc')
+                ->limit(200)
+                ->get();
+            
+            // Ensure current record is included for proper navigation
+            $foundCurrent = $allMarketRates->contains(function($item) use ($id) {
+                return $item->id == $id;
+            });
+            
+            if (!$foundCurrent) {
+                $allMarketRates->prepend($marketRate);
+                $allMarketRates = $allMarketRates->sortByDesc('created_at')->values();
+            }
+        } catch (\Exception $e) {
+            $allMarketRates = collect([$marketRate]);
+        }
         
         $currentIndex = $allMarketRates->search(function($item) use ($id) {
             return $item->id == $id;
@@ -309,21 +349,31 @@ class MarketRateController extends Controller
             }
 
             // When grid mode is enabled, get current record + (count-1) newer records
-            // All records are already filtered by marketName above
             if ($gridEnabled) {
-                $currentCreatedAt = $marketRate->created_at;
-                $additionalRecords = $gridCountValue - 1; // Subtract 1 for current record
+                try {
+                    $currentCreatedAt = $marketRate->created_at;
+                    $additionalRecords = $gridCountValue - 1;
+                    
+                    if (empty($marketRate->marketName)) {
+                        $newerRecords = MarketRate::forEvent($selectedEventId)
+                            ->whereNull('marketName')
+                            ->where('created_at', '>', $currentCreatedAt)
+                            ->orderBy('created_at', 'asc')
+                            ->limit($additionalRecords)
+                            ->get();
+                    } else {
+                        $newerRecords = MarketRate::forEvent($selectedEventId)
+                            ->where('marketName', $marketRate->marketName)
+                            ->whereNotNull('marketName')
+                            ->where('created_at', '>', $currentCreatedAt)
+                            ->orderBy('created_at', 'asc')
+                            ->limit($additionalRecords)
+                            ->get();
+                    }
+                } catch (\Exception $e) {
+                    $newerRecords = collect([]);
+                }
                 
-                // Get up to (count-1) records with same marketName that are newer (created_at > current)
-                $newerRecords = MarketRate::forEvent($selectedEventId)
-                    ->where('marketName', $marketRate->marketName)
-                    ->whereNotNull('marketName')
-                    ->where('created_at', '>', $currentCreatedAt)
-                    ->orderBy('created_at', 'asc') // Order ascending to get them in chronological order
-                    ->limit($additionalRecords)
-                    ->get();
-                
-                // Double-check marketName matches and create collection with current record first
                 $gridMarketRates = collect([$marketRate])
                     ->merge($newerRecords->filter(function($item) use ($marketRate) {
                         return $item->marketName === $marketRate->marketName;

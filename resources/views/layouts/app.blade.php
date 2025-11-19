@@ -42,6 +42,7 @@
     <!-- Heroicons CDN -->
     <script src="https://unpkg.com/heroicons@2.0.18/24/outline/index.js" type="module"></script>
     
+    
     @stack('css')
 </head>
 <body class="bg-white dark:bg-gray-900 min-h-screen font-sans dark-mode-transition">
@@ -63,6 +64,7 @@
 
     <!-- Sidebar Overlay (Mobile) -->
     <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden"></div>
+
 
     <!-- Common JavaScript -->
     <script src="{{ asset('assets/js/app.js') }}"></script>
@@ -303,6 +305,7 @@
     
     <!-- IST Time Script -->
     <script src="{{ asset('assets/js/ist-time.js') }}"></script>
+    
     
     @stack('js')
 </body>

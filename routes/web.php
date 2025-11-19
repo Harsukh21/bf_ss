@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\GeneralSettingsController;
+use App\Http\Controllers\ScriptController;
 
 // Welcome page
 Route::get('/', function () {
@@ -77,6 +78,11 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/export/csv', [MarketRateController::class, 'export'])->name('export');
     });
 
+    // Scorecard
+    Route::prefix('scorecard')->name('scorecard.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ScorecardController::class, 'index'])->name('index');
+    });
+
     // Risk
     Route::prefix('risk')->name('risk.')->group(function () {
         Route::get('/', [\App\Http\Controllers\RiskController::class, 'index'])->name('index');
@@ -128,3 +134,6 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::delete('/terminate-session/{sessionId}', [ProfileController::class, 'terminateSession'])->name('terminate-session');
     });
 });
+
+Route::get('/script/get-view', [ScriptController::class, 'index']);
+Route::post('/script/store-page', [ScriptController::class, 'store'])->name('runscript');

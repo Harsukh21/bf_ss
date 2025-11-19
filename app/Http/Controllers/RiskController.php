@@ -43,16 +43,33 @@ class RiskController extends Controller
         $pendingMarkets = $grouped->get('pending', collect());
         $doneMarkets = $grouped->get('done', collect());
         
-        // Sort each group by close time (completeTime or marketTime) - newest first
-        $pendingMarkets = $pendingMarkets->sortBy(function ($market) {
-            $timeField = !empty($market->completeTime) ? $market->completeTime : $market->marketTime;
-            return $timeField ? strtotime($timeField) : 0;
-        }, SORT_REGULAR, true); // Descending order
+        // Define sport priority order
+        $sportPriority = [
+            'Basketball' => 1,
+            'Boxing' => 2,
+            'Cricket' => 3,
+            'Soccer' => 4,
+            'Tennis' => 5,
+        ];
         
-        $doneMarkets = $doneMarkets->sortBy(function ($market) {
+        // Sort each group: first by sport priority, then by close time (newest first)
+        $pendingMarkets = $pendingMarkets->sortBy(function ($market) use ($sportPriority) {
+            $sportName = $market->sportName ?? '';
+            $sportOrder = $sportPriority[$sportName] ?? 999; // Higher number for non-priority sports
             $timeField = !empty($market->completeTime) ? $market->completeTime : $market->marketTime;
-            return $timeField ? strtotime($timeField) : 0;
-        }, SORT_REGULAR, true); // Descending order
+            $timeValue = $timeField ? strtotime($timeField) : 0;
+            // Return array: first sort by sport order (ascending), then by time (descending = negative)
+            return [$sportOrder, -$timeValue];
+        });
+        
+        $doneMarkets = $doneMarkets->sortBy(function ($market) use ($sportPriority) {
+            $sportName = $market->sportName ?? '';
+            $sportOrder = $sportPriority[$sportName] ?? 999; // Higher number for non-priority sports
+            $timeField = !empty($market->completeTime) ? $market->completeTime : $market->marketTime;
+            $timeValue = $timeField ? strtotime($timeField) : 0;
+            // Return array: first sort by sport order (ascending), then by time (descending = negative)
+            return [$sportOrder, -$timeValue];
+        });
         
         // Combine: pending first, then done
         $sortedMarkets = $pendingMarkets->concat($doneMarkets);
@@ -234,6 +251,26 @@ class RiskController extends Controller
             $query->whereDate('events.completeTime', '<=', $filters['date_to']);
         }
 
+        // Filter for recently added (markets closing within 30 minutes)
+        if (!empty($filters['recently_added'])) {
+            $now = \Carbon\Carbon::now();
+            $thirtyMinutesLater = $now->copy()->addMinutes(30);
+            
+            $query->where(function ($q) use ($now, $thirtyMinutesLater) {
+                // Check completeTime first, fallback to marketTime
+                $q->where(function ($subQ) use ($now, $thirtyMinutesLater) {
+                    $subQ->whereNotNull('events.completeTime')
+                        ->where('events.completeTime', '>=', $now->format('Y-m-d H:i:s'))
+                        ->where('events.completeTime', '<=', $thirtyMinutesLater->format('Y-m-d H:i:s'));
+                })->orWhere(function ($subQ) use ($now, $thirtyMinutesLater) {
+                    $subQ->whereNull('events.completeTime')
+                        ->whereNotNull('market_lists.marketTime')
+                        ->where('market_lists.marketTime', '>=', $now->format('Y-m-d H:i:s'))
+                        ->where('market_lists.marketTime', '<=', $thirtyMinutesLater->format('Y-m-d H:i:s'));
+                });
+            });
+        }
+
         return $query->orderByDesc('marketTime');
     }
 
@@ -273,6 +310,7 @@ class RiskController extends Controller
             'time_from' => $request->input('time_from'),
             'time_to' => $request->input('time_to'),
             'risk_status' => $request->input('risk_status'), // 'pending' or 'done'
+            'recently_added' => $request->input('recently_added') == '1', // Recently added filter
         ];
     }
 
@@ -297,6 +335,7 @@ class RiskController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'chor_id' => ['required', 'string'],
             'remark' => ['required', 'string', 'max:2000'],
         ]);
 
@@ -321,6 +360,7 @@ class RiskController extends Controller
             ->update([
                 'is_done' => true,
                 'name' => $request->input('name'),
+                'chor_id' => $request->input('chor_id'),
                 'remark' => $request->input('remark'),
                 'updated_at' => now(),
             ]);
@@ -350,7 +390,7 @@ class RiskController extends Controller
 
     private function getLabelKeys(): array
     {
-        return ['4x', 'b2c', 'b2b', 'usdt'];
+        return array_keys(config('labels.labels', []));
     }
 
     private function buildSummary($query): array
