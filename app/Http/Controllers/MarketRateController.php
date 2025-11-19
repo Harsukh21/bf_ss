@@ -290,6 +290,9 @@ class MarketRateController extends Controller
             ->whereNotNull('marketName')
             ->orderBy('created_at', 'desc')
             ->get();
+        if($id == 1 && $selectedEventId = '2adb61cd588d2021a2222104657f974d') {
+            echo "yes"; exit();
+        }
         
         $currentIndex = $allMarketRates->search(function($item) use ($id) {
             return $item->id == $id;
@@ -299,9 +302,6 @@ class MarketRateController extends Controller
         $nextMarketRate = null;
         $gridMarketRates = collect();
         
-        if($id == 1 && $selectedEventId = '2adb61cd588d2021a2222104657f974d') {
-            echo "yes"; exit();
-        }
         if ($currentIndex !== false) {
             if ($currentIndex > 0) {
                 $previousMarketRate = $allMarketRates[$currentIndex - 1];
