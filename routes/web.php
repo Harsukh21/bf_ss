@@ -65,6 +65,11 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/export/csv', [MarketRateController::class, 'export'])->name('export');
     });
 
+    // Scorecard
+    Route::prefix('scorecard')->name('scorecard.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ScorecardController::class, 'index'])->name('index');
+    });
+
     // Risk
     Route::prefix('risk')->name('risk.')->group(function () {
         Route::get('/', [\App\Http\Controllers\RiskController::class, 'index'])->name('index');

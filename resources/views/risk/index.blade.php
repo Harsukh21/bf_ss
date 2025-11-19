@@ -978,7 +978,7 @@
                 <label for="chorIdInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Chor ID <span class="text-red-500">*</span>
                 </label>
-                <input type="text" id="chorIdInput" class="w-full border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500" placeholder="Enter Chor ID..." required>
+                <textarea id="chorIdInput" class="w-full border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500" rows="3" placeholder="Enter Chor ID..." required></textarea>
             </div>
             <div>
                 <label for="remarkInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

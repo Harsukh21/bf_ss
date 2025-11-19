@@ -335,7 +335,7 @@ class RiskController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'chor_id' => ['required', 'string', 'max:255'],
+            'chor_id' => ['required', 'string'],
             'remark' => ['required', 'string', 'max:2000'],
         ]);
 
