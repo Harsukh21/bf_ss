@@ -285,14 +285,14 @@ class MarketRateController extends Controller
         $selectedRunner = $request->get('runner');
         // Get next and previous market rates for navigation (filtered by marketName)
         // Ensure we only get records with the exact same marketName
+        if($id == 1 && $selectedEventId = '2adb61cd588d2021a2222104657f974d') {
+            echo "yes"; exit();
+        }
         $allMarketRates = MarketRate::forEvent($selectedEventId)
             ->where('marketName', $marketRate->marketName)
             ->whereNotNull('marketName')
             ->orderBy('created_at', 'desc')
             ->get();
-        if($id == 1 && $selectedEventId = '2adb61cd588d2021a2222104657f974d') {
-            echo "yes"; exit();
-        }
         
         $currentIndex = $allMarketRates->search(function($item) use ($id) {
             return $item->id == $id;
