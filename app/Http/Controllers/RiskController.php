@@ -390,7 +390,7 @@ class RiskController extends Controller
 
     private function getLabelKeys(): array
     {
-        return ['4x', 'b2c', 'b2b', 'usdt'];
+        return array_keys(config('labels.labels', []));
     }
 
     private function buildSummary($query): array

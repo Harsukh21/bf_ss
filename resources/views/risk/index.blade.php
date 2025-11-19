@@ -379,12 +379,12 @@
 
 @section('content')
 @php
-    $labelOptions = [
-        '4x' => '4x',
+    $labelOptions = config('labels.labels', [
+        '4x' => '4X',
         'b2c' => 'B2C',
         'b2b' => 'B2B',
         'usdt' => 'USDT',
-    ];
+    ]);
 
     $activeFilters = [];
 
@@ -606,12 +606,9 @@
                         @foreach($pendingMarkets as $market)
                             @php
                                 $decodedLabels = json_decode($market->labels ?? '{}', true);
-                                $labelStates = array_merge([
-                                    '4x' => false,
-                                    'b2c' => false,
-                                    'b2b' => false,
-                                    'usdt' => false,
-                                ], is_array($decodedLabels) ? $decodedLabels : []);
+                                $labelKeys = array_keys($labelOptions);
+                                $defaultLabels = array_fill_keys($labelKeys, false);
+                                $labelStates = array_merge($defaultLabels, is_array($decodedLabels) ? array_intersect_key($decodedLabels, $defaultLabels) : []);
 
                                 $allLabelsChecked = collect($labelStates)->every(fn ($value) => (bool) $value === true);
                                 $isDone = (bool) $market->is_done;
