@@ -1077,7 +1077,6 @@
                                 </div>
                             </div>
                         </div>
-                        <p class="timepicker-hint text-xs">Example: 02:30:00 PM</p>
                     </div>
                     <div class="time-block" x-data="timePickerComponent('{{ $timeToValue }}', {{ $timeToEnabled ? 'true' : 'false' }})" x-init="init()" x-on:keydown.escape.window="close()">
                             <div class="flex items-center justify-between">
@@ -1136,10 +1135,8 @@
                                 </div>
                             </div>
                         </div>
-                        <p class="timepicker-hint">Example: 11:45:30 PM</p>
                     </div>
                 </div>
-                <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Times apply to the selected event date.</p>
             </div>
             
             <!-- Filter Buttons -->
