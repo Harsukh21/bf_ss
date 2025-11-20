@@ -247,6 +247,8 @@ return function ($event) {
 
 ## Verification Steps
 
+> **📋 Quick Guide:** For a comprehensive guide on checking cron job status, see [CHECK_CRON_JOB_STATUS.md](./CHECK_CRON_JOB_STATUS.md)
+
 ### 1. Check if Scheduler is Running
 
 ```bash

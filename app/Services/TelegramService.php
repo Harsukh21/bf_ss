@@ -103,5 +103,51 @@ class TelegramService
 
         return implode("\n", $lines);
     }
+
+    /**
+     * Send an immediate notification when event is first interrupted
+     *
+     * @param object $event
+     * @return bool
+     */
+    public function sendInterruptionNotification($event): bool
+    {
+        $message = $this->formatInterruptionNotificationMessage($event);
+        return $this->sendMessage($message);
+    }
+
+    /**
+     * Format immediate interruption notification message
+     *
+     * @param object $event
+     * @return string
+     */
+    protected function formatInterruptionNotificationMessage($event): string
+    {
+        $lines = [
+            "⚠️ <b>Event Interrupted</b>",
+            "",
+            "<b>Event:</b> " . ($event->eventName ?? 'N/A'),
+            "<b>Sport:</b> " . ($event->sportName ?? 'N/A'),
+        ];
+
+        if (!empty($event->market_old_limits) && is_array($event->market_old_limits)) {
+            $lines[] = "";
+            $lines[] = "<b>Market Old Limits:</b>";
+            foreach ($event->market_old_limits as $market) {
+                $lines[] = "  • " . ($market->marketName ?? 'N/A') . ": " . ($market->old_limit ?? 0);
+            }
+        }
+
+        if (!empty($event->remind_me_after)) {
+            $lines[] = "";
+            $lines[] = "<i>Reminder scheduled for " . ($event->remind_me_after ?? 0) . " minutes.</i>";
+        }
+
+        $lines[] = "";
+        $lines[] = "<b>I have set a 0–1 limit in the market for the event mentioned above.</b>";
+
+        return implode("\n", $lines);
+    }
 }
 
