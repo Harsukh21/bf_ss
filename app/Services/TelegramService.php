@@ -126,7 +126,7 @@ class TelegramService
     protected function formatInterruptionNotificationMessage($event): string
     {
         $lines = [
-            "⚠️ <b>Event Interrupted</b>",
+            "🔔🔔🔔 <b>Event Interrupted</b> 🔔🔔🔔",
             "",
             "<b>Event:</b> " . ($event->eventName ?? 'N/A'),
             "<b>Sport:</b> " . ($event->sportName ?? 'N/A'),
@@ -172,7 +172,7 @@ class TelegramService
     protected function formatInterruptionResolvedMessage($event): string
     {
         $lines = [
-            "✅ <b>Event Interruption Resolved</b>",
+            "✅✅✅ <b>Event Interruption Resolved</b> ✅✅✅",
             "",
             "<b>Event:</b> " . ($event->eventName ?? 'N/A'),
             "<b>Sport:</b> " . ($event->sportName ?? 'N/A'),
