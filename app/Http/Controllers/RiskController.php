@@ -145,17 +145,17 @@ class RiskController extends Controller
                 'market_lists.created_at',
             ])
             ->leftJoin('events', 'events.exEventId', '=', 'market_lists.exEventId')
-            ->whereIn('status', $statuses)
+            ->whereIn('market_lists.status', $statuses)
             ->when($onlyDone, function ($q) {
-                $q->where('is_done', true);
+                $q->where('market_lists.is_done', true);
             }, function ($q) {
                 $q->where(function ($inner) {
-                    $inner->whereNull('is_done')->orWhere('is_done', false);
+                    $inner->whereNull('market_lists.is_done')->orWhere('market_lists.is_done', false);
                 });
             });
 
         if ($filters['sport']) {
-            $query->where('sportName', $filters['sport']);
+            $query->where('market_lists.sportName', $filters['sport']);
         }
 
         if ($filters['search']) {
@@ -168,7 +168,7 @@ class RiskController extends Controller
 
         if (!empty($filters['labels'])) {
             foreach ($filters['labels'] as $labelKey) {
-                $query->whereRaw("(labels ->> ?)::boolean = true", [$labelKey]);
+                $query->whereRaw("(market_lists.labels ->> ?)::boolean = true", [$labelKey]);
             }
         }
 
@@ -271,7 +271,7 @@ class RiskController extends Controller
             });
         }
 
-        return $query->orderByDesc('marketTime');
+        return $query->orderByDesc('market_lists.marketTime');
     }
 
     private function parseFilterDate($dateStr, $timezone)
@@ -397,8 +397,8 @@ class RiskController extends Controller
     {
         return [
             'total' => (clone $query)->count(),
-            'settled' => (clone $query)->where('status', 4)->count(),
-            'voided' => (clone $query)->where('status', 5)->count(),
+            'settled' => (clone $query)->where('market_lists.status', 4)->count(),
+            'voided' => (clone $query)->where('market_lists.status', 5)->count(),
         ];
     }
 

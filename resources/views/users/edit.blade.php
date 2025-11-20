@@ -150,6 +150,38 @@
                                         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                                     @enderror
                                 </div>
+                                
+                                <div>
+                                    <label for="web_pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Web Pin</label>
+                                    <input type="text" 
+                                           id="web_pin" 
+                                           name="web_pin" 
+                                           value="{{ old('web_pin', $user->web_pin) }}"
+                                           pattern="[0-9]*"
+                                           inputmode="numeric"
+                                           minlength="6"
+                                           maxlength="20"
+                                           class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-gray-100 @error('web_pin') border-red-500 @enderror"
+                                           placeholder="Enter 6+ digit PIN">
+                                    @error('web_pin')
+                                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                    @enderror
+                                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Only numbers, minimum 6 digits</p>
+                                </div>
+                                
+                                <div>
+                                    <label for="telegram_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Telegram ID</label>
+                                    <input type="text" 
+                                           id="telegram_id" 
+                                           name="telegram_id" 
+                                           value="{{ old('telegram_id', $user->telegram_id) }}"
+                                           class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-gray-100 @error('telegram_id') border-red-500 @enderror"
+                                           placeholder="Enter Telegram Chat ID">
+                                    @error('telegram_id')
+                                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                    @enderror
+                                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">For sending notifications</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -352,6 +384,28 @@
 
 @push('js')
 <script>
+    // Web Pin validation - only allow numbers and minimum 6 digits
+    document.addEventListener('DOMContentLoaded', function() {
+        const webPinInput = document.getElementById('web_pin');
+        
+        if (webPinInput) {
+            webPinInput.addEventListener('input', function(e) {
+                // Remove any non-numeric characters
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+            
+            webPinInput.addEventListener('blur', function(e) {
+                // Validate minimum 6 digits if field has value
+                if (this.value && this.value.length < 6) {
+                    this.setCustomValidity('Web Pin must be at least 6 digits');
+                    this.reportValidity();
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+        }
+    });
+
     function confirmDeleteUser(userId, userName) {
         try {
             // Validate parameters

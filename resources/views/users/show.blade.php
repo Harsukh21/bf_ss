@@ -119,6 +119,26 @@
                                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Date of Birth</dt>
                                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $user->date_of_birth?->format('F j, Y') ?? 'Not provided' }}</dd>
                             </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Web Pin</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                    @if($user->web_pin)
+                                        <span class="font-mono">{{ $user->web_pin }}</span>
+                                    @else
+                                        <span class="text-gray-400 italic">Not set</span>
+                                    @endif
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Telegram ID</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                    @if($user->telegram_id)
+                                        <span class="font-mono">{{ $user->telegram_id }}</span>
+                                    @else
+                                        <span class="text-gray-400 italic">Not set</span>
+                                    @endif
+                                </dd>
+                            </div>
                         </dl>
                     </div>
                 </div>

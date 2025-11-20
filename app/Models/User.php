@@ -21,6 +21,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'web_pin',
+        'telegram_id',
         'first_name',
         'last_name',
         'phone',
@@ -70,5 +72,16 @@ class User extends Authenticatable
             'password_changed_at' => 'datetime',
             'active_sessions' => 'array',
         ];
+    }
+
+    /**
+     * Get the notifications for this user
+     */
+    public function notifications()
+    {
+        return $this->belongsToMany(Notification::class, 'notification_user')
+                    ->withPivot('is_read', 'read_at', 'is_delivered', 'delivered_at', 'delivery_status')
+                    ->withTimestamps()
+                    ->orderBy('created_at', 'desc');
     }
 }

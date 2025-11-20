@@ -45,6 +45,12 @@ class ProfileController extends Controller
             'date_of_birth' => 'nullable|date|before:today',
             'timezone' => 'nullable|string|max:50',
             'language' => 'nullable|string|max:10',
+            'web_pin' => 'nullable|string|regex:/^[0-9]+$/|min:6',
+            'telegram_id' => 'nullable|string|max:100',
+        ], [
+            'web_pin.regex' => 'Web Pin must contain only numbers.',
+            'web_pin.min' => 'Web Pin must be at least 6 digits.',
+            'telegram_id.max' => 'Telegram ID must not exceed 100 characters.',
         ]);
         
         $user = Auth::user();
@@ -57,6 +63,8 @@ class ProfileController extends Controller
             'date_of_birth' => $request->date_of_birth,
             'timezone' => $request->timezone,
             'language' => $request->language,
+            'web_pin' => $request->web_pin,
+            'telegram_id' => $request->telegram_id,
         ]);
         
         return redirect()->route('profile.index')->with('success', 'Profile updated successfully!');

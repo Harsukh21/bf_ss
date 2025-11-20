@@ -83,6 +83,18 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::post('/markets/{market}/done', [\App\Http\Controllers\RiskController::class, 'markDone'])->name('markets.done');
     });
 
+    // Notifications
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\NotificationController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\NotificationController::class, 'store'])->name('store');
+        Route::get('/pending', [\App\Http\Controllers\NotificationController::class, 'getPendingNotifications'])->name('pending');
+        Route::post('/{id}/mark-read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('mark-read');
+        Route::get('/{id}/edit', [\App\Http\Controllers\NotificationController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [\App\Http\Controllers\NotificationController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('destroy');
+    });
+
     // System Logs
     Route::prefix('system-logs')->name('system-logs.')->group(function () {
         Route::get('/', [SystemLogController::class, 'index'])->name('index');

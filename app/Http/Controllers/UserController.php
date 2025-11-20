@@ -87,6 +87,12 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::defaults()],
+            'web_pin' => ['nullable', 'string', 'regex:/^[0-9]+$/', 'min:6'],
+            'telegram_id' => ['nullable', 'string', 'max:100'],
+        ], [
+            'web_pin.regex' => 'Web Pin must contain only numbers.',
+            'web_pin.min' => 'Web Pin must be at least 6 digits.',
+            'telegram_id.max' => 'Telegram ID must not exceed 100 characters.',
         ]);
 
         if ($validator->fails()) {
@@ -99,6 +105,8 @@ class UserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'web_pin' => $request->web_pin,
+            'telegram_id' => $request->telegram_id,
         ]);
 
         return redirect()->route('users.index')
@@ -142,10 +150,16 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'phone' => ['nullable', 'string', 'max:20'],
             'password' => ['nullable', 'confirmed', Password::defaults()],
+            'web_pin' => ['nullable', 'string', 'regex:/^[0-9]+$/', 'min:6'],
+            'telegram_id' => ['nullable', 'string', 'max:100'],
             'date_of_birth' => ['nullable', 'date'],
             'bio' => ['nullable', 'string', 'max:1000'],
             'timezone' => ['nullable', 'string', 'max:50'],
             'language' => ['nullable', 'string', 'max:10'],
+        ], [
+            'web_pin.regex' => 'Web Pin must contain only numbers.',
+            'web_pin.min' => 'Web Pin must be at least 6 digits.',
+            'telegram_id.max' => 'Telegram ID must not exceed 100 characters.',
         ]);
 
         if ($validator->fails()) {
@@ -160,6 +174,8 @@ class UserController extends Controller
             'last_name' => $request->last_name,
             'email' => $request->email,
             'phone' => $request->phone,
+            'web_pin' => $request->web_pin,
+            'telegram_id' => $request->telegram_id,
             'date_of_birth' => $request->date_of_birth,
             'bio' => $request->bio,
             'timezone' => $request->timezone,

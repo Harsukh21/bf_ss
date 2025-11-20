@@ -21,6 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
             ->everyMinute()
             ->withoutOverlapping()
             ->runInBackground();
+        
+        // Schedule notification check to run every minute
+        $schedule->command('notifications:send-scheduled')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->runInBackground();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
