@@ -223,17 +223,17 @@
     .time-range-container {
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
+        gap: 0.5rem;
     }
 
     .time-block {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.375rem;
     }
 
     .time-block-header {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         font-weight: 600;
         text-transform: uppercase;
         color: #6b7280;
@@ -265,12 +265,12 @@
         align-items: center;
         justify-content: space-between;
         gap: 0.5rem;
-        padding: 0.75rem 0.85rem;
+        padding: 0.5rem 0.75rem;
         padding-right: 2.5rem;
         border: 1px solid #d1d5db;
-        border-radius: 0.75rem;
+        border-radius: 0.5rem;
         background-color: #ffffff;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 600;
         color: #1f2937;
         transition: all 0.2s ease-in-out;
@@ -1018,14 +1018,14 @@
 
             <!-- Event Time Range -->
             <div class="mb-4 filter-field-group">
-                <div class="filter-field-title">Event Time Range (12-hour format)</div>
-                <div class="time-range-container space-y-3">
+                <div class="filter-field-title mb-2">Event Time Range (12-hour format)</div>
+                <div class="time-range-container">
                     <div class="time-block" x-data="timePickerComponent('{{ $timeFromValue }}', {{ $timeFromEnabled ? 'true' : 'false' }})" x-init="init()" x-on:keydown.escape.window="close()">
-                        <div class="flex items-center justify-between">
+                            <div class="flex items-center justify-between">
                             <div class="time-block-header">From</div>
                             <label class="inline-flex items-center text-xs font-medium text-gray-600 dark:text-gray-300">
-                                <input type="checkbox" name="time_from_enabled" value="1" x-model="enabled" @change="updateHidden()" class="js-time-from-enabled h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
-                                <span class="ml-2">Apply</span>
+                                <input type="checkbox" name="time_from_enabled" value="1" x-model="enabled" @change="updateHidden()" class="js-time-from-enabled h-3.5 w-3.5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <span class="ml-1.5 text-xs">Apply</span>
                             </label>
                         </div>
                         <div class="time-picker-panel">
@@ -1077,14 +1077,14 @@
                                 </div>
                             </div>
                         </div>
-                        <p class="timepicker-hint">Example: 02:30:00 PM</p>
+                        <p class="timepicker-hint text-xs">Example: 02:30:00 PM</p>
                     </div>
                     <div class="time-block" x-data="timePickerComponent('{{ $timeToValue }}', {{ $timeToEnabled ? 'true' : 'false' }})" x-init="init()" x-on:keydown.escape.window="close()">
-                        <div class="flex items-center justify-between">
+                            <div class="flex items-center justify-between">
                             <div class="time-block-header">To</div>
                             <label class="inline-flex items-center text-xs font-medium text-gray-600 dark:text-gray-300">
-                                <input type="checkbox" name="time_to_enabled" value="1" x-model="enabled" @change="updateHidden()" class="js-time-to-enabled h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
-                                <span class="ml-2">Apply</span>
+                                <input type="checkbox" name="time_to_enabled" value="1" x-model="enabled" @change="updateHidden()" class="js-time-to-enabled h-3.5 w-3.5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <span class="ml-1.5 text-xs">Apply</span>
                             </label>
                         </div>
                         <div class="time-picker-panel">
@@ -1139,7 +1139,7 @@
                         <p class="timepicker-hint">Example: 11:45:30 PM</p>
                     </div>
                 </div>
-                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Times apply to the selected event date.</p>
+                <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Times apply to the selected event date.</p>
             </div>
             
             <!-- Filter Buttons -->
