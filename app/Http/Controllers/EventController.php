@@ -321,7 +321,8 @@ class EventController extends Controller
         $bindings = [];
 
         if ($request->filled('search')) {
-            $conditions[] = '(' . $this->quoteColumn('eventName') . ' ILIKE ? OR ' . $this->quoteColumn('tournamentsName') . ' ILIKE ?)';
+            $conditions[] = '(' . $this->quoteColumn('eventName') . ' ILIKE ? OR ' . $this->quoteColumn('tournamentsName') . ' ILIKE ? OR ' . $this->quoteColumn('exEventId') . ' ILIKE ?)';
+            $bindings[] = $request->search . '%';
             $bindings[] = $request->search . '%';
             $bindings[] = $request->search . '%';
         }

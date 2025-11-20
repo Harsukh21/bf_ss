@@ -362,7 +362,8 @@ class MarketController extends Controller
                 $q->where('marketName', 'ILIKE', "%{$searchTerm}%")
                   ->orWhere('eventName', 'ILIKE', "%{$searchTerm}%")
                   ->orWhere('sportName', 'ILIKE', "%{$searchTerm}%")
-                  ->orWhere('tournamentsName', 'ILIKE', "%{$searchTerm}%");
+                  ->orWhere('tournamentsName', 'ILIKE', "%{$searchTerm}%")
+                  ->orWhere('exEventId', 'ILIKE', "%{$searchTerm}%");
             });
         }
     }
@@ -503,8 +504,10 @@ class MarketController extends Controller
         if ($request->filled('search')) {
             $conditions[] = '('
                 . $this->quoteColumn('eventName') . " ILIKE ? OR "
-                . $this->quoteColumn('marketName') . " ILIKE ?)";
+                . $this->quoteColumn('marketName') . " ILIKE ? OR "
+                . $this->quoteColumn('exEventId') . " ILIKE ?)";
             $searchBinding = '%' . $request->search . '%';
+            $bindings[] = $searchBinding;
             $bindings[] = $searchBinding;
             $bindings[] = $searchBinding;
         }
