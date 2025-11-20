@@ -51,14 +51,10 @@
                 <!-- Logo -->
                 <div class="flex items-center">
                     <a href="/" class="flex items-center hover:opacity-80 transition-opacity duration-300 ease-in-out">
-                        <!-- Light mode logo -->
+                        <!-- Always show light logo -->
                         <img src="{{ asset('assets/img/light_logo.png') }}" 
                              alt="{{ config('app.name', 'Laravel') }}" 
-                             class="h-12 w-auto object-contain dark:hidden">
-                        <!-- Dark mode logo -->
-                        <img src="{{ asset('assets/img/dark_logo.png') }}" 
-                             alt="{{ config('app.name', 'Laravel') }}" 
-                             class="h-12 w-auto object-contain hidden dark:block">
+                             class="h-12 w-auto object-contain">
                     </a>
                 </div>
                 

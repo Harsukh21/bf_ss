@@ -4,7 +4,7 @@
         <!-- Logo Section -->
         <div class="px-4 h-14 md:h-16 border-b border-gray-200 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
             <div class="flex items-center w-full">
-                <a href="/" class="flex items-center justify-center w-full hover:opacity-80 transition-opacity duration-300 ease-in-out">
+                <a href="{{ route('dashboard') }}" class="flex items-center justify-center w-full hover:opacity-80 transition-opacity duration-300 ease-in-out">
                     <!-- Light mode logo -->
                     <img src="{{ asset('assets/img/light_logo.png') }}" 
                          alt="{{ config('app.name', 'Laravel') }}" 

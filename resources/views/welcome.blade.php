@@ -350,14 +350,10 @@
             <!-- Logo/Icon -->
             <div class="flex justify-center mb-8 fade-in">
                 <a href="/" class="flex items-center justify-center hover:opacity-90 transition-opacity duration-300 ease-in-out transform hover:scale-105">
-                    <!-- Light mode logo -->
+                    <!-- Always show light logo -->
                     <img src="{{ asset('assets/img/light_logo.png') }}" 
                          alt="{{ config('app.name', 'Laravel') }}" 
-                         class="h-28 md:h-32 w-auto max-w-full object-contain dark:hidden">
-                    <!-- Dark mode logo -->
-                    <img src="{{ asset('assets/img/dark_logo.png') }}" 
-                         alt="{{ config('app.name', 'Laravel') }}" 
-                         class="h-28 md:h-32 w-auto max-w-full object-contain hidden dark:block">
+                         class="h-28 md:h-32 w-auto max-w-full object-contain">
                 </a>
             </div>
 
