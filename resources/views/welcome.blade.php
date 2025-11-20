@@ -349,11 +349,16 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center content-relative">
             <!-- Logo/Icon -->
             <div class="flex justify-center mb-8 fade-in">
-                <div class="w-24 h-24 bg-gradient-to-br from-primary-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl transform hover:rotate-12 transition-transform duration-300 logo-pulse" style="animation: logoPulse 3s ease-in-out infinite;">
-                    <svg class="w-14 h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                </div>
+                <a href="/" class="flex items-center justify-center hover:opacity-90 transition-opacity duration-300 ease-in-out transform hover:scale-105">
+                    <!-- Light mode logo -->
+                    <img src="{{ asset('assets/img/light_logo.png') }}" 
+                         alt="{{ config('app.name', 'Laravel') }}" 
+                         class="h-28 md:h-32 w-auto max-w-full object-contain dark:hidden">
+                    <!-- Dark mode logo -->
+                    <img src="{{ asset('assets/img/dark_logo.png') }}" 
+                         alt="{{ config('app.name', 'Laravel') }}" 
+                         class="h-28 md:h-32 w-auto max-w-full object-contain hidden dark:block">
+                </a>
             </div>
 
             <!-- Heading -->
