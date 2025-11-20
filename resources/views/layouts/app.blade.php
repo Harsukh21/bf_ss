@@ -164,69 +164,6 @@
                 }, 300);
             }
 
-            static confirm(message, confirmText = 'Confirm', cancelText = 'Cancel') {
-                return new Promise((resolve) => {
-                    const container = document.getElementById('toast-container');
-                    if (!container) {
-                        resolve(false);
-                        return;
-                    }
-
-                    const toast = document.createElement('div');
-                    toast.className = `transform transition-all duration-300 ease-in-out translate-x-full opacity-0`;
-                    
-                    toast.innerHTML = `
-                        <div class="flex flex-col p-6 rounded-lg shadow-xl border-l-4 bg-purple-500 border-purple-600 text-white max-w-md">
-                            <div class="flex items-center mb-4">
-                                <div class="flex-shrink-0">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                </div>
-                                <div class="ml-3 flex-1">
-                                    <h3 class="text-lg font-semibold">Confirmation Required</h3>
-                                </div>
-                                <button onclick="this.closest('.toast-confirm').remove()" class="text-white hover:text-gray-200 transition-colors">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                            <div class="mb-4">
-                                <p class="text-sm">${message}</p>
-                            </div>
-                            <div class="flex space-x-3">
-                                <button onclick="handleToastConfirm(false, this.closest('.toast-confirm'))" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                                    ${cancelText}
-                                </button>
-                                <button onclick="handleToastConfirm(true, this.closest('.toast-confirm'))" class="flex-1 bg-white hover:bg-gray-100 text-purple-600 px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                                    ${confirmText}
-                                </button>
-                            </div>
-                        </div>
-                    `;
-
-                    toast.classList.add('toast-confirm');
-                    container.appendChild(toast);
-
-                    // Animate in
-                    setTimeout(() => {
-                        toast.classList.remove('translate-x-full', 'opacity-0');
-                        toast.classList.add('translate-x-0', 'opacity-100');
-                    }, 100);
-
-                    // Store resolve function
-                    toast.resolve = resolve;
-                });
-            }
-        }
-
-        // Handle toast confirm responses
-        function handleToastConfirm(result, toastElement) {
-            if (toastElement && toastElement.resolve) {
-                toastElement.resolve(result);
-            }
-            ToastNotification.remove(toastElement);
         }
 
         // Make ToastNotification globally available
