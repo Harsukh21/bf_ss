@@ -187,43 +187,161 @@
             clearHistory();
         });
 
+        // Logout Confirmation Modal
+        function showLogoutConfirm(message, confirmText = 'Yes, Logout', cancelText = 'Cancel') {
+            return new Promise((resolve) => {
+                // Create a full-screen overlay for the confirmation modal
+                const overlay = document.createElement('div');
+                overlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4';
+                overlay.style.transition = 'opacity 0.3s ease-in-out';
+                overlay.style.opacity = '0';
+
+                // Create the modal container
+                const modal = document.createElement('div');
+                modal.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full transform transition-all duration-300 scale-95';
+                modal.style.opacity = '0';
+                
+                modal.innerHTML = `
+                    <div class="flex flex-col p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="flex-shrink-0">
+                                <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Confirm Logout</h3>
+                            </div>
+                            <button onclick="handleLogoutConfirm(false, this.closest('.logout-confirm-overlay'))" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-sm text-gray-700 dark:text-gray-300">${message}</p>
+                        </div>
+                        <div class="flex space-x-3">
+                            <button onclick="handleLogoutConfirm(false, this.closest('.logout-confirm-overlay'))" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                ${cancelText}
+                            </button>
+                            <button onclick="handleLogoutConfirm(true, this.closest('.logout-confirm-overlay'))" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                ${confirmText}
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                overlay.classList.add('logout-confirm-overlay');
+                overlay.appendChild(modal);
+                document.body.appendChild(overlay);
+
+                // Prevent body scroll when modal is open
+                document.body.style.overflow = 'hidden';
+
+                // Animate in
+                setTimeout(() => {
+                    overlay.style.opacity = '1';
+                    modal.style.opacity = '1';
+                    modal.style.transform = 'scale(1)';
+                }, 10);
+
+                // Close on overlay click (outside modal)
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) {
+                        handleLogoutConfirm(false, overlay);
+                    }
+                });
+
+                // Close on Escape key
+                const escapeHandler = (e) => {
+                    if (e.key === 'Escape') {
+                        handleLogoutConfirm(false, overlay);
+                        document.removeEventListener('keydown', escapeHandler);
+                    }
+                };
+                document.addEventListener('keydown', escapeHandler);
+
+                // Store resolve function on overlay
+                overlay.resolve = resolve;
+            });
+        }
+
+        // Handle logout confirmation responses
+        function handleLogoutConfirm(result, overlayElement) {
+            if (overlayElement && overlayElement.resolve) {
+                overlayElement.resolve(result);
+                
+                // Animate out
+                const modal = overlayElement.querySelector('div[class*="bg-white"], div[class*="bg-gray-800"]');
+                if (modal) {
+                    modal.style.opacity = '0';
+                    modal.style.transform = 'scale(0.95)';
+                }
+                overlayElement.style.opacity = '0';
+                
+                setTimeout(() => {
+                    // Re-enable body scroll
+                    document.body.style.overflow = '';
+                    overlayElement.remove();
+                }, 300);
+            }
+        }
+
         // Handle sidebar logout
         async function handleSidebarLogout() {
             try {
-                if (typeof ToastNotification !== 'undefined') {
-                    const result = await ToastNotification.confirm(
-                        'Are you sure you want to logout? This will end your current session and redirect you to the login page. Any unsaved work will be lost.',
-                        'Yes, Logout',
-                        'Cancel'
-                    );
-                    
-                    if (result) {
-                        // Show logout progress toast
+                // Show logout confirmation modal
+                const confirmed = await showLogoutConfirm(
+                    'Are you sure you want to logout? This will end your current session and redirect you to the login page. Any unsaved work will be lost.',
+                    'Yes, Logout'
+                );
+                
+                if (confirmed) {
+                    // Show logout progress toast (if available)
+                    if (typeof ToastNotification !== 'undefined' && typeof ToastNotification.show === 'function') {
                         ToastNotification.show('Logging out... Please wait.', 'info', 2000);
-                        
-                        // Clear all browser storage
+                    }
+                    
+                    // Clear all browser storage
+                    try {
                         if (typeof(Storage) !== "undefined") {
                             localStorage.clear();
                             sessionStorage.clear();
                         }
-                        
-                        // Clear browser history
+                    } catch (e) {
+                        console.warn('Could not clear storage:', e);
+                    }
+                    
+                    // Clear browser history
+                    try {
                         if (window.history && window.history.replaceState) {
                             window.history.replaceState(null, null, '/login');
                         }
-                        
-                        // Submit the logout form
-                        document.getElementById('sidebarLogoutForm').submit();
+                    } catch (e) {
+                        console.warn('Could not update history:', e);
                     }
-                } else {
-                    if (confirm('Are you sure you want to logout? This will end your current session and redirect you to the login page. Any unsaved work will be lost.')) {
-                        document.getElementById('sidebarLogoutForm').submit();
+                    
+                    // Submit the logout form
+                    const form = document.getElementById('sidebarLogoutForm');
+                    if (form) {
+                        form.submit();
+                    } else {
+                        console.error('Logout form not found');
+                        // Fallback: redirect manually
+                        window.location.href = '/login';
                     }
                 }
             } catch (error) {
                 console.error('Logout error:', error);
-                if (typeof ToastNotification !== 'undefined') {
-                    ToastNotification.show('An error occurred during logout. Please try again.', 'error');
+                // Fallback to native confirm if modal fails
+                if (confirm('Are you sure you want to logout? This will end your current session and redirect you to the login page. Any unsaved work will be lost.')) {
+                    const form = document.getElementById('sidebarLogoutForm');
+                    if (form) {
+                        form.submit();
+                    } else {
+                        window.location.href = '/login';
+                    }
                 }
             }
         }
