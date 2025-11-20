@@ -10,6 +10,7 @@ use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GeneralSettingsController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ScriptController;
 
 // Welcome page
@@ -106,6 +107,9 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::post('/optimize', [GeneralSettingsController::class, 'optimize'])->name('optimize');
         Route::get('/info', [GeneralSettingsController::class, 'getInfo'])->name('info');
     });
+
+    // Settings Management
+    Route::resource('settings', SettingsController::class);
     
     // Profile & Settings
     Route::prefix('profile')->name('profile.')->group(function () {
