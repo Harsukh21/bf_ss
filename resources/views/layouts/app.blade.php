@@ -647,6 +647,178 @@
         }
     </script>
     
+    <!-- Push Notifications -->
+    <script>
+        (function() {
+            let pushNotificationCheckInterval = null;
+            let lastCheckedTime = new Date().toISOString();
+            let notificationPermission = null;
+
+            // Request notification permission on page load
+            function requestNotificationPermission() {
+                if (!('Notification' in window)) {
+                    console.log('This browser does not support desktop notifications');
+                    return false;
+                }
+
+                if (Notification.permission === 'granted') {
+                    notificationPermission = 'granted';
+                    return true;
+                }
+
+                if (Notification.permission !== 'denied') {
+                    Notification.requestPermission().then(function(permission) {
+                        notificationPermission = permission;
+                        if (permission === 'granted') {
+                            console.log('Notification permission granted');
+                            startPushNotificationPolling();
+                        } else {
+                            console.log('Notification permission denied');
+                        }
+                    });
+                } else {
+                    notificationPermission = 'denied';
+                    console.log('Notification permission was previously denied');
+                }
+                
+                return notificationPermission === 'granted';
+            }
+
+            // Show browser push notification
+            function showPushNotification(notification) {
+                if (notificationPermission !== 'granted') {
+                    return;
+                }
+
+                const options = {
+                    body: notification.message,
+                    icon: '{{ asset("assets/img/light_logo.png") }}',
+                    badge: '{{ asset("assets/img/light_logo.png") }}',
+                    tag: 'notification-' + notification.id, // Prevent duplicate notifications
+                    requireInteraction: false,
+                    silent: false,
+                };
+
+                const browserNotification = new Notification(notification.title, options);
+
+                // Mark as delivered when notification is clicked
+                browserNotification.onclick = function() {
+                    window.focus();
+                    markPushNotificationDelivered(notification.id);
+                    browserNotification.close();
+                };
+
+                // Mark as delivered when notification is closed
+                browserNotification.onclose = function() {
+                    markPushNotificationDelivered(notification.id);
+                };
+
+                // Auto close after 10 seconds
+                setTimeout(() => {
+                    browserNotification.close();
+                }, 10000);
+            }
+
+            // Mark push notification as delivered
+            function markPushNotificationDelivered(notificationId) {
+                fetch(`{{ url('notifications') }}/push/${notificationId}/mark-delivered`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    credentials: 'same-origin',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Push notification marked as delivered:', notificationId);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking push notification as delivered:', error);
+                });
+            }
+
+            // Check for new push notifications
+            function checkPushNotifications() {
+                if (notificationPermission !== 'granted') {
+                    return;
+                }
+
+                fetch('{{ route("notifications.push.pending") }}', {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    credentials: 'same-origin',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.notifications && data.notifications.length > 0) {
+                        // Show each notification
+                        data.notifications.forEach(notification => {
+                            showPushNotification(notification);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking push notifications:', error);
+                });
+            }
+
+            // Start polling for push notifications
+            function startPushNotificationPolling() {
+                if (pushNotificationCheckInterval) {
+                    clearInterval(pushNotificationCheckInterval);
+                }
+
+                // Check immediately
+                checkPushNotifications();
+
+                // Check every 30 seconds
+                pushNotificationCheckInterval = setInterval(checkPushNotifications, 30000);
+            }
+
+            // Stop polling for push notifications
+            function stopPushNotificationPolling() {
+                if (pushNotificationCheckInterval) {
+                    clearInterval(pushNotificationCheckInterval);
+                    pushNotificationCheckInterval = null;
+                }
+            }
+
+            // Initialize on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                // Request permission and start polling if granted
+                if (requestNotificationPermission()) {
+                    startPushNotificationPolling();
+                }
+
+                // Also check when page becomes visible (user switches back to tab)
+                document.addEventListener('visibilitychange', function() {
+                    if (!document.hidden && notificationPermission === 'granted') {
+                        checkPushNotifications();
+                    }
+                });
+
+                // Stop polling when page is hidden
+                document.addEventListener('visibilitychange', function() {
+                    if (document.hidden) {
+                        // Keep polling but at a reduced rate
+                    }
+                });
+            });
+
+            // Clean up on page unload
+            window.addEventListener('beforeunload', function() {
+                stopPushNotificationPolling();
+            });
+        })();
+    </script>
+    
     @stack('js')
 </body>
 </html>

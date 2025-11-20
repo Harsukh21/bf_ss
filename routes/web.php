@@ -89,6 +89,9 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/create', [\App\Http\Controllers\NotificationController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\NotificationController::class, 'store'])->name('store');
         Route::get('/pending', [\App\Http\Controllers\NotificationController::class, 'getPendingNotifications'])->name('pending');
+        Route::get('/push/pending', [\App\Http\Controllers\NotificationController::class, 'getPushNotifications'])->name('push.pending');
+        Route::post('/push/{id}/mark-delivered', [\App\Http\Controllers\NotificationController::class, 'markPushDelivered'])->name('push.mark-delivered');
+        Route::get('/{id}', [\App\Http\Controllers\NotificationController::class, 'show'])->name('show');
         Route::post('/{id}/mark-read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('mark-read');
         Route::get('/{id}/edit', [\App\Http\Controllers\NotificationController::class, 'edit'])->name('edit');
         Route::put('/{id}', [\App\Http\Controllers\NotificationController::class, 'update'])->name('update');

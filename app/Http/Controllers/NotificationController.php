@@ -421,6 +421,74 @@ class NotificationController extends Controller
     }
 
     /**
+     * Display the specified notification (for view modal)
+     */
+    public function show($id)
+    {
+        $notification = DB::table('notifications')
+            ->leftJoin('users as creator', 'notifications.created_by', '=', 'creator.id')
+            ->select(
+                'notifications.*',
+                'creator.name as creator_name',
+                'creator.email as creator_email'
+            )
+            ->where('notifications.id', $id)
+            ->first();
+
+        if (!$notification) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Notification not found',
+            ], 404);
+        }
+
+        // Get read statistics
+        $readCount = DB::table('notification_user')
+            ->where('notification_id', $id)
+            ->where('is_read', true)
+            ->count();
+
+        $totalUsers = DB::table('notification_user')
+            ->where('notification_id', $id)
+            ->count();
+
+        // Get user list
+        $users = DB::table('notification_user')
+            ->join('users', 'notification_user.user_id', '=', 'users.id')
+            ->where('notification_user.notification_id', $id)
+            ->select('users.id', 'users.name', 'users.email', 'notification_user.is_read', 'notification_user.read_at')
+            ->get();
+
+        // Parse JSON fields
+        $notification->delivery_methods = json_decode($notification->delivery_methods ?? '[]', true);
+        
+        // Convert timestamps
+        $notification->created_at = $notification->created_at ? Carbon::parse($notification->created_at)->toIso8601String() : null;
+        $notification->updated_at = $notification->updated_at ? Carbon::parse($notification->updated_at)->toIso8601String() : null;
+        $notification->scheduled_at = $notification->scheduled_at ? Carbon::parse($notification->scheduled_at)->toIso8601String() : null;
+        $notification->daily_time = $notification->daily_time ? Carbon::parse($notification->daily_time)->format('H:i') : null;
+        $notification->weekly_time = $notification->weekly_time ? Carbon::parse($notification->weekly_time)->format('H:i') : null;
+        $notification->monthly_time = $notification->monthly_time ? Carbon::parse($notification->monthly_time)->format('H:i') : null;
+
+        return response()->json([
+            'success' => true,
+            'notification' => array_merge((array)$notification, [
+                'read_count' => $readCount,
+                'unread_count' => $totalUsers - $readCount,
+                'users' => $users->map(function($user) {
+                    return [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'is_read' => $user->is_read,
+                        'read_at' => $user->read_at ? Carbon::parse($user->read_at)->toIso8601String() : null,
+                    ];
+                })->toArray(),
+            ]),
+        ]);
+    }
+
+    /**
      * Get pending notifications for authenticated user
      */
     public function getPendingNotifications(Request $request)
@@ -441,6 +509,86 @@ class NotificationController extends Controller
                     'created_at' => Carbon::parse($notification->created_at)->format('Y-m-d H:i:s'),
                 ];
             }, $notifications),
+        ]);
+    }
+
+    /**
+     * Get push notifications for authenticated user
+     */
+    public function getPushNotifications(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Get notifications that have 'push' in delivery_methods and are pending/sent
+        $notifications = DB::table('notifications')
+            ->join('notification_user', 'notifications.id', '=', 'notification_user.notification_id')
+            ->where('notification_user.user_id', $user->id)
+            ->whereIn('notifications.status', ['pending', 'sent'])
+            ->where(function($query) {
+                $query->whereNull('notifications.scheduled_at')
+                      ->orWhere('notifications.scheduled_at', '<=', now());
+            })
+            ->whereRaw("(notifications.delivery_methods::jsonb @> ?::jsonb)", [json_encode(['push'])])
+            ->where(function($query) {
+                // Check if push notification hasn't been delivered yet
+                $query->whereRaw("(notification_user.delivery_status::jsonb->>'push' IS NULL OR notification_user.delivery_status::jsonb->>'push' = 'false')")
+                      ->orWhereRaw("(notification_user.delivery_status::jsonb->>'push')::boolean = false");
+            })
+            ->select('notifications.*', 'notification_user.delivery_status', 'notification_user.id as pivot_id')
+            ->orderBy('notifications.created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'notifications' => array_map(function($notification) {
+                return [
+                    'id' => $notification->id,
+                    'title' => $notification->title,
+                    'message' => $notification->message,
+                    'created_at' => Carbon::parse($notification->created_at)->format('Y-m-d H:i:s'),
+                ];
+            }, $notifications->toArray()),
+        ]);
+    }
+
+    /**
+     * Mark push notification as delivered
+     */
+    public function markPushDelivered(Request $request, $id)
+    {
+        $user = Auth::user();
+        
+        // Get current delivery status
+        $pivot = DB::table('notification_user')
+            ->where('notification_id', $id)
+            ->where('user_id', $user->id)
+            ->first();
+            
+        if (!$pivot) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Notification not found',
+            ], 404);
+        }
+        
+        // Update delivery status to mark push as delivered
+        $deliveryStatus = json_decode($pivot->delivery_status ?? '{}', true);
+        $deliveryStatus['push'] = true;
+        
+        DB::table('notification_user')
+            ->where('notification_id', $id)
+            ->where('user_id', $user->id)
+            ->update([
+                'delivery_status' => json_encode($deliveryStatus),
+                'is_delivered' => true,
+                'delivered_at' => now(),
+                'updated_at' => now(),
+            ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Push notification marked as delivered',
         ]);
     }
 }

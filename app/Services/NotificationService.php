@@ -117,10 +117,13 @@ class NotificationService
                 $query->whereNull('notifications.scheduled_at')
                       ->orWhere('notifications.scheduled_at', '<=', now());
             })
-            ->whereRaw("(notifications.delivery_methods::jsonb ? 'login_popup')")
+            ->whereRaw("(notifications.delivery_methods::jsonb @> ?::jsonb)", [json_encode(['login_popup'])])
             ->select('notifications.*')
             ->orderBy('notifications.created_at', 'desc')
             ->get()
+            ->map(function($notification) {
+                return (array) $notification;
+            })
             ->toArray();
     }
 }
