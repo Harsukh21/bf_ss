@@ -68,6 +68,66 @@ class ScorecardController extends Controller
             $query->where('events.marketTime', '<=', $dateTo);
         }
 
+        // Interrupted status filter
+        if ($request->filled('interrupted_status')) {
+            $interruptedStatus = $request->input('interrupted_status');
+            if ($interruptedStatus === 'on') {
+                $query->where('events.is_interrupted', true);
+            } elseif ($interruptedStatus === 'off') {
+                $query->where(function($q) {
+                    $q->where('events.is_interrupted', false)
+                      ->orWhereNull('events.is_interrupted');
+                });
+            }
+            // If 'all', no filter is applied
+        }
+
+        // Labels filter - filter by events that have specific labels checked
+        if ($request->filled('labels') && is_array($request->input('labels'))) {
+            $selectedLabels = $request->input('labels');
+            // Only process labels that are checked (true)
+            $activeLabels = array_filter($selectedLabels, function($value) {
+                return $value === '1' || $value === 'true' || $value === true;
+            });
+            
+            if (!empty($activeLabels)) {
+                $labelConfig = config('labels.labels', []);
+                $allowedLabelKeys = array_keys($labelConfig);
+                
+                $query->where(function($q) use ($activeLabels, $allowedLabelKeys) {
+                    foreach ($activeLabels as $labelKey => $value) {
+                        // Only process if key is in allowed list (prevent SQL injection)
+                        if (!in_array($labelKey, $allowedLabelKeys)) {
+                            continue;
+                        }
+                        
+                        $normalizedKey = strtolower($labelKey); // Labels are stored with lowercase keys
+                        // Escape the key for use in raw SQL (prevent SQL injection)
+                        $escapedKey = str_replace("'", "''", $normalizedKey); // Escape single quotes for PostgreSQL
+                        // Check if label exists in JSONB and is true
+                        // PostgreSQL JSONB path query: events.labels->>'labelKey' = 'true'
+                        $q->orWhereRaw("COALESCE(events.labels->>'{$escapedKey}', 'false') = 'true'");
+                    }
+                });
+            }
+        }
+
+        // Get label keys for checking all labels
+        $labelConfig = config('labels.labels', []);
+        $labelKeys = array_keys($labelConfig);
+        $allLabelKeys = array_map('strtolower', $labelKeys); // Labels stored with lowercase keys
+        
+        // Build custom ordering:
+        // 1. is_interrupted = true first
+        // 2. Then in-play (marketTime <= now, currently active)
+        // 3. Then upcoming (marketTime > now, future in-play)
+        // 4. Then events with all 4 labels checked
+        $now = Carbon::now();
+        $nowStr = $now->format('Y-m-d H:i:s');
+        
+        // Build condition for all labels checked
+        $allLabelsCondition = $this->buildAllLabelsCheckedCondition($allLabelKeys);
+        
         $events = $query->groupBy(
                 'events.id',
                 'events.eventId',
@@ -82,7 +142,26 @@ class ScorecardController extends Controller
                 'events.labels',
                 'events.remind_me_after'
             )
-            ->orderBy('events.marketTime', 'desc')
+            ->selectRaw('
+                events.*,
+                CASE 
+                    WHEN events."is_interrupted" = true THEN 1
+                    ELSE 2
+                END as sort_interrupted,
+                CASE 
+                    WHEN events."marketTime" IS NOT NULL AND events."marketTime" <= ? THEN 1
+                    WHEN events."marketTime" IS NOT NULL AND events."marketTime" > ? THEN 2
+                    ELSE 3
+                END as sort_time_status,
+                CASE 
+                    WHEN ' . $allLabelsCondition . ' THEN 1
+                    ELSE 2
+                END as sort_all_labels
+            ', [$nowStr, $nowStr])
+            ->orderBy('sort_interrupted', 'asc') // 1. is_interrupted = true first
+            ->orderBy('sort_time_status', 'asc') // 2. In-play (current) first, then upcoming
+            ->orderBy('sort_all_labels', 'asc') // 3. All labels checked first
+            ->orderBy('events.marketTime', 'desc') // 4. Then by newest marketTime
             ->paginate(20);
 
         // Get sports list for display
@@ -424,6 +503,24 @@ class ScorecardController extends Controller
             'success' => true,
             'message' => 'Event settings updated successfully.',
         ]);
+    }
+
+    /**
+     * Build SQL condition to check if all labels are checked
+     */
+    private function buildAllLabelsCheckedCondition($labelKeys): string
+    {
+        $conditions = [];
+        foreach ($labelKeys as $key) {
+            $escapedKey = str_replace("'", "''", $key);
+            $conditions[] = "COALESCE(events.labels->>'{$escapedKey}', 'false') = 'true'";
+        }
+        
+        if (empty($conditions)) {
+            return 'false';
+        }
+        
+        return '(' . implode(' AND ', $conditions) . ')';
     }
 
     public function updateLabels(Request $request, $exEventId)

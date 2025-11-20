@@ -244,12 +244,16 @@
     $tournamentValue = request()->input('tournament');
     $dateFromValue = request()->input('date_from');
     $dateToValue = request()->input('date_to');
+    $interruptedStatusValue = request()->input('interrupted_status');
+    $labelsValue = request()->input('labels', []);
 
     $hasSearch = request()->has('search') && trim((string) $searchValue) !== '';
     $hasSport = request()->has('sport') && trim((string) $sportValue) !== '';
     $hasTournament = request()->has('tournament') && trim((string) $tournamentValue) !== '';
     $hasDateFrom = request()->has('date_from') && trim((string) $dateFromValue) !== '';
     $hasDateTo = request()->has('date_to') && trim((string) $dateToValue) !== '';
+    $hasInterruptedStatus = request()->has('interrupted_status') && in_array($interruptedStatusValue, ['on', 'off']);
+    $hasLabels = request()->has('labels') && is_array($labelsValue) && !empty(array_filter($labelsValue, function($v) { return $v === '1' || $v === 'true' || $v === true; }));
 
     if ($hasSearch) {
         $activeFilters[] = ['label' => 'Search', 'value' => $searchValue, 'query' => 'search'];
@@ -265,6 +269,23 @@
     }
     if ($hasDateTo) {
         $activeFilters[] = ['label' => 'Date To', 'value' => $dateToValue, 'query' => 'date_to'];
+    }
+    if ($hasInterruptedStatus) {
+        $statusLabel = $interruptedStatusValue === 'on' ? 'Interrupted: ON' : 'Interrupted: OFF';
+        $activeFilters[] = ['label' => $statusLabel, 'value' => '', 'query' => 'interrupted_status'];
+    }
+    if ($hasLabels) {
+        $labelConfig = config('labels.labels', []);
+        $selectedLabelNames = [];
+        foreach ($labelsValue as $key => $value) {
+            if ($value === '1' || $value === 'true' || $value === true) {
+                $labelName = $labelConfig[$key] ?? strtoupper($key);
+                $selectedLabelNames[] = $labelName;
+            }
+        }
+        if (!empty($selectedLabelNames)) {
+            $activeFilters[] = ['label' => 'Labels', 'value' => implode(', ', $selectedLabelNames), 'query' => 'labels'];
+        }
     }
 
     $filterCount = count($activeFilters);
@@ -544,6 +565,33 @@
                     </div>
                 </div>
             </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Interrupted Status</label>
+                <select name="interrupted_status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">All</option>
+                    <option value="on" @selected(request('interrupted_status') === 'on')>Interrupted (ON)</option>
+                    <option value="off" @selected(request('interrupted_status') === 'off')>Not Interrupted (OFF)</option>
+                </select>
+            </div>
+            <div class="filter-field-group">
+                <div class="filter-field-title">Labels</div>
+                <div class="space-y-2">
+                    @php
+                        $labelConfig = config('labels.labels', []);
+                        $selectedLabels = request()->input('labels', []);
+                    @endphp
+                    @foreach($labelConfig as $labelKey => $labelName)
+                        <label class="flex items-center">
+                            <input type="checkbox" 
+                                   name="labels[{{ $labelKey }}]" 
+                                   value="1" 
+                                   @checked(isset($selectedLabels[$labelKey]) && ($selectedLabels[$labelKey] === '1' || $selectedLabels[$labelKey] === 'true' || $selectedLabels[$labelKey] === true))
+                                   class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700">
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ $labelName }}</span>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
             <div class="flex items-center justify-between pt-2">
                 <button type="submit" class="inline-flex items-center px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500">Apply Filters</button>
                 <a href="{{ route('scorecard.index') }}" class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600">Reset</a>
@@ -603,7 +651,23 @@
     // Remove Filter
     function removeScorecardFilter(param) {
         const url = new URL(window.location.href);
-        url.searchParams.delete(param);
+        
+        // Handle labels filter specially (it's an array)
+        if (param === 'labels') {
+            // Remove all label parameters
+            const params = new URLSearchParams(url.search);
+            params.delete('labels');
+            // Remove individual label parameters like labels[4x], etc.
+            for (const key of params.keys()) {
+                if (key.startsWith('labels[')) {
+                    params.delete(key);
+                }
+            }
+            url.search = params.toString();
+        } else {
+            url.searchParams.delete(param);
+        }
+        
         url.searchParams.delete('page'); // Reset to page 1
         window.location.href = url.toString();
     }
