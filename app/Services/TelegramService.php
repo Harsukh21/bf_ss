@@ -83,7 +83,7 @@ class TelegramService
     protected function formatEventReminderMessage($event): string
     {
         $lines = [
-            "🔔 <b>Limit Reminder</b>",
+            "🔔🔔🔔 <b>Limit Reminder</b> 🔔🔔🔔",
             "",
             "<b>Event:</b> " . ($event->eventName ?? 'N/A'),
             "<b>Sport:</b> " . ($event->sportName ?? 'N/A'),
@@ -98,7 +98,8 @@ class TelegramService
         }
 
         $lines[] = "";
-        $lines[] = "<i>Reminder set for " . ($event->remind_me_after ?? 0) . " minutes.</i>";
+        $lines[] = "<b>Reminder set for " . ($event->remind_me_after ?? 0) . " minutes.</b>";
+        $lines[] = "";
         $lines[] = "<b>I have set a 0–1 limit in the market for the event mentioned above.</b>";
 
         return implode("\n", $lines);
