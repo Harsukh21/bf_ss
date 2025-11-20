@@ -1,8 +1,8 @@
 <!-- Sidebar -->
-<aside id="sidebar" class="sidebar-open bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 w-64 min-h-screen fixed left-0 top-0 z-40 sidebar-transition">
+<aside id="sidebar" class="sidebar-open bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 w-64 h-screen fixed left-0 top-0 z-40 sidebar-transition overflow-hidden flex flex-col">
     <div class="flex flex-col h-full">
         <!-- Logo Section -->
-        <div class="px-4 h-16 border-b border-gray-200 dark:border-gray-700 flex items-center justify-center">
+        <div class="px-4 h-16 border-b border-gray-200 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
             <div class="flex items-center">
                 <a href="/" class="flex items-center hover:opacity-80 transition-opacity duration-300 ease-in-out">
                     <!-- Light mode logo -->
@@ -17,7 +17,7 @@
             </div>
         </div>
         <!-- Navigation Menu -->
-        <nav class="flex-1 px-4 py-6 space-y-2">
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto overflow-x-hidden">
             <!-- Dashboard -->
             <a href="{{ route('dashboard') }}" 
                class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 ease-in-out {{ request()->routeIs('dashboard') ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
@@ -227,7 +227,7 @@
 
         <!-- Sidebar Footer -->
         @auth
-            <div class="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="px-4 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <!-- User Info -->
                 <div class="flex items-center space-x-3 mb-4">
                     <img class="h-10 w-10 rounded-full object-cover" 
