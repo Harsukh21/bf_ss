@@ -697,6 +697,42 @@
         </div>
         @endif
 
+        <!-- Status Summary Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 md:gap-6 mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">All Events</p>
+                        <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($paginatedEvents->total()) }}</p>
+                    </div>
+                </div>
+            </div>
+            @foreach($statusBadgeMeta as $statusId => $meta)
+                @php
+                    $count = $statusSummary[$statusId] ?? 0;
+                    $cardStyle = $statusCardStyles[$statusId] ?? ['iconBg' => 'bg-gray-200 dark:bg-gray-700/50', 'iconColor' => 'text-gray-600 dark:text-gray-300'];
+                @endphp
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+                    <div class="flex items-center">
+                        <div class="p-2 rounded-lg {{ $cardStyle['iconBg'] }}">
+                            <svg class="w-5 h-5 {{ $cardStyle['iconColor'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ $meta['label'] }}</p>
+                            <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($count) }}</p>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
         <!-- Recently Added Switcher -->
         <div class="mb-6">
             <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

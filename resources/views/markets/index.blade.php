@@ -475,7 +475,7 @@
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">All Markets</p>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">All</p>
                         <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($paginatedMarkets->total()) }}</p>
                     </div>
                 </div>
@@ -517,7 +517,7 @@
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">In-Play Markets</p>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">In-Play</p>
                         <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(DB::table('market_lists')->where('status', 3)->count()) }}</p>
                     </div>
                 </div>
@@ -531,7 +531,7 @@
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Pre-bet Markets</p>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Pre-bet</p>
                         <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(DB::table('market_lists')->where('isPreBet', true)->count()) }}</p>
                     </div>
                 </div>
