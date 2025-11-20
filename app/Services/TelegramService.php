@@ -83,7 +83,7 @@ class TelegramService
     protected function formatEventReminderMessage($event): string
     {
         $lines = [
-            "🔔🔔🔔 <b>Limit Reminder</b> 🔔🔔🔔",
+            "⚠️⚠️⚠️ <b>Event Interrupted</b> ⚠️⚠️⚠️",
             "",
             "<b>Event:</b> " . ($event->eventName ?? 'N/A'),
             "<b>Sport:</b> " . ($event->sportName ?? 'N/A'),
@@ -126,7 +126,7 @@ class TelegramService
     protected function formatInterruptionNotificationMessage($event): string
     {
         $lines = [
-            "🔔🔔🔔 <b>Event Interrupted</b> 🔔🔔🔔",
+            "⚠️⚠️⚠️ <b>Event Interrupted</b> ⚠️⚠️⚠️",
             "",
             "<b>Event:</b> " . ($event->eventName ?? 'N/A'),
             "<b>Sport:</b> " . ($event->sportName ?? 'N/A'),
@@ -142,7 +142,7 @@ class TelegramService
 
         if (!empty($event->remind_me_after)) {
             $lines[] = "";
-            $lines[] = "<i>Reminder scheduled for " . ($event->remind_me_after ?? 0) . " minutes.</i>";
+            $lines[] = "<b>Reminder scheduled for " . ($event->remind_me_after ?? 0) . " minutes.</b>";
         }
 
         $lines[] = "";
@@ -172,7 +172,7 @@ class TelegramService
     protected function formatInterruptionResolvedMessage($event): string
     {
         $lines = [
-            "✅✅✅ <b>Event Interruption Resolved</b> ✅✅✅",
+            "✅✅✅ <b>Now Bats Open</b> ✅✅✅",
             "",
             "<b>Event:</b> " . ($event->eventName ?? 'N/A'),
             "<b>Sport:</b> " . ($event->sportName ?? 'N/A'),
@@ -180,7 +180,7 @@ class TelegramService
 
         if (!empty($event->market_old_limits) && is_array($event->market_old_limits)) {
             $lines[] = "";
-            $lines[] = "<b>Previous Market Old Limits:</b>";
+            $lines[] = "<b>Current Market Limits:</b>";
             foreach ($event->market_old_limits as $market) {
                 $lines[] = "  • " . ($market->marketName ?? 'N/A') . ": " . ($market->old_limit ?? 0);
             }
