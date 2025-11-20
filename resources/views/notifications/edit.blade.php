@@ -57,19 +57,78 @@
                 <!-- Users Selection -->
                 <div>
                     <label for="user_ids" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Users *</label>
-                    <select id="user_ids" 
-                            name="user_ids[]" 
-                            multiple
-                            required
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 @error('user_ids') border-red-500 @enderror"
-                            style="min-height: 120px;">
-                        @foreach($users as $user)
-                            <option value="{{ $user->id }}" {{ (old('user_ids') && in_array($user->id, old('user_ids'))) || (isset($notification->assigned_user_ids) && in_array($user->id, $notification->assigned_user_ids)) ? 'selected' : '' }}>
-                                {{ $user->name }} ({{ $user->email }})
-                            </option>
-                        @endforeach
-                    </select>
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Hold Ctrl (Windows) or Cmd (Mac) to select multiple users</p>
+                    <div class="relative">
+                        <!-- Hidden select for form submission -->
+                        <select id="user_ids" 
+                                name="user_ids[]" 
+                                multiple
+                                required
+                                class="hidden">
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}" {{ (old('user_ids') && in_array($user->id, old('user_ids'))) || (isset($notification->assigned_user_ids) && in_array($user->id, $notification->assigned_user_ids)) ? 'selected' : '' }}>
+                                    {{ $user->name }} ({{ $user->email }})
+                                </option>
+                            @endforeach
+                        </select>
+                        
+                        <!-- Custom Multi-Select Dropdown -->
+                        <div class="relative">
+                            <div id="multiSelectTrigger" 
+                                 class="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('user_ids') border-red-500 @enderror min-h-[42px] flex items-center flex-wrap gap-2 relative">
+                                <div class="flex-1 flex items-center flex-wrap gap-2 min-h-[24px]">
+                                    <span id="selectedCount" class="text-sm text-gray-500 dark:text-gray-400">
+                                        @php
+                                            $selectedIds = old('user_ids') ?? (isset($notification->assigned_user_ids) ? $notification->assigned_user_ids : []);
+                                            $selectedCount = is_array($selectedIds) ? count($selectedIds) : 0;
+                                        @endphp
+                                        {{ $selectedCount > 0 ? $selectedCount . ' user(s) selected' : 'Select users...' }}
+                                    </span>
+                                    <div id="selectedTags" class="flex flex-wrap gap-1"></div>
+                                </div>
+                                <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                            
+                            <!-- Dropdown Menu -->
+                            <div id="multiSelectDropdown" 
+                                 class="hidden absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-64 overflow-hidden">
+                                <!-- Search Input -->
+                                <div class="p-2 border-b border-gray-200 dark:border-gray-700">
+                                    <input type="text" 
+                                           id="multiSelectSearch" 
+                                           placeholder="Search users..." 
+                                           class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                </div>
+                                
+                                <!-- Options List -->
+                                <div id="multiSelectOptions" class="overflow-y-auto max-h-52 p-1">
+                                    @foreach($users as $user)
+                                        @php
+                                            $isSelected = (old('user_ids') && in_array($user->id, old('user_ids'))) || (isset($notification->assigned_user_ids) && in_array($user->id, $notification->assigned_user_ids));
+                                        @endphp
+                                        <label class="flex items-center px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer group" data-user-id="{{ $user->id }}">
+                                            <input type="checkbox" 
+                                                   value="{{ $user->id }}" 
+                                                   class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"
+                                                   {{ $isSelected ? 'checked' : '' }}>
+                                            <span class="ml-3 text-sm text-gray-900 dark:text-gray-100 flex-1">
+                                                <span class="font-medium">{{ $user->name }}</span>
+                                                <span class="text-gray-500 dark:text-gray-400">({{ $user->email }})</span>
+                                            </span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                
+                                <!-- Select All / Clear All -->
+                                <div class="p-2 border-t border-gray-200 dark:border-gray-700 flex justify-between text-xs">
+                                    <button type="button" id="selectAllUsers" class="text-primary-600 dark:text-primary-400 hover:underline">Select All</button>
+                                    <button type="button" id="clearAllUsers" class="text-red-600 dark:text-red-400 hover:underline">Clear All</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Click to select multiple users</p>
                     @error('user_ids')
                         <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
@@ -264,6 +323,146 @@
 @push('js')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Multi-Select Dropdown Functionality
+        const trigger = document.getElementById('multiSelectTrigger');
+        const dropdown = document.getElementById('multiSelectDropdown');
+        const searchInput = document.getElementById('multiSelectSearch');
+        const optionsContainer = document.getElementById('multiSelectOptions');
+        const hiddenSelect = document.getElementById('user_ids');
+        const selectedCount = document.getElementById('selectedCount');
+        const selectedTags = document.getElementById('selectedTags');
+        const selectAllBtn = document.getElementById('selectAllUsers');
+        const clearAllBtn = document.getElementById('clearAllUsers');
+        
+        let userData = {};
+        const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]');
+        
+        // Build user data map
+        checkboxes.forEach(checkbox => {
+            const label = checkbox.closest('label');
+            const userId = checkbox.value;
+            const textContent = label.querySelector('span').textContent.trim();
+            userData[userId] = {
+                name: label.querySelector('.font-medium').textContent.trim(),
+                email: label.querySelector('.text-gray-500').textContent.replace(/[()]/g, ''),
+                fullText: textContent
+            };
+        });
+        
+        // Toggle dropdown
+        trigger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            dropdown.classList.toggle('hidden');
+            if (!dropdown.classList.contains('hidden')) {
+                searchInput.focus();
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!trigger.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+        
+        // Search functionality
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const labels = optionsContainer.querySelectorAll('label');
+            
+            labels.forEach(label => {
+                const text = label.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    label.style.display = 'flex';
+                } else {
+                    label.style.display = 'none';
+                }
+            });
+        });
+        
+        // Update selected items
+        function updateSelectedItems() {
+            const selectedCheckboxes = Array.from(checkboxes).filter(cb => cb.checked);
+            const selectedValues = selectedCheckboxes.map(cb => cb.value);
+            
+            // Update hidden select
+            Array.from(hiddenSelect.options).forEach(option => {
+                option.selected = selectedValues.includes(option.value);
+            });
+            
+            // Update selected count
+            const count = selectedValues.length;
+            if (count === 0) {
+                selectedCount.textContent = 'Select users...';
+                selectedCount.classList.remove('hidden');
+                selectedTags.innerHTML = '';
+            } else {
+                selectedCount.classList.add('hidden');
+                
+                // Show selected tags
+                selectedTags.innerHTML = '';
+                selectedValues.forEach(userId => {
+                    const user = userData[userId];
+                    if (user) {
+                        const tag = document.createElement('span');
+                        tag.className = 'inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200 rounded';
+                        tag.innerHTML = `
+                            ${user.name}
+                            <button type="button" 
+                                    class="hover:text-primary-600 dark:hover:text-primary-400" 
+                                    onclick="removeUser('${userId}'); event.stopPropagation();">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        `;
+                        selectedTags.appendChild(tag);
+                    }
+                });
+            }
+            
+            // Validate required field
+            hiddenSelect.setCustomValidity(count === 0 ? 'Please select at least one user' : '');
+        }
+        
+        // Remove user function (global for onclick)
+        window.removeUser = function(userId) {
+            const checkbox = document.querySelector(`#multiSelectOptions input[value="${userId}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+                updateSelectedItems();
+            }
+        };
+        
+        // Handle checkbox changes
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedItems);
+        });
+        
+        // Select All
+        selectAllBtn.addEventListener('click', function() {
+            const visibleLabels = Array.from(optionsContainer.querySelectorAll('label')).filter(
+                label => label.style.display !== 'none'
+            );
+            visibleLabels.forEach(label => {
+                const checkbox = label.querySelector('input[type="checkbox"]');
+                if (checkbox) checkbox.checked = true;
+            });
+            updateSelectedItems();
+        });
+        
+        // Clear All
+        clearAllBtn.addEventListener('click', function() {
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateSelectedItems();
+        });
+        
+        // Initialize
+        updateSelectedItems();
+        
+        // Notification Type Toggle
         const notificationType = document.getElementById('notification_type');
         const afterMinutesField = document.getElementById('after_minutes_field');
         const afterHoursField = document.getElementById('after_hours_field');

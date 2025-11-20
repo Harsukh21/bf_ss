@@ -38,6 +38,9 @@ class NotificationService
         $deliveryMethods = json_decode($notification->delivery_methods ?? '[]', true);
         $isRecurring = in_array($notification->notification_type, ['daily', 'weekly', 'monthly']);
 
+        // Track if we've sent to default chat (to avoid duplicates)
+        $sentToDefaultChat = false;
+
         foreach ($users as $user) {
             $deliveryStatus = [
                 'push' => false,
@@ -45,18 +48,32 @@ class NotificationService
                 'login_popup' => false,
             ];
 
-            // Send via Telegram if enabled and user has telegram_id
-            if (in_array('telegram', $deliveryMethods) && $user->telegram_id) {
+            // Send via Telegram if enabled
+            if (in_array('telegram', $deliveryMethods)) {
                 try {
                     $message = "<b>{$notification->title}</b>\n\n{$notification->message}";
-                    $telegramSent = $this->telegramService->sendMessage($message, $user->telegram_id);
-                    $deliveryStatus['telegram'] = $telegramSent;
+                    
+                    // Send to user's personal Telegram ID if available
+                    if (!empty($user->telegram_id)) {
+                        // Send to user's personal Telegram
+                        $telegramSent = $this->telegramService->sendMessage($message, $user->telegram_id);
+                        $deliveryStatus['telegram'] = $telegramSent;
+                    } elseif (!$sentToDefaultChat) {
+                        // Send to default group/chat (only once per notification)
+                        $telegramSent = $this->telegramService->sendMessage($message);
+                        $deliveryStatus['telegram'] = $telegramSent;
+                        $sentToDefaultChat = true;
+                    } else {
+                        // User doesn't have telegram_id and we already sent to default chat
+                        $deliveryStatus['telegram'] = true; // Mark as sent (via default chat)
+                    }
                 } catch (\Exception $e) {
                     Log::error('Failed to send Telegram notification', [
                         'user_id' => $user->id,
                         'notification_id' => $notificationId,
                         'error' => $e->getMessage(),
                     ]);
+                    $deliveryStatus['telegram'] = false;
                 }
             }
 

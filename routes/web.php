@@ -125,6 +125,14 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
 
     // Settings Management
     Route::resource('settings', SettingsController::class);
+
+    // Testing Routes
+    Route::prefix('testing')->name('testing.')->group(function () {
+        Route::prefix('telegram')->name('telegram.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Testing\TelegramTestController::class, 'index'])->name('index');
+            Route::post('/send', [\App\Http\Controllers\Testing\TelegramTestController::class, 'sendTestMessage'])->name('send');
+        });
+    });
     
     // Profile & Settings
     Route::prefix('profile')->name('profile.')->group(function () {

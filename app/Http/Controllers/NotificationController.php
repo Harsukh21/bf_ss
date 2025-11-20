@@ -401,6 +401,12 @@ class NotificationController extends Controller
             DB::table('notification_user')->insert($pivotData);
         }
 
+        // If instant, send immediately
+        if ($validated['notification_type'] === 'instant') {
+            $notificationService = new NotificationService();
+            $notificationService->sendNotification($id);
+        }
+
         return redirect()->route('notifications.index')
             ->with('success', 'Notification updated successfully!');
     }
@@ -501,12 +507,14 @@ class NotificationController extends Controller
         return response()->json([
             'success' => true,
             'notifications' => array_map(function($notification) {
+                // Handle both array and object formats
+                $notification = is_array($notification) ? $notification : (array) $notification;
                 return [
-                    'id' => $notification->id,
-                    'title' => $notification->title,
-                    'message' => $notification->message,
-                    'requires_web_pin' => $notification->requires_web_pin,
-                    'created_at' => Carbon::parse($notification->created_at)->format('Y-m-d H:i:s'),
+                    'id' => $notification['id'] ?? null,
+                    'title' => $notification['title'] ?? '',
+                    'message' => $notification['message'] ?? '',
+                    'requires_web_pin' => $notification['requires_web_pin'] ?? false,
+                    'created_at' => isset($notification['created_at']) ? Carbon::parse($notification['created_at'])->format('Y-m-d H:i:s') : '',
                 ];
             }, $notifications),
         ]);
