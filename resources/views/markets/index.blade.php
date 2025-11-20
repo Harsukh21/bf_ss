@@ -466,59 +466,101 @@
         @endif
 
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 md:gap-6 mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
                 <div class="flex items-center">
-                    <div class="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                         </svg>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Markets</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $paginatedMarkets->total() }}</p>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">All</p>
+                        <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($paginatedMarkets->total()) }}</p>
                     </div>
                 </div>
             </div>
             
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
                 <div class="flex items-center">
-                    <div class="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
-                        <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/20">
+                        <svg class="w-5 h-5 text-purple-600 dark:text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Unsettled</p>
+                        <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(DB::table('market_lists')->where('status', 1)->count()) }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/20">
+                        <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Upcoming</p>
+                        <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(DB::table('market_lists')->where('status', 2)->count()) }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-lg bg-red-100 dark:bg-red-900/20">
+                        <svg class="w-5 h-5 text-red-600 dark:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                         </svg>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Live Markets</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ DB::table('market_lists')->where('isLive', true)->count() }}</p>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">In-Play</p>
+                        <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(DB::table('market_lists')->where('status', 3)->count()) }}</p>
                     </div>
                 </div>
             </div>
             
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
                 <div class="flex items-center">
-                    <div class="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
-                        <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/20">
+                        <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Pre-bet Markets</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ DB::table('market_lists')->where('isPreBet', true)->count() }}</p>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Pre-bet</p>
+                        <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(DB::table('market_lists')->where('isPreBet', true)->count()) }}</p>
                     </div>
                 </div>
             </div>
             
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
                 <div class="flex items-center">
-                    <div class="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                        <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-2 rounded-lg bg-green-100 dark:bg-green-900/20">
+                        <svg class="w-5 h-5 text-green-600 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Scheduled Markets</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ DB::table('market_lists')->where('isLive', false)->where('isPreBet', false)->count() }}</p>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Settled</p>
+                        <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(DB::table('market_lists')->where('status', 4)->count()) }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700/50">
+                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Voided</p>
+                        <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(DB::table('market_lists')->where('status', 5)->count()) }}</p>
                     </div>
                 </div>
             </div>
@@ -876,7 +918,7 @@
                     <label class="flex items-center">
                         <input type="checkbox" name="is_live" value="1" {{ request('is_live') ? 'checked' : '' }}
                                class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded">
-                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Live Markets</span>
+                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">In-Play Markets</span>
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" name="is_prebet" value="1" {{ request('is_prebet') ? 'checked' : '' }}

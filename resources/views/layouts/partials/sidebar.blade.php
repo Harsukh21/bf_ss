@@ -1,21 +1,23 @@
 <!-- Sidebar -->
-<aside id="sidebar" class="sidebar-open bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 w-64 min-h-screen fixed left-0 top-0 z-40 sidebar-transition">
+<aside id="sidebar" class="sidebar-open bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 w-64 h-screen fixed left-0 top-0 z-40 sidebar-transition overflow-hidden flex flex-col">
     <div class="flex flex-col h-full">
         <!-- Logo Section -->
-        <div class="px-4 h-16 border-b border-gray-200 dark:border-gray-700 flex items-center">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-8 h-8 bg-primary-600 dark:bg-primary-500 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"></path>
-                            </svg>
-                        </div>
-                <a href="/" class="text-xl font-bold text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 ease-in-out">
-                    {{ config('app.name', 'Laravel') }}
+        <div class="px-4 h-14 md:h-16 border-b border-gray-200 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
+            <div class="flex items-center w-full">
+                <a href="/" class="flex items-center justify-center w-full hover:opacity-80 transition-opacity duration-300 ease-in-out">
+                    <!-- Light mode logo -->
+                    <img src="{{ asset('assets/img/light_logo.png') }}" 
+                         alt="{{ config('app.name', 'Laravel') }}" 
+                         class="h-12 md:h-14 w-auto max-w-full object-contain dark:hidden">
+                    <!-- Dark mode logo -->
+                    <img src="{{ asset('assets/img/dark_logo.png') }}" 
+                         alt="{{ config('app.name', 'Laravel') }}" 
+                         class="h-12 md:h-14 w-auto max-w-full object-contain hidden dark:block">
                 </a>
             </div>
         </div>
         <!-- Navigation Menu -->
-        <nav class="flex-1 px-4 py-6 space-y-2">
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto overflow-x-hidden sidebar-scrollbar">
             <!-- Dashboard -->
             <a href="{{ route('dashboard') }}" 
                class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 ease-in-out {{ request()->routeIs('dashboard') ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
@@ -175,7 +177,7 @@
                 <!-- Settings Dropdown -->
                 <div class="relative">
                     @php
-                        $isSettingsActive = request()->routeIs('general-settings.*') || request()->routeIs('system-logs.*') || request()->routeIs('performance.*');
+                        $isSettingsActive = request()->routeIs('general-settings.*') || request()->routeIs('system-logs.*') || request()->routeIs('performance.*') || request()->routeIs('settings.*');
                         $settingsDropdownOpen = $isSettingsActive ? 'open' : '';
                     @endphp
                     <button onclick="toggleDropdown('settings')" class="flex items-center justify-between w-full px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ $isSettingsActive ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
@@ -211,6 +213,13 @@
                             </svg>
                             Performance
                         </a>
+                        <a href="{{ route('settings.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('settings.*') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Settings
+                        </a>
                     </div>
                 </div>
             </div>
@@ -218,7 +227,7 @@
 
         <!-- Sidebar Footer -->
         @auth
-            <div class="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="px-4 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <!-- User Info -->
                 <div class="flex items-center space-x-3 mb-4">
                     <img class="h-10 w-10 rounded-full object-cover" 
