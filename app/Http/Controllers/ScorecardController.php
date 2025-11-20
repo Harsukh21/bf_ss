@@ -121,7 +121,7 @@ class ScorecardController extends Controller
         // 1. is_interrupted = true first
         // 2. Then in-play (marketTime <= now, currently active)
         // 3. Then upcoming (marketTime > now, future in-play)
-        // 4. Then events with all 4 labels checked
+        // 4. Then events WITHOUT all labels checked (events with all labels checked will appear later)
         $now = Carbon::now();
         $nowStr = $now->format('Y-m-d H:i:s');
         
@@ -154,13 +154,13 @@ class ScorecardController extends Controller
                     ELSE 3
                 END as sort_time_status,
                 CASE 
-                    WHEN ' . $allLabelsCondition . ' THEN 1
-                    ELSE 2
+                    WHEN ' . $allLabelsCondition . ' THEN 2
+                    ELSE 1
                 END as sort_all_labels
             ', [$nowStr, $nowStr])
             ->orderBy('sort_interrupted', 'asc') // 1. is_interrupted = true first
             ->orderBy('sort_time_status', 'asc') // 2. In-play (current) first, then upcoming
-            ->orderBy('sort_all_labels', 'asc') // 3. All labels checked first
+            ->orderBy('sort_all_labels', 'asc') // 3. Events WITHOUT all labels checked first (1 before 2)
             ->orderBy('events.marketTime', 'desc') // 4. Then by newest marketTime
             ->paginate(20);
 
