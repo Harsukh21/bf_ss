@@ -15,6 +15,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'prevent.back' => \App\Http\Middleware\PreventBackAfterLogout::class,
         ]);
     })
+    ->withSchedule(function ($schedule) {
+        // Schedule reminder check to run every minute
+        $schedule->command('reminders:send')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->runInBackground();
+    })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();

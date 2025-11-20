@@ -251,22 +251,22 @@ class RiskController extends Controller
             $query->whereDate('events.completeTime', '<=', $filters['date_to']);
         }
 
-        // Filter for recently added (markets closing within 30 minutes)
+        // Filter for recently added (markets closed in the past 30 minutes)
         if (!empty($filters['recently_added'])) {
             $now = \Carbon\Carbon::now();
-            $thirtyMinutesLater = $now->copy()->addMinutes(30);
+            $thirtyMinutesAgo = $now->copy()->subMinutes(30);
             
-            $query->where(function ($q) use ($now, $thirtyMinutesLater) {
+            $query->where(function ($q) use ($now, $thirtyMinutesAgo) {
                 // Check completeTime first, fallback to marketTime
-                $q->where(function ($subQ) use ($now, $thirtyMinutesLater) {
+                $q->where(function ($subQ) use ($now, $thirtyMinutesAgo) {
                     $subQ->whereNotNull('events.completeTime')
-                        ->where('events.completeTime', '>=', $now->format('Y-m-d H:i:s'))
-                        ->where('events.completeTime', '<=', $thirtyMinutesLater->format('Y-m-d H:i:s'));
-                })->orWhere(function ($subQ) use ($now, $thirtyMinutesLater) {
+                        ->where('events.completeTime', '>=', $thirtyMinutesAgo->format('Y-m-d H:i:s'))
+                        ->where('events.completeTime', '<=', $now->format('Y-m-d H:i:s'));
+                })->orWhere(function ($subQ) use ($now, $thirtyMinutesAgo) {
                     $subQ->whereNull('events.completeTime')
                         ->whereNotNull('market_lists.marketTime')
-                        ->where('market_lists.marketTime', '>=', $now->format('Y-m-d H:i:s'))
-                        ->where('market_lists.marketTime', '<=', $thirtyMinutesLater->format('Y-m-d H:i:s'));
+                        ->where('market_lists.marketTime', '>=', $thirtyMinutesAgo->format('Y-m-d H:i:s'))
+                        ->where('market_lists.marketTime', '<=', $now->format('Y-m-d H:i:s'));
                 });
             });
         }
@@ -335,6 +335,7 @@ class RiskController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'chor_id' => ['required', 'string'],
             'remark' => ['required', 'string', 'max:2000'],
         ]);
 
@@ -359,6 +360,7 @@ class RiskController extends Controller
             ->update([
                 'is_done' => true,
                 'name' => $request->input('name'),
+                'chor_id' => $request->input('chor_id'),
                 'remark' => $request->input('remark'),
                 'updated_at' => now(),
             ]);
@@ -388,7 +390,7 @@ class RiskController extends Controller
 
     private function getLabelKeys(): array
     {
-        return ['4x', 'b2c', 'b2b', 'usdt'];
+        return array_keys(config('labels.labels', []));
     }
 
     private function buildSummary($query): array

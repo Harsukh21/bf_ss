@@ -65,6 +65,14 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/export/csv', [MarketRateController::class, 'export'])->name('export');
     });
 
+    // Scorecard
+    Route::prefix('scorecard')->name('scorecard.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ScorecardController::class, 'index'])->name('index');
+        Route::get('/events/{exEventId}/markets', [\App\Http\Controllers\ScorecardController::class, 'getEventMarkets'])->name('events.markets');
+        Route::post('/events/{exEventId}/update', [\App\Http\Controllers\ScorecardController::class, 'updateEvent'])->name('events.update');
+        Route::post('/events/{exEventId}/update-labels', [\App\Http\Controllers\ScorecardController::class, 'updateLabels'])->name('events.update-labels');
+    });
+
     // Risk
     Route::prefix('risk')->name('risk.')->group(function () {
         Route::get('/', [\App\Http\Controllers\RiskController::class, 'index'])->name('index');
