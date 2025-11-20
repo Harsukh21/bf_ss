@@ -14,11 +14,11 @@
                     <!-- Light mode logo -->
                     <img src="{{ asset('assets/img/light_logo.png') }}" 
                          alt="{{ config('app.name', 'Laravel') }}" 
-                         class="h-10 w-auto object-contain dark:hidden">
+                         class="h-12 w-auto max-w-[180px] object-contain dark:hidden">
                     <!-- Dark mode logo -->
                     <img src="{{ asset('assets/img/dark_logo.png') }}" 
                          alt="{{ config('app.name', 'Laravel') }}" 
-                         class="h-10 w-auto object-contain hidden dark:block">
+                         class="h-12 w-auto max-w-[180px] object-contain hidden dark:block">
                 </a>
             </div>
 

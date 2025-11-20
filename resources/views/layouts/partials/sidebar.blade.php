@@ -2,17 +2,17 @@
 <aside id="sidebar" class="sidebar-open bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 w-64 h-screen fixed left-0 top-0 z-40 sidebar-transition overflow-hidden flex flex-col">
     <div class="flex flex-col h-full">
         <!-- Logo Section -->
-        <div class="px-4 h-16 border-b border-gray-200 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
-            <div class="flex items-center">
-                <a href="/" class="flex items-center hover:opacity-80 transition-opacity duration-300 ease-in-out">
+        <div class="px-4 h-14 md:h-16 border-b border-gray-200 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
+            <div class="flex items-center w-full">
+                <a href="/" class="flex items-center justify-center w-full hover:opacity-80 transition-opacity duration-300 ease-in-out">
                     <!-- Light mode logo -->
                     <img src="{{ asset('assets/img/light_logo.png') }}" 
                          alt="{{ config('app.name', 'Laravel') }}" 
-                         class="h-12 w-auto object-contain dark:hidden">
+                         class="h-12 md:h-14 w-auto max-w-full object-contain dark:hidden">
                     <!-- Dark mode logo -->
                     <img src="{{ asset('assets/img/dark_logo.png') }}" 
                          alt="{{ config('app.name', 'Laravel') }}" 
-                         class="h-12 w-auto object-contain hidden dark:block">
+                         class="h-12 md:h-14 w-auto max-w-full object-contain hidden dark:block">
                 </a>
             </div>
         </div>
