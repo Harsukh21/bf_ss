@@ -2,15 +2,17 @@
 <aside id="sidebar" class="sidebar-open bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 w-64 min-h-screen fixed left-0 top-0 z-40 sidebar-transition">
     <div class="flex flex-col h-full">
         <!-- Logo Section -->
-        <div class="px-4 h-16 border-b border-gray-200 dark:border-gray-700 flex items-center">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-8 h-8 bg-primary-600 dark:bg-primary-500 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"></path>
-                            </svg>
-                        </div>
-                <a href="/" class="text-xl font-bold text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 ease-in-out">
-                    {{ config('app.name', 'Laravel') }}
+        <div class="px-4 h-16 border-b border-gray-200 dark:border-gray-700 flex items-center justify-center">
+            <div class="flex items-center">
+                <a href="/" class="flex items-center hover:opacity-80 transition-opacity duration-300 ease-in-out">
+                    <!-- Light mode logo -->
+                    <img src="{{ asset('assets/img/light_logo.png') }}" 
+                         alt="{{ config('app.name', 'Laravel') }}" 
+                         class="h-12 w-auto object-contain dark:hidden">
+                    <!-- Dark mode logo -->
+                    <img src="{{ asset('assets/img/dark_logo.png') }}" 
+                         alt="{{ config('app.name', 'Laravel') }}" 
+                         class="h-12 w-auto object-contain hidden dark:block">
                 </a>
             </div>
         </div>
