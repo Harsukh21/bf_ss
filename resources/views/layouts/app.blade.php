@@ -36,6 +36,58 @@
     <!-- Common CSS -->
     <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
     
+    <!-- Custom Scrollbar Styles -->
+    <style>
+        /* WebKit Scrollbar (Chrome, Safari, Edge) */
+        .sidebar-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .sidebar-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 10px;
+        }
+        
+        .sidebar-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.3);
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            transition: background 0.2s ease;
+        }
+        
+        .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(156, 163, 175, 0.5);
+            background-clip: padding-box;
+        }
+        
+        /* Dark mode scrollbar */
+        .dark .sidebar-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(107, 114, 128, 0.4);
+            background-clip: padding-box;
+        }
+        
+        .dark .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(107, 114, 128, 0.6);
+            background-clip: padding-box;
+        }
+        
+        /* Firefox Scrollbar */
+        .sidebar-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+        }
+        
+        .dark .sidebar-scrollbar {
+            scrollbar-color: rgba(107, 114, 128, 0.4) transparent;
+        }
+        
+        /* Smooth scrolling */
+        .sidebar-scrollbar {
+            scroll-behavior: smooth;
+        }
+    </style>
+    
     <!-- Alpine.js CDN -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     

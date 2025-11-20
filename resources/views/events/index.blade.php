@@ -511,6 +511,7 @@
         4 => ['label' => 'Settled', 'class' => 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'],
         5 => ['label' => 'Voided', 'class' => 'bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200'],
         6 => ['label' => 'Removed', 'class' => 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300'],
+        'closed' => ['label' => 'Closed', 'class' => 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300'],
     ];
 
     $statusCardStyles = [
@@ -520,6 +521,7 @@
         4 => ['iconBg' => 'bg-green-100 dark:bg-green-900/20', 'iconColor' => 'text-green-600 dark:text-green-300'],
         5 => ['iconBg' => 'bg-gray-200 dark:bg-gray-700/50', 'iconColor' => 'text-gray-700 dark:text-gray-200'],
         6 => ['iconBg' => 'bg-orange-100 dark:bg-orange-900/20', 'iconColor' => 'text-orange-600 dark:text-orange-300'],
+        'closed' => ['iconBg' => 'bg-indigo-100 dark:bg-indigo-900/20', 'iconColor' => 'text-indigo-600 dark:text-indigo-300'],
     ];
 @endphp
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
@@ -696,6 +698,67 @@
             </div>
         </div>
         @endif
+
+        <!-- Status Summary Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6 mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+                <div class="flex items-center">
+                    <div class="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">All Events</p>
+                        <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($paginatedEvents->total()) }}</p>
+                    </div>
+                </div>
+            </div>
+            @foreach([1, 2, 3] as $statusId)
+                @php
+                    $meta = $statusBadgeMeta[$statusId] ?? null;
+                    $count = $statusSummary[$statusId] ?? 0;
+                    $cardStyle = $statusCardStyles[$statusId] ?? ['iconBg' => 'bg-gray-200 dark:bg-gray-700/50', 'iconColor' => 'text-gray-600 dark:text-gray-300'];
+                @endphp
+                @if($meta)
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+                        <div class="flex items-center">
+                            <div class="p-2 rounded-lg {{ $cardStyle['iconBg'] }}">
+                                <svg class="w-5 h-5 {{ $cardStyle['iconColor'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ $meta['label'] }}</p>
+                                <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($count) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            @endforeach
+            
+            <!-- CLOSED Status Card -->
+            @php
+                $closedMeta = $statusBadgeMeta['closed'] ?? null;
+                $closedCount = isset($statusSummary['closed']) ? $statusSummary['closed'] : 0;
+                $closedCardStyle = $statusCardStyles['closed'] ?? ['iconBg' => 'bg-indigo-100 dark:bg-indigo-900/20', 'iconColor' => 'text-indigo-600 dark:text-indigo-300'];
+            @endphp
+            @if($closedMeta)
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+                    <div class="flex items-center">
+                        <div class="p-2 rounded-lg {{ $closedCardStyle['iconBg'] }}">
+                            <svg class="w-5 h-5 {{ $closedCardStyle['iconColor'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ $closedMeta['label'] }}</p>
+                            <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($closedCount) }}</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
 
         <!-- Recently Added Switcher -->
         <div class="mb-6">
