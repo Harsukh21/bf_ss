@@ -226,6 +226,7 @@ class ScorecardController extends Controller
         // Check if this is the first time marking as interrupted
         $wasInterrupted = (bool) ($event->is_interrupted ?? false);
         $isFirstTimeInterrupted = false;
+        $isBeingTurnedOff = false;
 
         // Update is_interrupted (if provided in request)
         if ($request->has('is_interrupted')) {
@@ -234,6 +235,11 @@ class ScorecardController extends Controller
             // Check if this is first time being marked as interrupted
             if ($updateData['is_interrupted'] && !$wasInterrupted) {
                 $isFirstTimeInterrupted = true;
+            }
+            
+            // Check if interruption is being turned OFF
+            if (!$updateData['is_interrupted'] && $wasInterrupted) {
+                $isBeingTurnedOff = true;
             }
             
             // If turning off interruption, delete pending reminders
@@ -363,6 +369,51 @@ class ScorecardController extends Controller
             } catch (\Exception $e) {
                 // Log error but don't fail the request
                 \Log::error('Failed to send interruption notification', [
+                    'exEventId' => $exEventId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Send Telegram notification if interruption is being turned OFF
+        if ($isBeingTurnedOff) {
+            try {
+                // Get sport name from config
+                $sports = config('sports.sports', []);
+                $sportId = $event->sportId ?? null;
+                
+                // Get market old limits before clearing (for the message)
+                $marketOldLimits = DB::table('market_lists')
+                    ->select('marketName', 'old_limit')
+                    ->where('exEventId', $exEventId)
+                    ->where('status', 3) // INPLAY status
+                    ->whereNotNull('old_limit')
+                    ->orderBy('marketName')
+                    ->get()
+                    ->map(function ($market) {
+                        return (object) [
+                            'marketName' => $market->marketName,
+                            'old_limit' => $market->old_limit ?? 0,
+                        ];
+                    })
+                    ->toArray();
+                
+                // Prepare event data for notification
+                $eventData = (object) [
+                    'eventId' => $event->eventId ?? null,
+                    'exEventId' => $event->exEventId,
+                    'eventName' => $event->eventName ?? 'N/A',
+                    'sportName' => $sportId && isset($sports[$sportId]) ? $sports[$sportId] : 'Unknown Sport',
+                    'tournamentsName' => $event->tournamentsName ?? 'N/A',
+                    'market_old_limits' => $marketOldLimits,
+                ];
+
+                // Send interruption resolved notification
+                $telegramService = new TelegramService();
+                $telegramService->sendInterruptionResolvedNotification($eventData);
+            } catch (\Exception $e) {
+                // Log error but don't fail the request
+                \Log::error('Failed to send interruption resolved notification', [
                     'exEventId' => $exEventId,
                     'error' => $e->getMessage(),
                 ]);

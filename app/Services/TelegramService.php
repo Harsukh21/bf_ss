@@ -150,5 +150,46 @@ class TelegramService
 
         return implode("\n", $lines);
     }
+
+    /**
+     * Send notification when event interruption is turned OFF
+     *
+     * @param object $event
+     * @return bool
+     */
+    public function sendInterruptionResolvedNotification($event): bool
+    {
+        $message = $this->formatInterruptionResolvedMessage($event);
+        return $this->sendMessage($message);
+    }
+
+    /**
+     * Format interruption resolved notification message
+     *
+     * @param object $event
+     * @return string
+     */
+    protected function formatInterruptionResolvedMessage($event): string
+    {
+        $lines = [
+            "✅ <b>Event Interruption Resolved</b>",
+            "",
+            "<b>Event:</b> " . ($event->eventName ?? 'N/A'),
+            "<b>Sport:</b> " . ($event->sportName ?? 'N/A'),
+        ];
+
+        if (!empty($event->market_old_limits) && is_array($event->market_old_limits)) {
+            $lines[] = "";
+            $lines[] = "<b>Previous Market Old Limits:</b>";
+            foreach ($event->market_old_limits as $market) {
+                $lines[] = "  • " . ($market->marketName ?? 'N/A') . ": " . ($market->old_limit ?? 0);
+            }
+        }
+
+        $lines[] = "";
+        $lines[] = "<b>The interruption for this event has been resolved.</b>";
+
+        return implode("\n", $lines);
+    }
 }
 
