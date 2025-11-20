@@ -64,11 +64,19 @@ This will create the `event_reminders` table to track sent reminders.
 
 The reminder command is automatically scheduled to run every minute via Laravel's scheduler.
 
-**For Production:**
+**For Production on AWS:**
+See detailed AWS setup guide: [AWS_TELEGRAM_SCHEDULER_SETUP.md](./AWS_TELEGRAM_SCHEDULER_SETUP.md)
+
+**Quick Setup for EC2/Linux Server:**
 Add the following cron entry to your server (run `crontab -e`):
 
 ```bash
-* * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /var/www/laravel/bf_ss && php artisan schedule:run >> /dev/null 2>&1
+```
+
+**Or with logging (recommended for production):**
+```bash
+* * * * * cd /var/www/laravel/bf_ss && /usr/bin/php artisan schedule:run >> /var/www/laravel/bf_ss/storage/logs/scheduler.log 2>&1
 ```
 
 **For Local Development:**
