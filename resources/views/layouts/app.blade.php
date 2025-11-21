@@ -407,12 +407,417 @@
         }
     </script>
     
+    <!-- Notification Popup Modal -->
+    <div id="notification-popup-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex items-center justify-center p-4">
+        <div id="notification-popup-modal" class="bg-red-50 dark:bg-red-900/20 border-2 border-red-500 dark:border-red-600 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-red-600 dark:text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        <h3 class="text-lg font-semibold text-red-800 dark:text-red-200">Notification</h3>
+                    </div>
+                    <button id="notification-popup-close-btn" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 transition-colors hidden">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div id="notification-popup-content" class="mb-4">
+                    <!-- Notification content will be loaded here -->
+                </div>
+                
+                <div id="notification-popup-web-pin-section" class="hidden">
+                    <label for="notification-web-pin-input" class="block text-sm font-medium text-red-800 dark:text-red-200 mb-2">Enter Web PIN to close</label>
+                    <input type="text" 
+                           id="notification-web-pin-input" 
+                           pattern="[0-9]*"
+                           inputmode="numeric"
+                           maxlength="20"
+                           class="w-full px-3 py-2 border-2 border-red-400 dark:border-red-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-red-500 focus:border-red-500"
+                           placeholder="Enter your Web PIN">
+                    <p id="notification-web-pin-error" class="mt-1 text-sm text-red-700 dark:text-red-300 font-medium hidden"></p>
+                </div>
+                
+                <div id="notification-popup-actions" class="flex justify-end space-x-3 mt-4">
+                    <button id="notification-popup-submit-btn" type="button" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition-colors shadow-md">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     
     <!-- IST Time Script -->
     <script src="{{ asset('assets/js/ist-time.js') }}"></script>
     
+    <!-- Notification Popup Script -->
+    <script>
+        let currentNotificationId = null;
+        let currentNotificationRequiresPin = false;
+        let notificationQueue = [];
+
+        // Load pending notifications on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPendingNotifications();
+        });
+
+        function loadPendingNotifications() {
+            fetch('{{ route("notifications.pending") }}', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                credentials: 'same-origin',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.notifications && data.notifications.length > 0) {
+                    notificationQueue = data.notifications;
+                    showNextNotification();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading notifications:', error);
+            });
+        }
+
+        function showNextNotification() {
+            if (notificationQueue.length === 0) {
+                return;
+            }
+
+            const notification = notificationQueue[0];
+            currentNotificationId = notification.id;
+            currentNotificationRequiresPin = notification.requires_web_pin;
+
+            // Update popup content
+            document.getElementById('notification-popup-content').innerHTML = `
+                <div class="mb-4 bg-red-100 dark:bg-red-900/30 rounded-lg p-4 border border-red-300 dark:border-red-700">
+                    <h4 class="text-base font-semibold text-red-900 dark:text-red-100 mb-2">${escapeHtml(notification.title)}</h4>
+                    <p class="text-sm text-red-800 dark:text-red-200 whitespace-pre-wrap">${escapeHtml(notification.message)}</p>
+                </div>
+            `;
+
+            // Show/hide web PIN section
+            const pinSection = document.getElementById('notification-popup-web-pin-section');
+            const pinInput = document.getElementById('notification-web-pin-input');
+            const closeBtn = document.getElementById('notification-popup-close-btn');
+            const submitBtn = document.getElementById('notification-popup-submit-btn');
+
+            if (currentNotificationRequiresPin) {
+                pinSection.classList.remove('hidden');
+                closeBtn.classList.add('hidden');
+                pinInput.value = '';
+                pinInput.focus();
+                submitBtn.textContent = 'Verify PIN';
+            } else {
+                pinSection.classList.add('hidden');
+                closeBtn.classList.remove('hidden');
+                submitBtn.textContent = 'Close';
+            }
+
+            // Show popup
+            const overlay = document.getElementById('notification-popup-overlay');
+            const modal = document.getElementById('notification-popup-modal');
+            overlay.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            setTimeout(() => {
+                modal.style.transform = 'scale(1)';
+                modal.style.opacity = '1';
+            }, 10);
+
+            // Handle close button (only if no PIN required)
+            closeBtn.onclick = function() {
+                if (!currentNotificationRequiresPin) {
+                    closeNotification();
+                }
+            };
+
+            // Handle submit button
+            submitBtn.onclick = function() {
+                if (currentNotificationRequiresPin) {
+                    verifyWebPinAndClose();
+                } else {
+                    closeNotification();
+                }
+            };
+
+            // Handle Enter key on PIN input
+            pinInput.onkeypress = function(e) {
+                if (e.key === 'Enter') {
+                    verifyWebPinAndClose();
+                }
+            };
+
+            // Prevent closing by clicking overlay if PIN required
+            overlay.onclick = function(e) {
+                if (e.target === overlay && !currentNotificationRequiresPin) {
+                    closeNotification();
+                }
+            };
+
+            // Prevent closing with Escape if PIN required
+            const escapeHandler = function(e) {
+                if (e.key === 'Escape' && !currentNotificationRequiresPin) {
+                    closeNotification();
+                    document.removeEventListener('keydown', escapeHandler);
+                }
+            };
+            document.addEventListener('keydown', escapeHandler);
+        }
+
+        function verifyWebPinAndClose() {
+            const pinInput = document.getElementById('notification-web-pin-input');
+            const errorMsg = document.getElementById('notification-web-pin-error');
+            const webPin = pinInput.value.trim();
+
+            if (!webPin) {
+                errorMsg.textContent = 'Please enter your Web PIN';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            // Verify PIN via API
+            fetch(`/notifications/${currentNotificationId}/mark-read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    web_pin: webPin,
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    errorMsg.classList.add('hidden');
+                    closeNotification();
+                } else {
+                    errorMsg.textContent = data.message || 'Invalid Web PIN';
+                    errorMsg.classList.remove('hidden');
+                    pinInput.value = '';
+                    pinInput.focus();
+                }
+            })
+            .catch(error => {
+                console.error('Error verifying PIN:', error);
+                errorMsg.textContent = 'An error occurred. Please try again.';
+                errorMsg.classList.remove('hidden');
+            });
+        }
+
+        function closeNotification() {
+            const overlay = document.getElementById('notification-popup-overlay');
+            const modal = document.getElementById('notification-popup-modal');
+            const errorMsg = document.getElementById('notification-web-pin-error');
+            
+            modal.style.transform = 'scale(0.95)';
+            modal.style.opacity = '0';
+
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                document.body.style.overflow = '';
+                errorMsg.classList.add('hidden');
+                
+                // Remove current notification from queue
+                notificationQueue.shift();
+                
+                // Show next notification if any
+                if (notificationQueue.length > 0) {
+                    setTimeout(showNextNotification, 300);
+                }
+            }, 300);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+    
+    <!-- Push Notifications -->
+    <script>
+        (function() {
+            let pushNotificationCheckInterval = null;
+            let lastCheckedTime = new Date().toISOString();
+            let notificationPermission = null;
+
+            // Request notification permission on page load
+            function requestNotificationPermission() {
+                if (!('Notification' in window)) {
+                    console.log('This browser does not support desktop notifications');
+                    return false;
+                }
+
+                if (Notification.permission === 'granted') {
+                    notificationPermission = 'granted';
+                    return true;
+                }
+
+                if (Notification.permission !== 'denied') {
+                    Notification.requestPermission().then(function(permission) {
+                        notificationPermission = permission;
+                        if (permission === 'granted') {
+                            console.log('Notification permission granted');
+                            startPushNotificationPolling();
+                        } else {
+                            console.log('Notification permission denied');
+                        }
+                    });
+                } else {
+                    notificationPermission = 'denied';
+                    console.log('Notification permission was previously denied');
+                }
+                
+                return notificationPermission === 'granted';
+            }
+
+            // Show browser push notification
+            function showPushNotification(notification) {
+                if (notificationPermission !== 'granted') {
+                    return;
+                }
+
+                const options = {
+                    body: notification.message,
+                    icon: '{{ asset("assets/img/light_logo.png") }}',
+                    badge: '{{ asset("assets/img/light_logo.png") }}',
+                    tag: 'notification-' + notification.id, // Prevent duplicate notifications
+                    requireInteraction: false,
+                    silent: false,
+                };
+
+                const browserNotification = new Notification(notification.title, options);
+
+                // Mark as delivered when notification is clicked
+                browserNotification.onclick = function() {
+                    window.focus();
+                    markPushNotificationDelivered(notification.id);
+                    browserNotification.close();
+                };
+
+                // Mark as delivered when notification is closed
+                browserNotification.onclose = function() {
+                    markPushNotificationDelivered(notification.id);
+                };
+
+                // Auto close after 10 seconds
+                setTimeout(() => {
+                    browserNotification.close();
+                }, 10000);
+            }
+
+            // Mark push notification as delivered
+            function markPushNotificationDelivered(notificationId) {
+                fetch(`{{ url('notifications') }}/push/${notificationId}/mark-delivered`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    credentials: 'same-origin',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Push notification marked as delivered:', notificationId);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking push notification as delivered:', error);
+                });
+            }
+
+            // Check for new push notifications
+            function checkPushNotifications() {
+                if (notificationPermission !== 'granted') {
+                    return;
+                }
+
+                fetch('{{ route("notifications.push.pending") }}', {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    credentials: 'same-origin',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.notifications && data.notifications.length > 0) {
+                        // Show each notification
+                        data.notifications.forEach(notification => {
+                            showPushNotification(notification);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking push notifications:', error);
+                });
+            }
+
+            // Start polling for push notifications
+            function startPushNotificationPolling() {
+                if (pushNotificationCheckInterval) {
+                    clearInterval(pushNotificationCheckInterval);
+                }
+
+                // Check immediately
+                checkPushNotifications();
+
+                // Check every 30 seconds
+                pushNotificationCheckInterval = setInterval(checkPushNotifications, 30000);
+            }
+
+            // Stop polling for push notifications
+            function stopPushNotificationPolling() {
+                if (pushNotificationCheckInterval) {
+                    clearInterval(pushNotificationCheckInterval);
+                    pushNotificationCheckInterval = null;
+                }
+            }
+
+            // Initialize on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                // Request permission and start polling if granted
+                if (requestNotificationPermission()) {
+                    startPushNotificationPolling();
+                }
+
+                // Also check when page becomes visible (user switches back to tab)
+                document.addEventListener('visibilitychange', function() {
+                    if (!document.hidden && notificationPermission === 'granted') {
+                        checkPushNotifications();
+                    }
+                });
+
+                // Stop polling when page is hidden
+                document.addEventListener('visibilitychange', function() {
+                    if (document.hidden) {
+                        // Keep polling but at a reduced rate
+                    }
+                });
+            });
+
+            // Clean up on page unload
+            window.addEventListener('beforeunload', function() {
+                stopPushNotificationPolling();
+            });
+        })();
+    </script>
     
     @stack('js')
 </body>

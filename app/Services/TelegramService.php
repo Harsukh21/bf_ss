@@ -33,8 +33,9 @@ class TelegramService
         }
 
         try {
+            $targetChatId = $chatId ?? $this->chatId;
             $response = Http::post("{$this->apiUrl}/sendMessage", [
-                'chat_id' => $chatId ?? $this->chatId,
+                'chat_id' => $targetChatId,
                 'text' => $message,
                 'parse_mode' => 'HTML',
             ]);
@@ -46,9 +47,12 @@ class TelegramService
                 }
             }
 
+            // Log detailed error
+            $errorResponse = $response->json();
             Log::error('Telegram API error', [
-                'response' => $response->json(),
+                'response' => $errorResponse,
                 'status' => $response->status(),
+                'chat_id' => $targetChatId,
             ]);
 
             return false;
@@ -56,9 +60,105 @@ class TelegramService
             Log::error('Telegram send message exception', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+                'chat_id' => $chatId ?? $this->chatId,
             ]);
 
             return false;
+        }
+    }
+
+    /**
+     * Send a message and return detailed error information
+     *
+     * @param string $message
+     * @param string|null $chatId
+     * @return array Returns ['success' => bool, 'error' => string|null]
+     */
+    public function sendMessageWithDetails(string $message, ?string $chatId = null): array
+    {
+        if (empty($this->botToken) || empty($chatId ?? $this->chatId)) {
+            return [
+                'success' => false,
+                'error' => 'Telegram configuration missing. Bot token or chat ID not set.'
+            ];
+        }
+
+        try {
+            $targetChatId = $chatId ?? $this->chatId;
+            $response = Http::post("{$this->apiUrl}/sendMessage", [
+                'chat_id' => $targetChatId,
+                'text' => $message,
+                'parse_mode' => 'HTML',
+            ]);
+
+            if ($response->successful()) {
+                $result = $response->json();
+                if (isset($result['ok']) && $result['ok'] === true) {
+                    return ['success' => true, 'error' => null];
+                }
+            }
+
+            // Get error details
+            $errorResponse = $response->json();
+            $errorDescription = $errorResponse['description'] ?? 'Unknown error';
+            $errorCode = $errorResponse['error_code'] ?? $response->status();
+
+            // Provide user-friendly error messages
+            $userFriendlyError = $this->getUserFriendlyError($errorCode, $errorDescription, $targetChatId);
+
+            Log::error('Telegram API error', [
+                'response' => $errorResponse,
+                'status' => $response->status(),
+                'chat_id' => $targetChatId,
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $userFriendlyError
+            ];
+        } catch (\Exception $e) {
+            Log::error('Telegram send message exception', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'chat_id' => $chatId ?? $this->chatId,
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'An error occurred: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get user-friendly error message
+     */
+    private function getUserFriendlyError(int $errorCode, string $description, string $chatId): string
+    {
+        switch ($errorCode) {
+            case 400:
+                if (str_contains($description, 'chat not found')) {
+                    return "Chat not found. The user with ID '{$chatId}' may not have started a conversation with your bot. Please ensure:\n\n1. The user has sent at least one message to your bot (@YourBotUsername)\n2. The Telegram ID is correct (username or numeric ID)\n3. If using username, make sure it includes '@' symbol\n\nAsk the user to start a chat with your bot first.";
+                }
+                if (str_contains($description, 'chat_id is empty')) {
+                    return "Invalid chat ID. Please provide a valid Telegram ID.";
+                }
+                if (str_contains($description, 'message is too long')) {
+                    return "Message is too long. Telegram messages have a maximum length limit.";
+                }
+                return "Bad Request: {$description}";
+            
+            case 403:
+                return "Forbidden: The bot is blocked by the user or doesn't have permission to send messages. The user needs to unblock the bot or allow messages.";
+            
+            case 404:
+                return "Bot not found. Please check your bot token in the configuration.";
+            
+            case 429:
+                return "Rate limit exceeded. Please wait a moment before sending another message.";
+            
+            default:
+                return "Error ({$errorCode}): {$description}";
         }
     }
 

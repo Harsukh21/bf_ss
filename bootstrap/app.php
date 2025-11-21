@@ -13,11 +13,18 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'prevent.back' => \App\Http\Middleware\PreventBackAfterLogout::class,
+            'permission' => \App\Http\Middleware\CheckPermission::class,
         ]);
     })
     ->withSchedule(function ($schedule) {
         // Schedule reminder check to run every minute
         $schedule->command('reminders:send')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->runInBackground();
+        
+        // Schedule notification check to run every minute
+        $schedule->command('notifications:send-scheduled')
             ->everyMinute()
             ->withoutOverlapping()
             ->runInBackground();

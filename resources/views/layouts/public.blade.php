@@ -49,14 +49,12 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                    </div>
-                    <a href="/" class="text-xl font-bold text-gray-900 hover:text-primary-600 transition-colors">
-                        {{ config('app.name', 'Laravel') }}
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center hover:opacity-80 transition-opacity duration-300 ease-in-out">
+                        <!-- Always show light logo -->
+                        <img src="{{ asset('assets/img/light_logo.png') }}" 
+                             alt="{{ config('app.name', 'Laravel') }}" 
+                             class="h-12 w-auto object-contain">
                     </a>
                 </div>
                 

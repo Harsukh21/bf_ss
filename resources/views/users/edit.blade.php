@@ -150,6 +150,38 @@
                                         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                                     @enderror
                                 </div>
+                                
+                                <div>
+                                    <label for="web_pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Web Pin</label>
+                                    <input type="text" 
+                                           id="web_pin" 
+                                           name="web_pin" 
+                                           value="{{ old('web_pin', $user->web_pin) }}"
+                                           pattern="[0-9]*"
+                                           inputmode="numeric"
+                                           minlength="6"
+                                           maxlength="20"
+                                           class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-gray-100 @error('web_pin') border-red-500 @enderror"
+                                           placeholder="Enter 6+ digit PIN">
+                                    @error('web_pin')
+                                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                    @enderror
+                                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Only numbers, minimum 6 digits</p>
+                                </div>
+                                
+                                <div>
+                                    <label for="telegram_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Telegram ID</label>
+                                    <input type="text" 
+                                           id="telegram_id" 
+                                           name="telegram_id" 
+                                           value="{{ old('telegram_id', $user->telegram_id) }}"
+                                           class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-gray-100 @error('telegram_id') border-red-500 @enderror"
+                                           placeholder="Enter Telegram Chat ID">
+                                    @error('telegram_id')
+                                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                    @enderror
+                                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">For sending notifications</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -199,6 +231,41 @@
                         </div>
                     </div>
 
+                    <!-- Roles & Permissions Card -->
+                    <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+                        <div class="px-4 py-5 sm:p-6">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                                Roles & Permissions
+                            </h3>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Assign Roles</label>
+                                <div class="space-y-2">
+                                    @forelse($roles as $role)
+                                        <label class="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                            <input type="checkbox" 
+                                                   name="roles[]" 
+                                                   value="{{ $role->id }}"
+                                                   {{ $user->roles->contains($role->id) ? 'checked' : '' }}
+                                                   class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700">
+                                            <div class="flex-1">
+                                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $role->name }}</div>
+                                                @if($role->description)
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ $role->description }}</div>
+                                                @endif
+                                            </div>
+                                        </label>
+                                    @empty
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">No roles available. Please create roles first.</p>
+                                    @endforelse
+                                </div>
+                                @error('roles')
+                                    <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Additional Information Card -->
                     <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
                         <div class="px-4 py-5 sm:p-6">
@@ -211,17 +278,19 @@
                                     <label for="timezone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Timezone</label>
                                     <select id="timezone" 
                                             name="timezone" 
-                                            class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-gray-100 @error('timezone') border-red-500 @enderror">
+                                            class="timezone-select mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-gray-100 @error('timezone') border-red-500 @enderror">
                                         <option value="">Select Timezone</option>
-                                        <option value="UTC" {{ old('timezone', $user->timezone) == 'UTC' ? 'selected' : '' }}>UTC</option>
-                                        <option value="America/New_York" {{ old('timezone', $user->timezone) == 'America/New_York' ? 'selected' : '' }}>Eastern Time</option>
-                                        <option value="America/Chicago" {{ old('timezone', $user->timezone) == 'America/Chicago' ? 'selected' : '' }}>Central Time</option>
-                                        <option value="America/Denver" {{ old('timezone', $user->timezone) == 'America/Denver' ? 'selected' : '' }}>Mountain Time</option>
-                                        <option value="America/Los_Angeles" {{ old('timezone', $user->timezone) == 'America/Los_Angeles' ? 'selected' : '' }}>Pacific Time</option>
-                                        <option value="Europe/London" {{ old('timezone', $user->timezone) == 'Europe/London' ? 'selected' : '' }}>London</option>
-                                        <option value="Europe/Paris" {{ old('timezone', $user->timezone) == 'Europe/Paris' ? 'selected' : '' }}>Paris</option>
-                                        <option value="Asia/Tokyo" {{ old('timezone', $user->timezone) == 'Asia/Tokyo' ? 'selected' : '' }}>Tokyo</option>
-                                        <option value="Asia/Shanghai" {{ old('timezone', $user->timezone) == 'Asia/Shanghai' ? 'selected' : '' }}>Shanghai</option>
+                                        @php
+                                            $timezones = config('timezones.timezones', []);
+                                            $selectedTimezone = old('timezone', $user->timezone);
+                                        @endphp
+                                        @foreach($timezones as $tz => $data)
+                                            <option value="{{ $tz }}" 
+                                                    data-flag="{{ $data['flag'] }}" 
+                                                    {{ $selectedTimezone == $tz ? 'selected' : '' }}>
+                                                {{ $data['flag'] }} {{ $data['name'] }} ({{ $tz }})
+                                            </option>
+                                        @endforeach
                                     </select>
                                     @error('timezone')
                                         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -350,8 +419,84 @@
     </div>
 </div>
 
+@push('css')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<style>
+    .select2-container--bootstrap-5 .select2-selection {
+        min-height: 38px;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        background-color: #fff;
+    }
+    .dark .select2-container--bootstrap-5 .select2-selection {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: #f9fafb;
+    }
+    .select2-container--bootstrap-5 .select2-selection__rendered {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+        line-height: 36px;
+        color: #1f2937;
+    }
+    .dark .select2-container--bootstrap-5 .select2-selection__rendered {
+        color: #f9fafb;
+    }
+    .select2-container--bootstrap-5 .select2-results__option {
+        padding: 0.5rem 0.75rem;
+    }
+    .select2-container--bootstrap-5 .select2-results__option--highlighted {
+        background-color: #3b82f6;
+        color: #fff;
+    }
+    .select2-dropdown {
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+    }
+    .dark .select2-dropdown {
+        background-color: #374151;
+        border-color: #4b5563;
+    }
+    .select2-search__field {
+        padding: 0.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.25rem;
+        background-color: #fff;
+    }
+    .dark .select2-search__field {
+        background-color: #4b5563;
+        border-color: #6b7280;
+        color: #f9fafb;
+    }
+</style>
+@endpush
+
 @push('js')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
+    // Web Pin validation - only allow numbers and minimum 6 digits
+    document.addEventListener('DOMContentLoaded', function() {
+        const webPinInput = document.getElementById('web_pin');
+        
+        if (webPinInput) {
+            webPinInput.addEventListener('input', function(e) {
+                // Remove any non-numeric characters
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+            
+            webPinInput.addEventListener('blur', function(e) {
+                // Validate minimum 6 digits if field has value
+                if (this.value && this.value.length < 6) {
+                    this.setCustomValidity('Web Pin must be at least 6 digits');
+                    this.reportValidity();
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+        }
+    });
+
     function confirmDeleteUser(userId, userName) {
         try {
             // Validate parameters
@@ -441,6 +586,59 @@
         if (event.target.classList.contains('fixed') && event.target.classList.contains('inset-0')) {
             closeModal();
         }
+    });
+
+    // Initialize Select2 for timezone dropdown
+    $(document).ready(function() {
+        function formatTimezone(option) {
+        if (!option.id) {
+            return option.text;
+        }
+        var $option = $(option.element);
+        var flag = $option.data('flag');
+        var text = option.text;
+        
+        // Extract flag, name, and timezone from text
+        var parts = text.match(/^([^\s]+)\s+(.+?)\s+\((.+)\)$/);
+        if (parts) {
+            var flag = parts[1];
+            var name = parts[2];
+            var tz = parts[3];
+            return $('<span><span class="mr-2">' + flag + '</span>' + name + ' <span class="text-gray-500 text-xs">(' + tz + ')</span></span>');
+        }
+        return text;
+    }
+
+    $('#timezone').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: 'Select Timezone',
+        allowClear: true,
+        templateResult: formatTimezone,
+        templateSelection: function(option) {
+            if (!option.id) {
+                return option.text;
+            }
+            var $option = $(option.element);
+            var flag = $option.data('flag');
+            var text = option.text;
+            var parts = text.match(/^([^\s]+)\s+(.+?)\s+\((.+)\)$/);
+            if (parts) {
+                var flag = parts[1];
+                var name = parts[2];
+                return $('<span><span class="mr-2">' + flag + '</span>' + name + '</span>');
+            }
+            return text;
+        },
+        language: {
+            noResults: function() {
+                return "No timezone found";
+            },
+            searching: function() {
+                return "Searching...";
+            }
+        }
+    });
     });
 </script>
 @endpush

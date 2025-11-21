@@ -7,7 +7,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use PragmaRX\Google2FA\Google2FA;
+use App\Services\TelegramService;
+use App\Services\TelegramUpdateService;
 
 class ProfileController extends Controller
 {
@@ -45,11 +48,99 @@ class ProfileController extends Controller
             'date_of_birth' => 'nullable|date|before:today',
             'timezone' => 'nullable|string|max:50',
             'language' => 'nullable|string|max:10',
+            'web_pin' => 'nullable|string|regex:/^[0-9]+$/|min:6',
+            'telegram_id' => 'nullable|string|max:100',
+        ], [
+            'web_pin.regex' => 'Web Pin must contain only numbers.',
+            'web_pin.min' => 'Web Pin must be at least 6 digits.',
+            'telegram_id.max' => 'Telegram ID must not exceed 100 characters.',
         ]);
         
         $user = Auth::user();
+        $oldTelegramId = $user->telegram_id;
+        $newTelegramId = trim($request->telegram_id ?? '');
+        $needsValidation = false;
+        $chatId = null;
         
-        $user->update([
+        // Check if Telegram ID needs validation:
+        // 1. New Telegram ID provided and different from old one
+        // 2. Telegram ID exists but chat_id is missing
+        if (!empty($newTelegramId)) {
+            if ($newTelegramId !== $oldTelegramId || empty($user->telegram_chat_id)) {
+                $needsValidation = true;
+            }
+        }
+        
+        // Validate Telegram ID if needed
+        if ($needsValidation) {
+            // First, sync Telegram updates to get latest chat_id mappings (with error handling)
+            $updateService = new TelegramUpdateService();
+            try {
+                $syncResult = $updateService->syncUpdates();
+                
+                // Timeout is normal when there are no new updates - not an error
+                // We'll continue with existing data in the database
+                if (!$syncResult['success'] && !str_contains($syncResult['message'] ?? '', 'timeout') && !str_contains($syncResult['message'] ?? '', 'No new')) {
+                    Log::warning('Telegram sync failed, but continuing with existing data', [
+                        'user_id' => $user->id,
+                        'telegram_id' => $newTelegramId,
+                        'sync_message' => $syncResult['message'] ?? 'Unknown',
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Log but don't fail - we can still try to find existing chat_id from database
+                // Connection timeouts are expected when there are no new updates
+                if (!str_contains($e->getMessage(), 'timeout')) {
+                    Log::warning('Telegram sync exception, continuing with lookup', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+            
+            // Check if chat_id exists for this telegram_id in database
+            $chatId = $updateService->getChatIdByTelegramId($newTelegramId);
+            
+            if (!$chatId) {
+                // Chat ID not found - user hasn't messaged the bot yet
+                return back()
+                    ->withErrors(['telegram_id' => 'Telegram ID not found. Please ensure you have sent a message (e.g., /start) to the bot first.'])
+                    ->withInput()
+                    ->with('telegram_validation_error', 'To use Telegram notifications, you must first start a conversation with the bot. Please follow these steps:<br><br>1. Click on the bot link below to open Telegram chat<br>2. Send a message (e.g., /start) to the bot<br>3. Wait a few seconds for the system to sync<br>4. Come back here and try again');
+            }
+            
+            // Chat ID found - verify by sending a test message (only if telegram_id changed)
+            if ($newTelegramId !== $oldTelegramId) {
+                $telegramService = new TelegramService();
+                $validationMessage = "✅ <b>Telegram ID Verified!</b>\n\n" .
+                                   "Hello " . ($user->name ?? $user->email) . ",\n\n" .
+                                   "Your Telegram ID has been successfully verified for " . config('app.name') . " notifications.\n\n" .
+                                   "You will now receive notifications on this Telegram account.";
+                
+                // Use chat_id instead of telegram_id for sending
+                $result = $telegramService->sendMessageWithDetails($validationMessage, (string)$chatId);
+                
+                if (!$result['success']) {
+                    // Validation failed - return with error
+                    $errorMessage = $result['error'] ?? 'Failed to send verification message to Telegram.';
+                    
+                    return back()
+                        ->withErrors(['telegram_id' => $errorMessage])
+                        ->withInput();
+                }
+            }
+            
+            // Validation succeeded - log the update
+            Log::info('Telegram ID validated successfully', [
+                'user_id' => $user->id,
+                'telegram_id' => $newTelegramId,
+                'telegram_chat_id' => $chatId,
+                'was_update' => $newTelegramId === $oldTelegramId,
+            ]);
+        }
+        
+        // Prepare update data
+        $updateData = [
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'phone' => $request->phone,
@@ -57,9 +148,40 @@ class ProfileController extends Controller
             'date_of_birth' => $request->date_of_birth,
             'timezone' => $request->timezone,
             'language' => $request->language,
-        ]);
+            'web_pin' => $request->web_pin,
+        ];
         
-        return redirect()->route('profile.index')->with('success', 'Profile updated successfully!');
+        // Handle Telegram ID and chat_id
+        if (empty($newTelegramId)) {
+            // Removing Telegram ID
+            if (!empty($oldTelegramId)) {
+                $updateData['telegram_id'] = null;
+                $updateData['telegram_chat_id'] = null;
+            }
+        } else {
+            // Setting/updating Telegram ID
+            $updateData['telegram_id'] = $newTelegramId;
+            
+            // Set chat_id if we found it during validation
+            if ($chatId) {
+                $updateData['telegram_chat_id'] = $chatId;
+            } elseif ($newTelegramId === $oldTelegramId && $user->telegram_chat_id) {
+                // Keep existing chat_id if telegram_id hasn't changed
+                $updateData['telegram_chat_id'] = $user->telegram_chat_id;
+            }
+        }
+        
+        $user->update($updateData);
+        
+        // Prepare success message
+        $successMessage = 'Profile updated successfully!';
+        if (!empty($newTelegramId) && $newTelegramId !== $oldTelegramId) {
+            $successMessage .= ' Your Telegram ID has been verified and is ready to receive notifications.';
+        } elseif (empty($newTelegramId) && !empty($oldTelegramId)) {
+            $successMessage .= ' Telegram ID has been removed.';
+        }
+        
+        return redirect()->route('profile.index')->with('success', $successMessage);
     }
     
     /**

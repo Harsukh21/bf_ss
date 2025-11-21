@@ -824,7 +824,10 @@
                 const labelsContainer = labelsRow.querySelector('.js-labels-container');
                 const marketLimitsSection = labelsRow.querySelector('.flex.flex-wrap.items-center.gap-4');
                 
-                if (checkedCount === eventCheckboxes.length) {
+                const totalLabels = eventCheckboxes.length;
+                const allChecked = checkedCount === totalLabels;
+                
+                if (allChecked) {
                     // Hide labels section
                     if (labelsContainer) {
                         labelsContainer.style.display = 'none';
@@ -847,7 +850,15 @@
                 }
                 
                 // Update labels in events table
-                updateEventLabels(exEventId, eventLabels);
+                updateEventLabels(exEventId, eventLabels).then((success) => {
+                    // If all labels are checked (last label was just checked), refresh the page to reorder records
+                    if (success && allChecked && checked === true) {
+                        // Small delay to ensure DB update completes
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 300);
+                    }
+                });
             }
         });
 
@@ -1520,6 +1531,9 @@
                     // Fallback to alert if ToastNotification is not available
                     alert('Labels updated successfully!');
                 }
+                
+                // Return success status
+                return true;
             } else {
                 // Show error message
                 if (typeof ToastNotification !== 'undefined') {
@@ -1528,6 +1542,7 @@
                     alert('Failed to update labels: ' + (result.message || 'Unknown error'));
                 }
                 console.error('Error updating labels:', result.message);
+                return false;
             }
         } catch (error) {
             // Show error message
@@ -1537,6 +1552,7 @@
                 alert('Error updating labels. Please try again.');
             }
             console.error('Error updating labels:', error);
+            return false;
         }
     }
 

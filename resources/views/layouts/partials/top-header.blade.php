@@ -10,7 +10,7 @@
                     </svg>
                 </button>
                 <!-- Mobile Logo -->
-                <a href="/" class="md:hidden flex items-center hover:opacity-80 transition-opacity duration-300 ease-in-out">
+                <a href="{{ route('dashboard') }}" class="md:hidden flex items-center hover:opacity-80 transition-opacity duration-300 ease-in-out">
                     <!-- Light mode logo -->
                     <img src="{{ asset('assets/img/light_logo.png') }}" 
                          alt="{{ config('app.name', 'Laravel') }}" 

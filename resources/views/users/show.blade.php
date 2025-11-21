@@ -119,6 +119,26 @@
                                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Date of Birth</dt>
                                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $user->date_of_birth?->format('F j, Y') ?? 'Not provided' }}</dd>
                             </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Web Pin</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                    @if($user->web_pin)
+                                        <span class="font-mono">{{ $user->web_pin }}</span>
+                                    @else
+                                        <span class="text-gray-400 italic">Not set</span>
+                                    @endif
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Telegram ID</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                    @if($user->telegram_id)
+                                        <span class="font-mono">{{ $user->telegram_id }}</span>
+                                    @else
+                                        <span class="text-gray-400 italic">Not set</span>
+                                    @endif
+                                </dd>
+                            </div>
                         </dl>
                     </div>
                 </div>
@@ -176,6 +196,83 @@
                                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $user->language ?? 'Not set' }}</dd>
                             </div>
                         </dl>
+                    </div>
+                </div>
+
+                <!-- Roles & Permissions Card -->
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                                Roles & Permissions
+                            </h3>
+                            @php
+                                $authorizedEmails = ['harsukh21@gmail.com', 'sam.parkinson7777@gmail.com'];
+                                $isAuthorized = in_array(auth()->user()->email, $authorizedEmails);
+                            @endphp
+                            @if($isAuthorized)
+                                <button onclick="openRolesModal()" class="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </button>
+                            @endif
+                        </div>
+                        
+                        <!-- Roles Display -->
+                        <div class="mb-6">
+                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Assigned Roles</h4>
+                            @if($user->roles && $user->roles->count() > 0)
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach($user->roles as $role)
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+                                            {{ $role->name }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-sm text-gray-500 dark:text-gray-400">No roles assigned</p>
+                            @endif
+                        </div>
+
+                        <!-- Permissions Display -->
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Permissions (via Roles)</h4>
+                            @php
+                                $userPermissions = $user->permissions();
+                            @endphp
+                            @if($userPermissions && $userPermissions->count() > 0)
+                                @if(isset($permissions) && $permissions->count() > 0)
+                                    @foreach($permissions as $group => $groupPermissions)
+                                        <div class="mb-4">
+                                            <h5 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">{{ $group ?? 'General' }}</h5>
+                                            <div class="flex flex-wrap gap-2">
+                                                @foreach($groupPermissions as $permission)
+                                                    @php
+                                                        $hasPermission = false;
+                                                        foreach($user->roles as $role) {
+                                                            if($role->permissions->contains($permission->id)) {
+                                                                $hasPermission = true;
+                                                                break;
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    @if($hasPermission)
+                                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300">
+                                                            {{ $permission->name }}
+                                                        </span>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">No permissions available</p>
+                                @endif
+                            @else
+                                <p class="text-sm text-gray-500 dark:text-gray-400">No permissions assigned</p>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -271,8 +368,92 @@
     </div>
 </div>
 
+<!-- Roles Management Modal -->
+@if(isset($roles) && isset($isAuthorized) && $isAuthorized)
+<div id="rolesModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white dark:bg-gray-800">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Manage Roles for {{ $user->name }}</h3>
+            <button onclick="closeRolesModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <form id="rolesForm" method="POST" action="{{ route('users.update-roles', $user) }}">
+            @csrf
+            @method('PATCH')
+            
+            <div class="space-y-3 max-h-96 overflow-y-auto">
+                @foreach($roles as $role)
+                    <label class="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                        <input type="checkbox" 
+                               name="roles[]" 
+                               value="{{ $role->id }}"
+                               {{ $user->roles->contains($role->id) ? 'checked' : '' }}
+                               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700">
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $role->name }}</div>
+                            @if($role->description)
+                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ $role->description }}</div>
+                            @endif
+                            @if($role->permissions && $role->permissions->count() > 0)
+                                <div class="mt-2 flex flex-wrap gap-1">
+                                    @foreach($role->permissions->take(3) as $permission)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                            {{ $permission->name }}
+                                        </span>
+                                    @endforeach
+                                    @if($role->permissions->count() > 3)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-gray-500 dark:text-gray-400">
+                                            +{{ $role->permissions->count() - 3 }} more
+                                        </span>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    </label>
+                @endforeach
+            </div>
+            
+            <div class="mt-6 flex items-center justify-end space-x-3">
+                <button type="button" onclick="closeRolesModal()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700">
+                    Update Roles
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
 @push('js')
 <script>
+    function openRolesModal() {
+        const modal = document.getElementById('rolesModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    }
+
+    function closeRolesModal() {
+        const modal = document.getElementById('rolesModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(event) {
+        const modal = document.getElementById('rolesModal');
+        if (modal && event.target === modal) {
+            closeRolesModal();
+        }
+    });
+
     function confirmDeleteUser(userId, userName) {
         try {
             // Validate parameters

@@ -9,6 +9,7 @@ use App\Http\Controllers\SystemLogController;
 use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\GeneralSettingsController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ScriptController;
@@ -35,10 +36,22 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::post('/', [UserController::class, 'store'])->name('store');
         Route::get('/search', [UserController::class, 'search'])->name('search');
         Route::patch('/{user}/update-status', [UserController::class, 'updateStatus'])->name('update-status');
+        Route::patch('/{user}/update-roles', [UserController::class, 'updateRoles'])->name('update-roles');
         Route::get('/{user}', [UserController::class, 'show'])->name('show');
         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
         Route::put('/{user}', [UserController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+    });
+
+    // Roles & Permissions Management
+    Route::prefix('roles')->name('roles.')->group(function () {
+        Route::get('/', [RoleController::class, 'index'])->name('index');
+        Route::get('/create', [RoleController::class, 'create'])->name('create');
+        Route::post('/', [RoleController::class, 'store'])->name('store');
+        Route::get('/{role}', [RoleController::class, 'show'])->name('show');
+        Route::get('/{role}/edit', [RoleController::class, 'edit'])->name('edit');
+        Route::put('/{role}', [RoleController::class, 'update'])->name('update');
+        Route::delete('/{role}', [RoleController::class, 'destroy'])->name('destroy');
     });
     
     // Events
@@ -66,12 +79,20 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/export/csv', [MarketRateController::class, 'export'])->name('export');
     });
 
-    // Scorecard
+    // Scorecard - Protected by permissions
     Route::prefix('scorecard')->name('scorecard.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\ScorecardController::class, 'index'])->name('index');
-        Route::get('/events/{exEventId}/markets', [\App\Http\Controllers\ScorecardController::class, 'getEventMarkets'])->name('events.markets');
-        Route::post('/events/{exEventId}/update', [\App\Http\Controllers\ScorecardController::class, 'updateEvent'])->name('events.update');
-        Route::post('/events/{exEventId}/update-labels', [\App\Http\Controllers\ScorecardController::class, 'updateLabels'])->name('events.update-labels');
+        Route::get('/', [\App\Http\Controllers\ScorecardController::class, 'index'])
+            ->middleware('permission:view-scorecard')
+            ->name('index');
+        Route::get('/events/{exEventId}/markets', [\App\Http\Controllers\ScorecardController::class, 'getEventMarkets'])
+            ->middleware('permission:view-event-markets')
+            ->name('events.markets');
+        Route::post('/events/{exEventId}/update', [\App\Http\Controllers\ScorecardController::class, 'updateEvent'])
+            ->middleware('permission:update-scorecard-events')
+            ->name('events.update');
+        Route::post('/events/{exEventId}/update-labels', [\App\Http\Controllers\ScorecardController::class, 'updateLabels'])
+            ->middleware('permission:update-scorecard-labels')
+            ->name('events.update-labels');
     });
 
     // Risk
@@ -81,6 +102,43 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/done', [\App\Http\Controllers\RiskController::class, 'done'])->name('done');
         Route::post('/markets/{market}/labels', [\App\Http\Controllers\RiskController::class, 'updateLabels'])->name('markets.labels');
         Route::post('/markets/{market}/done', [\App\Http\Controllers\RiskController::class, 'markDone'])->name('markets.done');
+    });
+
+    // Notifications - Protected by permissions
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index'])
+            ->middleware('permission:view-notifications')
+            ->name('index');
+        Route::get('/create', [\App\Http\Controllers\NotificationController::class, 'create'])
+            ->middleware('permission:create-notifications')
+            ->name('create');
+        Route::post('/', [\App\Http\Controllers\NotificationController::class, 'store'])
+            ->middleware('permission:create-notifications')
+            ->name('store');
+        Route::get('/pending', [\App\Http\Controllers\NotificationController::class, 'getPendingNotifications'])
+            ->middleware('permission:view-pending-notifications')
+            ->name('pending');
+        Route::get('/push/pending', [\App\Http\Controllers\NotificationController::class, 'getPushNotifications'])
+            ->middleware('permission:manage-push-notifications')
+            ->name('push.pending');
+        Route::post('/push/{id}/mark-delivered', [\App\Http\Controllers\NotificationController::class, 'markPushDelivered'])
+            ->middleware('permission:manage-push-notifications')
+            ->name('push.mark-delivered');
+        Route::get('/{id}', [\App\Http\Controllers\NotificationController::class, 'show'])
+            ->middleware('permission:view-notification-details')
+            ->name('show');
+        Route::post('/{id}/mark-read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])
+            ->middleware('permission:mark-notifications-as-read')
+            ->name('mark-read');
+        Route::get('/{id}/edit', [\App\Http\Controllers\NotificationController::class, 'edit'])
+            ->middleware('permission:edit-notifications')
+            ->name('edit');
+        Route::put('/{id}', [\App\Http\Controllers\NotificationController::class, 'update'])
+            ->middleware('permission:edit-notifications')
+            ->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\NotificationController::class, 'destroy'])
+            ->middleware('permission:delete-notifications')
+            ->name('destroy');
     });
 
     // System Logs
@@ -108,8 +166,42 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/info', [GeneralSettingsController::class, 'getInfo'])->name('info');
     });
 
-    // Settings Management
-    Route::resource('settings', SettingsController::class);
+    // Settings Management - Protected by permissions
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/', [SettingsController::class, 'index'])
+            ->middleware('permission:view-settings')
+            ->name('index');
+        Route::get('/create', [SettingsController::class, 'create'])
+            ->middleware('permission:create-settings')
+            ->name('create');
+        Route::post('/', [SettingsController::class, 'store'])
+            ->middleware('permission:create-settings')
+            ->name('store');
+        Route::get('/{setting}', [SettingsController::class, 'show'])
+            ->middleware('permission:view-settings')
+            ->name('show');
+        Route::get('/{setting}/edit', [SettingsController::class, 'edit'])
+            ->middleware('permission:edit-settings')
+            ->name('edit');
+        Route::put('/{setting}', [SettingsController::class, 'update'])
+            ->middleware('permission:edit-settings')
+            ->name('update');
+        Route::delete('/{setting}', [SettingsController::class, 'destroy'])
+            ->middleware('permission:delete-settings')
+            ->name('destroy');
+    });
+
+    // Testing Routes - Protected by permissions
+    Route::prefix('testing')->name('testing.')->group(function () {
+        Route::prefix('telegram')->name('telegram.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Testing\TelegramTestController::class, 'index'])
+                ->middleware('permission:access-testing-module')
+                ->name('index');
+            Route::post('/send', [\App\Http\Controllers\Testing\TelegramTestController::class, 'sendTestMessage'])
+                ->middleware('permission:send-telegram-test-messages')
+                ->name('send');
+        });
+    });
     
     // Profile & Settings
     Route::prefix('profile')->name('profile.')->group(function () {
