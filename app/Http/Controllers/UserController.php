@@ -36,7 +36,8 @@ class UserController extends Controller
                   ->orWhere('email', 'like', "%{$search}%")
                   ->orWhere('first_name', 'like', "%{$search}%")
                   ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('telegram_id', 'like', "%{$search}%");
             });
         }
 
@@ -46,6 +47,17 @@ class UserController extends Controller
                 $query->whereNotNull('email_verified_at');
             } elseif ($request->get('status') === 'inactive') {
                 $query->whereNull('email_verified_at');
+            }
+        }
+
+        // Apply Telegram verification filter
+        if ($request->filled('telegram_verified')) {
+            if ($request->get('telegram_verified') === 'verified') {
+                $query->whereNotNull('telegram_chat_id');
+            } elseif ($request->get('telegram_verified') === 'unverified') {
+                $query->whereNotNull('telegram_id')->whereNull('telegram_chat_id');
+            } elseif ($request->get('telegram_verified') === 'not_set') {
+                $query->whereNull('telegram_id');
             }
         }
 
