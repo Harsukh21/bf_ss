@@ -145,17 +145,17 @@ class RiskController extends Controller
                 'market_lists.created_at',
             ])
             ->leftJoin('events', 'events.exEventId', '=', 'market_lists.exEventId')
-            ->whereIn('status', $statuses)
+            ->whereIn('market_lists.status', $statuses)
             ->when($onlyDone, function ($q) {
-                $q->where('is_done', true);
+                $q->where('market_lists.is_done', true);
             }, function ($q) {
                 $q->where(function ($inner) {
-                    $inner->whereNull('is_done')->orWhere('is_done', false);
+                    $inner->whereNull('market_lists.is_done')->orWhere('market_lists.is_done', false);
                 });
             });
 
         if ($filters['sport']) {
-            $query->where('sportName', $filters['sport']);
+            $query->where('market_lists.sportName', $filters['sport']);
         }
 
         if ($filters['search']) {
@@ -168,7 +168,7 @@ class RiskController extends Controller
 
         if (!empty($filters['labels'])) {
             foreach ($filters['labels'] as $labelKey) {
-                $query->whereRaw("(labels ->> ?)::boolean = true", [$labelKey]);
+                $query->whereRaw("(market_lists.labels ->> ?)::boolean = true", [$labelKey]);
             }
         }
 
@@ -251,27 +251,27 @@ class RiskController extends Controller
             $query->whereDate('events.completeTime', '<=', $filters['date_to']);
         }
 
-        // Filter for recently added (markets closing within 30 minutes)
+        // Filter for recently added (markets closed in the past 30 minutes)
         if (!empty($filters['recently_added'])) {
             $now = \Carbon\Carbon::now();
-            $thirtyMinutesLater = $now->copy()->addMinutes(30);
+            $thirtyMinutesAgo = $now->copy()->subMinutes(30);
             
-            $query->where(function ($q) use ($now, $thirtyMinutesLater) {
+            $query->where(function ($q) use ($now, $thirtyMinutesAgo) {
                 // Check completeTime first, fallback to marketTime
-                $q->where(function ($subQ) use ($now, $thirtyMinutesLater) {
+                $q->where(function ($subQ) use ($now, $thirtyMinutesAgo) {
                     $subQ->whereNotNull('events.completeTime')
-                        ->where('events.completeTime', '>=', $now->format('Y-m-d H:i:s'))
-                        ->where('events.completeTime', '<=', $thirtyMinutesLater->format('Y-m-d H:i:s'));
-                })->orWhere(function ($subQ) use ($now, $thirtyMinutesLater) {
+                        ->where('events.completeTime', '>=', $thirtyMinutesAgo->format('Y-m-d H:i:s'))
+                        ->where('events.completeTime', '<=', $now->format('Y-m-d H:i:s'));
+                })->orWhere(function ($subQ) use ($now, $thirtyMinutesAgo) {
                     $subQ->whereNull('events.completeTime')
                         ->whereNotNull('market_lists.marketTime')
-                        ->where('market_lists.marketTime', '>=', $now->format('Y-m-d H:i:s'))
-                        ->where('market_lists.marketTime', '<=', $thirtyMinutesLater->format('Y-m-d H:i:s'));
+                        ->where('market_lists.marketTime', '>=', $thirtyMinutesAgo->format('Y-m-d H:i:s'))
+                        ->where('market_lists.marketTime', '<=', $now->format('Y-m-d H:i:s'));
                 });
             });
         }
 
-        return $query->orderByDesc('marketTime');
+        return $query->orderByDesc('market_lists.marketTime');
     }
 
     private function parseFilterDate($dateStr, $timezone)
@@ -397,8 +397,8 @@ class RiskController extends Controller
     {
         return [
             'total' => (clone $query)->count(),
-            'settled' => (clone $query)->where('status', 4)->count(),
-            'voided' => (clone $query)->where('status', 5)->count(),
+            'settled' => (clone $query)->where('market_lists.status', 4)->count(),
+            'voided' => (clone $query)->where('market_lists.status', 5)->count(),
         ];
     }
 

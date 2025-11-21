@@ -223,17 +223,17 @@
     .time-range-container {
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
+        gap: 0.5rem;
     }
 
     .time-block {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.375rem;
     }
 
     .time-block-header {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         font-weight: 600;
         text-transform: uppercase;
         color: #6b7280;
@@ -265,12 +265,12 @@
         align-items: center;
         justify-content: space-between;
         gap: 0.5rem;
-        padding: 0.75rem 0.85rem;
+        padding: 0.5rem 0.75rem;
         padding-right: 2.5rem;
         border: 1px solid #d1d5db;
-        border-radius: 0.75rem;
+        border-radius: 0.5rem;
         background-color: #ffffff;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 600;
         color: #1f2937;
         transition: all 0.2s ease-in-out;
@@ -511,6 +511,7 @@
         4 => ['label' => 'Settled', 'class' => 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'],
         5 => ['label' => 'Voided', 'class' => 'bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200'],
         6 => ['label' => 'Removed', 'class' => 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300'],
+        'closed' => ['label' => 'Closed', 'class' => 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300'],
     ];
 
     $statusCardStyles = [
@@ -520,6 +521,7 @@
         4 => ['iconBg' => 'bg-green-100 dark:bg-green-900/20', 'iconColor' => 'text-green-600 dark:text-green-300'],
         5 => ['iconBg' => 'bg-gray-200 dark:bg-gray-700/50', 'iconColor' => 'text-gray-700 dark:text-gray-200'],
         6 => ['iconBg' => 'bg-orange-100 dark:bg-orange-900/20', 'iconColor' => 'text-orange-600 dark:text-orange-300'],
+        'closed' => ['iconBg' => 'bg-indigo-100 dark:bg-indigo-900/20', 'iconColor' => 'text-indigo-600 dark:text-indigo-300'],
     ];
 @endphp
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
@@ -698,7 +700,7 @@
         @endif
 
         <!-- Status Summary Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 md:gap-6 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6 mb-6">
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
                 <div class="flex items-center">
                     <div class="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
@@ -707,30 +709,55 @@
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Events</p>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">All Events</p>
                         <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($paginatedEvents->total()) }}</p>
                     </div>
                 </div>
             </div>
-            @foreach($statusBadgeMeta as $statusId => $meta)
+            @foreach([1, 2, 3] as $statusId)
                 @php
+                    $meta = $statusBadgeMeta[$statusId] ?? null;
                     $count = $statusSummary[$statusId] ?? 0;
                     $cardStyle = $statusCardStyles[$statusId] ?? ['iconBg' => 'bg-gray-200 dark:bg-gray-700/50', 'iconColor' => 'text-gray-600 dark:text-gray-300'];
                 @endphp
+                @if($meta)
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+                        <div class="flex items-center">
+                            <div class="p-2 rounded-lg {{ $cardStyle['iconBg'] }}">
+                                <svg class="w-5 h-5 {{ $cardStyle['iconColor'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ $meta['label'] }}</p>
+                                <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($count) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            @endforeach
+            
+            <!-- CLOSED Status Card -->
+            @php
+                $closedMeta = $statusBadgeMeta['closed'] ?? null;
+                $closedCount = isset($statusSummary['closed']) ? $statusSummary['closed'] : 0;
+                $closedCardStyle = $statusCardStyles['closed'] ?? ['iconBg' => 'bg-indigo-100 dark:bg-indigo-900/20', 'iconColor' => 'text-indigo-600 dark:text-indigo-300'];
+            @endphp
+            @if($closedMeta)
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
                     <div class="flex items-center">
-                        <div class="p-2 rounded-lg {{ $cardStyle['iconBg'] }}">
-                            <svg class="w-5 h-5 {{ $cardStyle['iconColor'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        <div class="p-2 rounded-lg {{ $closedCardStyle['iconBg'] }}">
+                            <svg class="w-5 h-5 {{ $closedCardStyle['iconColor'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                         </div>
                         <div class="ml-3">
-                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ $meta['label'] }}</p>
-                            <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($count) }}</p>
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ $closedMeta['label'] }}</p>
+                            <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($closedCount) }}</p>
                         </div>
                     </div>
                 </div>
-            @endforeach
+            @endif
         </div>
 
         <!-- Recently Added Switcher -->
@@ -1018,14 +1045,14 @@
 
             <!-- Event Time Range -->
             <div class="mb-4 filter-field-group">
-                <div class="filter-field-title">Event Time Range (12-hour format)</div>
-                <div class="time-range-container space-y-3">
+                <div class="filter-field-title mb-2">Event Time Range (12-hour format)</div>
+                <div class="time-range-container">
                     <div class="time-block" x-data="timePickerComponent('{{ $timeFromValue }}', {{ $timeFromEnabled ? 'true' : 'false' }})" x-init="init()" x-on:keydown.escape.window="close()">
-                        <div class="flex items-center justify-between">
+                            <div class="flex items-center justify-between">
                             <div class="time-block-header">From</div>
                             <label class="inline-flex items-center text-xs font-medium text-gray-600 dark:text-gray-300">
-                                <input type="checkbox" name="time_from_enabled" value="1" x-model="enabled" @change="updateHidden()" class="js-time-from-enabled h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
-                                <span class="ml-2">Apply</span>
+                                <input type="checkbox" name="time_from_enabled" value="1" x-model="enabled" @change="updateHidden()" class="js-time-from-enabled h-3.5 w-3.5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <span class="ml-1.5 text-xs">Apply</span>
                             </label>
                         </div>
                         <div class="time-picker-panel">
@@ -1077,14 +1104,13 @@
                                 </div>
                             </div>
                         </div>
-                        <p class="timepicker-hint">Example: 02:30:00 PM</p>
                     </div>
                     <div class="time-block" x-data="timePickerComponent('{{ $timeToValue }}', {{ $timeToEnabled ? 'true' : 'false' }})" x-init="init()" x-on:keydown.escape.window="close()">
-                        <div class="flex items-center justify-between">
+                            <div class="flex items-center justify-between">
                             <div class="time-block-header">To</div>
                             <label class="inline-flex items-center text-xs font-medium text-gray-600 dark:text-gray-300">
-                                <input type="checkbox" name="time_to_enabled" value="1" x-model="enabled" @change="updateHidden()" class="js-time-to-enabled h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
-                                <span class="ml-2">Apply</span>
+                                <input type="checkbox" name="time_to_enabled" value="1" x-model="enabled" @change="updateHidden()" class="js-time-to-enabled h-3.5 w-3.5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <span class="ml-1.5 text-xs">Apply</span>
                             </label>
                         </div>
                         <div class="time-picker-panel">
@@ -1136,10 +1162,8 @@
                                 </div>
                             </div>
                         </div>
-                        <p class="timepicker-hint">Example: 11:45:30 PM</p>
                     </div>
                 </div>
-                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Times apply to the selected event date.</p>
             </div>
             
             <!-- Filter Buttons -->

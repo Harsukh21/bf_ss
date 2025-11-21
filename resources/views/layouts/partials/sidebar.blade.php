@@ -1,21 +1,23 @@
 <!-- Sidebar -->
-<aside id="sidebar" class="sidebar-open bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 w-64 min-h-screen fixed left-0 top-0 z-40 sidebar-transition">
+<aside id="sidebar" class="sidebar-open bg-white dark:bg-gray-900 shadow-lg border-r border-gray-200 dark:border-gray-700 w-64 h-screen fixed left-0 top-0 z-40 sidebar-transition overflow-hidden flex flex-col">
     <div class="flex flex-col h-full">
         <!-- Logo Section -->
-        <div class="px-4 h-16 border-b border-gray-200 dark:border-gray-700 flex items-center">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-8 h-8 bg-primary-600 dark:bg-primary-500 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"></path>
-                            </svg>
-                        </div>
-                <a href="/" class="text-xl font-bold text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 ease-in-out">
-                    {{ config('app.name', 'Laravel') }}
+        <div class="px-4 h-14 md:h-16 border-b border-gray-200 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
+            <div class="flex items-center w-full">
+                <a href="{{ route('dashboard') }}" class="flex items-center justify-center w-full hover:opacity-80 transition-opacity duration-300 ease-in-out">
+                    <!-- Light mode logo -->
+                    <img src="{{ asset('assets/img/light_logo.png') }}" 
+                         alt="{{ config('app.name', 'Laravel') }}" 
+                         class="h-12 md:h-14 w-auto max-w-full object-contain dark:hidden">
+                    <!-- Dark mode logo -->
+                    <img src="{{ asset('assets/img/dark_logo.png') }}" 
+                         alt="{{ config('app.name', 'Laravel') }}" 
+                         class="h-12 md:h-14 w-auto max-w-full object-contain hidden dark:block">
                 </a>
             </div>
         </div>
         <!-- Navigation Menu -->
-        <nav class="flex-1 px-4 py-6 space-y-2">
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto overflow-x-hidden sidebar-scrollbar">
             <!-- Dashboard -->
             <a href="{{ route('dashboard') }}" 
                class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 ease-in-out {{ request()->routeIs('dashboard') ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
@@ -91,7 +93,7 @@
                             <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                             </svg>
-                            Event List
+                            Today & Tomorrow
                         </a>
                     </div>
                 </div>
@@ -123,7 +125,7 @@
                             <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                             </svg>
-                            Market List
+                            Today & Tomorrow
                         </a>
                     </div>
                 </div>
@@ -156,13 +158,15 @@
                 </div>
 
                 <!-- Scorecard -->
-                <a href="{{ route('scorecard.index') }}" 
-                   class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 ease-in-out {{ request()->routeIs('scorecard.*') ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    Scorecard
-                </a>
+                @if(auth()->user()->hasPermission('view-scorecard'))
+                    <a href="{{ route('scorecard.index') }}" 
+                       class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 ease-in-out {{ request()->routeIs('scorecard.*') ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Scorecard
+                    </a>
+                @endif
 
                 <!-- Risk -->
                 <a href="{{ route('risk.index') }}" 
@@ -172,7 +176,54 @@
                     </svg>
                     Risk
                 </a>
+
+                <!-- Notifications -->
+                @if(auth()->user()->hasPermission('view-notifications'))
+                    <a href="{{ route('notifications.index') }}" 
+                       class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 ease-in-out {{ request()->routeIs('notifications.*') ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                        Notifications
+                    </a>
+                @endif
             </div>
+
+            <!-- Testing Section -->
+            @if(auth()->user()->hasPermission('access-testing-module'))
+                <div class="mt-8">
+                    <h3 class="px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Testing</h3>
+                    
+                    <!-- Testing Dropdown -->
+                    <div class="relative">
+                        @php
+                            $isTestingActive = request()->routeIs('testing.*');
+                        @endphp
+                        <button onclick="toggleDropdown('testing')" class="flex items-center justify-between w-full px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ $isTestingActive ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                </svg>
+                                Testing
+                            </div>
+                            <svg id="testing-arrow" class="w-4 h-4 transition-transform duration-200 {{ $isTestingActive ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        
+                        <div id="testing-dropdown" class="space-y-1 ml-4 {{ $isTestingActive ? '' : 'hidden' }}">
+                            @if(auth()->user()->hasPermission('send-telegram-test-messages'))
+                                <a href="{{ route('testing.telegram.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('testing.telegram.*') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
+                                    <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                    </svg>
+                                    Telegram
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             <!-- Settings Section -->
             <div class="mt-6">
@@ -181,7 +232,7 @@
                 <!-- Settings Dropdown -->
                 <div class="relative">
                     @php
-                        $isSettingsActive = request()->routeIs('general-settings.*') || request()->routeIs('system-logs.*') || request()->routeIs('performance.*');
+                        $isSettingsActive = request()->routeIs('general-settings.*') || request()->routeIs('system-logs.*') || request()->routeIs('performance.*') || request()->routeIs('settings.*');
                         $settingsDropdownOpen = $isSettingsActive ? 'open' : '';
                     @endphp
                     <button onclick="toggleDropdown('settings')" class="flex items-center justify-between w-full px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ $isSettingsActive ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
@@ -217,6 +268,15 @@
                             </svg>
                             Performance
                         </a>
+                        @if(auth()->user()->hasPermission('view-settings'))
+                            <a href="{{ route('settings.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('settings.*') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                Settings
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -224,7 +284,7 @@
 
         <!-- Sidebar Footer -->
         @auth
-            <div class="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="px-4 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <!-- User Info -->
                 <div class="flex items-center space-x-3 mb-4">
                     <img class="h-10 w-10 rounded-full object-cover" 

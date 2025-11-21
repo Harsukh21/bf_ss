@@ -126,12 +126,13 @@
             <div class="auth-card slide-in rounded-2xl shadow-2xl p-8">
                 <!-- Logo/Brand -->
                 <div class="text-center mb-8">
-                    <div class="flex justify-center mb-4">
-                        <div class="w-16 h-16 bg-gradient-to-br from-primary-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-110 transition-transform duration-300">
-                            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                            </svg>
-                        </div>
+                    <div class="flex justify-center mb-6">
+                        <a href="/" class="flex items-center justify-center hover:opacity-80 transition-opacity duration-300 ease-in-out">
+                            <!-- Always show light logo -->
+                            <img src="{{ asset('assets/img/light_logo.png') }}" 
+                                 alt="{{ config('app.name', 'Laravel') }}" 
+                                 class="h-20 w-auto max-w-full object-contain">
+                        </a>
                     </div>
                     <h2 class="text-3xl font-bold text-gray-900">
                         @yield('heading', 'Welcome Back')

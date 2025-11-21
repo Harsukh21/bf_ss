@@ -107,6 +107,14 @@ class RoleController extends Controller
         // Assign permissions if provided
         if ($request->filled('permissions')) {
             $role->permissions()->sync($request->permissions);
+            // Clear cache for all users with this role (if any)
+            $role->load('users');
+            $users = $role->users;
+            foreach ($users as $user) {
+                $user->clearPermissionCache();
+                $user->loadPermissionsIntoCache();
+                $user->loadRolesIntoCache();
+            }
         }
 
         return redirect()->route('roles.index')
@@ -183,6 +191,15 @@ class RoleController extends Controller
 
         // Update permissions
         $role->permissions()->sync($request->permissions ?? []);
+        
+        // Clear cache for all users with this role
+        $role->load('users');
+        $users = $role->users;
+        foreach ($users as $user) {
+            $user->clearPermissionCache();
+            $user->loadPermissionsIntoCache();
+            $user->loadRolesIntoCache();
+        }
 
         return redirect()->route('roles.index')
             ->with('success', 'Role updated successfully.');
@@ -200,13 +217,19 @@ class RoleController extends Controller
 
         $roleName = $role->name;
         
+        // Get users with this role before deletion
+        $users = $role->users;
+        
         // Check if role has users assigned
-        if ($role->users()->count() > 0) {
+        if ($users->count() > 0) {
             return redirect()->route('roles.index')
                 ->with('error', "Cannot delete role '{$roleName}' because it has users assigned. Please remove users from this role first.");
         }
 
         $role->delete();
+        
+        // Note: Since we check that role has no users, no cache clearing needed
+        // But if we ever allow deletion with users, we'd clear cache here
 
         return redirect()->route('roles.index')
             ->with('success', "Role '{$roleName}' has been deleted successfully.");

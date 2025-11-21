@@ -10,8 +10,15 @@
                     </svg>
                 </button>
                 <!-- Mobile Logo -->
-                <a href="/" class="md:hidden text-lg font-bold text-gray-900 dark:text-gray-100">
-                    {{ config('app.name', 'Laravel') }}
+                <a href="{{ route('dashboard') }}" class="md:hidden flex items-center hover:opacity-80 transition-opacity duration-300 ease-in-out">
+                    <!-- Light mode logo -->
+                    <img src="{{ asset('assets/img/light_logo.png') }}" 
+                         alt="{{ config('app.name', 'Laravel') }}" 
+                         class="h-12 w-auto max-w-[180px] object-contain dark:hidden">
+                    <!-- Dark mode logo -->
+                    <img src="{{ asset('assets/img/dark_logo.png') }}" 
+                         alt="{{ config('app.name', 'Laravel') }}" 
+                         class="h-12 w-auto max-w-[180px] object-contain hidden dark:block">
                 </a>
             </div>
 

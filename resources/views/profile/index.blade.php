@@ -94,7 +94,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <label for="date_of_birth" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date of Birth</label>
-                            <input type="date" id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth', $user->date_of_birth) }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                            <input type="date" id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth', $user->date_of_birth?->format('Y-m-d')) }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500">
                             @error('date_of_birth')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
@@ -131,6 +131,220 @@
                             @error('language')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="web_pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Web Pin</label>
+                            <input type="text" 
+                                   id="web_pin" 
+                                   name="web_pin" 
+                                   value="{{ old('web_pin', $user->web_pin) }}"
+                                   pattern="[0-9]*"
+                                   inputmode="numeric"
+                                   minlength="6"
+                                   maxlength="20"
+                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 @error('web_pin') border-red-500 @enderror"
+                                   placeholder="Enter 6+ digit PIN">
+                            @error('web_pin')
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Only numbers, minimum 6 digits</p>
+                        </div>
+
+                        <div>
+                            <label for="telegram_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Telegram ID
+                                @if($user->telegram_id)
+                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        Verified
+                                    </span>
+                                @endif
+                            </label>
+                            <input type="text" 
+                                   id="telegram_id" 
+                                   name="telegram_id" 
+                                   value="{{ old('telegram_id', $user->telegram_id) }}"
+                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 @error('telegram_id') border-red-500 @enderror"
+                                   placeholder="@username or numeric ID (e.g., 123456789)">
+                            @error('telegram_id')
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                            
+                            @if(session('telegram_validation_error'))
+                                <div class="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-yellow-800 dark:text-yellow-200">{!! session('telegram_validation_error') !!}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                            
+                            <!-- Professional Telegram Setup Guide - Compact -->
+                            <div class="mt-3 space-y-2.5">
+                                @php
+                                    $botUsername = config('services.telegram.bot_username');
+                                    $botLink = $botUsername ? 'https://t.me/' . ltrim($botUsername, '@') : '#';
+                                @endphp
+                                
+                                <!-- Instructions Card - Compact -->
+                                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10 rounded-lg border border-blue-200 dark:border-blue-800 shadow-sm overflow-hidden">
+                                    <!-- Header - Compact -->
+                                    <div class="bg-gradient-to-r from-blue-500 to-indigo-500 px-3 py-2 border-b border-blue-600 dark:border-blue-700">
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex-shrink-0 w-6 h-6 bg-white/20 rounded flex items-center justify-center">
+                                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                            </div>
+                                            <h3 class="text-xs font-semibold text-white">How to Set Up Telegram Notifications</h3>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Content - Compact -->
+                                    <div class="p-3 space-y-2.5">
+                                        <!-- Step 1 -->
+                                        <div class="flex gap-2.5">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold text-xs shadow-sm">
+                                                    1
+                                                </div>
+                                            </div>
+                                            <div class="flex-1 pt-0.5">
+                                                <p class="text-xs font-medium text-gray-900 dark:text-gray-100 mb-0.5">
+                                                    Connect with our bot:
+                                                </p>
+                                                @if($botUsername)
+                                                    <a href="{{ $botLink }}" 
+                                                       target="_blank" 
+                                                       rel="noopener noreferrer"
+                                                       class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 shadow-sm hover:shadow">
+                                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.169 1.858-.896 6.728-.896 6.728-.464 2.207-1.153 2.618-1.935 2.681-.786.064-1.288-.415-2.003-1.012l-.897-.674c-.353.131-.692.261-1.031.39-.484.206-1.231.523-1.983.523-.417 0-.652-.074-1.061-.238l-.269-.122c-.512-.232-.679-.38-.679-.784 0-.339.26-.654.719-.962l.24-.16c.487-.324.776-.519 1.154-.817.682-.539 1.194-1.076 1.743-1.715l.012-.015c.484-.564 3.065-2.733 3.065-2.733.364-.339.072-.351-.21-.07l-3.09 3.071c-.17.167-.287.287-.468.287-.17 0-.26-.087-.26-.248l.048-1.664c.048-1.664.03-2.571.03-2.571 0-.277.151-.517.478-.517.26 0 .372.052.51.18l2.076 2.003c.137.137.191.248.191.37 0 .247-.1.417-.338.576l-.155.096c-.174.11-.438.28-.621.399l-.099.065c-.191.131-.338.232-.469.336z"/>
+                                                        </svg>
+                                                        <span>{{ $botUsername }}</span>
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                                        </svg>
+                                                    </a>
+                                                @else
+                                                    <span class="text-xs font-semibold text-gray-900 dark:text-gray-100">@YourBotUsername</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Step 2 -->
+                                        <div class="flex gap-2.5">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold text-xs shadow-sm">
+                                                    2
+                                                </div>
+                                            </div>
+                                            <div class="flex-1 pt-0.5">
+                                                <p class="text-xs text-gray-700 dark:text-gray-300">
+                                                    Click "Start" or send <code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">/start</code> to the bot
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Step 3 -->
+                                        <div class="flex gap-2.5">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold text-xs shadow-sm">
+                                                    3
+                                                </div>
+                                            </div>
+                                            <div class="flex-1 pt-0.5">
+                                                <p class="text-xs text-gray-700 dark:text-gray-300">
+                                                    Enter your Telegram username (e.g., <code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">@username</code>) above
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Step 4 -->
+                                        <div class="flex gap-2.5">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold text-xs shadow-sm">
+                                                    4
+                                                </div>
+                                            </div>
+                                            <div class="flex-1 pt-0.5">
+                                                <p class="text-xs text-gray-700 dark:text-gray-300 mb-1">
+                                                    Click "Update Profile" - system will automatically:
+                                                </p>
+                                                <ul class="space-y-0.5 ml-3">
+                                                    <li class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                                                        <svg class="w-3 h-3 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                        <span>Sync & verify your chat ID</span>
+                                                    </li>
+                                                    <li class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                                                        <svg class="w-3 h-3 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                        <span>Send verification message</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Step 5 -->
+                                        <div class="flex gap-2.5">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center font-semibold text-xs shadow-sm">
+                                                    ✓
+                                                </div>
+                                            </div>
+                                            <div class="flex-1 pt-0.5">
+                                                <p class="text-xs font-medium text-gray-900 dark:text-gray-100">
+                                                    Done! Telegram ID and Chat ID will be saved
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Important Note Card - Compact -->
+                                <div class="bg-amber-50 dark:bg-amber-900/10 rounded-lg border-l-4 border-amber-400 dark:border-amber-600">
+                                    <div class="p-2.5">
+                                        <div class="flex items-start gap-2">
+                                            <div class="flex-shrink-0">
+                                                <svg class="w-4 h-4 text-amber-500 dark:text-amber-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                                </svg>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="text-xs font-semibold text-amber-900 dark:text-amber-100 mb-1">Important:</p>
+                                                <ul class="space-y-0.5 text-xs text-amber-800 dark:text-amber-200">
+                                                    <li class="flex items-start gap-1.5">
+                                                        <span class="text-amber-500 dark:text-amber-400 mt-0.5">•</span>
+                                                        <span>Send a message to the bot first before entering your Telegram ID</span>
+                                                    </li>
+                                                    <li class="flex items-start gap-1.5">
+                                                        <span class="text-amber-500 dark:text-amber-400 mt-0.5">•</span>
+                                                        <span>System automatically syncs when you update your profile</span>
+                                                    </li>
+                                                    <li class="flex items-start gap-1.5">
+                                                        <span class="text-amber-500 dark:text-amber-400 mt-0.5">•</span>
+                                                        <span>Only verified Telegram IDs receive notifications</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -245,4 +459,30 @@
     </div>
     </div>
 </div>
+
+@push('js')
+<script>
+    // Web Pin validation - only allow numbers and minimum 6 digits
+    document.addEventListener('DOMContentLoaded', function() {
+        const webPinInput = document.getElementById('web_pin');
+        
+        if (webPinInput) {
+            webPinInput.addEventListener('input', function(e) {
+                // Remove any non-numeric characters
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+            
+            webPinInput.addEventListener('blur', function(e) {
+                // Validate minimum 6 digits if field has value
+                if (this.value && this.value.length < 6) {
+                    this.setCustomValidity('Web Pin must be at least 6 digits');
+                    this.reportValidity();
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+        }
+    });
+</script>
+@endpush
 @endsection
