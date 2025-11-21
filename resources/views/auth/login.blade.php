@@ -52,30 +52,153 @@
         </div>
     @endif
 
+    <!-- Professional Login Method Toggle Styles -->
+    <style>
+        /* Professional Login Method Toggle Styles - Modern Segmented Control */
+        .login-method-toggle {
+            min-width: 300px;
+            background: #f3f4f6;
+            border-radius: 12px;
+            padding: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+        
+        .login-method-toggle #toggleIndicator {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3), 0 1px 2px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 0;
+        }
+        
+        .login-method-toggle #toggleIndicator.translate-right {
+            transform: translateX(100%);
+        }
+        
+        .login-method-toggle label {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            min-width: 140px;
+            padding: 10px 20px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            -webkit-user-select: none;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .login-method-toggle label:not(.active) {
+            color: #6b7280;
+        }
+        
+        .login-method-toggle label:not(.active):hover {
+            color: #374151;
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .login-method-toggle label.active {
+            color: #ffffff;
+        }
+        
+        .login-method-toggle label svg {
+            width: 18px;
+            height: 18px;
+            stroke-width: 2.5;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .login-method-toggle label.active svg {
+            transform: scale(1.1);
+        }
+        
+        .login-method-toggle label span {
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        
+        /* Smooth field transitions - Fixed container to prevent layout shifts */
+        .auth-field-container {
+            position: relative;
+            min-height: 100px;
+            overflow: hidden;
+        }
+        
+        #passwordField,
+        #webPinField {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(15px) scale(0.98);
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                        transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        visibility 0s linear 0.4s;
+            pointer-events: none;
+            z-index: 1;
+            will-change: opacity, transform;
+        }
+        
+        #passwordField.active,
+        #webPinField.active {
+            position: relative;
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.1s, 
+                        transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                        visibility 0s linear 0s;
+            z-index: 2;
+        }
+    </style>
+
     <!-- Login Form -->
     <form method="POST" action="{{ route('login') }}" id="loginForm" class="space-y-6">
         @csrf
         
-        <!-- Login Method Toggle -->
-        <div class="flex items-center justify-center gap-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <label class="flex items-center cursor-pointer">
-                <input type="radio" name="login_method" value="password" id="loginMethodPassword" {{ old('login_method', 'password') === 'password' ? 'checked' : '' }} class="sr-only peer">
-                <span class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg peer-checked:bg-primary-600 peer-checked:text-white peer-checked:border-primary-600 transition-all duration-200">
-                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+        <!-- Login Method Toggle - Professional Segmented Control -->
+        <div class="relative flex justify-center mb-4">
+            <div class="login-method-toggle relative inline-flex items-center" role="group">
+                <input type="radio" name="login_method" value="password" id="loginMethodPassword" {{ old('login_method', 'password') === 'password' ? 'checked' : '' }} class="sr-only">
+                <input type="radio" name="login_method" value="web_pin" id="loginMethodWebPin" {{ old('login_method') === 'web_pin' ? 'checked' : '' }} class="sr-only">
+                
+                <!-- Sliding Background Indicator -->
+                <div id="toggleIndicator" class="{{ old('login_method', 'password') === 'web_pin' ? 'translate-right' : '' }}"></div>
+                
+                <!-- Password Option -->
+                <label for="loginMethodPassword" class="{{ old('login_method', 'password') === 'password' ? 'active' : '' }}" id="passwordLabel">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                     </svg>
-                    Password
-                </span>
-            </label>
-            <label class="flex items-center cursor-pointer">
-                <input type="radio" name="login_method" value="web_pin" id="loginMethodWebPin" {{ old('login_method') === 'web_pin' ? 'checked' : '' }} class="sr-only peer">
-                <span class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg peer-checked:bg-primary-600 peer-checked:text-white peer-checked:border-primary-600 transition-all duration-200">
-                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    <span>Password</span>
+                </label>
+                
+                <!-- Web PIN Option -->
+                <label for="loginMethodWebPin" class="{{ old('login_method') === 'web_pin' ? 'active' : '' }}" id="webPinLabel">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                     </svg>
-                    Web PIN
-                </span>
-            </label>
+                    <span>Web PIN</span>
+                </label>
+            </div>
         </div>
         
         <!-- Email Field -->
@@ -104,76 +227,79 @@
             @enderror
         </div>
 
-        <!-- Password Field -->
-        <div id="passwordField" class="{{ old('login_method', 'password') === 'web_pin' ? 'hidden' : '' }}">
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-                Password
-            </label>
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
+        <!-- Auth Field Container - Prevents layout shifts -->
+        <div class="auth-field-container">
+            <!-- Password Field -->
+            <div id="passwordField" class="{{ old('login_method', 'password') === 'password' ? 'active' : '' }}">
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                    Password
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <input 
+                        type="password" 
+                        name="password" 
+                        id="password" 
+                        autocomplete="current-password"
+                        class="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 @error('password') border-red-500 @enderror"
+                        placeholder="Enter your password">
+                    <button 
+                        type="button" 
+                        id="togglePassword"
+                        data-target="password"
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </button>
                 </div>
-                <input 
-                    type="password" 
-                    name="password" 
-                    id="password" 
-                    autocomplete="current-password"
-                    class="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 @error('password') border-red-500 @enderror"
-                    placeholder="Enter your password">
-                <button 
-                    type="button" 
-                    id="togglePassword"
-                    data-target="password"
-                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                    </svg>
-                </button>
+                @error('password')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
             </div>
-            @error('password')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
 
-        <!-- Web PIN Field -->
-        <div id="webPinField" class="{{ old('login_method', 'password') === 'web_pin' ? '' : 'hidden' }}">
-            <label for="web_pin" class="block text-sm font-medium text-gray-700 mb-2">
-                Web PIN
-            </label>
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
+            <!-- Web PIN Field -->
+            <div id="webPinField" class="{{ old('login_method', 'password') === 'web_pin' ? 'active' : '' }}">
+                <label for="web_pin" class="block text-sm font-medium text-gray-700 mb-2">
+                    Web PIN
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                        </svg>
+                    </div>
+                    <input 
+                        type="password" 
+                        name="web_pin" 
+                        id="web_pin" 
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        maxlength="20"
+                        autocomplete="off"
+                        class="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 @error('web_pin') border-red-500 @enderror"
+                        placeholder="Enter your 6-digit Web PIN">
+                    <button 
+                        type="button" 
+                        id="toggleWebPin"
+                        data-target="web_pin"
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </button>
                 </div>
-                <input 
-                    type="password" 
-                    name="web_pin" 
-                    id="web_pin" 
-                    inputmode="numeric"
-                    pattern="[0-9]*"
-                    maxlength="20"
-                    autocomplete="off"
-                    class="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 @error('web_pin') border-red-500 @enderror"
-                    placeholder="Enter your 6-digit Web PIN">
-                <button 
-                    type="button" 
-                    id="toggleWebPin"
-                    data-target="web_pin"
-                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                    </svg>
-                </button>
+                <p class="mt-1 text-xs text-gray-500">Enter your 6-digit Web PIN</p>
+                @error('web_pin')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
             </div>
-            <p class="mt-1 text-xs text-gray-500">Enter your 6-digit Web PIN</p>
-            @error('web_pin')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
         </div>
 
 
@@ -233,18 +359,49 @@
             const webPinField = document.getElementById('webPinField');
             const passwordInput = document.getElementById('password');
             const webPinInput = document.getElementById('web_pin');
+            const toggleIndicator = document.getElementById('toggleIndicator');
+            const passwordLabel = document.getElementById('passwordLabel');
+            const webPinLabel = document.getElementById('webPinLabel');
             
-            // Toggle between password and web_pin fields
+            // Toggle between password and web_pin fields with smooth animations
             function toggleLoginMethod() {
                 if (loginMethodPassword.checked) {
-                    passwordField.classList.remove('hidden');
-                    webPinField.classList.add('hidden');
+                    // Move indicator to left (Password)
+                    toggleIndicator.classList.remove('translate-right');
+                    
+                    // Update label classes
+                    passwordLabel.classList.add('active');
+                    webPinLabel.classList.remove('active');
+                    
+                    // Smooth field transition - Fade out Web PIN first
+                    webPinField.classList.remove('active');
+                    
+                    // After fade out starts, fade in Password
+                    setTimeout(() => {
+                        passwordField.classList.add('active');
+                    }, 100);
+                    
+                    // Update required attributes
                     passwordInput.setAttribute('required', 'required');
                     webPinInput.removeAttribute('required');
                     webPinInput.value = ''; // Clear web_pin when switching
                 } else if (loginMethodWebPin.checked) {
-                    passwordField.classList.add('hidden');
-                    webPinField.classList.remove('hidden');
+                    // Move indicator to right (Web PIN)
+                    toggleIndicator.classList.add('translate-right');
+                    
+                    // Update label classes
+                    webPinLabel.classList.add('active');
+                    passwordLabel.classList.remove('active');
+                    
+                    // Smooth field transition - Fade out Password first
+                    passwordField.classList.remove('active');
+                    
+                    // After fade out starts, fade in Web PIN
+                    setTimeout(() => {
+                        webPinField.classList.add('active');
+                    }, 100);
+                    
+                    // Update required attributes
                     passwordInput.removeAttribute('required');
                     passwordInput.value = ''; // Clear password when switching
                     webPinInput.setAttribute('required', 'required');
@@ -255,8 +412,14 @@
             loginMethodPassword.addEventListener('change', toggleLoginMethod);
             loginMethodWebPin.addEventListener('change', toggleLoginMethod);
             
-            // Initial state
-            toggleLoginMethod();
+            // Initial state - ensure correct field is active on page load
+            if (loginMethodPassword.checked) {
+                passwordField.classList.add('active');
+                webPinField.classList.remove('active');
+            } else if (loginMethodWebPin.checked) {
+                webPinField.classList.add('active');
+                passwordField.classList.remove('active');
+            }
             
             // Web PIN input validation - only numbers
             if (webPinInput) {
