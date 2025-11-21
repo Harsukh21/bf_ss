@@ -30,17 +30,71 @@ class AuthController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
-            'password' => 'required',
+            'login_method' => 'required|in:password,web_pin',
         ]);
 
-        // Attempt to authenticate using Laravel's built-in Auth system
-        $credentials = $request->only('email', 'password');
-        $remember = $request->has('remember');
+        $loginMethod = $request->input('login_method', 'password');
+        $email = $request->input('email');
 
-        if (Auth::attempt($credentials, $remember)) {
-            $request->session()->regenerate();
+        // Validate based on login method
+        if ($loginMethod === 'password') {
+            $request->validate([
+                'password' => 'required',
+            ]);
             
-            $user = Auth::user();
+            // Attempt to authenticate using Laravel's built-in Auth system
+            $credentials = $request->only('email', 'password');
+            $remember = $request->has('remember');
+
+            if (Auth::attempt($credentials, $remember)) {
+                $request->session()->regenerate();
+                
+                $user = Auth::user();
+                
+                // Track login information
+                ProfileController::trackLogin($user, $request);
+                
+                return redirect()->intended('/dashboard')->with('success', 'Welcome back, ' . $user->name . '!');
+            }
+
+            return back()->withErrors([
+                'email' => 'The provided credentials do not match our records.',
+            ])->withInput($request->only('email', 'login_method'));
+            
+        } else if ($loginMethod === 'web_pin') {
+            $request->validate([
+                'web_pin' => 'required|string|regex:/^[0-9]+$/|min:6',
+            ], [
+                'web_pin.regex' => 'Web PIN must contain only numbers.',
+                'web_pin.min' => 'Web PIN must be at least 6 digits.',
+            ]);
+            
+            // Find user by email
+            $user = User::where('email', $email)->first();
+            
+            if (!$user) {
+                return back()->withErrors([
+                    'email' => 'The provided credentials do not match our records.',
+                ])->withInput($request->only('email', 'login_method'));
+            }
+            
+            // Check if user has web_pin set
+            if (empty($user->web_pin)) {
+                return back()->withErrors([
+                    'web_pin' => 'Web PIN is not set for this account. Please use password login or contact administrator.',
+                ])->withInput($request->only('email', 'login_method'));
+            }
+            
+            // Verify web_pin
+            if ($user->web_pin !== $request->input('web_pin')) {
+                return back()->withErrors([
+                    'web_pin' => 'The provided Web PIN is incorrect.',
+                ])->withInput($request->only('email', 'login_method'));
+            }
+            
+            // Login the user
+            Auth::login($user, $request->has('remember'));
+            $request->session()->regenerate();
             
             // Track login information
             ProfileController::trackLogin($user, $request);
@@ -49,8 +103,8 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ])->onlyInput('email');
+            'email' => 'Invalid login method.',
+        ])->withInput($request->only('email', 'login_method'));
     }
 
     /**

@@ -43,12 +43,296 @@
                 <!-- Message -->
                 <div>
                     <label for="message" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message *</label>
+                    <!-- Hidden textarea for form submission -->
                     <textarea id="message" 
                               name="message" 
-                              rows="4"
                               required
-                              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 @error('message') border-red-500 @enderror"
-                              placeholder="Enter notification message">{{ old('message', $notification->message) }}</textarea>
+                              class="hidden">{{ old('message', $notification->message) }}</textarea>
+                    
+                    <!-- Rich Text Editor Container -->
+                    <div class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 @error('message') border-red-500 @enderror">
+                        <!-- Toolbar -->
+                        <div class="flex items-center gap-1 p-2 border-b border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-750 flex-wrap">
+                            <!-- Text Formatting -->
+                            <div class="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-1">
+                                <button type="button" 
+                                        class="rich-editor-btn" 
+                                        data-command="bold" 
+                                        title="Bold (Ctrl+B)">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" 
+                                        class="rich-editor-btn" 
+                                        data-command="italic" 
+                                        title="Italic (Ctrl+I)">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" 
+                                        class="rich-editor-btn" 
+                                        data-command="underline" 
+                                        title="Underline (Ctrl+U)">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19h14M5 5h14"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" 
+                                        class="rich-editor-btn" 
+                                        data-command="strikethrough" 
+                                        title="Strikethrough">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19h14M5 5h14M8 12h8"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <!-- Text Alignment -->
+                            <div class="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-1">
+                                <button type="button" 
+                                        class="rich-editor-btn" 
+                                        data-command="justifyLeft" 
+                                        title="Align Left">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M3 4h14v1.5H3V4zm0 5h14v1.5H3V9zm0 5h14v1.5H3v-1.5z"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" 
+                                        class="rich-editor-btn" 
+                                        data-command="justifyCenter" 
+                                        title="Align Center">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M3 4h14v1.5H3V4zm3 5h8v1.5H6V9zm-3 5h14v1.5H3v-1.5z"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" 
+                                        class="rich-editor-btn" 
+                                        data-command="justifyRight" 
+                                        title="Align Right">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M3 4h14v1.5H3V4zm6 5h8v1.5H9V9zm-6 5h14v1.5H3v-1.5z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <!-- Lists -->
+                            <div class="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2 mr-1">
+                                <button type="button" 
+                                        class="rich-editor-btn" 
+                                        data-command="insertUnorderedList" 
+                                        title="Bullet List">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M3 4h14v1.5H3V4zm0 5h14v1.5H3V9zm0 5h14v1.5H3v-1.5z"></path>
+                                        <circle cx="1.5" cy="4.75" r="0.75" fill="currentColor"></circle>
+                                        <circle cx="1.5" cy="9.75" r="0.75" fill="currentColor"></circle>
+                                        <circle cx="1.5" cy="14.75" r="0.75" fill="currentColor"></circle>
+                                    </svg>
+                                </button>
+                                <button type="button" 
+                                        class="rich-editor-btn" 
+                                        data-command="insertOrderedList" 
+                                        title="Numbered List">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M3 4h14v1.5H3V4zm0 5h14v1.5H3V9zm0 5h14v1.5H3v-1.5z"></path>
+                                        <text x="0.5" y="6" font-size="4" fill="currentColor">1.</text>
+                                        <text x="0.5" y="11" font-size="4" fill="currentColor">2.</text>
+                                        <text x="0.5" y="16" font-size="4" fill="currentColor">3.</text>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <!-- Other Options -->
+                            <div class="flex items-center gap-1">
+                                <!-- Icon/Emoji Picker -->
+                                <div class="relative">
+                                    <button type="button" 
+                                            class="rich-editor-btn" 
+                                            id="iconPickerBtn"
+                                            title="Insert Icon/Emoji">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </button>
+                                    <!-- Icon Picker Dropdown -->
+                                    <div id="iconPickerDropdown" class="hidden absolute z-50 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg p-3 w-80 max-h-96 overflow-y-auto">
+                                        <div class="mb-2">
+                                            <input type="text" 
+                                                   id="iconSearch" 
+                                                   placeholder="Search icons..." 
+                                                   class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                        </div>
+                                        <div class="grid grid-cols-8 gap-1" id="iconGrid">
+                                            <!-- Common Emojis -->
+                                            <button type="button" class="icon-emoji-btn" data-icon="😀">😀</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😃">😃</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😄">😄</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😁">😁</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😅">😅</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😂">😂</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤣">🤣</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😊">😊</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😇">😇</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🙂">🙂</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🙃">🙃</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😉">😉</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😌">😌</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😍">😍</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🥰">🥰</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😘">😘</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😗">😗</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😙">😙</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😚">😚</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😋">😋</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😛">😛</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😝">😝</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😜">😜</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤪">🤪</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤨">🤨</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🧐">🧐</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤓">🤓</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😎">😎</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤩">🤩</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🥳">🥳</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😏">😏</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😒">😒</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😞">😞</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😔">😔</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😟">😟</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😕">😕</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🙁">🙁</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="☹️">☹️</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😣">😣</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😖">😖</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😫">😫</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😩">😩</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🥺">🥺</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😢">😢</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😭">😭</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😤">😤</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😠">😠</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😡">😡</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤬">🤬</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤯">🤯</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😳">😳</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🥵">🥵</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🥶">🥶</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😱">😱</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😨">😨</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😰">😰</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😥">😥</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😓">😓</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤗">🤗</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤔">🤔</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤭">🤭</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤫">🤫</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤥">🤥</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😶">😶</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😐">😐</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😑">😑</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😬">😬</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🙄">🙄</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😯">😯</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😦">😦</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😧">😧</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😮">😮</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😲">😲</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🥱">🥱</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😴">😴</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤤">🤤</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😪">😪</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😵">😵</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤐">🤐</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🥴">🥴</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤢">🤢</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤮">🤮</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤧">🤧</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="😷">😷</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤒">🤒</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤕">🤕</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤑">🤑</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🤠">🤠</button>
+                                            
+                                            <!-- Symbols & Icons -->
+                                            <button type="button" class="icon-emoji-btn" data-icon="✅">✅</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="❌">❌</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="⚠️">⚠️</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="❗">❗</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="❓">❓</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="💯">💯</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🔥">🔥</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="⭐">⭐</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🌟">🌟</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="💡">💡</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="💪">💪</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🎉">🎉</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🎊">🎊</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🎈">🎈</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🎁">🎁</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🏆">🏆</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🏅">🏅</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🎖️">🎖️</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="💰">💰</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="💎">💎</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="💵">💵</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="💸">💸</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="📱">📱</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="📞">📞</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="📧">📧</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="📨">📨</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="📩">📩</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="📬">📬</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="📭">📭</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="📮">📮</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="📯">📯</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="📪">📪</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="📫">📫</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🔔">🔔</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🔕">🔕</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="📢">📢</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="📣">📣</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="📯">📯</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🔊">🔊</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🔉">🔉</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🔇">🔇</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🔈">🔈</button>
+                                            <button type="button" class="icon-emoji-btn" data-icon="🔇">🔇</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" 
+                                        class="rich-editor-btn" 
+                                        data-command="createLink" 
+                                        title="Insert Link">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" 
+                                        class="rich-editor-btn" 
+                                        data-command="removeFormat" 
+                                        title="Clear Formatting">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Editor Content -->
+                        <div id="messageEditor" 
+                             contenteditable="true"
+                             class="min-h-[150px] max-h-[400px] overflow-y-auto px-3 py-2 text-gray-900 dark:text-gray-100 focus:outline-none"
+                             data-placeholder="Enter notification message...">{{ old('message', $notification->message) }}</div>
+                    </div>
+                    
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        You can format your message using the toolbar above. HTML formatting is supported.
+                    </p>
                     @error('message')
                         <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
@@ -320,9 +604,242 @@
     </div>
 </div>
 
+@push('css')
+<style>
+    .rich-editor-btn {
+        @apply p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500;
+    }
+    
+    .rich-editor-btn.active {
+        @apply bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300;
+    }
+    
+    #messageEditor:empty:before {
+        content: attr(data-placeholder);
+        @apply text-gray-400 dark:text-gray-500;
+    }
+    
+    #messageEditor:focus {
+        @apply outline-none;
+    }
+    
+    #messageEditor ul,
+    #messageEditor ol {
+        @apply ml-6 my-2;
+    }
+    
+    #messageEditor ul {
+        list-style-type: disc;
+    }
+    
+    #messageEditor ol {
+        list-style-type: decimal;
+    }
+    
+    #messageEditor a {
+        @apply text-primary-600 dark:text-primary-400 underline;
+    }
+    
+    #messageEditor strong {
+        @apply font-bold;
+    }
+    
+    #messageEditor em {
+        @apply italic;
+    }
+    
+    #messageEditor u {
+        @apply underline;
+    }
+    
+    .icon-emoji-btn {
+        @apply p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-xl transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer;
+    }
+    
+    .icon-emoji-btn:hover {
+        @apply transform scale-110;
+    }
+</style>
+@endpush
+
 @push('js')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Rich Text Editor Functionality
+        const messageEditor = document.getElementById('messageEditor');
+        const messageTextarea = document.getElementById('message');
+        const editorButtons = document.querySelectorAll('.rich-editor-btn');
+        
+        // Sync content to textarea
+        function syncToTextarea() {
+            messageTextarea.value = messageEditor.innerHTML;
+        }
+        
+        // Initialize with existing value
+        if (messageTextarea.value) {
+            messageEditor.innerHTML = messageTextarea.value;
+        }
+        
+        // Update textarea on input
+        messageEditor.addEventListener('input', syncToTextarea);
+        messageEditor.addEventListener('blur', syncToTextarea);
+        
+        // Handle toolbar buttons
+        editorButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const command = this.dataset.command;
+                
+                // Focus editor first
+                messageEditor.focus();
+                
+                // Handle special commands
+                if (command === 'createLink') {
+                    const url = prompt('Enter URL:');
+                    if (url) {
+                        document.execCommand('createLink', false, url);
+                    }
+                } else {
+                    document.execCommand(command, false, null);
+                }
+                
+                // Update active state
+                updateButtonStates();
+                
+                // Sync to textarea
+                syncToTextarea();
+            });
+        });
+        
+        // Update button active states
+        function updateButtonStates() {
+            editorButtons.forEach(button => {
+                const command = button.dataset.command;
+                let isActive = false;
+                
+                if (['bold', 'italic', 'underline', 'strikethrough'].includes(command)) {
+                    isActive = document.queryCommandState(command);
+                }
+                
+                button.classList.toggle('active', isActive);
+            });
+        }
+        
+        // Update on selection change
+        messageEditor.addEventListener('keyup', updateButtonStates);
+        messageEditor.addEventListener('mouseup', updateButtonStates);
+        
+        // Keyboard shortcuts
+        messageEditor.addEventListener('keydown', function(e) {
+            // Ctrl+B for Bold
+            if (e.ctrlKey && e.key === 'b') {
+                e.preventDefault();
+                document.execCommand('bold', false, null);
+                updateButtonStates();
+                syncToTextarea();
+            }
+            // Ctrl+I for Italic
+            if (e.ctrlKey && e.key === 'i') {
+                e.preventDefault();
+                document.execCommand('italic', false, null);
+                updateButtonStates();
+                syncToTextarea();
+            }
+            // Ctrl+U for Underline
+            if (e.ctrlKey && e.key === 'u') {
+                e.preventDefault();
+                document.execCommand('underline', false, null);
+                updateButtonStates();
+                syncToTextarea();
+            }
+        });
+        
+        // Sync before form submission
+        const form = document.getElementById('notificationForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                syncToTextarea();
+                // Validate that content is not empty
+                if (!messageEditor.textContent.trim()) {
+                    e.preventDefault();
+                    alert('Please enter a message.');
+                    messageEditor.focus();
+                    return false;
+                }
+            });
+        }
+        
+        // Initial button state update
+        updateButtonStates();
+        
+        // Icon/Emoji Picker Functionality
+        const iconPickerBtn = document.getElementById('iconPickerBtn');
+        const iconPickerDropdown = document.getElementById('iconPickerDropdown');
+        const iconSearch = document.getElementById('iconSearch');
+        const iconEmojiBtns = document.querySelectorAll('.icon-emoji-btn');
+        
+        // Toggle icon picker dropdown
+        iconPickerBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            iconPickerDropdown.classList.toggle('hidden');
+            if (!iconPickerDropdown.classList.contains('hidden')) {
+                iconSearch.focus();
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!iconPickerBtn.contains(e.target) && !iconPickerDropdown.contains(e.target)) {
+                iconPickerDropdown.classList.add('hidden');
+            }
+        });
+        
+        // Insert icon/emoji into editor
+        iconEmojiBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const icon = this.dataset.icon;
+                
+                // Focus editor
+                messageEditor.focus();
+                
+                // Insert icon at cursor position
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    const textNode = document.createTextNode(icon);
+                    range.insertNode(textNode);
+                    range.setStartAfter(textNode);
+                    range.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                } else {
+                    // If no selection, append at the end
+                    messageEditor.appendChild(document.createTextNode(icon));
+                }
+                
+                // Sync to textarea
+                syncToTextarea();
+                
+                // Close dropdown
+                iconPickerDropdown.classList.add('hidden');
+            });
+        });
+        
+        // Search functionality for icons
+        iconSearch.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            iconEmojiBtns.forEach(btn => {
+                const icon = btn.dataset.icon;
+                if (icon.toLowerCase().includes(searchTerm) || searchTerm === '') {
+                    btn.style.display = 'block';
+                } else {
+                    btn.style.display = 'none';
+                }
+            });
+        });
         // Multi-Select Dropdown Functionality
         const trigger = document.getElementById('multiSelectTrigger');
         const dropdown = document.getElementById('multiSelectDropdown');
