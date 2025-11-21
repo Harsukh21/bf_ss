@@ -149,22 +149,31 @@ class AuthController extends Controller
             ]);
         }
         
+        // Eager load user roles for display
+        $user = Auth::user();
+        $user->load('roles');
+        
         $timezone = config('app.timezone', 'UTC');
         $now = Carbon::now($timezone);
-
-        $statusMap = $this->getEventStatusMap();
         $statusStyles = $this->getEventStatusStyles();
         $matchOddsExpr = $this->getMatchOddsStatusExpression('e');
 
-        $statusCounts = DB::table('events as e')
-            ->selectRaw($matchOddsExpr . ' as match_status, COUNT(*) as total')
-            ->groupBy('match_status')
-            ->pluck('total', 'match_status')
-            ->filter(fn ($_, $status) => !is_null($status))
-            ->mapWithKeys(fn ($count, $status) => [(int) $status => $count])
-            ->toArray();
+        // Get event status counts using raw query
+        $statusCountsQuery = "SELECT 
+            ({$matchOddsExpr}) as match_status,
+            COUNT(*) as total
+        FROM events e
+        WHERE ({$matchOddsExpr}) IS NOT NULL
+        GROUP BY match_status";
+        
+        $statusCountsRaw = DB::select($statusCountsQuery);
+        $statusCounts = [];
+        foreach ($statusCountsRaw as $row) {
+            $statusCounts[(int)$row->match_status] = (int)$row->total;
+        }
 
-        $totalEvents = DB::table('events')->count();
+        // Get total events count
+        $totalEvents = (int)DB::selectOne("SELECT COUNT(*) as total FROM events")->total;
 
         $eventStats = [
             'total' => $totalEvents,
@@ -176,96 +185,106 @@ class AuthController extends Controller
             'removed' => $statusCounts[6] ?? 0,
         ];
 
+        // Get flag counts in single query
+        $flagCountsRaw = DB::selectOne("
+            SELECT 
+                COUNT(CASE WHEN highlight::int = 1 THEN 1 END) as highlight,
+                COUNT(CASE WHEN popular::int = 1 THEN 1 END) as popular
+            FROM events
+        ");
         $flagCounts = [
-            'highlight' => DB::table('events')->where('highlight', 1)->count(),
-            'popular' => DB::table('events')->where('popular', 1)->count(),
+            'highlight' => (int)$flagCountsRaw->highlight,
+            'popular' => (int)$flagCountsRaw->popular,
         ];
 
+        // Get market stats in single query
+        $marketStatsRaw = DB::selectOne("
+            SELECT 
+                COUNT(*) as total,
+                COUNT(CASE WHEN \"isLive\" = true THEN 1 END) as live,
+                COUNT(CASE WHEN \"isPreBet\" = true THEN 1 END) as pre,
+                COUNT(CASE WHEN \"isCompleted\" = true THEN 1 END) as completed
+            FROM market_lists
+        ");
         $marketStats = [
-            'total' => DB::table('market_lists')->count(),
-            'live' => DB::table('market_lists')->where('isLive', true)->count(),
-            'pre' => DB::table('market_lists')->where('isPreBet', true)->count(),
-            'completed' => DB::table('market_lists')->where('isCompleted', true)->count(),
+            'total' => (int)$marketStatsRaw->total,
+            'live' => (int)$marketStatsRaw->live,
+            'pre' => (int)$marketStatsRaw->pre,
+            'completed' => (int)$marketStatsRaw->completed,
+            'active' => (int)$marketStatsRaw->total - (int)$marketStatsRaw->completed,
         ];
-        $marketStats['active'] = $marketStats['total'] - $marketStats['completed'];
 
-        $recentEvents = DB::table('events')
-            ->select([
-                'id',
-                'eventName',
-                'tournamentsName',
-                'IsSettle',
-                'IsVoid',
-                'IsUnsettle',
-                'isCompleted',
-                'highlight',
-                'popular',
-                'marketTime',
-                'createdAt',
-                DB::raw($this->getMatchOddsStatusExpression('events') . ' as "matchOddsStatus"'),
-            ])
-            ->orderByRaw('COALESCE("marketTime", "createdAt") DESC')
-            ->limit(5)
-            ->get()
-            ->map(function ($event) use ($now, $timezone, $statusStyles) {
-                $eventTime = $event->marketTime ? Carbon::parse($event->marketTime, $timezone) : null;
-                $matchStatus = $event->matchOddsStatus !== null ? (int) $event->matchOddsStatus : null;
+        // Get recent events with only needed fields
+        $recentEventsQuery = "
+            SELECT 
+                e.id,
+                e.\"eventName\",
+                e.\"tournamentsName\",
+                e.\"IsSettle\",
+                e.\"IsVoid\",
+                e.\"IsUnsettle\",
+                e.\"isCompleted\",
+                e.\"marketTime\",
+                e.\"createdAt\",
+                ({$matchOddsExpr}) as \"matchOddsStatus\"
+            FROM events e
+            ORDER BY COALESCE(e.\"marketTime\", e.\"createdAt\") DESC
+            LIMIT 5
+        ";
+        
+        $recentEventsRaw = DB::select($recentEventsQuery);
+        $recentEvents = collect($recentEventsRaw)->map(function ($event) use ($now, $timezone, $statusStyles) {
+            $eventTime = $event->marketTime ? Carbon::parse($event->marketTime, $timezone) : null;
+            $matchStatus = $event->matchOddsStatus !== null ? (int) $event->matchOddsStatus : null;
 
-                if ($matchStatus && isset($statusStyles[$matchStatus])) {
-                    $status = $statusStyles[$matchStatus]['label'];
-                    $statusClass = $statusStyles[$matchStatus]['badge'];
-                } else {
-                    $status = 'Unknown';
-                    $statusClass = 'bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-200';
+            if ($matchStatus && isset($statusStyles[$matchStatus])) {
+                $status = $statusStyles[$matchStatus]['label'];
+                $statusClass = $statusStyles[$matchStatus]['badge'];
+            } else {
+                $status = 'Unknown';
+                $statusClass = 'bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-200';
 
-                    if ($event->IsVoid) {
-                        $status = 'Voided';
-                        $statusClass = 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300';
-                    } elseif ($event->IsSettle) {
-                        $status = 'Settled';
-                        $statusClass = 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
-                    } elseif ($event->IsUnsettle) {
-                        $status = 'Unsettled';
-                        $statusClass = 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
-                    } elseif ($eventTime && $eventTime->gt($now)) {
-                        $status = 'Upcoming';
-                        $statusClass = 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300';
-                    } elseif ($eventTime && $eventTime->lte($now)) {
-                        $status = 'In-Play';
-                        $statusClass = 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300';
-                    }
+                if ($event->IsVoid) {
+                    $status = 'Voided';
+                    $statusClass = 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300';
+                } elseif ($event->IsSettle) {
+                    $status = 'Settled';
+                    $statusClass = 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
+                } elseif ($event->IsUnsettle) {
+                    $status = 'Unsettled';
+                    $statusClass = 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
+                } elseif ($eventTime && $eventTime->gt($now)) {
+                    $status = 'Upcoming';
+                    $statusClass = 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300';
+                } elseif ($eventTime && $eventTime->lte($now)) {
+                    $status = 'In-Play';
+                    $statusClass = 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300';
                 }
+            }
 
-                $event->status_label = $status;
-                $event->status_class = $statusClass;
-                $event->display_time = $eventTime
+            return (object)[
+                'id' => $event->id,
+                'eventName' => $event->eventName,
+                'tournamentsName' => $event->tournamentsName,
+                'status_label' => $status,
+                'status_class' => $statusClass,
+                'display_time' => $eventTime
                     ? $eventTime->format('M d, Y h:i A')
-                    : ($event->createdAt ? Carbon::parse($event->createdAt, $timezone)->format('M d, Y h:i A') : null);
+                    : ($event->createdAt ? Carbon::parse($event->createdAt, $timezone)->format('M d, Y h:i A') : null),
+            ];
+        });
 
-                return $event;
-            });
-
-        $statusBreakdown = collect($statusStyles)
-            ->map(function ($style, $statusId) use ($eventStats) {
-                $keyMap = [
-                    1 => 'unsettled',
-                    2 => 'upcoming',
-                    3 => 'in_play',
-                    4 => 'settled',
-                    5 => 'voided',
-                    6 => 'removed',
-                ];
-
-                $statKey = $keyMap[$statusId] ?? null;
-
-                return [
-                    'label' => $style['label'],
-                    'count' => $statKey ? ($eventStats[$statKey] ?? 0) : 0,
-                    'color' => $style['dot'],
-                ];
-            })
-            ->values()
-            ->all();
+        // Build status breakdown
+        $statusBreakdown = [];
+        $keyMap = [1 => 'unsettled', 2 => 'upcoming', 3 => 'in_play', 4 => 'settled', 5 => 'voided', 6 => 'removed'];
+        foreach ($statusStyles as $statusId => $style) {
+            $statKey = $keyMap[$statusId] ?? null;
+            $statusBreakdown[] = [
+                'label' => $style['label'],
+                'count' => $statKey ? ($eventStats[$statKey] ?? 0) : 0,
+                'color' => $style['dot'],
+            ];
+        }
 
         return response()
             ->view('dashboard', [
