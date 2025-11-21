@@ -23,6 +23,7 @@ class User extends Authenticatable
         'password',
         'web_pin',
         'telegram_id',
+        'telegram_chat_id',
         'first_name',
         'last_name',
         'phone',

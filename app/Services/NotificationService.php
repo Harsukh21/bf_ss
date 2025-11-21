@@ -53,9 +53,13 @@ class NotificationService
                 try {
                     $message = "<b>{$notification->title}</b>\n\n{$notification->message}";
                     
-                    // Send to user's personal Telegram ID if available
-                    if (!empty($user->telegram_id)) {
-                        // Send to user's personal Telegram
+                    // Send to user's personal Telegram chat_id if available
+                    if (!empty($user->telegram_chat_id)) {
+                        // Send to user's personal Telegram using chat_id
+                        $telegramSent = $this->telegramService->sendMessage($message, (string)$user->telegram_chat_id);
+                        $deliveryStatus['telegram'] = $telegramSent;
+                    } elseif (!empty($user->telegram_id)) {
+                        // Fallback: Try to use telegram_id (for backward compatibility)
                         $telegramSent = $this->telegramService->sendMessage($message, $user->telegram_id);
                         $deliveryStatus['telegram'] = $telegramSent;
                     } elseif (!$sentToDefaultChat) {
@@ -64,13 +68,14 @@ class NotificationService
                         $deliveryStatus['telegram'] = $telegramSent;
                         $sentToDefaultChat = true;
                     } else {
-                        // User doesn't have telegram_id and we already sent to default chat
+                        // User doesn't have telegram_chat_id and we already sent to default chat
                         $deliveryStatus['telegram'] = true; // Mark as sent (via default chat)
                     }
                 } catch (\Exception $e) {
                     Log::error('Failed to send Telegram notification', [
                         'user_id' => $user->id,
                         'notification_id' => $notificationId,
+                        'telegram_chat_id' => $user->telegram_chat_id ?? null,
                         'error' => $e->getMessage(),
                     ]);
                     $deliveryStatus['telegram'] = false;
