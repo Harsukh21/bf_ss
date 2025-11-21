@@ -9,10 +9,10 @@
             @php($summary = session('summary'))
             <div class="mb-6 rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-800">
                 <div class="font-semibold text-green-900">Fuck Off</div>
-                <div class="mt-1 flex gap-4">
+                {{-- <div class="mt-1 flex gap-4">
                     <span>Updated: <strong>{{ $summary['updated'] ?? 0 }}</strong></span>
                     <span>Not updated: <strong>{{ $summary['not_updated'] ?? 0 }}</strong></span>
-                </div>
+                </div> --}}
             </div>
         @endif
 
