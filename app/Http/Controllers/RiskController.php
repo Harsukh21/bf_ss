@@ -443,13 +443,232 @@ class RiskController extends Controller
     }
 
     /**
-     * Vol. Base Markets - Placeholder for future functionality
+     * Vol. Base Markets - Show markets with max totalMatched values
      */
     public function volBaseMarkets(Request $request)
     {
+        $filters = $this->buildVolBaseFilters($request);
+        
+        // Get all available event tables
+        $eventIds = \App\Models\MarketRate::getAvailableEventTables();
+        
+        if (empty($eventIds)) {
+            return view('risk.vol-base-markets', [
+                'markets' => collect([]),
+                'summary' => [
+                    'total' => 0,
+                    'total_volume' => 0,
+                    'avg_volume' => 0,
+                ],
+                'filters' => $filters,
+                'sports' => $this->getSportsList(),
+                'tournamentsBySport' => $this->getTournamentsBySport(),
+            ]);
+        }
+        
+        // Build query to get max totalMatched for each market across all events
+        $markets = collect();
+        
+        foreach ($eventIds as $exEventId) {
+            $tableName = "market_rates_{$exEventId}";
+            
+            // Check if table exists
+            $tableExists = DB::select("SELECT to_regclass('public.{$tableName}') as table_name");
+            if (!$tableExists[0]->table_name) {
+                continue;
+            }
+            
+            try {
+                // Get max totalMatched for each market in this event
+                $eventMarkets = DB::table($tableName)
+                    ->select([
+                        'exMarketId',
+                        'marketName',
+                        DB::raw('MAX("totalMatched") as max_total_matched')
+                    ])
+                    ->whereNotNull('exMarketId')
+                    ->whereNotNull('marketName')
+                    ->groupBy('exMarketId', 'marketName')
+                    ->get();
+                
+                // Get market details from market_lists in batch
+                $exMarketIds = $eventMarkets->pluck('exMarketId')->unique()->toArray();
+                
+                if (!empty($exMarketIds)) {
+                    $marketDetailsMap = DB::table('market_lists')
+                        ->where('exEventId', $exEventId)
+                        ->whereIn('exMarketId', $exMarketIds)
+                        ->select([
+                            'id',
+                            'exMarketId',
+                            'eventName',
+                            'exEventId',
+                            'tournamentsName',
+                            'sportName',
+                            'status',
+                            'marketTime',
+                            'winnerType',
+                            'selectionName'
+                        ])
+                        ->get()
+                        ->keyBy('exMarketId');
+                    
+                    foreach ($eventMarkets as $market) {
+                        $marketDetails = $marketDetailsMap->get($market->exMarketId);
+                        
+                        if ($marketDetails) {
+                            $marketObj = (object) [
+                                'id' => $marketDetails->id,
+                                'exMarketId' => $market->exMarketId,
+                                'marketName' => $market->marketName,
+                                'eventName' => $marketDetails->eventName,
+                                'exEventId' => $exEventId,
+                                'tournamentsName' => $marketDetails->tournamentsName,
+                                'sportName' => $marketDetails->sportName,
+                                'status' => $marketDetails->status,
+                                'marketTime' => $marketDetails->marketTime,
+                                'winnerType' => $marketDetails->winnerType,
+                                'selectionName' => $marketDetails->selectionName,
+                                'max_total_matched' => (float) ($market->max_total_matched ?? 0),
+                            ];
+                            
+                            $markets->push($marketObj);
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Skip this table if there's an error
+                continue;
+            }
+        }
+        
+        // Apply filters
+        if ($filters['sport']) {
+            $markets = $markets->filter(function ($market) use ($filters) {
+                return $market->sportName === $filters['sport'];
+            });
+        }
+        
+        if ($filters['search']) {
+            $searchTerm = strtolower($filters['search']);
+            $markets = $markets->filter(function ($market) use ($searchTerm) {
+                return str_contains(strtolower($market->marketName ?? ''), $searchTerm) ||
+                       str_contains(strtolower($market->eventName ?? ''), $searchTerm);
+            });
+        }
+        
+        // Volume filter with operator (greater than or less than)
+        if ($filters['volume_value'] && $filters['volume_operator']) {
+            $volumeValue = (float) $filters['volume_value'];
+            if ($filters['volume_operator'] === 'greater_than') {
+                $markets = $markets->filter(function ($market) use ($volumeValue) {
+                    return $market->max_total_matched > $volumeValue;
+                });
+            } elseif ($filters['volume_operator'] === 'less_than') {
+                $markets = $markets->filter(function ($market) use ($volumeValue) {
+                    return $market->max_total_matched < $volumeValue;
+                });
+            }
+        }
+        
+        // Date range filter
+        if ($filters['date_from'] || $filters['date_to']) {
+            $timezone = config('app.timezone', 'UTC');
+            $startDate = null;
+            $endDate = null;
+            
+            if ($filters['date_from']) {
+                try {
+                    $parsedDate = $this->parseFilterDate($filters['date_from'], $timezone);
+                    if ($parsedDate) {
+                        $startDate = $parsedDate->copy()->startOfDay();
+                    }
+                } catch (\Exception $e) {
+                    // Ignore invalid date
+                }
+            }
+            
+            if ($filters['date_to']) {
+                try {
+                    $parsedDate = $this->parseFilterDate($filters['date_to'], $timezone);
+                    if ($parsedDate) {
+                        $endDate = $parsedDate->copy()->endOfDay();
+                    }
+                } catch (\Exception $e) {
+                    // Ignore invalid date
+                }
+            }
+            
+            if ($startDate || $endDate) {
+                $markets = $markets->filter(function ($market) use ($startDate, $endDate) {
+                    if (!$market->marketTime) {
+                        return false;
+                    }
+                    
+                    $marketDate = \Carbon\Carbon::parse($market->marketTime);
+                    
+                    if ($startDate && $endDate) {
+                        return $marketDate->between($startDate, $endDate);
+                    } elseif ($startDate) {
+                        return $marketDate->gte($startDate);
+                    } elseif ($endDate) {
+                        return $marketDate->lte($endDate);
+                    }
+                    
+                    return true;
+                });
+            }
+        }
+        
+        // Sort by max_total_matched descending
+        $markets = $markets->sortByDesc('max_total_matched')->values();
+        
+        // Build summary before pagination
+        $summary = [
+            'total' => $markets->count(),
+            'total_volume' => $markets->sum('max_total_matched'),
+            'avg_volume' => $markets->count() > 0 ? $markets->avg('max_total_matched') : 0,
+        ];
+        
+        // Paginate manually
+        $page = $request->get('page', 1);
+        $perPage = 20;
+        $total = $markets->count();
+        $offset = ($page - 1) * $perPage;
+        $items = $markets->slice($offset, $perPage)->values();
+        
+        // Create paginator manually
+        $paginatedMarkets = new \Illuminate\Pagination\LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'pageName' => 'page',
+            ]
+        );
+        $paginatedMarkets->appends($request->query());
+        
         return view('risk.vol-base-markets', [
-            'message' => 'Vol. Base Markets functionality will be implemented here.',
+            'markets' => $paginatedMarkets,
+            'summary' => $summary,
+            'filters' => $filters,
+            'sports' => $this->getSportsList(),
+            'tournamentsBySport' => $this->getTournamentsBySport(),
         ]);
+    }
+    
+    private function buildVolBaseFilters(Request $request): array
+    {
+        return [
+            'search' => $request->input('search'),
+            'sport' => $request->input('sport'),
+            'volume_operator' => $request->input('volume_operator'), // 'greater_than' or 'less_than'
+            'volume_value' => $request->input('volume_value'),
+            'date_from' => $request->input('date_from'),
+            'date_to' => $request->input('date_to'),
+        ];
     }
 }
 
