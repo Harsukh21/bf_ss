@@ -441,5 +441,15 @@ class RiskController extends Controller
 
         return $map;
     }
+
+    /**
+     * Vol. Base Markets - Placeholder for future functionality
+     */
+    public function volBaseMarkets(Request $request)
+    {
+        return view('risk.vol-base-markets', [
+            'message' => 'Vol. Base Markets functionality will be implemented here.',
+        ]);
+    }
 }
 
