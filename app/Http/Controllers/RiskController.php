@@ -463,62 +463,13 @@ class RiskController extends Controller
             ]);
         }
         
-        // Get only the MAX record from each table using DISTINCT ON (PostgreSQL)
-        $unionQueries = [];
-        
-        // Batch check table existence
-        $tableCheckSql = "SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = 'public' 
-            AND table_name IN (" . implode(',', array_map(function($id) {
-                return "'market_rates_" . addslashes($id) . "'";
-            }, $eventIds)) . ")";
-        
-        $existingTables = DB::select($tableCheckSql);
-        $existingTableNames = collect($existingTables)->pluck('table_name')->toArray();
-        
-        foreach ($eventIds as $exEventId) {
-            $tableName = "market_rates_{$exEventId}";
-            
-            // Only include if table exists
-            if (!in_array($tableName, $existingTableNames)) {
-                continue;
-            }
-            
-            // Get only the record with MAX totalMatched per exMarketId
-            // Wrap DISTINCT ON in a subquery for UNION compatibility
-            $unionQueries[] = "(SELECT DISTINCT ON (\"exMarketId\")
-                " . DB::getPdo()->quote($exEventId) . "::text as ex_event_id,
-                \"exMarketId\",
-                \"marketName\",
-                \"totalMatched\" as max_total_matched
-            FROM \"{$tableName}\"
-            WHERE \"exMarketId\" IS NOT NULL 
-            AND \"marketName\" IS NOT NULL
-            ORDER BY \"exMarketId\", \"totalMatched\" DESC)";
-        }
-        
-        if (empty($unionQueries)) {
-            return view('risk.vol-base-markets', [
-                'markets' => collect([]),
-                'filters' => $filters,
-                'sports' => $this->getSportsList(),
-                'tournamentsBySport' => $this->getTournamentsBySport(),
-            ]);
-        }
-        
-        // Build the main query with JOIN to market_lists
-        $unionSql = implode(' UNION ALL ', $unionQueries);
-        
-        $query = DB::table(DB::raw("({$unionSql}) as market_volumes"))
-            ->join('market_lists', function($join) {
-                $join->on('market_lists.exMarketId', '=', 'market_volumes.exMarketId')
-                     ->on('market_lists.exEventId', '=', 'market_volumes.ex_event_id');
-            })
+        // Simple query: Get all markets from market_lists (no need to query dynamic tables)
+        // Just get distinct markets from market_lists table
+        $query = DB::table('market_lists')
             ->select([
                 'market_lists.id',
                 'market_lists.exMarketId',
-                'market_volumes.marketName',
+                'market_lists.marketName',
                 'market_lists.eventName',
                 'market_lists.exEventId',
                 'market_lists.tournamentsName',
@@ -527,8 +478,11 @@ class RiskController extends Controller
                 'market_lists.marketTime',
                 'market_lists.winnerType',
                 'market_lists.selectionName',
-                'market_volumes.max_total_matched'
-            ]);
+                DB::raw('0 as max_total_matched') // Placeholder since we're not calculating it
+            ])
+            ->whereNotNull('market_lists.exMarketId')
+            ->whereNotNull('market_lists.marketName')
+            ->distinct();
         
         // Apply filters at database level
         if ($filters['sport']) {
@@ -538,20 +492,20 @@ class RiskController extends Controller
         if ($filters['search']) {
             $searchTerm = '%' . $filters['search'] . '%';
             $query->where(function($q) use ($searchTerm) {
-                $q->where('market_volumes.marketName', 'ILIKE', $searchTerm)
+                $q->where('market_lists.marketName', 'ILIKE', $searchTerm)
                   ->orWhere('market_lists.eventName', 'ILIKE', $searchTerm);
             });
         }
         
-        // Volume filter
-        if ($filters['volume_value'] && $filters['volume_operator']) {
-            $volumeValue = (float) $filters['volume_value'];
-            if ($filters['volume_operator'] === 'greater_than') {
-                $query->where('market_volumes.max_total_matched', '>', $volumeValue);
-            } elseif ($filters['volume_operator'] === 'less_than') {
-                $query->where('market_volumes.max_total_matched', '<', $volumeValue);
-            }
-        }
+        // Volume filter - removed since we're not calculating totalMatched
+        // if ($filters['volume_value'] && $filters['volume_operator']) {
+        //     $volumeValue = (float) $filters['volume_value'];
+        //     if ($filters['volume_operator'] === 'greater_than') {
+        //         $query->where('market_volumes.max_total_matched', '>', $volumeValue);
+        //     } elseif ($filters['volume_operator'] === 'less_than') {
+        //         $query->where('market_volumes.max_total_matched', '<', $volumeValue);
+        //     }
+        // }
         
         // Date range filter
         if ($filters['date_from'] || $filters['date_to']) {
@@ -580,8 +534,8 @@ class RiskController extends Controller
             }
         }
         
-        // Order by max_total_matched descending
-        $query->orderByDesc('market_volumes.max_total_matched');
+        // Order by marketTime descending
+        $query->orderByDesc('market_lists.marketTime');
         
         // Paginate
         $perPage = 20;
