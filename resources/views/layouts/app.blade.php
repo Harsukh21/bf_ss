@@ -820,41 +820,109 @@
     </script>
 
     <!-- Push Notification Permission Alert -->
-    <div id="pushNotificationAlert" class="fixed bottom-4 right-4 z-50 max-w-md hidden">
-        <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg shadow-lg p-4 md:p-5">
-            <div class="flex items-start">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 md:h-6 md:w-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                    </svg>
-                </div>
-                <div class="ml-3 flex-1">
-                    <h3 id="notificationAlertTitle" class="text-sm md:text-base font-semibold text-yellow-800 dark:text-yellow-200">
-                        Allow Browser Notifications
-                    </h3>
-                    <p id="notificationAlertMessage" class="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
-                        Please allow notifications from your browser to receive important updates and alerts.
-                    </p>
-                    <div id="notificationAlertActions" class="mt-3 flex gap-2">
-                        <button onclick="requestNotificationPermission()" class="inline-flex items-center px-3 py-2 text-xs md:text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors">
-                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Allow Notifications
-                        </button>
+    <div id="pushNotificationAlert" class="fixed bottom-4 right-4 z-50 max-w-sm hidden animate-slide-up">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <!-- Header with gradient -->
+            <div id="notificationAlertHeader" class="bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 px-3 py-2.5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-white/20 dark:bg-white/10 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 id="notificationAlertTitle" class="text-sm font-semibold text-white leading-tight">
+                                Enable Notifications
+                            </h3>
+                            <p class="text-xs text-blue-100 dark:text-blue-200 leading-tight">Stay updated</p>
+                        </div>
                     </div>
-                </div>
-                <div class="ml-4 flex-shrink-0">
-                    <button onclick="hidePushNotificationAlert()" class="inline-flex text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-200 focus:outline-none transition-colors">
+                    <button onclick="hidePushNotificationAlert()" class="flex-shrink-0 text-white/80 hover:text-white transition-colors p-0.5 rounded hover:bg-white/10">
                         <span class="sr-only">Close</span>
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
                 </div>
             </div>
+            
+            <!-- Content -->
+            <div class="px-3 py-2.5">
+                <p id="notificationAlertMessage" class="text-xs text-gray-700 dark:text-gray-300 leading-relaxed mb-2.5">
+                    Please allow notifications from your browser to receive important updates and alerts.
+                </p>
+                
+                <!-- Instructions for denied state -->
+                <div id="notificationInstructions" class="hidden space-y-1.5 mb-2.5">
+                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Browser Settings:</p>
+                    <div class="space-y-1.5">
+                        <div class="flex items-start space-x-2 p-1.5 bg-gray-50 dark:bg-gray-700/50 rounded">
+                            <div class="flex-shrink-0 mt-0.5">
+                                <div class="w-5 h-5 bg-blue-100 dark:bg-blue-900/30 rounded flex items-center justify-center">
+                                    <span class="text-xs font-bold text-blue-600 dark:text-blue-400">C</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-medium text-gray-900 dark:text-gray-100">Chrome/Edge</p>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 leading-tight">Lock → Site settings → Notifications</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-2 p-1.5 bg-gray-50 dark:bg-gray-700/50 rounded">
+                            <div class="flex-shrink-0 mt-0.5">
+                                <div class="w-5 h-5 bg-orange-100 dark:bg-orange-900/30 rounded flex items-center justify-center">
+                                    <span class="text-xs font-bold text-orange-600 dark:text-orange-400">F</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-medium text-gray-900 dark:text-gray-100">Firefox</p>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 leading-tight">Lock → More info → Permissions</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-2 p-1.5 bg-gray-50 dark:bg-gray-700/50 rounded">
+                            <div class="flex-shrink-0 mt-0.5">
+                                <div class="w-5 h-5 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
+                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300">S</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-medium text-gray-900 dark:text-gray-100">Safari</p>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 leading-tight">Preferences → Websites → Notifications</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div id="notificationAlertActions" class="flex gap-2">
+                    <button onclick="requestNotificationPermission()" class="flex-1 inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm hover:shadow">
+                        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Enable
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
+
+    <style>
+        @keyframes slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-slide-up {
+            animation: slide-up 0.3s ease-out;
+        }
+    </style>
 
     <script>
     (function() {
@@ -863,6 +931,8 @@
             const titleElement = document.getElementById('notificationAlertTitle');
             const messageElement = document.getElementById('notificationAlertMessage');
             const actionsElement = document.getElementById('notificationAlertActions');
+            const instructionsElement = document.getElementById('notificationInstructions');
+            const headerElement = document.getElementById('notificationAlertHeader');
             const alertElement = document.getElementById('pushNotificationAlert');
 
             if (!titleElement || !messageElement || !actionsElement || !alertElement) {
@@ -870,33 +940,40 @@
             }
 
             if (permission === 'denied') {
-                // Change to red/warning style for denied permission
-                alertElement.className = alertElement.className.replace('bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700', 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700');
-                titleElement.className = titleElement.className.replace('text-yellow-800 dark:text-yellow-200', 'text-red-800 dark:text-red-200');
-                messageElement.className = messageElement.className.replace('text-yellow-700 dark:text-yellow-300', 'text-red-700 dark:text-red-300');
+                // Update header to warning style
+                if (headerElement) {
+                    headerElement.className = 'bg-gradient-to-r from-amber-500 to-orange-600 dark:from-amber-600 dark:to-orange-700 px-5 py-4';
+                }
                 
-                titleElement.textContent = 'Notifications Blocked';
-                messageElement.innerHTML = 'Notification permission was previously denied. Please enable it in your browser settings:<br><br>' +
-                    '<strong>Chrome/Edge:</strong> Click the lock icon in the address bar → Site settings → Notifications → Allow<br>' +
-                    '<strong>Firefox:</strong> Click the lock icon → More information → Permissions → Notifications → Allow<br>' +
-                    '<strong>Safari:</strong> Safari → Preferences → Websites → Notifications → Allow';
+                titleElement.textContent = 'Notifications Disabled';
+                messageElement.textContent = 'Notification permission was previously denied. Please enable it in your browser settings to receive important updates.';
+                
+                // Show instructions
+                if (instructionsElement) {
+                    instructionsElement.classList.remove('hidden');
+                }
                 
                 // Hide the button since user needs to enable in browser settings
                 actionsElement.innerHTML = '';
             } else {
-                // Reset to yellow style for default state
-                alertElement.className = alertElement.className.replace('bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700', 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700');
-                titleElement.className = titleElement.className.replace('text-red-800 dark:text-red-200', 'text-yellow-800 dark:text-yellow-200');
-                messageElement.className = messageElement.className.replace('text-red-700 dark:text-red-300', 'text-yellow-700 dark:text-yellow-300');
+                // Reset to default blue style
+                if (headerElement) {
+                    headerElement.className = 'bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 px-5 py-4';
+                }
                 
-                titleElement.textContent = 'Allow Browser Notifications';
+                titleElement.textContent = 'Enable Notifications';
                 messageElement.textContent = 'Please allow notifications from your browser to receive important updates and alerts.';
                 
+                // Hide instructions
+                if (instructionsElement) {
+                    instructionsElement.classList.add('hidden');
+                }
+                
                 // Show the button
-                actionsElement.innerHTML = '<button onclick="requestNotificationPermission()" class="inline-flex items-center px-3 py-2 text-xs md:text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors">' +
-                    '<svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                actionsElement.innerHTML = '<button onclick="requestNotificationPermission()" class="flex-1 inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm hover:shadow">' +
+                    '<svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
                     '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>' +
-                    '</svg>Allow Notifications</button>';
+                    '</svg>Enable</button>';
             }
         }
 
