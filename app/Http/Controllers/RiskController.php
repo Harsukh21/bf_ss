@@ -443,14 +443,16 @@ class RiskController extends Controller
     }
 
     /**
-     * Vol. Base Markets - Show markets with max totalMatched values
+     * Vol. Base Markets - Show markets with max totalMatched values (Optimized)
      */
     public function volBaseMarkets(Request $request)
     {
         $filters = $this->buildVolBaseFilters($request);
         
-        // Get all available event tables
-        $eventIds = \App\Models\MarketRate::getAvailableEventTables();
+        // Cache event table list for 5 minutes
+        $eventIds = \Illuminate\Support\Facades\Cache::remember('vol_base_markets.event_tables', 300, function () {
+            return \App\Models\MarketRate::getAvailableEventTables();
+        });
         
         if (empty($eventIds)) {
             return view('risk.vol-base-markets', [
@@ -466,122 +468,110 @@ class RiskController extends Controller
             ]);
         }
         
-        // Build query to get max totalMatched for each market across all events
-        $markets = collect();
+        // Build UNION query for all market_rates tables (check existence first)
+        $unionQueries = [];
+        $validEventIds = [];
+        
+        // Batch check table existence
+        $tableCheckSql = "SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name IN (" . implode(',', array_map(function($id) {
+                return "'market_rates_" . addslashes($id) . "'";
+            }, $eventIds)) . ")";
+        
+        $existingTables = DB::select($tableCheckSql);
+        $existingTableNames = collect($existingTables)->pluck('table_name')->toArray();
         
         foreach ($eventIds as $exEventId) {
             $tableName = "market_rates_{$exEventId}";
             
-            // Check if table exists
-            $tableExists = DB::select("SELECT to_regclass('public.{$tableName}') as table_name");
-            if (!$tableExists[0]->table_name) {
+            // Only include if table exists
+            if (!in_array($tableName, $existingTableNames)) {
                 continue;
             }
             
-            try {
-                // Get max totalMatched for each market in this event
-                $eventMarkets = DB::table($tableName)
-                    ->select([
-                        'exMarketId',
-                        'marketName',
-                        DB::raw('MAX("totalMatched") as max_total_matched')
-                    ])
-                    ->whereNotNull('exMarketId')
-                    ->whereNotNull('marketName')
-                    ->groupBy('exMarketId', 'marketName')
-                    ->get();
-                
-                // Get market details from market_lists in batch
-                $exMarketIds = $eventMarkets->pluck('exMarketId')->unique()->toArray();
-                
-                if (!empty($exMarketIds)) {
-                    $marketDetailsMap = DB::table('market_lists')
-                        ->where('exEventId', $exEventId)
-                        ->whereIn('exMarketId', $exMarketIds)
-                        ->select([
-                            'id',
-                            'exMarketId',
-                            'eventName',
-                            'exEventId',
-                            'tournamentsName',
-                            'sportName',
-                            'status',
-                            'marketTime',
-                            'winnerType',
-                            'selectionName'
-                        ])
-                        ->get()
-                        ->keyBy('exMarketId');
-                    
-                    foreach ($eventMarkets as $market) {
-                        $marketDetails = $marketDetailsMap->get($market->exMarketId);
-                        
-                        if ($marketDetails) {
-                            $marketObj = (object) [
-                                'id' => $marketDetails->id,
-                                'exMarketId' => $market->exMarketId,
-                                'marketName' => $market->marketName,
-                                'eventName' => $marketDetails->eventName,
-                                'exEventId' => $exEventId,
-                                'tournamentsName' => $marketDetails->tournamentsName,
-                                'sportName' => $marketDetails->sportName,
-                                'status' => $marketDetails->status,
-                                'marketTime' => $marketDetails->marketTime,
-                                'winnerType' => $marketDetails->winnerType,
-                                'selectionName' => $marketDetails->selectionName,
-                                'max_total_matched' => (float) ($market->max_total_matched ?? 0),
-                            ];
-                            
-                            $markets->push($marketObj);
-                        }
-                    }
-                }
-            } catch (\Exception $e) {
-                // Skip this table if there's an error
-                continue;
-            }
+            $unionQueries[] = "SELECT 
+                " . DB::getPdo()->quote($exEventId) . "::text as ex_event_id,
+                \"exMarketId\",
+                \"marketName\",
+                MAX(\"totalMatched\") as max_total_matched
+            FROM \"{$tableName}\"
+            WHERE \"exMarketId\" IS NOT NULL 
+            AND \"marketName\" IS NOT NULL
+            GROUP BY \"exMarketId\", \"marketName\"";
+            $validEventIds[] = $exEventId;
         }
         
-        // Apply filters
+        if (empty($unionQueries)) {
+            return view('risk.vol-base-markets', [
+                'markets' => collect([]),
+                'summary' => [
+                    'total' => 0,
+                    'total_volume' => 0,
+                    'avg_volume' => 0,
+                ],
+                'filters' => $filters,
+                'sports' => $this->getSportsList(),
+                'tournamentsBySport' => $this->getTournamentsBySport(),
+            ]);
+        }
+        
+        // Build the main query with JOIN to market_lists
+        $unionSql = implode(' UNION ALL ', $unionQueries);
+        
+        $query = DB::table(DB::raw("({$unionSql}) as market_volumes"))
+            ->join('market_lists', function($join) {
+                $join->on('market_lists.exMarketId', '=', 'market_volumes.exMarketId')
+                     ->on('market_lists.exEventId', '=', 'market_volumes.ex_event_id');
+            })
+            ->select([
+                'market_lists.id',
+                'market_lists.exMarketId',
+                'market_volumes.marketName',
+                'market_lists.eventName',
+                'market_lists.exEventId',
+                'market_lists.tournamentsName',
+                'market_lists.sportName',
+                'market_lists.status',
+                'market_lists.marketTime',
+                'market_lists.winnerType',
+                'market_lists.selectionName',
+                'market_volumes.max_total_matched'
+            ]);
+        
+        // Apply filters at database level
         if ($filters['sport']) {
-            $markets = $markets->filter(function ($market) use ($filters) {
-                return $market->sportName === $filters['sport'];
-            });
+            $query->where('market_lists.sportName', $filters['sport']);
         }
         
         if ($filters['search']) {
-            $searchTerm = strtolower($filters['search']);
-            $markets = $markets->filter(function ($market) use ($searchTerm) {
-                return str_contains(strtolower($market->marketName ?? ''), $searchTerm) ||
-                       str_contains(strtolower($market->eventName ?? ''), $searchTerm);
+            $searchTerm = '%' . $filters['search'] . '%';
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('market_volumes.marketName', 'ILIKE', $searchTerm)
+                  ->orWhere('market_lists.eventName', 'ILIKE', $searchTerm);
             });
         }
         
-        // Volume filter with operator (greater than or less than)
+        // Volume filter
         if ($filters['volume_value'] && $filters['volume_operator']) {
             $volumeValue = (float) $filters['volume_value'];
             if ($filters['volume_operator'] === 'greater_than') {
-                $markets = $markets->filter(function ($market) use ($volumeValue) {
-                    return $market->max_total_matched > $volumeValue;
-                });
+                $query->where('market_volumes.max_total_matched', '>', $volumeValue);
             } elseif ($filters['volume_operator'] === 'less_than') {
-                $markets = $markets->filter(function ($market) use ($volumeValue) {
-                    return $market->max_total_matched < $volumeValue;
-                });
+                $query->where('market_volumes.max_total_matched', '<', $volumeValue);
             }
         }
         
         // Date range filter
         if ($filters['date_from'] || $filters['date_to']) {
             $timezone = config('app.timezone', 'UTC');
-            $startDate = null;
-            $endDate = null;
             
             if ($filters['date_from']) {
                 try {
                     $parsedDate = $this->parseFilterDate($filters['date_from'], $timezone);
                     if ($parsedDate) {
-                        $startDate = $parsedDate->copy()->startOfDay();
+                        $query->where('market_lists.marketTime', '>=', $parsedDate->copy()->startOfDay()->format('Y-m-d H:i:s'));
                     }
                 } catch (\Exception $e) {
                     // Ignore invalid date
@@ -592,66 +582,90 @@ class RiskController extends Controller
                 try {
                     $parsedDate = $this->parseFilterDate($filters['date_to'], $timezone);
                     if ($parsedDate) {
-                        $endDate = $parsedDate->copy()->endOfDay();
+                        $query->where('market_lists.marketTime', '<=', $parsedDate->copy()->endOfDay()->format('Y-m-d H:i:s'));
                     }
                 } catch (\Exception $e) {
                     // Ignore invalid date
                 }
             }
-            
-            if ($startDate || $endDate) {
-                $markets = $markets->filter(function ($market) use ($startDate, $endDate) {
-                    if (!$market->marketTime) {
-                        return false;
-                    }
-                    
-                    $marketDate = \Carbon\Carbon::parse($market->marketTime);
-                    
-                    if ($startDate && $endDate) {
-                        return $marketDate->between($startDate, $endDate);
-                    } elseif ($startDate) {
-                        return $marketDate->gte($startDate);
-                    } elseif ($endDate) {
-                        return $marketDate->lte($endDate);
-                    }
-                    
-                    return true;
-                });
+        }
+        
+        // Get total count for summary (before ordering)
+        $totalCount = (clone $query)->count();
+        
+        // Order by max_total_matched descending
+        $query->orderByDesc('market_volumes.max_total_matched');
+        
+        // Get summary stats (using a subquery for efficiency)
+        $summaryQuery = DB::table(DB::raw("({$unionSql}) as market_volumes"))
+            ->join('market_lists', function($join) {
+                $join->on('market_lists.exMarketId', '=', 'market_volumes.exMarketId')
+                     ->on('market_lists.exEventId', '=', 'market_volumes.ex_event_id');
+            })
+            ->select([
+                DB::raw('COUNT(*) as total'),
+                DB::raw('SUM(market_volumes.max_total_matched) as total_volume'),
+                DB::raw('AVG(market_volumes.max_total_matched) as avg_volume')
+            ]);
+        
+        // Apply same filters to summary query
+        if ($filters['sport']) {
+            $summaryQuery->where('market_lists.sportName', $filters['sport']);
+        }
+        
+        if ($filters['search']) {
+            $searchTerm = '%' . $filters['search'] . '%';
+            $summaryQuery->where(function($q) use ($searchTerm) {
+                $q->where('market_volumes.marketName', 'ILIKE', $searchTerm)
+                  ->orWhere('market_lists.eventName', 'ILIKE', $searchTerm);
+            });
+        }
+        
+        if ($filters['volume_value'] && $filters['volume_operator']) {
+            $volumeValue = (float) $filters['volume_value'];
+            if ($filters['volume_operator'] === 'greater_than') {
+                $summaryQuery->where('market_volumes.max_total_matched', '>', $volumeValue);
+            } elseif ($filters['volume_operator'] === 'less_than') {
+                $summaryQuery->where('market_volumes.max_total_matched', '<', $volumeValue);
             }
         }
         
-        // Sort by max_total_matched descending
-        $markets = $markets->sortByDesc('max_total_matched')->values();
+        if ($filters['date_from'] || $filters['date_to']) {
+            $timezone = config('app.timezone', 'UTC');
+            
+            if ($filters['date_from']) {
+                try {
+                    $parsedDate = $this->parseFilterDate($filters['date_from'], $timezone);
+                    if ($parsedDate) {
+                        $summaryQuery->where('market_lists.marketTime', '>=', $parsedDate->copy()->startOfDay()->format('Y-m-d H:i:s'));
+                    }
+                } catch (\Exception $e) {}
+            }
+            
+            if ($filters['date_to']) {
+                try {
+                    $parsedDate = $this->parseFilterDate($filters['date_to'], $timezone);
+                    if ($parsedDate) {
+                        $summaryQuery->where('market_lists.marketTime', '<=', $parsedDate->copy()->endOfDay()->format('Y-m-d H:i:s'));
+                    }
+                } catch (\Exception $e) {}
+            }
+        }
         
-        // Build summary before pagination
+        $summaryResult = $summaryQuery->first();
         $summary = [
-            'total' => $markets->count(),
-            'total_volume' => $markets->sum('max_total_matched'),
-            'avg_volume' => $markets->count() > 0 ? $markets->avg('max_total_matched') : 0,
+            'total' => (int) ($summaryResult->total ?? 0),
+            'total_volume' => (float) ($summaryResult->total_volume ?? 0),
+            'avg_volume' => (float) ($summaryResult->avg_volume ?? 0),
         ];
         
-        // Paginate manually
-        $page = $request->get('page', 1);
+        // Paginate
         $perPage = 20;
-        $total = $markets->count();
-        $offset = ($page - 1) * $perPage;
-        $items = $markets->slice($offset, $perPage)->values();
-        
-        // Create paginator manually
-        $paginatedMarkets = new \Illuminate\Pagination\LengthAwarePaginator(
-            $items,
-            $total,
-            $perPage,
-            $page,
-            [
-                'path' => $request->url(),
-                'pageName' => 'page',
-            ]
-        );
-        $paginatedMarkets->appends($request->query());
+        $markets = $query->paginate($perPage);
+        $markets->appends($request->query());
         
         return view('risk.vol-base-markets', [
-            'markets' => $paginatedMarkets,
+            'markets' => $markets,
             'summary' => $summary,
             'filters' => $filters,
             'sports' => $this->getSportsList(),
