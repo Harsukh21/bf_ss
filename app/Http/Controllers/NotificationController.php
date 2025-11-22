@@ -135,7 +135,7 @@ class NotificationController extends Controller
             'user_ids' => 'required|array|min:1',
             'user_ids.*' => 'exists:users,id',
             'notification_type' => 'required|in:instant,after_minutes,daily,weekly,monthly,after_hours',
-            'duration_value' => 'nullable|integer|min:1|required_if:notification_type,after_minutes,after_hours',
+            'duration_value' => 'required_if:notification_type,after_minutes,after_hours|nullable|integer|min:1',
             'daily_time' => 'nullable|required_if:notification_type,daily|date_format:H:i',
             'weekly_day' => 'nullable|required_if:notification_type,weekly|integer|min:0|max:6',
             'weekly_time' => 'nullable|required_if:notification_type,weekly|date_format:H:i',
@@ -151,9 +151,9 @@ class NotificationController extends Controller
         if ($validated['notification_type'] === 'instant') {
             $scheduledAt = now();
         } elseif ($validated['notification_type'] === 'after_minutes') {
-            $scheduledAt = now()->addMinutes($validated['duration_value']);
+            $scheduledAt = now()->addMinutes((int)$validated['duration_value']);
         } elseif ($validated['notification_type'] === 'after_hours') {
-            $scheduledAt = now()->addHours($validated['duration_value']);
+            $scheduledAt = now()->addHours((int)$validated['duration_value']);
         } elseif ($validated['notification_type'] === 'daily') {
             $scheduledAt = Carbon::parse($validated['daily_time'])->setDate(now()->year, now()->month, now()->day);
             if ($scheduledAt->isPast()) {
@@ -346,7 +346,7 @@ class NotificationController extends Controller
             'user_ids' => 'required|array|min:1',
             'user_ids.*' => 'exists:users,id',
             'notification_type' => 'required|in:instant,after_minutes,daily,weekly,monthly,after_hours',
-            'duration_value' => 'nullable|integer|min:1|required_if:notification_type,after_minutes,after_hours',
+            'duration_value' => 'required_if:notification_type,after_minutes,after_hours|nullable|integer|min:1',
             'daily_time' => 'nullable|required_if:notification_type,daily|date_format:H:i',
             'weekly_day' => 'nullable|required_if:notification_type,weekly|integer|min:0|max:6',
             'weekly_time' => 'nullable|required_if:notification_type,weekly|date_format:H:i',
@@ -362,9 +362,9 @@ class NotificationController extends Controller
         if ($validated['notification_type'] === 'instant') {
             $scheduledAt = now();
         } elseif ($validated['notification_type'] === 'after_minutes') {
-            $scheduledAt = now()->addMinutes($validated['duration_value']);
+            $scheduledAt = now()->addMinutes((int)$validated['duration_value']);
         } elseif ($validated['notification_type'] === 'after_hours') {
-            $scheduledAt = now()->addHours($validated['duration_value']);
+            $scheduledAt = now()->addHours((int)$validated['duration_value']);
         } elseif ($validated['notification_type'] === 'daily') {
             $scheduledAt = Carbon::parse($validated['daily_time'])->setDate(now()->year, now()->month, now()->day);
             if ($scheduledAt->isPast()) {

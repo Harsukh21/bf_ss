@@ -58,10 +58,10 @@ class EventController extends Controller
             'dataSwitch',
             'isRecentlyAdded',
             'marketTime',
-            'createdAt'
+            'createdAt',
+            'status'
         ];
         $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
-        $selectList .= ', ' . $this->getMatchOddsStatusSelect();
         $selectList .= ', COALESCE(mc.market_count, 0) AS "market_count"';
 
         $isRecentlyAdded = $request->boolean('recently_added');
@@ -194,10 +194,10 @@ class EventController extends Controller
             'events."dataSwitch"',
             'events."isRecentlyAdded"',
             'events."marketTime"',
-            'events."createdAt"'
+            'events."createdAt"',
+            'events."status"'
         ];
         $selectList = implode(', ', $selectColumns);
-        $selectList .= ', ' . $this->getMatchOddsStatusSelect();
         $selectList .= ', COALESCE(mc.market_count, 0) as "market_count"';
 
         $defaultDateFilters = ['conditions' => [], 'bindings' => []];
@@ -421,93 +421,34 @@ class EventController extends Controller
             return null;
         }
 
-        $eventExEventColumn = $this->quoteColumn('exEventId');
-
-        $sql = 'EXISTS (
-            SELECT 1
-            FROM market_lists ml_status
-            WHERE ml_status."exEventId" = ' . $eventExEventColumn . '
-              AND ml_status."type" = ?
-              AND ml_status."status" = ?
-        )';
+        $statusColumn = $this->quoteColumn('status');
 
         return [
-            'sql' => $sql,
-            'bindings' => ['match_odds', $statusValue],
+            'sql' => $statusColumn . ' = ?',
+            'bindings' => [$statusValue],
         ];
     }
 
     private function getEventStatusMap(): array
     {
         return [
-            1 => 'Unsettled',
-            2 => 'Upcoming',
-            3 => 'In Play',
-            4 => 'Settled',
-            5 => 'Voided',
-            6 => 'Removed',
+            1 => 'UNSETTLED',
+            2 => 'UPCOMING',
+            3 => 'INPLAY',
+            4 => 'CLOSED',
         ];
-    }
-
-    private function getMatchOddsStatusSelect(): string
-    {
-        return $this->getEffectiveEventStatusExpression() . ' AS "matchOddsStatus"';
-    }
-
-    private function getMatchOddsStatusExpression(?string $tableAlias = null): string
-    {
-        if ($tableAlias) {
-            $column = '"' . str_replace('"', '""', $tableAlias) . '"."exEventId"';
-        } else {
-            $column = $this->quoteColumn('exEventId');
-        }
-
-        return '(SELECT ml."status"
-            FROM market_lists ml
-            WHERE ml."type" = \'match_odds\'
-              AND ml."exEventId" = ' . $column . '
-            ORDER BY ml."id" DESC
-            LIMIT 1)';
-    }
-
-    private function getEffectiveEventStatusExpression(?string $tableAlias = null): string
-    {
-        $matchStatusExpr = $this->getMatchOddsStatusExpression($tableAlias);
-
-        $column = function (string $columnName) use ($tableAlias): string {
-            if ($tableAlias) {
-                return '"' . str_replace('"', '""', $tableAlias) . '"."' . str_replace('"', '""', $columnName) . '"';
-            }
-            return $this->quoteColumn($columnName);
-        };
-
-        return sprintf(
-            'COALESCE(
-                %s,
-                CASE
-                    WHEN %s = 1 THEN 4
-                    WHEN %s = 1 THEN 5
-                    WHEN %s = 1 THEN 1
-                    ELSE NULL
-                END
-            )',
-            $matchStatusExpr,
-            $column('IsSettle'),
-            $column('IsVoid'),
-            $column('IsUnsettle')
-        );
     }
 
     private function fetchEventStatusSummary(string $whereSql, array $bindings): array
     {
-        $statusExpr = $this->getEffectiveEventStatusExpression();
+        $statusColumn = $this->quoteColumn('status');
 
         $statusSql = sprintf(
-            'SELECT match_status, COUNT(*) AS total FROM (
-                SELECT %s AS match_status FROM events%s
+            'SELECT status, COUNT(*) AS total FROM (
+                SELECT %s AS status FROM events%s
             ) AS status_source
-            GROUP BY match_status',
-            $statusExpr,
+            GROUP BY status',
+            $statusColumn,
             $whereSql
         );
 
@@ -515,8 +456,8 @@ class EventController extends Controller
 
         $counts = [];
         foreach ($rows as $row) {
-            if ($row->match_status !== null) {
-                $counts[(int) $row->match_status] = (int) $row->total;
+            if ($row->status !== null) {
+                $counts[(int) $row->status] = (int) $row->total;
             }
         }
 
@@ -733,10 +674,10 @@ class EventController extends Controller
             'events."dataSwitch"',
             'events."isRecentlyAdded"',
             'events."marketTime" as "marketTime"',
-            'events."createdAt"'
+            'events."createdAt"',
+            'events."status"'
         ];
         $selectList = implode(', ', $selectColumns);
-        $selectList .= ', ' . $this->getMatchOddsStatusSelect();
         $selectList .= ', COALESCE(mc.market_count, 0) as "market_count"';
 
         $filterSql = $this->buildEventFilterSql($request, ['conditions' => [], 'bindings' => []]);
@@ -801,7 +742,7 @@ class EventController extends Controller
 
             // Add data rows
             foreach ($events as $event) {
-                $statusValue = isset($event->matchOddsStatus) ? (int) $event->matchOddsStatus : null;
+                $statusValue = isset($event->status) ? (int) $event->status : null;
                 $status = $statusValue && isset($statusMap[$statusValue])
                     ? $statusMap[$statusValue]
                     : 'Unknown';

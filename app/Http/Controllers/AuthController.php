@@ -179,20 +179,19 @@ class AuthController extends Controller
         $timezone = config('app.timezone', 'UTC');
         $now = Carbon::now($timezone);
         $statusStyles = $this->getEventStatusStyles();
-        $matchOddsExpr = $this->getMatchOddsStatusExpression('e');
 
-        // Get event status counts using raw query
+        // Get event status counts using raw query from events.status column
         $statusCountsQuery = "SELECT 
-            ({$matchOddsExpr}) as match_status,
+            status,
             COUNT(*) as total
-        FROM events e
-        WHERE ({$matchOddsExpr}) IS NOT NULL
-        GROUP BY match_status";
+        FROM events
+        WHERE status IS NOT NULL
+        GROUP BY status";
         
         $statusCountsRaw = DB::select($statusCountsQuery);
         $statusCounts = [];
         foreach ($statusCountsRaw as $row) {
-            $statusCounts[(int)$row->match_status] = (int)$row->total;
+            $statusCounts[(int)$row->status] = (int)$row->total;
         }
 
         // Get total events count
@@ -203,9 +202,7 @@ class AuthController extends Controller
             'unsettled' => $statusCounts[1] ?? 0,
             'upcoming' => $statusCounts[2] ?? 0,
             'in_play' => $statusCounts[3] ?? 0,
-            'settled' => $statusCounts[4] ?? 0,
-            'voided' => $statusCounts[5] ?? 0,
-            'removed' => $statusCounts[6] ?? 0,
+            'closed' => $statusCounts[4] ?? 0,
         ];
 
         // Get flag counts in single query
@@ -243,13 +240,9 @@ class AuthController extends Controller
                 e.id,
                 e.\"eventName\",
                 e.\"tournamentsName\",
-                e.\"IsSettle\",
-                e.\"IsVoid\",
-                e.\"IsUnsettle\",
-                e.\"isCompleted\",
                 e.\"marketTime\",
                 e.\"createdAt\",
-                ({$matchOddsExpr}) as \"matchOddsStatus\"
+                e.\"status\"
             FROM events e
             ORDER BY COALESCE(e.\"marketTime\", e.\"createdAt\") DESC
             LIMIT 5
@@ -258,31 +251,14 @@ class AuthController extends Controller
         $recentEventsRaw = DB::select($recentEventsQuery);
         $recentEvents = collect($recentEventsRaw)->map(function ($event) use ($now, $timezone, $statusStyles) {
             $eventTime = $event->marketTime ? Carbon::parse($event->marketTime, $timezone) : null;
-            $matchStatus = $event->matchOddsStatus !== null ? (int) $event->matchOddsStatus : null;
+            $eventStatus = $event->status !== null ? (int) $event->status : null;
 
-            if ($matchStatus && isset($statusStyles[$matchStatus])) {
-                $status = $statusStyles[$matchStatus]['label'];
-                $statusClass = $statusStyles[$matchStatus]['badge'];
+            if ($eventStatus && isset($statusStyles[$eventStatus])) {
+                $status = $statusStyles[$eventStatus]['label'];
+                $statusClass = $statusStyles[$eventStatus]['badge'];
             } else {
                 $status = 'Unknown';
                 $statusClass = 'bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-200';
-
-                if ($event->IsVoid) {
-                    $status = 'Voided';
-                    $statusClass = 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300';
-                } elseif ($event->IsSettle) {
-                    $status = 'Settled';
-                    $statusClass = 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
-                } elseif ($event->IsUnsettle) {
-                    $status = 'Unsettled';
-                    $statusClass = 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
-                } elseif ($eventTime && $eventTime->gt($now)) {
-                    $status = 'Upcoming';
-                    $statusClass = 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300';
-                } elseif ($eventTime && $eventTime->lte($now)) {
-                    $status = 'In-Play';
-                    $statusClass = 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300';
-                }
             }
 
             return (object)[
@@ -299,7 +275,7 @@ class AuthController extends Controller
 
         // Build status breakdown
         $statusBreakdown = [];
-        $keyMap = [1 => 'unsettled', 2 => 'upcoming', 3 => 'in_play', 4 => 'settled', 5 => 'voided', 6 => 'removed'];
+        $keyMap = [1 => 'unsettled', 2 => 'upcoming', 3 => 'in_play', 4 => 'closed'];
         foreach ($statusStyles as $statusId => $style) {
             $statKey = $keyMap[$statusId] ?? null;
             $statusBreakdown[] = [
@@ -328,12 +304,10 @@ class AuthController extends Controller
     private function getEventStatusMap(): array
     {
         return [
-            1 => 'Unsettled',
-            2 => 'Upcoming',
-            3 => 'In Play',
-            4 => 'Settled',
-            5 => 'Voided',
-            6 => 'Removed',
+            1 => 'UNSETTLED',
+            2 => 'UPCOMING',
+            3 => 'INPLAY',
+            4 => 'CLOSED',
         ];
     }
 
@@ -341,48 +315,26 @@ class AuthController extends Controller
     {
         return [
             1 => [
-                'label' => 'Unsettled',
+                'label' => 'UNSETTLED',
                 'badge' => 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300',
                 'dot' => 'bg-purple-500',
             ],
             2 => [
-                'label' => 'Upcoming',
+                'label' => 'UPCOMING',
                 'badge' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
                 'dot' => 'bg-yellow-500',
             ],
             3 => [
-                'label' => 'In Play',
+                'label' => 'INPLAY',
                 'badge' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
                 'dot' => 'bg-red-500',
             ],
             4 => [
-                'label' => 'Settled',
-                'badge' => 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300',
-                'dot' => 'bg-green-500',
-            ],
-            5 => [
-                'label' => 'Voided',
-                'badge' => 'bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
-                'dot' => 'bg-gray-500',
-            ],
-            6 => [
-                'label' => 'Removed',
-                'badge' => 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300',
-                'dot' => 'bg-orange-500',
+                'label' => 'CLOSED',
+                'badge' => 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300',
+                'dot' => 'bg-indigo-500',
             ],
         ];
-    }
-
-    private function getMatchOddsStatusExpression(string $eventAlias = 'events'): string
-    {
-        $quotedAlias = '"' . str_replace('"', '""', $eventAlias) . '"';
-
-        return '(SELECT ml."status"
-            FROM market_lists ml
-            WHERE ml."type" = \'match_odds\'
-              AND ml."exEventId" = ' . $quotedAlias . '."exEventId"
-            ORDER BY ml."id" DESC
-            LIMIT 1)';
     }
 }
 

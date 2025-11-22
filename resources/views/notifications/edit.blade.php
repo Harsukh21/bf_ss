@@ -995,34 +995,63 @@
             weeklyField.classList.add('hidden');
             monthlyField.classList.add('hidden');
 
-            // Remove required attributes
-            document.getElementById('duration_value_minutes')?.removeAttribute('required');
-            document.getElementById('duration_value_hours')?.removeAttribute('required');
-            document.getElementById('daily_time')?.removeAttribute('required');
-            document.getElementById('weekly_day')?.removeAttribute('required');
-            document.getElementById('weekly_time')?.removeAttribute('required');
-            document.getElementById('monthly_day')?.removeAttribute('required');
-            document.getElementById('monthly_time')?.removeAttribute('required');
+            // Remove required attributes and disable hidden fields
+            const durationMinutes = document.getElementById('duration_value_minutes');
+            const durationHours = document.getElementById('duration_value_hours');
+            const dailyTime = document.getElementById('daily_time');
+            const weeklyDay = document.getElementById('weekly_day');
+            const weeklyTime = document.getElementById('weekly_time');
+            const monthlyDay = document.getElementById('monthly_day');
+            const monthlyTime = document.getElementById('monthly_time');
 
-            // Show and set required based on selected type
+            // Disable all fields first
+            [durationMinutes, durationHours, dailyTime, weeklyDay, weeklyTime, monthlyDay, monthlyTime].forEach(field => {
+                if (field) {
+                    field.removeAttribute('required');
+                    field.setAttribute('disabled', 'disabled');
+                }
+            });
+
+            // Show and enable/require based on selected type
             const selectedType = notificationType.value;
             if (selectedType === 'after_minutes') {
                 afterMinutesField.classList.remove('hidden');
-                document.getElementById('duration_value_minutes')?.setAttribute('required', 'required');
+                if (durationMinutes) {
+                    durationMinutes.removeAttribute('disabled');
+                    durationMinutes.setAttribute('required', 'required');
+                }
             } else if (selectedType === 'after_hours') {
                 afterHoursField.classList.remove('hidden');
-                document.getElementById('duration_value_hours')?.setAttribute('required', 'required');
+                if (durationHours) {
+                    durationHours.removeAttribute('disabled');
+                    durationHours.setAttribute('required', 'required');
+                }
             } else if (selectedType === 'daily') {
                 dailyField.classList.remove('hidden');
-                document.getElementById('daily_time')?.setAttribute('required', 'required');
+                if (dailyTime) {
+                    dailyTime.removeAttribute('disabled');
+                    dailyTime.setAttribute('required', 'required');
+                }
             } else if (selectedType === 'weekly') {
                 weeklyField.classList.remove('hidden');
-                document.getElementById('weekly_day')?.setAttribute('required', 'required');
-                document.getElementById('weekly_time')?.setAttribute('required', 'required');
+                if (weeklyDay) {
+                    weeklyDay.removeAttribute('disabled');
+                    weeklyDay.setAttribute('required', 'required');
+                }
+                if (weeklyTime) {
+                    weeklyTime.removeAttribute('disabled');
+                    weeklyTime.setAttribute('required', 'required');
+                }
             } else if (selectedType === 'monthly') {
                 monthlyField.classList.remove('hidden');
-                document.getElementById('monthly_day')?.setAttribute('required', 'required');
-                document.getElementById('monthly_time')?.setAttribute('required', 'required');
+                if (monthlyDay) {
+                    monthlyDay.removeAttribute('disabled');
+                    monthlyDay.setAttribute('required', 'required');
+                }
+                if (monthlyTime) {
+                    monthlyTime.removeAttribute('disabled');
+                    monthlyTime.setAttribute('required', 'required');
+                }
             }
         }
 

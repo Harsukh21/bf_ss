@@ -36,7 +36,7 @@ class NotificationService
             ->get();
 
         $deliveryMethods = json_decode($notification->delivery_methods ?? '[]', true);
-        $isRecurring = in_array($notification->notification_type, ['daily', 'weekly', 'monthly']);
+        $isRecurring = in_array($notification->notification_type, ['daily', 'weekly', 'monthly', 'after_minutes', 'after_hours']);
 
         // Track if we've sent to default chat (to avoid duplicates)
         $sentToDefaultChat = false;

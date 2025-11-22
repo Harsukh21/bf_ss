@@ -494,34 +494,26 @@
 @section('content')
 @php
     $statusOptions = $statusOptions ?? [
-        1 => 'Unsettled',
-        2 => 'Upcoming',
-        3 => 'In Play',
-        4 => 'Settled',
-        5 => 'Voided',
-        6 => 'Removed',
+        1 => 'UNSETTLED',
+        2 => 'UPCOMING',
+        3 => 'INPLAY',
+        4 => 'CLOSED',
     ];
 
     $statusSummary = $statusSummary ?? [];
 
     $statusBadgeMeta = [
-        1 => ['label' => 'Unsettled', 'class' => 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'],
-        2 => ['label' => 'Upcoming', 'class' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300'],
-        3 => ['label' => 'In Play', 'class' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'],
-        4 => ['label' => 'Settled', 'class' => 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'],
-        5 => ['label' => 'Voided', 'class' => 'bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200'],
-        6 => ['label' => 'Removed', 'class' => 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300'],
-        'closed' => ['label' => 'Closed', 'class' => 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300'],
+        1 => ['label' => 'UNSETTLED', 'class' => 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'],
+        2 => ['label' => 'UPCOMING', 'class' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300'],
+        3 => ['label' => 'INPLAY', 'class' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'],
+        4 => ['label' => 'CLOSED', 'class' => 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300'],
     ];
 
     $statusCardStyles = [
         1 => ['iconBg' => 'bg-purple-100 dark:bg-purple-900/20', 'iconColor' => 'text-purple-600 dark:text-purple-300'],
         2 => ['iconBg' => 'bg-yellow-100 dark:bg-yellow-900/20', 'iconColor' => 'text-yellow-600 dark:text-yellow-300'],
         3 => ['iconBg' => 'bg-red-100 dark:bg-red-900/20', 'iconColor' => 'text-red-600 dark:text-red-300'],
-        4 => ['iconBg' => 'bg-green-100 dark:bg-green-900/20', 'iconColor' => 'text-green-600 dark:text-green-300'],
-        5 => ['iconBg' => 'bg-gray-200 dark:bg-gray-700/50', 'iconColor' => 'text-gray-700 dark:text-gray-200'],
-        6 => ['iconBg' => 'bg-orange-100 dark:bg-orange-900/20', 'iconColor' => 'text-orange-600 dark:text-orange-300'],
-        'closed' => ['iconBg' => 'bg-indigo-100 dark:bg-indigo-900/20', 'iconColor' => 'text-indigo-600 dark:text-indigo-300'],
+        4 => ['iconBg' => 'bg-indigo-100 dark:bg-indigo-900/20', 'iconColor' => 'text-indigo-600 dark:text-indigo-300'],
     ];
 @endphp
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
@@ -714,7 +706,7 @@
                     </div>
                 </div>
             </div>
-            @foreach([1, 2, 3] as $statusId)
+            @foreach([1, 2, 3, 4] as $statusId)
                 @php
                     $meta = $statusBadgeMeta[$statusId] ?? null;
                     $count = $statusSummary[$statusId] ?? 0;
@@ -725,7 +717,11 @@
                         <div class="flex items-center">
                             <div class="p-2 rounded-lg {{ $cardStyle['iconBg'] }}">
                                 <svg class="w-5 h-5 {{ $cardStyle['iconColor'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    @if($statusId == 4)
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    @else
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    @endif
                                 </svg>
                             </div>
                             <div class="ml-3">
@@ -736,28 +732,6 @@
                     </div>
                 @endif
             @endforeach
-            
-            <!-- CLOSED Status Card -->
-            @php
-                $closedMeta = $statusBadgeMeta['closed'] ?? null;
-                $closedCount = isset($statusSummary['closed']) ? $statusSummary['closed'] : 0;
-                $closedCardStyle = $statusCardStyles['closed'] ?? ['iconBg' => 'bg-indigo-100 dark:bg-indigo-900/20', 'iconColor' => 'text-indigo-600 dark:text-indigo-300'];
-            @endphp
-            @if($closedMeta)
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
-                    <div class="flex items-center">
-                        <div class="p-2 rounded-lg {{ $closedCardStyle['iconBg'] }}">
-                            <svg class="w-5 h-5 {{ $closedCardStyle['iconColor'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ $closedMeta['label'] }}</p>
-                            <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($closedCount) }}</p>
-                        </div>
-                    </div>
-                </div>
-            @endif
         </div>
 
         <!-- Recently Added Switcher -->
@@ -912,20 +886,9 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @php
-                                            $matchOddsStatus = isset($event->matchOddsStatus) ? (int) $event->matchOddsStatus : null;
-
-                                            if (!$matchOddsStatus) {
-                                                if ($event->IsSettle) {
-                                                    $matchOddsStatus = 4;
-                                                } elseif ($event->IsVoid) {
-                                                    $matchOddsStatus = 5;
-                                                } elseif ($event->IsUnsettle) {
-                                                    $matchOddsStatus = 1;
-                                                }
-                                            }
-
-                                            $statusInfo = $matchOddsStatus && isset($statusBadgeMeta[$matchOddsStatus])
-                                                ? $statusBadgeMeta[$matchOddsStatus]
+                                            $eventStatus = isset($event->status) ? (int) $event->status : null;
+                                            $statusInfo = $eventStatus && isset($statusBadgeMeta[$eventStatus])
+                                                ? $statusBadgeMeta[$eventStatus]
                                                 : null;
                                         @endphp
                                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $statusInfo['class'] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200' }}">
