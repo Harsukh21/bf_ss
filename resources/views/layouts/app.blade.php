@@ -818,6 +818,180 @@
             });
         })();
     </script>
+
+    <!-- Push Notification Permission Alert -->
+    <div id="pushNotificationAlert" class="fixed bottom-4 right-4 z-50 max-w-md hidden">
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg shadow-lg p-4 md:p-5">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 md:h-6 md:w-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                </div>
+                <div class="ml-3 flex-1">
+                    <h3 id="notificationAlertTitle" class="text-sm md:text-base font-semibold text-yellow-800 dark:text-yellow-200">
+                        Allow Browser Notifications
+                    </h3>
+                    <p id="notificationAlertMessage" class="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
+                        Please allow notifications from your browser to receive important updates and alerts.
+                    </p>
+                    <div id="notificationAlertActions" class="mt-3 flex gap-2">
+                        <button onclick="requestNotificationPermission()" class="inline-flex items-center px-3 py-2 text-xs md:text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Allow Notifications
+                        </button>
+                    </div>
+                </div>
+                <div class="ml-4 flex-shrink-0">
+                    <button onclick="hidePushNotificationAlert()" class="inline-flex text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-200 focus:outline-none transition-colors">
+                        <span class="sr-only">Close</span>
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        // Update alert message based on permission status
+        function updateAlertMessage(permission) {
+            const titleElement = document.getElementById('notificationAlertTitle');
+            const messageElement = document.getElementById('notificationAlertMessage');
+            const actionsElement = document.getElementById('notificationAlertActions');
+            const alertElement = document.getElementById('pushNotificationAlert');
+
+            if (!titleElement || !messageElement || !actionsElement || !alertElement) {
+                return;
+            }
+
+            if (permission === 'denied') {
+                // Change to red/warning style for denied permission
+                alertElement.className = alertElement.className.replace('bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700', 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700');
+                titleElement.className = titleElement.className.replace('text-yellow-800 dark:text-yellow-200', 'text-red-800 dark:text-red-200');
+                messageElement.className = messageElement.className.replace('text-yellow-700 dark:text-yellow-300', 'text-red-700 dark:text-red-300');
+                
+                titleElement.textContent = 'Notifications Blocked';
+                messageElement.innerHTML = 'Notification permission was previously denied. Please enable it in your browser settings:<br><br>' +
+                    '<strong>Chrome/Edge:</strong> Click the lock icon in the address bar → Site settings → Notifications → Allow<br>' +
+                    '<strong>Firefox:</strong> Click the lock icon → More information → Permissions → Notifications → Allow<br>' +
+                    '<strong>Safari:</strong> Safari → Preferences → Websites → Notifications → Allow';
+                
+                // Hide the button since user needs to enable in browser settings
+                actionsElement.innerHTML = '';
+            } else {
+                // Reset to yellow style for default state
+                alertElement.className = alertElement.className.replace('bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700', 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700');
+                titleElement.className = titleElement.className.replace('text-red-800 dark:text-red-200', 'text-yellow-800 dark:text-yellow-200');
+                messageElement.className = messageElement.className.replace('text-red-700 dark:text-red-300', 'text-yellow-700 dark:text-yellow-300');
+                
+                titleElement.textContent = 'Allow Browser Notifications';
+                messageElement.textContent = 'Please allow notifications from your browser to receive important updates and alerts.';
+                
+                // Show the button
+                actionsElement.innerHTML = '<button onclick="requestNotificationPermission()" class="inline-flex items-center px-3 py-2 text-xs md:text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors">' +
+                    '<svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>' +
+                    '</svg>Allow Notifications</button>';
+            }
+        }
+
+        // Check notification permission and show/hide alert
+        function checkNotificationPermission() {
+            if (!('Notification' in window)) {
+                // Browser doesn't support notifications
+                const alertElement = document.getElementById('pushNotificationAlert');
+                if (alertElement) {
+                    alertElement.classList.add('hidden');
+                }
+                return;
+            }
+
+            const permission = Notification.permission;
+            const alertElement = document.getElementById('pushNotificationAlert');
+
+            if (!alertElement) {
+                return;
+            }
+
+            if (permission === 'granted') {
+                // Permission granted, hide alert
+                alertElement.classList.add('hidden');
+            } else {
+                // Permission not granted, show alert and update message
+                updateAlertMessage(permission);
+                alertElement.classList.remove('hidden');
+            }
+        }
+
+        // Request notification permission
+        window.requestNotificationPermission = function() {
+            if (!('Notification' in window)) {
+                updateAlertMessage('unsupported');
+                const messageElement = document.getElementById('notificationAlertMessage');
+                if (messageElement) {
+                    messageElement.textContent = 'This browser does not support desktop notifications.';
+                }
+                return;
+            }
+
+            if (Notification.permission === 'granted') {
+                checkNotificationPermission();
+                return;
+            }
+
+            if (Notification.permission === 'denied') {
+                // Update alert to show instructions instead of browser alert
+                updateAlertMessage('denied');
+                checkNotificationPermission(); // Ensure alert is visible
+                return;
+            }
+
+            // Request permission
+            Notification.requestPermission().then(function(permission) {
+                if (permission === 'denied') {
+                    updateAlertMessage('denied');
+                }
+                checkNotificationPermission();
+                
+                if (permission === 'granted') {
+                    // Reload page to start notification polling
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                }
+            });
+        };
+
+        // Hide alert temporarily (will show again on next page load if permission not granted)
+        window.hidePushNotificationAlert = function() {
+            const alertElement = document.getElementById('pushNotificationAlert');
+            if (alertElement) {
+                alertElement.classList.add('hidden');
+                // Show again after 1 hour if permission still not granted
+                setTimeout(() => {
+                    checkNotificationPermission();
+                }, 3600000); // 1 hour
+            }
+        };
+
+        // Check permission on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkNotificationPermission();
+        });
+
+        // Also check when page becomes visible (user switches back to tab)
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                checkNotificationPermission();
+            }
+        });
+    })();
+    </script>
     
     @stack('js')
 </body>
