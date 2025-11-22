@@ -118,13 +118,19 @@ class UserController extends Controller
                 ->withInput();
         }
 
-        $user = User::create([
+        $userData = [
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'web_pin' => $request->web_pin,
             'telegram_id' => $request->telegram_id,
-        ]);
+        ];
+
+        // Only set web_pin if provided (will be auto-hashed by Eloquent cast)
+        if ($request->filled('web_pin')) {
+            $userData['web_pin'] = $request->web_pin;
+        }
+
+        $user = User::create($userData);
 
         // Assign roles if provided
         if ($request->filled('roles')) {
@@ -206,13 +212,17 @@ class UserController extends Controller
             'last_name' => $request->last_name,
             'email' => $request->email,
             'phone' => $request->phone,
-            'web_pin' => $request->web_pin,
             'telegram_id' => $request->telegram_id,
             'date_of_birth' => $request->date_of_birth,
             'bio' => $request->bio,
             'timezone' => $request->timezone,
             'language' => $request->language,
         ];
+
+        // Only update web_pin if provided (will be auto-hashed by Eloquent cast)
+        if ($request->filled('web_pin')) {
+            $updateData['web_pin'] = $request->web_pin;
+        }
 
         if ($request->filled('password')) {
             $updateData['password'] = Hash::make($request->password);

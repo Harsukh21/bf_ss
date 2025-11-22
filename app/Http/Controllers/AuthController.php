@@ -82,18 +82,41 @@ class AuthController extends Controller
                 ])->withInput($request->only('email', 'login_method'));
             }
             
-            // Check if user has web_pin set
-            if (empty($user->web_pin)) {
+            // Get raw web_pin value from database (bypassing Eloquent casts)
+            $userData = DB::table('users')->where('id', $user->id)->first();
+            
+            if (empty($userData->web_pin)) {
                 return back()->withErrors([
                     'web_pin' => 'Web PIN is not set for this account. Please use password login or contact administrator.',
                 ])->withInput($request->only('email', 'login_method'));
             }
             
-            // Verify web_pin
-            if ($user->web_pin !== $request->input('web_pin')) {
+            // Verify web_pin - handle both hashed and plain text (backward compatibility)
+            $storedPin = $userData->web_pin;
+            $inputPin = $request->input('web_pin');
+            $isVerified = false;
+            $needsHashing = false;
+            
+            // Check if stored PIN is already hashed (bcrypt hashes start with $2y$, $2a$, or $2b$ and are 60 chars)
+            if (strlen($storedPin) >= 60 && (str_starts_with($storedPin, '$2y$') || str_starts_with($storedPin, '$2a$') || str_starts_with($storedPin, '$2b$'))) {
+                // Already hashed - use Hash::check()
+                $isVerified = Hash::check($inputPin, $storedPin);
+            } else {
+                // Plain text - compare directly (backward compatibility)
+                $isVerified = ($storedPin === $inputPin);
+                $needsHashing = true; // Mark for auto-hashing after verification
+            }
+            
+            if (!$isVerified) {
                 return back()->withErrors([
                     'web_pin' => 'The provided Web PIN is incorrect.',
                 ])->withInput($request->only('email', 'login_method'));
+            }
+            
+            // Auto-hash plain text web_pin for security (one-time migration)
+            if ($needsHashing) {
+                $user->web_pin = $inputPin; // Will be auto-hashed by Eloquent cast
+                $user->save();
             }
             
             // Login the user
