@@ -82,20 +82,45 @@ class NotificationService
                 }
             }
 
-            // Push and login_popup are handled separately
+            // Push notifications - keep as false until frontend marks as delivered
+            // Frontend will call markPushDelivered endpoint to update status
             if (in_array('push', $deliveryMethods)) {
-                $deliveryStatus['push'] = true; // Will be handled by frontend
+                $deliveryStatus['push'] = false; // Will be marked as true by frontend via markPushDelivered endpoint
             }
 
+            // Login popup - mark as true since it will be shown on next login
             if (in_array('login_popup', $deliveryMethods)) {
                 $deliveryStatus['login_popup'] = true; // Will be shown on next login
+            }
+
+            // Determine if notification is delivered (at least one method succeeded)
+            // If only push is selected, keep is_delivered as false until push is actually delivered
+            $isDelivered = false;
+            $hasPushOnly = in_array('push', $deliveryMethods) && count($deliveryMethods) === 1;
+            $hasTelegram = in_array('telegram', $deliveryMethods);
+            $hasLoginPopup = in_array('login_popup', $deliveryMethods);
+            
+            // Mark as delivered if:
+            // 1. Telegram was sent successfully, OR
+            // 2. Login popup is enabled (will show on next login), OR  
+            // 3. Push is enabled AND at least one other method succeeded
+            if ($hasTelegram && $deliveryStatus['telegram']) {
+                $isDelivered = true;
+            } elseif ($hasLoginPopup) {
+                $isDelivered = true; // Login popup will show on next login
+            } elseif (!$hasPushOnly && in_array('push', $deliveryMethods)) {
+                // Push + other methods: mark as delivered if other method succeeded
+                $isDelivered = ($hasTelegram && $deliveryStatus['telegram']) || ($hasLoginPopup);
+            } elseif ($hasPushOnly) {
+                // Push only: keep as false until frontend marks it as delivered
+                $isDelivered = false;
             }
 
             // Update pivot table
             // For recurring notifications, reset is_read so it shows again
             $pivotData = [
-                'is_delivered' => true,
-                'delivered_at' => now(),
+                'is_delivered' => $isDelivered,
+                'delivered_at' => $isDelivered ? now() : null,
                 'delivery_status' => json_encode($deliveryStatus),
                 'updated_at' => now(),
             ];

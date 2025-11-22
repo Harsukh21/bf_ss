@@ -692,8 +692,8 @@
 
                 const options = {
                     body: notification.message,
-                    icon: '{{ asset("assets/img/light_logo.png") }}',
-                    badge: '{{ asset("assets/img/light_logo.png") }}',
+                    icon: '{{ asset("assets/img/notification_icon.png") }}',
+                    badge: '{{ asset("assets/img/notification_icon.png") }}',
                     tag: 'notification-' + notification.id, // Prevent duplicate notifications
                     requireInteraction: false,
                     silent: false,
