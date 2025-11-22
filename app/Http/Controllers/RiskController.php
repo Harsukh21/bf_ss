@@ -486,7 +486,8 @@ class RiskController extends Controller
             }
             
             // Get only the record with MAX totalMatched per exMarketId
-            $unionQueries[] = "SELECT DISTINCT ON (\"exMarketId\")
+            // Wrap DISTINCT ON in a subquery for UNION compatibility
+            $unionQueries[] = "(SELECT DISTINCT ON (\"exMarketId\")
                 " . DB::getPdo()->quote($exEventId) . "::text as ex_event_id,
                 \"exMarketId\",
                 \"marketName\",
@@ -494,7 +495,7 @@ class RiskController extends Controller
             FROM \"{$tableName}\"
             WHERE \"exMarketId\" IS NOT NULL 
             AND \"marketName\" IS NOT NULL
-            ORDER BY \"exMarketId\", \"totalMatched\" DESC";
+            ORDER BY \"exMarketId\", \"totalMatched\" DESC)";
         }
         
         if (empty($unionQueries)) {
