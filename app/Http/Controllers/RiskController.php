@@ -463,111 +463,85 @@ class RiskController extends Controller
             ]);
         }
         
-        // Optimized query: Get markets with max totalMatched from dynamic tables
-        // Only query tables for events that exist in market_lists (much faster)
-        $existingEventIds = DB::table('market_lists')
-            ->select('exEventId')
-            ->distinct()
-            ->whereNotNull('exEventId')
-            ->pluck('exEventId')
-            ->toArray();
-        
-        if (empty($existingEventIds)) {
-            // Fallback if no events
-            $tablesWithData = [];
-        } else {
-            // Build table names for existing events only
-            $tablesWithData = array_map(function($eventId) {
-                return 'market_rates_' . $eventId;
-            }, $existingEventIds);
-            
-            // Verify tables exist (batch check)
-            $tableList = "'" . implode("','", array_map('addslashes', $tablesWithData)) . "'";
-            $existingTables = DB::select("
+        // Optimized query: Only show markets that have dynamic tables
+        // First, get only events that have corresponding market_rates tables
+        $tablesWithData = \Illuminate\Support\Facades\Cache::remember('vol_base_markets.existing_tables', 600, function () {
+            return DB::select("
                 SELECT table_name 
                 FROM information_schema.tables 
                 WHERE table_schema = 'public' 
-                AND table_name IN ({$tableList})
+                AND table_name LIKE 'market_rates_%'
+                ORDER BY table_name
             ");
-            
-            $tablesWithData = collect($existingTables)->pluck('table_name')->toArray();
-        }
+        });
         
         if (empty($tablesWithData)) {
-            // Fallback to simple query if no dynamic tables with data exist
-            $query = DB::table('market_lists')
-                ->select([
-                    'market_lists.id',
-                    'market_lists.exMarketId',
-                    'market_lists.marketName',
-                    'market_lists.eventName',
-                    'market_lists.exEventId',
-                    'market_lists.tournamentsName',
-                    'market_lists.sportName',
-                    'market_lists.status',
-                    'market_lists.marketTime',
-                    'market_lists.winnerType',
-                    'market_lists.selectionName',
-                    DB::raw('0 as max_total_matched')
-                ])
-                ->whereNotNull('market_lists.exMarketId')
-                ->whereNotNull('market_lists.marketName')
-                ->distinct();
-        } else {
-            // Build optimized UNION query - only query tables with data
-            // Use efficient aggregation: get max per market per table in one pass
-            $unionParts = [];
-            $pdo = DB::getPdo();
-            
-            foreach ($tablesWithData as $tableName) {
-                $eventId = str_replace('market_rates_', '', $tableName);
-                
-                // Get max totalMatched per exMarketId from each table
-                // Use efficient GROUP BY instead of scanning all rows
-                $unionParts[] = "SELECT 
-                    " . $pdo->quote($eventId) . "::text as ex_event_id,
-                    \"exMarketId\",
-                    MAX(\"totalMatched\") as max_total_matched
-                FROM \"{$tableName}\"
-                WHERE \"exMarketId\" IS NOT NULL
-                GROUP BY \"exMarketId\"";
-            }
-            
-            // Combine all tables efficiently
-            $unionSql = implode(' UNION ALL ', $unionParts);
-            
-            // Main query: Join market_lists with aggregated max values
-            // Use LEFT JOIN so markets without rates still show (with 0 volume)
-            $query = DB::table('market_lists')
-                ->leftJoin(DB::raw("(
-                    SELECT 
-                        ex_event_id,
-                        \"exMarketId\",
-                        MAX(max_total_matched) as max_total_matched
-                    FROM ({$unionSql}) as market_volumes
-                    GROUP BY ex_event_id, \"exMarketId\"
-                ) as market_max"), function($join) {
-                    $join->on('market_lists.exMarketId', '=', 'market_max.exMarketId')
-                         ->on('market_lists.exEventId', '=', 'market_max.ex_event_id');
-                })
-                ->select([
-                    'market_lists.id',
-                    'market_lists.exMarketId',
-                    'market_lists.marketName',
-                    'market_lists.eventName',
-                    'market_lists.exEventId',
-                    'market_lists.tournamentsName',
-                    'market_lists.sportName',
-                    'market_lists.status',
-                    'market_lists.marketTime',
-                    'market_lists.winnerType',
-                    'market_lists.selectionName',
-                    DB::raw('COALESCE(market_max.max_total_matched, 0) as max_total_matched')
-                ])
-                ->whereNotNull('market_lists.exMarketId')
-                ->whereNotNull('market_lists.marketName')
-                ->distinct();
+            // No tables exist, return empty result
+            return view('risk.vol-base-markets', [
+                'markets' => new \Illuminate\Pagination\LengthAwarePaginator(collect([]), 0, 20, 1),
+                'filters' => $filters,
+                'sports' => $this->getSportsList(),
+                'tournamentsBySport' => $this->getTournamentsBySport(),
+            ]);
         }
+        
+        // Extract event IDs from table names
+        $eventIdsWithTables = collect($tablesWithData)->map(function($table) {
+            return str_replace('market_rates_', '', $table->table_name);
+        })->toArray();
+        
+        // Build optimized UNION query - only query tables that exist
+        $unionParts = [];
+        $pdo = DB::getPdo();
+        
+        foreach ($tablesWithData as $table) {
+            $tableName = $table->table_name;
+            $eventId = str_replace('market_rates_', '', $tableName);
+            
+            // Get max totalMatched per exMarketId from each table
+            $unionParts[] = "SELECT 
+                " . $pdo->quote($eventId) . "::text as ex_event_id,
+                \"exMarketId\",
+                MAX(\"totalMatched\") as max_total_matched
+            FROM \"{$tableName}\"
+            WHERE \"exMarketId\" IS NOT NULL
+            GROUP BY \"exMarketId\"";
+        }
+        
+        // Combine all tables efficiently
+        $unionSql = implode(' UNION ALL ', $unionParts);
+        
+        // Main query: INNER JOIN - only show markets that have dynamic table data
+        $query = DB::table('market_lists')
+            ->join(DB::raw("(
+                SELECT 
+                    ex_event_id,
+                    \"exMarketId\",
+                    MAX(max_total_matched) as max_total_matched
+                FROM ({$unionSql}) as market_volumes
+                GROUP BY ex_event_id, \"exMarketId\"
+            ) as market_max"), function($join) {
+                $join->on('market_lists.exMarketId', '=', 'market_max.exMarketId')
+                     ->on('market_lists.exEventId', '=', 'market_max.ex_event_id');
+            })
+            ->whereIn('market_lists.exEventId', $eventIdsWithTables)
+            ->select([
+                'market_lists.id',
+                'market_lists.exMarketId',
+                'market_lists.marketName',
+                'market_lists.eventName',
+                'market_lists.exEventId',
+                'market_lists.tournamentsName',
+                'market_lists.sportName',
+                'market_lists.status',
+                'market_lists.marketTime',
+                'market_lists.winnerType',
+                'market_lists.selectionName',
+                'market_max.max_total_matched'
+            ])
+            ->whereNotNull('market_lists.exMarketId')
+            ->whereNotNull('market_lists.marketName')
+            ->distinct();
         
         // Apply filters at database level
         if ($filters['sport']) {
@@ -586,9 +560,9 @@ class RiskController extends Controller
         if ($filters['volume_value'] && $filters['volume_operator']) {
             $volumeValue = (float) $filters['volume_value'];
             if ($filters['volume_operator'] === 'greater_than') {
-                $query->where(DB::raw('COALESCE(market_max.max_total_matched, 0)'), '>', $volumeValue);
+                $query->where('market_max.max_total_matched', '>', $volumeValue);
             } elseif ($filters['volume_operator'] === 'less_than') {
-                $query->where(DB::raw('COALESCE(market_max.max_total_matched, 0)'), '<', $volumeValue);
+                $query->where('market_max.max_total_matched', '<', $volumeValue);
             }
         }
         
@@ -620,7 +594,7 @@ class RiskController extends Controller
         }
         
         // Order by max_total_matched descending, then by marketTime
-        $query->orderByDesc(DB::raw('COALESCE(market_max.max_total_matched, 0)'))
+        $query->orderByDesc('market_max.max_total_matched')
               ->orderByDesc('market_lists.marketTime');
         
         // Paginate
