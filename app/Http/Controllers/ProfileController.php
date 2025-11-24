@@ -148,8 +148,12 @@ class ProfileController extends Controller
             'date_of_birth' => $request->date_of_birth,
             'timezone' => $request->timezone,
             'language' => $request->language,
-            'web_pin' => $request->web_pin,
         ];
+
+        // Only update web_pin if provided (will be auto-hashed by Eloquent cast)
+        if ($request->filled('web_pin')) {
+            $updateData['web_pin'] = $request->web_pin;
+        }
         
         // Handle Telegram ID and chat_id
         if (empty($newTelegramId)) {

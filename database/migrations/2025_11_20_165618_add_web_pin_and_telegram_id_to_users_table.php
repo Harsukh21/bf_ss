@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('web_pin', 20)->nullable()->after('password');
+            // Using 255 to accommodate bcrypt hashes (60 chars) and future-proofing
+            $table->string('web_pin', 255)->nullable()->after('password');
             $table->string('telegram_id', 100)->nullable()->after('web_pin');
         });
     }

@@ -59,12 +59,26 @@ class ScorecardController extends Controller
 
         // Date range filters
         if ($request->filled('date_from')) {
-            $dateFrom = Carbon::parse($request->input('date_from'))->startOfDay();
+            $dateInput = $request->input('date_from');
+            // Try to parse DD/MM/YYYY format first, fallback to standard parse
+            try {
+                $dateFrom = Carbon::createFromFormat('d/m/Y', $dateInput)->startOfDay();
+            } catch (\Exception $e) {
+                // Fallback to Carbon::parse for other formats (Y-m-d, etc.)
+                $dateFrom = Carbon::parse($dateInput)->startOfDay();
+            }
             $query->where('events.marketTime', '>=', $dateFrom);
         }
 
         if ($request->filled('date_to')) {
-            $dateTo = Carbon::parse($request->input('date_to'))->endOfDay();
+            $dateInput = $request->input('date_to');
+            // Try to parse DD/MM/YYYY format first, fallback to standard parse
+            try {
+                $dateTo = Carbon::createFromFormat('d/m/Y', $dateInput)->endOfDay();
+            } catch (\Exception $e) {
+                // Fallback to Carbon::parse for other formats (Y-m-d, etc.)
+                $dateTo = Carbon::parse($dateInput)->endOfDay();
+            }
             $query->where('events.marketTime', '<=', $dateTo);
         }
 

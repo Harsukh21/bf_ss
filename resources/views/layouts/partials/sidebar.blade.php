@@ -173,26 +173,50 @@
                 </div>
                 @endif
 
-                <!-- Scorecard -->
+                <!-- Settle Team -->
                 @if(auth()->user()->hasPermission('view-scorecard'))
                     <a href="{{ route('scorecard.index') }}" 
                        class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 ease-in-out {{ request()->routeIs('scorecard.*') ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
-                        Scorecard
+                        Settle Team
                     </a>
                 @endif
 
-                <!-- Risk -->
+                <!-- Risk Team Dropdown -->
                 @if(auth()->user()->hasPermission('view-risk-markets'))
-                <a href="{{ route('risk.index') }}" 
-                   class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 ease-in-out {{ request()->routeIs('risk.*') ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.306 0-2.417.835-2.83 2H7a1 1 0 000 2h2.17A3.001 3.001 0 0012 14a3 3 0 002.83-2H17a1 1 0 100-2h-2.17A3.001 3.001 0 0012 8zM5 20h14a2 2 0 002-2V9a2 2 0 00-.764-1.582l-7-5.25a2 2 0 00-2.472 0l-7 5.25A2 2 0 005 9v9a2 2 0 002 2z"></path>
-                    </svg>
-                    Risk
-                </a>
+                <div class="relative">
+                    @php
+                        $isRiskActive = request()->routeIs('risk.*');
+                    @endphp
+                    <button onclick="toggleDropdown('risk')" class="flex items-center justify-between w-full px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ $isRiskActive ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.306 0-2.417.835-2.83 2H7a1 1 0 000 2h2.17A3.001 3.001 0 0012 14a3 3 0 002.83-2H17a1 1 0 100-2h-2.17A3.001 3.001 0 0012 8zM5 20h14a2 2 0 002-2V9a2 2 0 00-.764-1.582l-7-5.25a2 2 0 00-2.472 0l-7 5.25A2 2 0 005 9v9a2 2 0 002 2z"></path>
+                            </svg>
+                            Risk Team
+                        </div>
+                        <svg id="risk-arrow" class="w-4 h-4 transition-transform duration-200 {{ $isRiskActive ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    
+                    <div id="risk-dropdown" class="space-y-1 ml-4 {{ $isRiskActive ? '' : 'hidden' }}">
+                        <a href="{{ route('risk.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('risk.index') || request()->routeIs('risk.pending') || request()->routeIs('risk.done') || request()->routeIs('risk.markets.*') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            Betlist Check
+                        </a>
+                        <a href="{{ route('risk.vol-base-markets.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('risk.vol-base-markets.*') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
+                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            Vol. Base Markets
+                        </a>
+                    </div>
+                </div>
                 @endif
 
                 <!-- Notifications -->

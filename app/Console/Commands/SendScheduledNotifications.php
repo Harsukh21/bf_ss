@@ -32,7 +32,7 @@ class SendScheduledNotifications extends Command
         
         // Get notifications that are scheduled and due
         $notifications = DB::table('notifications')
-            ->where('status', 'pending')
+            // ->where('status', 'pending')
             ->whereNotNull('scheduled_at')
             ->where('scheduled_at', '<=', now())
             ->get();
@@ -42,7 +42,31 @@ class SendScheduledNotifications extends Command
             $notificationService->sendNotification($notification->id);
 
             // Handle recurring notifications
-            if ($notification->notification_type === 'daily') {
+            if ($notification->notification_type === 'after_minutes') {
+                // Schedule for next interval (after X minutes)
+                $durationValue = (int)$notification->duration_value;
+                $nextScheduledAt = Carbon::now()->addMinutes($durationValue);
+                
+                DB::table('notifications')
+                    ->where('id', $notification->id)
+                    ->update([
+                        'status' => 'pending',
+                        'scheduled_at' => $nextScheduledAt,
+                        'updated_at' => now(),
+                    ]);
+            } elseif ($notification->notification_type === 'after_hours') {
+                // Schedule for next interval (after X hours)
+                $durationValue = (int)$notification->duration_value;
+                $nextScheduledAt = Carbon::now()->addHours($durationValue);
+                
+                DB::table('notifications')
+                    ->where('id', $notification->id)
+                    ->update([
+                        'status' => 'pending',
+                        'scheduled_at' => $nextScheduledAt,
+                        'updated_at' => now(),
+                    ]);
+            } elseif ($notification->notification_type === 'daily') {
                 // Schedule for next day
                 $dailyTime = Carbon::parse($notification->daily_time);
                 $nextScheduledAt = Carbon::now()->setTimeFromTimeString($dailyTime->format('H:i:s'))->addDay();

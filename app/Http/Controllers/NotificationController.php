@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 use App\Services\NotificationService;
 
@@ -134,7 +135,7 @@ class NotificationController extends Controller
             'user_ids' => 'required|array|min:1',
             'user_ids.*' => 'exists:users,id',
             'notification_type' => 'required|in:instant,after_minutes,daily,weekly,monthly,after_hours',
-            'duration_value' => 'nullable|integer|min:1|required_if:notification_type,after_minutes,after_hours',
+            'duration_value' => 'required_if:notification_type,after_minutes,after_hours|nullable|integer|min:1',
             'daily_time' => 'nullable|required_if:notification_type,daily|date_format:H:i',
             'weekly_day' => 'nullable|required_if:notification_type,weekly|integer|min:0|max:6',
             'weekly_time' => 'nullable|required_if:notification_type,weekly|date_format:H:i',
@@ -150,9 +151,9 @@ class NotificationController extends Controller
         if ($validated['notification_type'] === 'instant') {
             $scheduledAt = now();
         } elseif ($validated['notification_type'] === 'after_minutes') {
-            $scheduledAt = now()->addMinutes($validated['duration_value']);
+            $scheduledAt = now()->addMinutes((int)$validated['duration_value']);
         } elseif ($validated['notification_type'] === 'after_hours') {
-            $scheduledAt = now()->addHours($validated['duration_value']);
+            $scheduledAt = now()->addHours((int)$validated['duration_value']);
         } elseif ($validated['notification_type'] === 'daily') {
             $scheduledAt = Carbon::parse($validated['daily_time'])->setDate(now()->year, now()->month, now()->day);
             if ($scheduledAt->isPast()) {
@@ -239,13 +240,42 @@ class NotificationController extends Controller
 
         $user = Auth::user();
 
-        // Verify web_pin
+        // Verify web_pin - handle both hashed and plain text (backward compatibility)
         $userData = DB::table('users')->where('id', $user->id)->first();
-        if (!$userData->web_pin || $userData->web_pin !== $request->web_pin) {
+        if (!$userData->web_pin) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid Web PIN',
             ], 422);
+        }
+        
+        $storedPin = $userData->web_pin;
+        $inputPin = $request->web_pin;
+        $isVerified = false;
+        $needsHashing = false;
+        
+        // Check if stored PIN is already hashed (bcrypt hashes start with $2y$, $2a$, or $2b$ and are 60 chars)
+        if (strlen($storedPin) >= 60 && (str_starts_with($storedPin, '$2y$') || str_starts_with($storedPin, '$2a$') || str_starts_with($storedPin, '$2b$'))) {
+            // Already hashed - use Hash::check()
+            $isVerified = Hash::check($inputPin, $storedPin);
+        } else {
+            // Plain text - compare directly (backward compatibility)
+            $isVerified = ($storedPin === $inputPin);
+            $needsHashing = true; // Mark for auto-hashing after verification
+        }
+        
+        if (!$isVerified) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Web PIN',
+            ], 422);
+        }
+        
+        // Auto-hash plain text web_pin for security (one-time migration)
+        if ($needsHashing) {
+            DB::table('users')
+                ->where('id', $user->id)
+                ->update(['web_pin' => Hash::make($inputPin)]);
         }
 
         // Mark notification as read
@@ -316,7 +346,7 @@ class NotificationController extends Controller
             'user_ids' => 'required|array|min:1',
             'user_ids.*' => 'exists:users,id',
             'notification_type' => 'required|in:instant,after_minutes,daily,weekly,monthly,after_hours',
-            'duration_value' => 'nullable|integer|min:1|required_if:notification_type,after_minutes,after_hours',
+            'duration_value' => 'required_if:notification_type,after_minutes,after_hours|nullable|integer|min:1',
             'daily_time' => 'nullable|required_if:notification_type,daily|date_format:H:i',
             'weekly_day' => 'nullable|required_if:notification_type,weekly|integer|min:0|max:6',
             'weekly_time' => 'nullable|required_if:notification_type,weekly|date_format:H:i',
@@ -332,9 +362,9 @@ class NotificationController extends Controller
         if ($validated['notification_type'] === 'instant') {
             $scheduledAt = now();
         } elseif ($validated['notification_type'] === 'after_minutes') {
-            $scheduledAt = now()->addMinutes($validated['duration_value']);
+            $scheduledAt = now()->addMinutes((int)$validated['duration_value']);
         } elseif ($validated['notification_type'] === 'after_hours') {
-            $scheduledAt = now()->addHours($validated['duration_value']);
+            $scheduledAt = now()->addHours((int)$validated['duration_value']);
         } elseif ($validated['notification_type'] === 'daily') {
             $scheduledAt = Carbon::parse($validated['daily_time'])->setDate(now()->year, now()->month, now()->day);
             if ($scheduledAt->isPast()) {

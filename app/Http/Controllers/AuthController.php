@@ -82,18 +82,41 @@ class AuthController extends Controller
                 ])->withInput($request->only('email', 'login_method'));
             }
             
-            // Check if user has web_pin set
-            if (empty($user->web_pin)) {
+            // Get raw web_pin value from database (bypassing Eloquent casts)
+            $userData = DB::table('users')->where('id', $user->id)->first();
+            
+            if (empty($userData->web_pin)) {
                 return back()->withErrors([
                     'web_pin' => 'Web PIN is not set for this account. Please use password login or contact administrator.',
                 ])->withInput($request->only('email', 'login_method'));
             }
             
-            // Verify web_pin
-            if ($user->web_pin !== $request->input('web_pin')) {
+            // Verify web_pin - handle both hashed and plain text (backward compatibility)
+            $storedPin = $userData->web_pin;
+            $inputPin = $request->input('web_pin');
+            $isVerified = false;
+            $needsHashing = false;
+            
+            // Check if stored PIN is already hashed (bcrypt hashes start with $2y$, $2a$, or $2b$ and are 60 chars)
+            if (strlen($storedPin) >= 60 && (str_starts_with($storedPin, '$2y$') || str_starts_with($storedPin, '$2a$') || str_starts_with($storedPin, '$2b$'))) {
+                // Already hashed - use Hash::check()
+                $isVerified = Hash::check($inputPin, $storedPin);
+            } else {
+                // Plain text - compare directly (backward compatibility)
+                $isVerified = ($storedPin === $inputPin);
+                $needsHashing = true; // Mark for auto-hashing after verification
+            }
+            
+            if (!$isVerified) {
                 return back()->withErrors([
                     'web_pin' => 'The provided Web PIN is incorrect.',
                 ])->withInput($request->only('email', 'login_method'));
+            }
+            
+            // Auto-hash plain text web_pin for security (one-time migration)
+            if ($needsHashing) {
+                $user->web_pin = $inputPin; // Will be auto-hashed by Eloquent cast
+                $user->save();
             }
             
             // Login the user
@@ -149,123 +172,118 @@ class AuthController extends Controller
             ]);
         }
         
+        // Eager load user roles for display
+        $user = Auth::user();
+        $user->load('roles');
+        
         $timezone = config('app.timezone', 'UTC');
         $now = Carbon::now($timezone);
-
-        $statusMap = $this->getEventStatusMap();
         $statusStyles = $this->getEventStatusStyles();
-        $matchOddsExpr = $this->getMatchOddsStatusExpression('e');
 
-        $statusCounts = DB::table('events as e')
-            ->selectRaw($matchOddsExpr . ' as match_status, COUNT(*) as total')
-            ->groupBy('match_status')
-            ->pluck('total', 'match_status')
-            ->filter(fn ($_, $status) => !is_null($status))
-            ->mapWithKeys(fn ($count, $status) => [(int) $status => $count])
-            ->toArray();
+        // Get event status counts using raw query from events.status column
+        $statusCountsQuery = "SELECT 
+            status,
+            COUNT(*) as total
+        FROM events
+        WHERE status IS NOT NULL
+        GROUP BY status";
+        
+        $statusCountsRaw = DB::select($statusCountsQuery);
+        $statusCounts = [];
+        foreach ($statusCountsRaw as $row) {
+            $statusCounts[(int)$row->status] = (int)$row->total;
+        }
 
-        $totalEvents = DB::table('events')->count();
+        // Get total events count
+        $totalEvents = (int)DB::selectOne("SELECT COUNT(*) as total FROM events")->total;
 
         $eventStats = [
             'total' => $totalEvents,
             'unsettled' => $statusCounts[1] ?? 0,
             'upcoming' => $statusCounts[2] ?? 0,
             'in_play' => $statusCounts[3] ?? 0,
-            'settled' => $statusCounts[4] ?? 0,
-            'voided' => $statusCounts[5] ?? 0,
-            'removed' => $statusCounts[6] ?? 0,
+            'closed' => $statusCounts[4] ?? 0,
         ];
 
+        // Get flag counts in single query
+        $flagCountsRaw = DB::selectOne("
+            SELECT 
+                COUNT(CASE WHEN highlight::int = 1 THEN 1 END) as highlight,
+                COUNT(CASE WHEN popular::int = 1 THEN 1 END) as popular
+            FROM events
+        ");
         $flagCounts = [
-            'highlight' => DB::table('events')->where('highlight', 1)->count(),
-            'popular' => DB::table('events')->where('popular', 1)->count(),
+            'highlight' => (int)$flagCountsRaw->highlight,
+            'popular' => (int)$flagCountsRaw->popular,
         ];
 
+        // Get market stats in single query
+        $marketStatsRaw = DB::selectOne("
+            SELECT 
+                COUNT(*) as total,
+                COUNT(CASE WHEN \"isLive\" = true THEN 1 END) as live,
+                COUNT(CASE WHEN \"isPreBet\" = true THEN 1 END) as pre,
+                COUNT(CASE WHEN \"isCompleted\" = true THEN 1 END) as completed
+            FROM market_lists
+        ");
         $marketStats = [
-            'total' => DB::table('market_lists')->count(),
-            'live' => DB::table('market_lists')->where('isLive', true)->count(),
-            'pre' => DB::table('market_lists')->where('isPreBet', true)->count(),
-            'completed' => DB::table('market_lists')->where('isCompleted', true)->count(),
+            'total' => (int)$marketStatsRaw->total,
+            'live' => (int)$marketStatsRaw->live,
+            'pre' => (int)$marketStatsRaw->pre,
+            'completed' => (int)$marketStatsRaw->completed,
+            'active' => (int)$marketStatsRaw->total - (int)$marketStatsRaw->completed,
         ];
-        $marketStats['active'] = $marketStats['total'] - $marketStats['completed'];
 
-        $recentEvents = DB::table('events')
-            ->select([
-                'id',
-                'eventName',
-                'tournamentsName',
-                'IsSettle',
-                'IsVoid',
-                'IsUnsettle',
-                'isCompleted',
-                'highlight',
-                'popular',
-                'marketTime',
-                'createdAt',
-                DB::raw($this->getMatchOddsStatusExpression('events') . ' as "matchOddsStatus"'),
-            ])
-            ->orderByRaw('COALESCE("marketTime", "createdAt") DESC')
-            ->limit(5)
-            ->get()
-            ->map(function ($event) use ($now, $timezone, $statusStyles) {
-                $eventTime = $event->marketTime ? Carbon::parse($event->marketTime, $timezone) : null;
-                $matchStatus = $event->matchOddsStatus !== null ? (int) $event->matchOddsStatus : null;
+        // Get recent events with only needed fields
+        $recentEventsQuery = "
+            SELECT 
+                e.id,
+                e.\"eventName\",
+                e.\"tournamentsName\",
+                e.\"marketTime\",
+                e.\"createdAt\",
+                e.\"status\"
+            FROM events e
+            ORDER BY COALESCE(e.\"marketTime\", e.\"createdAt\") DESC
+            LIMIT 5
+        ";
+        
+        $recentEventsRaw = DB::select($recentEventsQuery);
+        $recentEvents = collect($recentEventsRaw)->map(function ($event) use ($now, $timezone, $statusStyles) {
+            $eventTime = $event->marketTime ? Carbon::parse($event->marketTime, $timezone) : null;
+            $eventStatus = $event->status !== null ? (int) $event->status : null;
 
-                if ($matchStatus && isset($statusStyles[$matchStatus])) {
-                    $status = $statusStyles[$matchStatus]['label'];
-                    $statusClass = $statusStyles[$matchStatus]['badge'];
-                } else {
-                    $status = 'Unknown';
-                    $statusClass = 'bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-200';
+            if ($eventStatus && isset($statusStyles[$eventStatus])) {
+                $status = $statusStyles[$eventStatus]['label'];
+                $statusClass = $statusStyles[$eventStatus]['badge'];
+            } else {
+                $status = 'Unknown';
+                $statusClass = 'bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-200';
+            }
 
-                    if ($event->IsVoid) {
-                        $status = 'Voided';
-                        $statusClass = 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300';
-                    } elseif ($event->IsSettle) {
-                        $status = 'Settled';
-                        $statusClass = 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
-                    } elseif ($event->IsUnsettle) {
-                        $status = 'Unsettled';
-                        $statusClass = 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
-                    } elseif ($eventTime && $eventTime->gt($now)) {
-                        $status = 'Upcoming';
-                        $statusClass = 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300';
-                    } elseif ($eventTime && $eventTime->lte($now)) {
-                        $status = 'In-Play';
-                        $statusClass = 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300';
-                    }
-                }
-
-                $event->status_label = $status;
-                $event->status_class = $statusClass;
-                $event->display_time = $eventTime
+            return (object)[
+                'id' => $event->id,
+                'eventName' => $event->eventName,
+                'tournamentsName' => $event->tournamentsName,
+                'status_label' => $status,
+                'status_class' => $statusClass,
+                'display_time' => $eventTime
                     ? $eventTime->format('M d, Y h:i A')
-                    : ($event->createdAt ? Carbon::parse($event->createdAt, $timezone)->format('M d, Y h:i A') : null);
+                    : ($event->createdAt ? Carbon::parse($event->createdAt, $timezone)->format('M d, Y h:i A') : null),
+            ];
+        });
 
-                return $event;
-            });
-
-        $statusBreakdown = collect($statusStyles)
-            ->map(function ($style, $statusId) use ($eventStats) {
-                $keyMap = [
-                    1 => 'unsettled',
-                    2 => 'upcoming',
-                    3 => 'in_play',
-                    4 => 'settled',
-                    5 => 'voided',
-                    6 => 'removed',
-                ];
-
-                $statKey = $keyMap[$statusId] ?? null;
-
-                return [
-                    'label' => $style['label'],
-                    'count' => $statKey ? ($eventStats[$statKey] ?? 0) : 0,
-                    'color' => $style['dot'],
-                ];
-            })
-            ->values()
-            ->all();
+        // Build status breakdown
+        $statusBreakdown = [];
+        $keyMap = [1 => 'unsettled', 2 => 'upcoming', 3 => 'in_play', 4 => 'closed'];
+        foreach ($statusStyles as $statusId => $style) {
+            $statKey = $keyMap[$statusId] ?? null;
+            $statusBreakdown[] = [
+                'label' => $style['label'],
+                'count' => $statKey ? ($eventStats[$statKey] ?? 0) : 0,
+                'color' => $style['dot'],
+            ];
+        }
 
         return response()
             ->view('dashboard', [
@@ -286,12 +304,10 @@ class AuthController extends Controller
     private function getEventStatusMap(): array
     {
         return [
-            1 => 'Unsettled',
-            2 => 'Upcoming',
-            3 => 'In Play',
-            4 => 'Settled',
-            5 => 'Voided',
-            6 => 'Removed',
+            1 => 'UNSETTLED',
+            2 => 'UPCOMING',
+            3 => 'INPLAY',
+            4 => 'CLOSED',
         ];
     }
 
@@ -299,48 +315,26 @@ class AuthController extends Controller
     {
         return [
             1 => [
-                'label' => 'Unsettled',
+                'label' => 'UNSETTLED',
                 'badge' => 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300',
                 'dot' => 'bg-purple-500',
             ],
             2 => [
-                'label' => 'Upcoming',
+                'label' => 'UPCOMING',
                 'badge' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
                 'dot' => 'bg-yellow-500',
             ],
             3 => [
-                'label' => 'In Play',
+                'label' => 'INPLAY',
                 'badge' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
                 'dot' => 'bg-red-500',
             ],
             4 => [
-                'label' => 'Settled',
-                'badge' => 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300',
-                'dot' => 'bg-green-500',
-            ],
-            5 => [
-                'label' => 'Voided',
-                'badge' => 'bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
-                'dot' => 'bg-gray-500',
-            ],
-            6 => [
-                'label' => 'Removed',
-                'badge' => 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300',
-                'dot' => 'bg-orange-500',
+                'label' => 'CLOSED',
+                'badge' => 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300',
+                'dot' => 'bg-indigo-500',
             ],
         ];
-    }
-
-    private function getMatchOddsStatusExpression(string $eventAlias = 'events'): string
-    {
-        $quotedAlias = '"' . str_replace('"', '""', $eventAlias) . '"';
-
-        return '(SELECT ml."status"
-            FROM market_lists ml
-            WHERE ml."type" = \'match_odds\'
-              AND ml."exEventId" = ' . $quotedAlias . '."exEventId"
-            ORDER BY ml."id" DESC
-            LIMIT 1)';
     }
 }
 

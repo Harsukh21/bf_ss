@@ -42,12 +42,29 @@
                 <div class="min-w-0 flex-1">
                     <h2 class="text-lg md:text-xl font-semibold text-gray-900 dark:text-gray-100 truncate">{{ Auth::user()->name }}</h2>
                     <p class="text-sm text-gray-600 dark:text-gray-400 truncate">{{ Auth::user()->email }}</p>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 mt-1">
-                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                        </svg>
-                        Event Manager
-                    </span>
+                    <div class="flex flex-wrap gap-2 mt-1">
+                        @php
+                            $user = Auth::user();
+                            $userRoles = $user->roles;
+                        @endphp
+                        @if($userRoles && $userRoles->count() > 0)
+                            @foreach($userRoles as $role)
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    {{ $role->name }}
+                                </span>
+                            @endforeach
+                        @else
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-300">
+                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                </svg>
+                                No Role Assigned
+                            </span>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>

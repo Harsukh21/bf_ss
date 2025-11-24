@@ -101,6 +101,7 @@
                         if(request('search')) $filterCount++;
                         if(request('status')) $filterCount++;
                         if(request('role')) $filterCount++;
+                        if(request('telegram_verified')) $filterCount++;
                         if(request('date_from')) $filterCount++;
                         if(request('date_to')) $filterCount++;
                     @endphp
@@ -174,6 +175,12 @@
                             <button onclick="removeFilter('role')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
                         </span>
                     @endif
+                    @if(request('telegram_verified'))
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                            Telegram: {{ ucfirst(request('telegram_verified')) }}
+                            <button onclick="removeFilter('telegram_verified')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
+                        </span>
+                    @endif
                     @if(request('date_from'))
                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
                             From: {{ request('date_from') }}
@@ -205,16 +212,13 @@
                                 Contact Info
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Roles
+                                Telegram
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Status
+                                Roles & Status
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Last Login
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Created
+                                Login & Created
                             </th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Actions
@@ -246,49 +250,85 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @if($user->roles && $user->roles->count() > 0)
-                                        <div class="flex flex-wrap gap-1">
-                                            @foreach($user->roles as $role)
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
-                                                    {{ $role->name }}
-                                                </span>
-                                            @endforeach
-                                        </div>
+                                    @if($user->telegram_id)
+                                        <div class="text-sm text-gray-900 dark:text-gray-100 mb-1">{{ $user->telegram_id }}</div>
+                                        @if($user->telegram_chat_id)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                                </svg>
+                                                Verified
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                                </svg>
+                                                Unverified
+                                            </span>
+                                        @endif
                                     @else
-                                        <span class="text-xs text-gray-400 dark:text-gray-500">No roles</span>
+                                        <span class="text-sm text-gray-400 dark:text-gray-500 italic">Not set</span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @php
-                                        $authorizedEmails = ['harsukh21@gmail.com', 'sam.parkinson7777@gmail.com'];
-                                        $isAuthorized = in_array(auth()->user()->email, $authorizedEmails);
-                                    @endphp
-                                    @if($isAuthorized)
-                                        <form action="{{ route('users.update-status', $user) }}" method="POST" class="inline" id="statusForm{{ $user->id }}">
-                                            @csrf
-                                            @method('PATCH')
-                                            <select name="status" onchange="updateStatus({{ $user->id }})" class="status-select text-xs font-medium rounded-full px-3 py-1 border-0 focus:ring-2 focus:ring-primary-500 {{ $user->email_verified_at ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300' }}">
-                                                <option value="active" {{ $user->email_verified_at ? 'selected' : '' }}>Active</option>
-                                                <option value="inactive" {{ !$user->email_verified_at ? 'selected' : '' }}>Inactive</option>
-                                            </select>
-                                        </form>
-                                    @else
-                                        @if($user->email_verified_at)
-                                            <span class="status-badge status-active">Active</span>
-                                        @else
-                                            <span class="status-badge status-inactive">Inactive</span>
-                                        @endif
-                                    @endif
+                                    <div class="space-y-2">
+                                        <!-- Roles -->
+                                        <div>
+                                            @if($user->roles && $user->roles->count() > 0)
+                                                <div class="flex flex-wrap gap-1">
+                                                    @foreach($user->roles as $role)
+                                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+                                                            {{ $role->name }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <span class="text-xs text-gray-400 dark:text-gray-500">No roles</span>
+                                            @endif
+                                        </div>
+                                        <!-- Status -->
+                                        <div>
+                                            @php
+                                                $authorizedEmails = ['harsukh21@gmail.com', 'sam.parkinson7777@gmail.com'];
+                                                $isAuthorized = in_array(auth()->user()->email, $authorizedEmails);
+                                            @endphp
+                                            @if($isAuthorized)
+                                                <form action="{{ route('users.update-status', $user) }}" method="POST" class="inline" id="statusForm{{ $user->id }}">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <select name="status" onchange="updateStatus({{ $user->id }})" class="status-select text-xs font-medium rounded-full px-3 py-1 border-0 focus:ring-2 focus:ring-primary-500 {{ $user->email_verified_at ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300' }}">
+                                                        <option value="active" {{ $user->email_verified_at ? 'selected' : '' }}>Active</option>
+                                                        <option value="inactive" {{ !$user->email_verified_at ? 'selected' : '' }}>Inactive</option>
+                                                    </select>
+                                                </form>
+                                            @else
+                                                @if($user->email_verified_at)
+                                                    <span class="status-badge status-active">Active</span>
+                                                @else
+                                                    <span class="status-badge status-inactive">Inactive</span>
+                                                @endif
+                                            @endif
+                                        </div>
+                                    </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    @if($user->last_login_at)
-                                        {{ $user->last_login_at->format('M j, Y g:i A') }}
-                                    @else
-                                        <span class="text-gray-400">Never</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $user->created_at->format('M j, Y') }}
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="space-y-1">
+                                        <!-- Last Login -->
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                                            <span class="text-xs text-gray-400 dark:text-gray-500">Last Login:</span>
+                                            @if($user->last_login_at)
+                                                {{ $user->last_login_at->format('M j, Y g:i A') }}
+                                            @else
+                                                <span class="text-gray-400">Never</span>
+                                            @endif
+                                        </div>
+                                        <!-- Created -->
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                                            <span class="text-xs text-gray-400 dark:text-gray-500">Created:</span>
+                                            {{ $user->created_at->format('M j, Y') }}
+                                        </div>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
@@ -381,6 +421,17 @@
                     <option value="">All Status</option>
                     <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
                     <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                </select>
+            </div>
+            
+            <!-- Telegram Verification Status -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Telegram Verification</label>
+                <select name="telegram_verified" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-gray-100">
+                    <option value="">All</option>
+                    <option value="verified" {{ request('telegram_verified') == 'verified' ? 'selected' : '' }}>Verified</option>
+                    <option value="unverified" {{ request('telegram_verified') == 'unverified' ? 'selected' : '' }}>Unverified</option>
+                    <option value="not_set" {{ request('telegram_verified') == 'not_set' ? 'selected' : '' }}>Not Set</option>
                 </select>
             </div>
             

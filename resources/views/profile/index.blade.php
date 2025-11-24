@@ -2,6 +2,51 @@
 
 @section('title', 'Profile')
 
+@push('css')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<style>
+    .select2-container--bootstrap-5 .select2-selection {
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        min-height: 2.5rem;
+    }
+    .dark .select2-container--bootstrap-5 .select2-selection {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: #f3f4f6;
+    }
+    .select2-container--bootstrap-5 .select2-selection__rendered {
+        color: #111827;
+        padding-left: 0.75rem;
+    }
+    .dark .select2-container--bootstrap-5 .select2-selection__rendered {
+        color: #f3f4f6;
+    }
+    .select2-container--bootstrap-5 .select2-results__option {
+        padding: 0.5rem 0.75rem;
+    }
+    .select2-container--bootstrap-5 .select2-results__option--highlighted {
+        background-color: #3b82f6;
+    }
+    .select2-dropdown {
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+    }
+    .dark .select2-dropdown {
+        background-color: #374151;
+        border-color: #4b5563;
+    }
+    .select2-search__field {
+        color: #111827;
+    }
+    .dark .select2-search__field {
+        background-color: #374151;
+        color: #f3f4f6;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="px-4 py-6 sm:px-0">
     <div class="max-w-7xl mx-auto">
@@ -102,16 +147,21 @@
 
                         <div>
                             <label for="timezone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Timezone</label>
-                            <select id="timezone" name="timezone" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500">
-                                <option value="UTC" {{ $user->timezone === 'UTC' ? 'selected' : '' }}>UTC</option>
-                                <option value="America/New_York" {{ $user->timezone === 'America/New_York' ? 'selected' : '' }}>Eastern Time</option>
-                                <option value="America/Chicago" {{ $user->timezone === 'America/Chicago' ? 'selected' : '' }}>Central Time</option>
-                                <option value="America/Denver" {{ $user->timezone === 'America/Denver' ? 'selected' : '' }}>Mountain Time</option>
-                                <option value="America/Los_Angeles" {{ $user->timezone === 'America/Los_Angeles' ? 'selected' : '' }}>Pacific Time</option>
-                                <option value="Europe/London" {{ $user->timezone === 'Europe/London' ? 'selected' : '' }}>London</option>
-                                <option value="Europe/Paris" {{ $user->timezone === 'Europe/Paris' ? 'selected' : '' }}>Paris</option>
-                                <option value="Asia/Tokyo" {{ $user->timezone === 'Asia/Tokyo' ? 'selected' : '' }}>Tokyo</option>
-                                <option value="Asia/Shanghai" {{ $user->timezone === 'Asia/Shanghai' ? 'selected' : '' }}>Shanghai</option>
+                            <select id="timezone" 
+                                    name="timezone" 
+                                    class="timezone-select w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 @error('timezone') border-red-500 @enderror">
+                                <option value="">Select Timezone</option>
+                                @php
+                                    $timezones = config('timezones.timezones', []);
+                                    $selectedTimezone = old('timezone', $user->timezone);
+                                @endphp
+                                @foreach($timezones as $tz => $data)
+                                    <option value="{{ $tz }}" 
+                                            data-flag="{{ $data['flag'] }}" 
+                                            {{ $selectedTimezone == $tz ? 'selected' : '' }}>
+                                        {{ $data['flag'] }} {{ $data['name'] }} ({{ $tz }})
+                                    </option>
+                                @endforeach
                             </select>
                             @error('timezone')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -136,32 +186,55 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="web_pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Web Pin</label>
+                            <label for="web_pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Web Pin
+                                @if($user->web_pin)
+                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        Set
+                                    </span>
+                                @endif
+                            </label>
                             <input type="text" 
                                    id="web_pin" 
                                    name="web_pin" 
-                                   value="{{ old('web_pin', $user->web_pin) }}"
+                                   value="{{ old('web_pin', '') }}"
                                    pattern="[0-9]*"
                                    inputmode="numeric"
                                    minlength="6"
                                    maxlength="20"
                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 @error('web_pin') border-red-500 @enderror"
-                                   placeholder="Enter 6+ digit PIN">
+                                   placeholder="{{ $user->web_pin ? 'Enter new PIN to change (leave blank to keep current)' : 'Enter 6+ digit PIN' }}">
                             @error('web_pin')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Only numbers, minimum 6 digits</p>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                @if($user->web_pin)
+                                    Leave blank to keep your current PIN. Only numbers, minimum 6 digits.
+                                @else
+                                    Only numbers, minimum 6 digits
+                                @endif
+                            </p>
                         </div>
 
                         <div>
                             <label for="telegram_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Telegram ID
-                                @if($user->telegram_id)
+                                @if($user->telegram_chat_id)
                                     <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                         </svg>
                                         Verified
+                                    </span>
+                                @elseif($user->telegram_id)
+                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                        </svg>
+                                        Unverified
                                     </span>
                                 @endif
                             </label>
@@ -461,6 +534,7 @@
 </div>
 
 @push('js')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     // Web Pin validation - only allow numbers and minimum 6 digits
     document.addEventListener('DOMContentLoaded', function() {
@@ -482,6 +556,57 @@
                 }
             });
         }
+
+        // Initialize Select2 for timezone dropdown
+        function formatTimezone(option) {
+            if (!option.id) {
+                return option.text;
+            }
+            var $option = $(option.element);
+            var flag = $option.data('flag');
+            var text = option.text;
+            
+            // Extract flag, name, and timezone from text
+            var parts = text.match(/^([^\s]+)\s+(.+?)\s+\((.+)\)$/);
+            if (parts) {
+                var flag = parts[1];
+                var name = parts[2];
+                var tz = parts[3];
+                return $('<span><span class="mr-2">' + flag + '</span>' + name + ' <span class="text-gray-500 text-xs">(' + tz + ')</span></span>');
+            }
+            return text;
+        }
+
+        $('#timezone').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Select Timezone',
+            allowClear: true,
+            templateResult: formatTimezone,
+            templateSelection: function(option) {
+                if (!option.id) {
+                    return option.text;
+                }
+                var $option = $(option.element);
+                var flag = $option.data('flag');
+                var text = option.text;
+                var parts = text.match(/^([^\s]+)\s+(.+?)\s+\((.+)\)$/);
+                if (parts) {
+                    var flag = parts[1];
+                    var name = parts[2];
+                    return $('<span><span class="mr-2">' + flag + '</span>' + name + '</span>');
+                }
+                return text;
+            },
+            language: {
+                noResults: function() {
+                    return "No timezone found";
+                },
+                searching: function() {
+                    return "Searching...";
+                }
+            }
+        });
     });
 </script>
 @endpush

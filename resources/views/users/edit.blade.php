@@ -152,21 +152,37 @@
                                 </div>
                                 
                                 <div>
-                                    <label for="web_pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Web Pin</label>
+                                    <label for="web_pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Web Pin
+                                        @if($user->web_pin)
+                                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                                </svg>
+                                                Set
+                                            </span>
+                                        @endif
+                                    </label>
                                     <input type="text" 
                                            id="web_pin" 
                                            name="web_pin" 
-                                           value="{{ old('web_pin', $user->web_pin) }}"
+                                           value="{{ old('web_pin', '') }}"
                                            pattern="[0-9]*"
                                            inputmode="numeric"
                                            minlength="6"
                                            maxlength="20"
                                            class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-gray-100 @error('web_pin') border-red-500 @enderror"
-                                           placeholder="Enter 6+ digit PIN">
+                                           placeholder="{{ $user->web_pin ? 'Enter new PIN to change (leave blank to keep current)' : 'Enter 6+ digit PIN' }}">
                                     @error('web_pin')
                                         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                                     @enderror
-                                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Only numbers, minimum 6 digits</p>
+                                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                        @if($user->web_pin)
+                                            Leave blank to keep the current PIN. Only numbers, minimum 6 digits.
+                                        @else
+                                            Only numbers, minimum 6 digits
+                                        @endif
+                                    </p>
                                 </div>
                                 
                                 <div>
