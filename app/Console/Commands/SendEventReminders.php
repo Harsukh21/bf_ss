@@ -119,6 +119,43 @@ class SendEventReminders extends Command
                     $this->markReminderAsSent($reminder->id);
                     $this->info("✓ Reminder sent for event: {$eventData->eventName} ({$reminder->exEventId})");
                     $sentCount++;
+                    
+                    // Create next reminder if event is still interrupted and remind_me_after is set
+                    // Re-check event status to ensure it's still interrupted
+                    $eventStillInterrupted = DB::table('events')
+                        ->where('exEventId', $reminder->exEventId)
+                        ->value('is_interrupted');
+                    
+                    $remindMeAfter = $event->remind_me_after ?? 0;
+                    
+                    if ($eventStillInterrupted && $remindMeAfter > 0) {
+                        $nextReminderTime = Carbon::now()->addMinutes($remindMeAfter);
+                        
+                        // Create new reminder for the next interval
+                        // Use updateOrInsert to avoid duplicates if somehow a reminder already exists
+                        DB::table('event_reminders')->updateOrInsert(
+                            [
+                                'exEventId' => $reminder->exEventId,
+                                'reminder_time' => $nextReminderTime->format('Y-m-d H:i:s'),
+                            ],
+                            [
+                                'reminder_time' => $nextReminderTime->format('Y-m-d H:i:s'),
+                                'sent' => false,
+                                'sent_at' => null,
+                                'error_message' => null,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]
+                        );
+                        
+                        $this->info("  → Next reminder scheduled for: {$nextReminderTime->format('Y-m-d H:i:s')}");
+                    } else {
+                        if (!$eventStillInterrupted) {
+                            $this->info("  → Event no longer interrupted. Stopping reminders.");
+                        } elseif ($remindMeAfter <= 0) {
+                            $this->info("  → remind_me_after is 0 or not set. Stopping reminders.");
+                        }
+                    }
                 } else {
                     $this->markReminderAsFailed($reminder->id, 'Failed to send Telegram message');
                     $this->error("✗ Failed to send reminder for event: {$eventData->eventName} ({$reminder->exEventId})");

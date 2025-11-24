@@ -547,11 +547,17 @@ class RiskController extends Controller
         }
         
         // Get unique market IDs with their max volumes
-        $marketVolumesMap = $allMarketVolumes->groupBy(function($item) {
-            return $item->ex_event_id . '|' . $item->exMarketId;
-        })->map(function($group) {
-            return $group->max('max_total_matched');
-        });
+        // Filter out markets with 0 or null volume
+        $marketVolumesMap = $allMarketVolumes
+            ->filter(function($item) {
+                return $item->max_total_matched > 0;
+            })
+            ->groupBy(function($item) {
+                return $item->ex_event_id . '|' . $item->exMarketId;
+            })
+            ->map(function($group) {
+                return $group->max('max_total_matched');
+            });
         
         // Build query with market_lists - filter to only markets that have volumes
         $marketKeys = $marketVolumesMap->keys()->toArray();
@@ -625,16 +631,21 @@ class RiskController extends Controller
             }
         }
         
-        // Get results and add max_total_matched, filter to only include markets with volumes
+        // Get results and add max_total_matched, filter to only include markets with volumes > 0
         $markets = $query->get()->map(function($market) use ($marketVolumesMap) {
             $key = $market->exEventId . '|' . $market->exMarketId;
             $volume = $marketVolumesMap->get($key);
-            if ($volume !== null) {
+            if ($volume !== null && $volume > 0) {
                 $market->max_total_matched = $volume;
                 return $market;
             }
             return null;
-        })->filter(); // Remove null values (markets without volumes)
+        })->filter(); // Remove null values (markets without volumes or with 0 volume)
+        
+        // Filter out markets with 0 volume
+        $markets = $markets->filter(function($market) {
+            return isset($market->max_total_matched) && $market->max_total_matched > 0;
+        });
         
         // Apply volume filter after getting data
         if ($filters['volume_value'] && $filters['volume_operator']) {
