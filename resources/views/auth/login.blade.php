@@ -138,6 +138,8 @@
             overflow: hidden;
         }
         
+        #emailField,
+        #usernameField,
         #passwordField,
         #webPinField {
             position: absolute;
@@ -156,6 +158,8 @@
             will-change: opacity, transform;
         }
         
+        #emailField.active,
+        #usernameField.active,
         #passwordField.active,
         #webPinField.active {
             position: relative;
@@ -201,30 +205,57 @@
             </div>
         </div>
         
-        <!-- Email Field -->
-        <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-            </label>
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
-                    </svg>
+        <!-- Email/Username Field Container -->
+        <div class="auth-field-container">
+            <!-- Email Field (for Password login) -->
+            <div id="emailField" class="{{ old('login_method', 'password') === 'password' ? 'active' : '' }}">
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
+                        </svg>
+                    </div>
+                    <input 
+                        type="email" 
+                        name="email" 
+                        id="email" 
+                        value="{{ old('email') }}"
+                        autocomplete="email"
+                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 @error('email') border-red-500 @enderror"
+                        placeholder="Enter your email">
                 </div>
-                <input 
-                    type="email" 
-                    name="email" 
-                    id="email" 
-                    value="{{ old('email') }}"
-                    required
-                    autocomplete="email"
-                    class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 @error('email') border-red-500 @enderror"
-                    placeholder="Enter your email">
+                @error('email')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
             </div>
-            @error('email')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
+
+            <!-- Username Field (for Web PIN login) -->
+            <div id="usernameField" class="{{ old('login_method') === 'web_pin' ? 'active' : '' }}">
+                <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                    Username
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <input 
+                        type="text" 
+                        name="username" 
+                        id="username" 
+                        value="{{ old('username') }}"
+                        autocomplete="username"
+                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 @error('username') border-red-500 @enderror"
+                        placeholder="Enter your username">
+                </div>
+                @error('username')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
         </div>
 
         <!-- Auth Field Container - Prevents layout shifts -->
@@ -355,8 +386,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             const loginMethodPassword = document.getElementById('loginMethodPassword');
             const loginMethodWebPin = document.getElementById('loginMethodWebPin');
+            const emailField = document.getElementById('emailField');
+            const usernameField = document.getElementById('usernameField');
             const passwordField = document.getElementById('passwordField');
             const webPinField = document.getElementById('webPinField');
+            const emailInput = document.getElementById('email');
+            const usernameInput = document.getElementById('username');
             const passwordInput = document.getElementById('password');
             const webPinInput = document.getElementById('web_pin');
             const toggleIndicator = document.getElementById('toggleIndicator');
@@ -373,17 +408,22 @@
                     passwordLabel.classList.add('active');
                     webPinLabel.classList.remove('active');
                     
-                    // Smooth field transition - Fade out Web PIN first
+                    // Smooth field transitions - Hide Web PIN fields first
+                    usernameField.classList.remove('active');
                     webPinField.classList.remove('active');
                     
-                    // After fade out starts, fade in Password
+                    // After fade out starts, fade in Password fields
                     setTimeout(() => {
+                        emailField.classList.add('active');
                         passwordField.classList.add('active');
                     }, 100);
                     
                     // Update required attributes
+                    emailInput.setAttribute('required', 'required');
                     passwordInput.setAttribute('required', 'required');
+                    usernameInput.removeAttribute('required');
                     webPinInput.removeAttribute('required');
+                    usernameInput.value = ''; // Clear username when switching
                     webPinInput.value = ''; // Clear web_pin when switching
                 } else if (loginMethodWebPin.checked) {
                     // Move indicator to right (Web PIN)
@@ -393,18 +433,23 @@
                     webPinLabel.classList.add('active');
                     passwordLabel.classList.remove('active');
                     
-                    // Smooth field transition - Fade out Password first
+                    // Smooth field transitions - Hide Password fields first
+                    emailField.classList.remove('active');
                     passwordField.classList.remove('active');
                     
-                    // After fade out starts, fade in Web PIN
+                    // After fade out starts, fade in Web PIN fields
                     setTimeout(() => {
+                        usernameField.classList.add('active');
                         webPinField.classList.add('active');
                     }, 100);
                     
                     // Update required attributes
-                    passwordInput.removeAttribute('required');
-                    passwordInput.value = ''; // Clear password when switching
+                    usernameInput.setAttribute('required', 'required');
                     webPinInput.setAttribute('required', 'required');
+                    emailInput.removeAttribute('required');
+                    passwordInput.removeAttribute('required');
+                    emailInput.value = ''; // Clear email when switching
+                    passwordInput.value = ''; // Clear password when switching
                 }
             }
             
@@ -412,12 +457,16 @@
             loginMethodPassword.addEventListener('change', toggleLoginMethod);
             loginMethodWebPin.addEventListener('change', toggleLoginMethod);
             
-            // Initial state - ensure correct field is active on page load
+            // Initial state - ensure correct fields are active on page load
             if (loginMethodPassword.checked) {
+                emailField.classList.add('active');
                 passwordField.classList.add('active');
+                usernameField.classList.remove('active');
                 webPinField.classList.remove('active');
             } else if (loginMethodWebPin.checked) {
+                usernameField.classList.add('active');
                 webPinField.classList.add('active');
+                emailField.classList.remove('active');
                 passwordField.classList.remove('active');
             }
             

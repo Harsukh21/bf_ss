@@ -28,19 +28,16 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'login_method' => 'required|in:password,web_pin',
-        ]);
-
         $loginMethod = $request->input('login_method', 'password');
-        $email = $request->input('email');
 
         // Validate based on login method
         if ($loginMethod === 'password') {
             $request->validate([
+                'email' => 'required|email',
                 'password' => 'required',
             ]);
+            
+            $email = $request->input('email');
             
             // Attempt to authenticate using Laravel's built-in Auth system
             $credentials = $request->only('email', 'password');
@@ -67,19 +64,22 @@ class AuthController extends Controller
             
         } else if ($loginMethod === 'web_pin') {
             $request->validate([
+                'username' => 'required|string|max:255',
                 'web_pin' => 'required|string|regex:/^[0-9]+$/|min:6',
             ], [
                 'web_pin.regex' => 'Web PIN must contain only numbers.',
                 'web_pin.min' => 'Web PIN must be at least 6 digits.',
             ]);
             
-            // Find user by email
-            $user = User::where('email', $email)->first();
+            $username = $request->input('username');
+            
+            // Find user by username
+            $user = User::where('username', $username)->first();
             
             if (!$user) {
                 return back()->withErrors([
-                    'email' => 'The provided credentials do not match our records.',
-                ])->withInput($request->only('email', 'login_method'));
+                    'username' => 'The provided credentials do not match our records.',
+                ])->withInput($request->only('username', 'login_method'));
             }
             
             // Get raw web_pin value from database (bypassing Eloquent casts)
@@ -88,7 +88,7 @@ class AuthController extends Controller
             if (empty($userData->web_pin)) {
                 return back()->withErrors([
                     'web_pin' => 'Web PIN is not set for this account. Please use password login or contact administrator.',
-                ])->withInput($request->only('email', 'login_method'));
+                ])->withInput($request->only('username', 'login_method'));
             }
             
             // Verify web_pin - handle both hashed and plain text (backward compatibility)
@@ -110,7 +110,7 @@ class AuthController extends Controller
             if (!$isVerified) {
                 return back()->withErrors([
                     'web_pin' => 'The provided Web PIN is incorrect.',
-                ])->withInput($request->only('email', 'login_method'));
+                ])->withInput($request->only('username', 'login_method'));
             }
             
             // Auto-hash plain text web_pin for security (one-time migration)
@@ -134,8 +134,8 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'Invalid login method.',
-        ])->withInput($request->only('email', 'login_method'));
+            'login_method' => 'Invalid login method.',
+        ])->withInput($request->only('email', 'username', 'login_method'));
     }
 
     /**
