@@ -104,6 +104,16 @@
                                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $user->email }}</dd>
                             </div>
                             <div>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Username</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                    @if($user->username)
+                                        <span class="font-mono">{{ $user->username }}</span>
+                                    @else
+                                        <span class="text-gray-400 italic">Not set</span>
+                                    @endif
+                                </dd>
+                            </div>
+                            <div>
                                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">First Name</dt>
                                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $user->first_name }}</dd>
                             </div>

@@ -103,10 +103,13 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'username' => ['nullable', 'string', 'max:255', 'unique:users', 'regex:/^[a-zA-Z0-9_]+$/'],
             'password' => ['required', 'confirmed', Password::defaults()],
             'web_pin' => ['nullable', 'string', 'regex:/^[0-9]+$/', 'min:6'],
             'telegram_id' => ['nullable', 'string', 'max:100'],
         ], [
+            'username.unique' => 'This username is already taken.',
+            'username.regex' => 'Username can only contain letters, numbers, and underscores.',
             'web_pin.regex' => 'Web Pin must contain only numbers.',
             'web_pin.min' => 'Web Pin must be at least 6 digits.',
             'telegram_id.max' => 'Telegram ID must not exceed 100 characters.',
@@ -121,6 +124,7 @@ class UserController extends Controller
         $userData = [
             'name' => $request->name,
             'email' => $request->email,
+            'username' => $request->username,
             'password' => Hash::make($request->password),
             'telegram_id' => $request->telegram_id,
         ];
@@ -186,6 +190,7 @@ class UserController extends Controller
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'username' => ['nullable', 'string', 'max:255', 'unique:users,username,' . $user->id, 'regex:/^[a-zA-Z0-9_]+$/'],
             'phone' => ['nullable', 'string', 'max:20'],
             'password' => ['nullable', 'confirmed', Password::defaults()],
             'web_pin' => ['nullable', 'string', 'regex:/^[0-9]+$/', 'min:6'],
@@ -195,6 +200,8 @@ class UserController extends Controller
             'timezone' => ['nullable', 'string', 'max:50'],
             'language' => ['nullable', 'string', 'max:10'],
         ], [
+            'username.unique' => 'This username is already taken.',
+            'username.regex' => 'Username can only contain letters, numbers, and underscores.',
             'web_pin.regex' => 'Web Pin must contain only numbers.',
             'web_pin.min' => 'Web Pin must be at least 6 digits.',
             'telegram_id.max' => 'Telegram ID must not exceed 100 characters.',
@@ -211,6 +218,7 @@ class UserController extends Controller
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'email' => $request->email,
+            'username' => $request->username,
             'phone' => $request->phone,
             'telegram_id' => $request->telegram_id,
             'date_of_birth' => $request->date_of_birth,

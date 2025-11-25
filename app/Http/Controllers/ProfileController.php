@@ -41,6 +41,7 @@ class ProfileController extends Controller
     public function updateProfile(Request $request)
     {
         $request->validate([
+            'username' => ['nullable', 'string', 'max:255', 'unique:users,username,' . Auth::id(), 'regex:/^[a-zA-Z0-9_]+$/'],
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
@@ -51,6 +52,8 @@ class ProfileController extends Controller
             'web_pin' => 'nullable|string|regex:/^[0-9]+$/|min:6',
             'telegram_id' => 'nullable|string|max:100',
         ], [
+            'username.unique' => 'This username is already taken.',
+            'username.regex' => 'Username can only contain letters, numbers, and underscores.',
             'web_pin.regex' => 'Web Pin must contain only numbers.',
             'web_pin.min' => 'Web Pin must be at least 6 digits.',
             'telegram_id.max' => 'Telegram ID must not exceed 100 characters.',
@@ -141,6 +144,7 @@ class ProfileController extends Controller
         
         // Prepare update data
         $updateData = [
+            'username' => $request->username,
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'phone' => $request->phone,

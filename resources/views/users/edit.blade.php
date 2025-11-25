@@ -102,6 +102,20 @@
                                 </div>
                                 
                                 <div>
+                                    <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                                    <input type="text" 
+                                           id="username" 
+                                           name="username" 
+                                           value="{{ old('username', $user->username) }}"
+                                           class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-gray-100 @error('username') border-red-500 @enderror" 
+                                           placeholder="Enter username (optional)">
+                                    @error('username')
+                                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                    @enderror
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Username can only contain letters, numbers, and underscores.</p>
+                                </div>
+                                
+                                <div>
                                     <label for="first_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name *</label>
                                     <input type="text" 
                                            id="first_name" 
