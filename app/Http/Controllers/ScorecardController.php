@@ -32,7 +32,21 @@ class ScorecardController extends Controller
             ->join('market_lists', function($join) {
                 $join->on('market_lists.exEventId', '=', 'events.exEventId');
             })
-            ->where('market_lists.status', 3); // INPLAY status
+            ->where('market_lists.status', 3) // INPLAY status
+            ->where(function($query) {
+                $query->where(function($q) {
+                    // Show interrupted events (regardless of settle/void status)
+                    $q->where('events.is_interrupted', true);
+                })->orWhere(function($q) {
+                    // Show non-interrupted events that are not settled and not void
+                    $q->where('events.IsSettle', 0)
+                      ->where('events.IsVoid', 0)
+                      ->where(function($subQ) {
+                          $subQ->where('events.is_interrupted', false)
+                                ->orWhereNull('events.is_interrupted');
+                      });
+                });
+            });
 
         // Apply filters
         if ($request->filled('search')) {
