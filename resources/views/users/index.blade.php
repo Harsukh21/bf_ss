@@ -245,8 +245,10 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900 dark:text-gray-100">{{ $user->email }}</div>
-                                    @if($user->username)
-                                        <div class="text-sm text-gray-500 dark:text-gray-400 font-mono">@{{ $user->username }}</div>
+                                    @if(!empty($user->username))
+                                        <div class="text-sm text-gray-500 dark:text-gray-400 font-mono">{{ '@' . $user->username }}</div>
+                                    @else
+                                        <div class="text-sm text-gray-400 dark:text-gray-500 italic">Username: Not set</div>
                                     @endif
                                     @if($user->phone)
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ $user->phone }}</div>
