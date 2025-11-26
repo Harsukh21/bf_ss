@@ -12,6 +12,14 @@ class ScorecardController extends Controller
     public function index(Request $request)
     {
         // Build the query with filters
+        // Use a subquery to get INPLAY markets count and first market time
+        $inplayMarketsSubquery = DB::table('market_lists')
+            ->select('exEventId')
+            ->selectRaw('COUNT(DISTINCT id) as inplay_markets_count')
+            ->selectRaw('MIN("marketTime") as first_market_time')
+            ->where('status', 3) // INPLAY status
+            ->groupBy('exEventId');
+
         $query = DB::table('events')
             ->select([
                 'events.id',
@@ -26,25 +34,25 @@ class ScorecardController extends Controller
                 'events.is_interrupted',
                 'events.labels',
                 'events.remind_me_after',
-                DB::raw('COUNT(DISTINCT "market_lists"."id") as inplay_markets_count'),
-                DB::raw('MIN("market_lists"."marketTime") as first_market_time'),
+                DB::raw('COALESCE(inplay_markets.inplay_markets_count, 0) as inplay_markets_count'),
+                DB::raw('inplay_markets.first_market_time'),
             ])
-            ->join('market_lists', function($join) {
-                $join->on('market_lists.exEventId', '=', 'events.exEventId');
+            ->leftJoinSub($inplayMarketsSubquery, 'inplay_markets', function($join) {
+                $join->on('inplay_markets.exEventId', '=', 'events.exEventId');
             })
-            ->where('market_lists.status', 3) // INPLAY status
             ->where(function($query) {
                 $query->where(function($q) {
-                    // Show interrupted events (regardless of settle/void status)
+                    // Show interrupted events (regardless of settle/void status or market status)
                     $q->where('events.is_interrupted', true);
                 })->orWhere(function($q) {
-                    // Show non-interrupted events that are not settled and not void
+                    // Show non-interrupted events that are not settled, not void, and have INPLAY markets
                     $q->where('events.IsSettle', 0)
                       ->where('events.IsVoid', 0)
                       ->where(function($subQ) {
                           $subQ->where('events.is_interrupted', false)
                                 ->orWhereNull('events.is_interrupted');
-                      });
+                      })
+                      ->whereNotNull('inplay_markets.exEventId'); // Must have at least one INPLAY market
                 });
             });
 
