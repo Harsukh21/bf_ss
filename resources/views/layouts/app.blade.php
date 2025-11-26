@@ -818,7 +818,7 @@
             });
         })();
     </script>
-
+    
     <!-- Push Notification Permission Alert -->
     <div id="pushNotificationAlert" class="fixed bottom-4 right-4 z-50 max-w-sm hidden animate-slide-up">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">

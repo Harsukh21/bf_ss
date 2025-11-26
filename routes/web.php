@@ -99,11 +99,11 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
     Route::prefix('risk')->name('risk.')->group(function () {
         // Betlist Check - Keep same route names but use /betlist-check URL path
         Route::prefix('betlist-check')->group(function () {
-            Route::get('/', [\App\Http\Controllers\RiskController::class, 'index'])->name('index');
-            Route::get('/pending', [\App\Http\Controllers\RiskController::class, 'pending'])->name('pending');
-            Route::get('/done', [\App\Http\Controllers\RiskController::class, 'done'])->name('done');
-            Route::post('/markets/{market}/labels', [\App\Http\Controllers\RiskController::class, 'updateLabels'])->name('markets.labels');
-            Route::post('/markets/{market}/done', [\App\Http\Controllers\RiskController::class, 'markDone'])->name('markets.done');
+        Route::get('/', [\App\Http\Controllers\RiskController::class, 'index'])->name('index');
+        Route::get('/pending', [\App\Http\Controllers\RiskController::class, 'pending'])->name('pending');
+        Route::get('/done', [\App\Http\Controllers\RiskController::class, 'done'])->name('done');
+        Route::post('/markets/{market}/labels', [\App\Http\Controllers\RiskController::class, 'updateLabels'])->name('markets.labels');
+        Route::post('/markets/{market}/done', [\App\Http\Controllers\RiskController::class, 'markDone'])->name('markets.done');
         });
         
         // Vol. Base Markets (placeholder for future functionality)

@@ -192,9 +192,9 @@
                     @endphp
                     <button onclick="toggleDropdown('risk')" class="flex items-center justify-between w-full px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ $isRiskActive ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
                         <div class="flex items-center">
-                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.306 0-2.417.835-2.83 2H7a1 1 0 000 2h2.17A3.001 3.001 0 0012 14a3 3 0 002.83-2H17a1 1 0 100-2h-2.17A3.001 3.001 0 0012 8zM5 20h14a2 2 0 002-2V9a2 2 0 00-.764-1.582l-7-5.25a2 2 0 00-2.472 0l-7 5.25A2 2 0 005 9v9a2 2 0 002 2z"></path>
-                            </svg>
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.306 0-2.417.835-2.83 2H7a1 1 0 000 2h2.17A3.001 3.001 0 0012 14a3 3 0 002.83-2H17a1 1 0 100-2h-2.17A3.001 3.001 0 0012 8zM5 20h14a2 2 0 002-2V9a2 2 0 00-.764-1.582l-7-5.25a2 2 0 00-2.472 0l-7 5.25A2 2 0 005 9v9a2 2 0 002 2z"></path>
+                    </svg>
                             Risk Team
                         </div>
                         <svg id="risk-arrow" class="w-4 h-4 transition-transform duration-200 {{ $isRiskActive ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
