@@ -407,43 +407,75 @@
                             </tr>
                             <!-- Labels Row with Market Old Limits and Remind Me After -->
                             @php
-                                // Count how many labels are checked
-                                $checkedCount = 0;
-                                foreach ($labelConfig as $labelKey => $labelName) {
+                                // Define required labels (first 4)
+                                $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
+                                
+                                // Count how many required labels are checked
+                                $requiredCheckedCount = 0;
+                                foreach ($requiredLabelKeys as $labelKey) {
                                     if (isset($event->labels[$labelKey]) && (bool)$event->labels[$labelKey] === true) {
-                                        $checkedCount++;
+                                        $requiredCheckedCount++;
                                     }
                                 }
-                                $allChecked = $checkedCount === count($labelConfig);
+                                $allRequiredChecked = $requiredCheckedCount === count($requiredLabelKeys);
                                 $isInterrupted = $event->is_interrupted ?? false;
                                 $hasMarketLimits = !empty($event->market_old_limits ?? []);
                                 $hasReminder = !empty($event->remind_me_after ?? null);
                                 
-                                // Show row if: labels not all checked OR (interrupted AND has market limits/reminder)
-                                $showRow = !$allChecked || ($isInterrupted && ($hasMarketLimits || $hasReminder));
+                                // Show row if: required labels not all checked OR (interrupted AND has market limits/reminder)
+                                $showRow = !$allRequiredChecked || ($isInterrupted && ($hasMarketLimits || $hasReminder));
                             @endphp
                             @if($showRow)
                             <tr class="js-labels-row bg-gray-50/60 dark:bg-gray-800/70 text-xs text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700" data-event-id="{{ $event->exEventId }}">
                                 <td colspan="4" class="px-6 py-3">
                                     <div class="flex flex-wrap items-center justify-between gap-6">
-                                        <!-- Labels Section (Left Side) - Hide if all checked -->
-                                        <div class="flex flex-wrap items-center gap-6 js-labels-container" style="{{ $allChecked ? 'display: none;' : '' }}">
-                                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Labels:</span>
-                                            @foreach($labelConfig as $labelKey => $labelName)
-                                                @php
-                                                    $labelChecked = isset($event->labels[$labelKey]) && (bool)$event->labels[$labelKey] === true;
-                                                @endphp
-                                                <label class="inline-flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        class="js-label-checkbox rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 cursor-pointer"
-                                                        data-event-id="{{ $event->exEventId }}"
-                                                        data-label-key="{{ $labelKey }}"
-                                                        @checked($labelChecked)
-                                                    >
-                                                    <span class="uppercase">{{ $labelName }}</span>
-                                                </label>
-                                            @endforeach
+                                        <!-- Labels Section (Left Side) -->
+                                        <div class="flex flex-wrap items-center gap-6 js-labels-container">
+                                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Scorecard:</span>
+                                            
+                                            <!-- Required Labels (Hide if all checked) -->
+                                            <div class="flex flex-wrap items-center gap-6 js-required-labels-container" style="{{ $allRequiredChecked ? 'display: none;' : '' }}">
+                                                @foreach($labelConfig as $labelKey => $labelName)
+                                                    @php
+                                                        $isRequired = in_array($labelKey, $requiredLabelKeys);
+                                                        if (!$isRequired) continue; // Skip optional labels here
+                                                        $labelChecked = isset($event->labels[$labelKey]) && (bool)$event->labels[$labelKey] === true;
+                                                    @endphp
+                                                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            class="js-label-checkbox js-required-label rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                                                            data-event-id="{{ $event->exEventId }}"
+                                                            data-label-key="{{ $labelKey }}"
+                                                            data-required="true"
+                                                            @checked($labelChecked)
+                                                        >
+                                                        <span>{{ $labelName }}</span>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                            
+                                            <!-- Optional Labels (Always visible) -->
+                                            <div class="flex flex-wrap items-center gap-6 js-optional-labels-container">
+                                                @foreach($labelConfig as $labelKey => $labelName)
+                                                    @php
+                                                        $isRequired = in_array($labelKey, $requiredLabelKeys);
+                                                        if ($isRequired) continue; // Skip required labels here
+                                                        $labelChecked = isset($event->labels[$labelKey]) && (bool)$event->labels[$labelKey] === true;
+                                                    @endphp
+                                                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            class="js-label-checkbox rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                                                            data-event-id="{{ $event->exEventId }}"
+                                                            data-label-key="{{ $labelKey }}"
+                                                            data-required="false"
+                                                            @checked($labelChecked)
+                                                        >
+                                                        <span class="text-gray-500 dark:text-gray-400">{{ $labelName }}</span>
+                                                    </label>
+                                                @endforeach
+                                            </div>
                                         </div>
                                         
                                         <!-- Market Old Limits and Remind Me After (Right Side - Only show when interrupted) -->
@@ -810,40 +842,62 @@
                 // Get all labels for this event
                 const eventLabels = {};
                 const eventCheckboxes = labelsRow.querySelectorAll('.js-label-checkbox');
-                let checkedCount = 0;
+                let requiredCheckedCount = 0;
+                let totalRequiredLabels = 0;
                 
                 eventCheckboxes.forEach(cb => {
                     const key = cb.getAttribute('data-label-key');
+                    const isRequired = cb.getAttribute('data-required') === 'true';
                     eventLabels[key] = cb.checked;
-                    if (cb.checked) {
-                        checkedCount++;
+                    if (isRequired) {
+                        totalRequiredLabels++;
+                        if (cb.checked) {
+                            requiredCheckedCount++;
+                        }
                     }
                 });
                 
-                // Hide labels container if all checkboxes are checked, but keep row if there's Market Old Limits
+                // Hide only required labels container if all required checkboxes are checked
+                const requiredLabelsContainer = labelsRow.querySelector('.js-required-labels-container');
+                const optionalLabelsContainer = labelsRow.querySelector('.js-optional-labels-container');
                 const labelsContainer = labelsRow.querySelector('.js-labels-container');
-                const marketLimitsSection = labelsRow.querySelector('.flex.flex-wrap.items-center.gap-4');
+                const marketLimitsSection = labelsRow.querySelector('.flex.flex-wrap.items-center.gap-3');
                 
-                const totalLabels = eventCheckboxes.length;
-                const allChecked = checkedCount === totalLabels;
+                const allRequiredChecked = requiredCheckedCount === totalRequiredLabels;
                 
-                if (allChecked) {
-                    // Hide labels section
-                    if (labelsContainer) {
-                        labelsContainer.style.display = 'none';
+                // Hide/show required labels container based on whether all required are checked
+                if (allRequiredChecked) {
+                    // Hide only the required labels container
+                    if (requiredLabelsContainer) {
+                        requiredLabelsContainer.style.display = 'none';
+                    }
+                    // Keep optional labels visible
+                    if (optionalLabelsContainer) {
+                        optionalLabelsContainer.style.display = '';
                     }
                     
-                    // If no Market Old Limits or Reminder section, hide entire row
+                    // If no Market Old Limits or Reminder section, and no optional labels checked, hide entire row
+                    const hasOptionalChecked = Array.from(optionalLabelsContainer?.querySelectorAll('.js-label-checkbox') || [])
+                        .some(cb => cb.checked);
+                    
                     if (!marketLimitsSection || marketLimitsSection.children.length === 0) {
-                        labelsRow.style.display = 'none';
+                        if (!hasOptionalChecked) {
+                            labelsRow.style.display = 'none';
+                        } else {
+                            labelsRow.style.display = '';
+                        }
                     } else {
                         // Keep row visible for Market Old Limits/Reminder
                         labelsRow.style.display = '';
                     }
                 } else {
-                    // Show labels section
-                    if (labelsContainer) {
-                        labelsContainer.style.display = '';
+                    // Show required labels section
+                    if (requiredLabelsContainer) {
+                        requiredLabelsContainer.style.display = '';
+                    }
+                    // Keep optional labels visible
+                    if (optionalLabelsContainer) {
+                        optionalLabelsContainer.style.display = '';
                     }
                     // Ensure row is visible
                     labelsRow.style.display = '';
@@ -851,8 +905,9 @@
                 
                 // Update labels in events table
                 updateEventLabels(exEventId, eventLabels).then((success) => {
-                    // If all labels are checked (last label was just checked), refresh the page to reorder records
-                    if (success && allChecked && checked === true) {
+                    // If all required labels are checked (last required label was just checked), refresh the page to reorder records
+                    const isRequired = checkbox.getAttribute('data-required') === 'true';
+                    if (success && allRequiredChecked && checked === true && isRequired) {
                         // Small delay to ensure DB update completes
                         setTimeout(() => {
                             window.location.reload();
