@@ -25,6 +25,7 @@ class ScorecardController extends Controller
                 'events.createdAt',
                 'events.is_interrupted',
                 'events.labels',
+                'events.label_timestamps',
                 'events.remind_me_after',
                 DB::raw('COUNT(DISTINCT "market_lists"."id") as inplay_markets_count'),
                 DB::raw('MIN("market_lists"."marketTime") as first_market_time'),
@@ -168,6 +169,7 @@ class ScorecardController extends Controller
                 'events.createdAt',
                 'events.is_interrupted',
                 'events.labels',
+                'events.label_timestamps',
                 'events.remind_me_after'
             )
             ->selectRaw('
@@ -238,17 +240,32 @@ class ScorecardController extends Controller
                 }
             }
             
+            // Parse label timestamps from events table (JSONB)
+            // Timestamps are stored as: {"4x":"2025-11-27 15:30:00","b2c":null,"b2b":null,"usdt":null} (lowercase keys)
+            $eventLabelTimestamps = [];
+            if ($event->label_timestamps) {
+                $timestamps = is_string($event->label_timestamps) ? json_decode($event->label_timestamps, true) : $event->label_timestamps;
+                if (is_array($timestamps)) {
+                    $eventLabelTimestamps = $timestamps;
+                }
+            }
+            
             // Normalize labels: ensure all label keys exist with default false value
             // Keys in DB are lowercase (e.g., "4x"), but we use original keys from config for display
             $parsedLabels = [];
+            $parsedLabelTimestamps = [];
             foreach ($labelKeys as $labelKey) {
                 // Check lowercase key (stored in DB) first, fallback to original key for backward compatibility
                 $dbKey = strtolower($labelKey);
                 $parsedLabels[$labelKey] = (isset($eventLabels[$dbKey]) && (bool)$eventLabels[$dbKey] === true)
                     || (isset($eventLabels[$labelKey]) && (bool)$eventLabels[$labelKey] === true);
+                
+                // Parse timestamp (use lowercase key from DB)
+                $parsedLabelTimestamps[$labelKey] = $eventLabelTimestamps[$dbKey] ?? $eventLabelTimestamps[$labelKey] ?? null;
             }
             
             $event->labels = $parsedLabels;
+            $event->label_timestamps = $parsedLabelTimestamps;
             
             // Get all markets with old_limit for this event (show all markets even if old_limit is 0 or null)
             $eventMarkets = $marketOldLimits->get($event->exEventId, collect());
@@ -386,15 +403,41 @@ class ScorecardController extends Controller
             // Normalize labels: ensure all keys are lowercase and boolean values
             $normalizedLabels = [];
             $labelKeys = array_keys(config('labels.labels', []));
+            
+            // Get existing labels and timestamps
+            $existingLabels = json_decode($event->labels ?? '{}', true);
+            $existingTimestamps = json_decode($event->label_timestamps ?? '{}', true);
+            
+            // Prepare normalized labels and timestamps
+            $normalizedTimestamps = [];
+            $now = now()->format('Y-m-d H:i:s');
+            
             foreach ($labelKeys as $key) {
+                $dbKey = strtolower($key);
                 // Preserve existing label value if not provided in request
-                $existingLabels = json_decode($event->labels ?? '{}', true);
-                $existingValue = $existingLabels[strtolower($key)] ?? false;
+                $existingValue = $existingLabels[$dbKey] ?? false;
                 
                 // Use provided value if exists, otherwise keep existing value
-                $normalizedLabels[strtolower($key)] = isset($labels[$key]) ? (bool) $labels[$key] : $existingValue;
+                $isChecked = isset($labels[$key]) ? (bool) $labels[$key] : $existingValue;
+                $wasChecked = $existingValue;
+                
+                $normalizedLabels[$dbKey] = $isChecked;
+                
+                // Update timestamp: set when checked, clear when unchecked
+                if ($isChecked && !$wasChecked) {
+                    // Just checked - set timestamp
+                    $normalizedTimestamps[$dbKey] = $now;
+                } elseif ($isChecked && $wasChecked) {
+                    // Already checked - preserve existing timestamp
+                    $normalizedTimestamps[$dbKey] = $existingTimestamps[$dbKey] ?? $now;
+                } else {
+                    // Unchecked - set to null
+                    $normalizedTimestamps[$dbKey] = null;
+                }
             }
+            
             $updateData['labels'] = json_encode($normalizedLabels);
+            $updateData['label_timestamps'] = json_encode($normalizedTimestamps);
         }
 
         // Update remind_me_after
@@ -572,14 +615,40 @@ class ScorecardController extends Controller
         $labels = $request->input('labels', []);
         $normalizedLabels = [];
         $labelKeys = array_keys(config('labels.labels', []));
+        
+        // Get existing labels and timestamps
+        $existingLabels = json_decode($event->labels ?? '{}', true);
+        $existingTimestamps = json_decode($event->label_timestamps ?? '{}', true);
+        
+        // Prepare normalized labels and timestamps
+        $normalizedTimestamps = [];
+        $now = now()->format('Y-m-d H:i:s');
+        
         foreach ($labelKeys as $key) {
-            $normalizedLabels[strtolower($key)] = isset($labels[$key]) ? (bool) $labels[$key] : false;
+            $dbKey = strtolower($key);
+            $isChecked = isset($labels[$key]) ? (bool) $labels[$key] : false;
+            $wasChecked = isset($existingLabels[$dbKey]) ? (bool) $existingLabels[$dbKey] : false;
+            
+            $normalizedLabels[$dbKey] = $isChecked;
+            
+            // Update timestamp: set when checked, clear when unchecked
+            if ($isChecked && !$wasChecked) {
+                // Just checked - set timestamp
+                $normalizedTimestamps[$dbKey] = $now;
+            } elseif ($isChecked && $wasChecked) {
+                // Already checked - preserve existing timestamp
+                $normalizedTimestamps[$dbKey] = $existingTimestamps[$dbKey] ?? $now;
+            } else {
+                // Unchecked - set to null
+                $normalizedTimestamps[$dbKey] = null;
+            }
         }
 
         DB::table('events')
             ->where('exEventId', $exEventId)
             ->update([
                 'labels' => json_encode($normalizedLabels),
+                'label_timestamps' => json_encode($normalizedTimestamps),
                 'updated_at' => now(),
             ]);
 

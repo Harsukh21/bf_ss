@@ -440,6 +440,8 @@
                                                         $isRequired = in_array($labelKey, $requiredLabelKeys);
                                                         if (!$isRequired) continue; // Skip optional labels here
                                                         $labelChecked = isset($event->labels[$labelKey]) && (bool)$event->labels[$labelKey] === true;
+                                                        $labelTimestamp = isset($event->label_timestamps[$labelKey]) ? $event->label_timestamps[$labelKey] : null;
+                                                        $formattedTimestamp = $labelTimestamp ? \Carbon\Carbon::parse($labelTimestamp)->format('M d, h:i A') : null;
                                                     @endphp
                                                     <label class="inline-flex items-center gap-2 cursor-pointer">
                                                         <input
@@ -451,6 +453,9 @@
                                                             @checked($labelChecked)
                                                         >
                                                         <span>{{ $labelName }}</span>
+                                                        @if($labelChecked && $formattedTimestamp)
+                                                            <span class="text-xs text-gray-500 dark:text-gray-400" title="Checked at: {{ $formattedTimestamp }}">({{ $formattedTimestamp }})</span>
+                                                        @endif
                                                     </label>
                                                 @endforeach
                                             </div>
@@ -462,6 +467,8 @@
                                                         $isRequired = in_array($labelKey, $requiredLabelKeys);
                                                         if ($isRequired) continue; // Skip required labels here
                                                         $labelChecked = isset($event->labels[$labelKey]) && (bool)$event->labels[$labelKey] === true;
+                                                        $labelTimestamp = isset($event->label_timestamps[$labelKey]) ? $event->label_timestamps[$labelKey] : null;
+                                                        $formattedTimestamp = $labelTimestamp ? \Carbon\Carbon::parse($labelTimestamp)->format('M d, h:i A') : null;
                                                     @endphp
                                                     <label class="inline-flex items-center gap-2 cursor-pointer">
                                                         <input
@@ -473,6 +480,9 @@
                                                             @checked($labelChecked)
                                                         >
                                                         <span class="text-gray-500 dark:text-gray-400">{{ $labelName }}</span>
+                                                        @if($labelChecked && $formattedTimestamp)
+                                                            <span class="text-xs text-gray-500 dark:text-gray-400" title="Checked at: {{ $formattedTimestamp }}">({{ $formattedTimestamp }})</span>
+                                                        @endif
                                                     </label>
                                                 @endforeach
                                             </div>

@@ -195,7 +195,9 @@ class EventController extends Controller
             'events."isRecentlyAdded"',
             'events."marketTime"',
             'events."createdAt"',
-            'events."status"'
+            'events."status"',
+            'events."labels"',
+            'events."label_timestamps"'
         ];
         $selectList = implode(', ', $selectColumns);
         $selectList .= ', COALESCE(mc.market_count, 0) as "market_count"';
@@ -243,6 +245,48 @@ class EventController extends Controller
         $dataBindings = array_merge($filterSql['bindings'], [$perPage, $offset]);
         $events = collect(DB::select($dataSql, $dataBindings));
 
+        // Get label configuration
+        $labelConfig = config('labels.labels', []);
+        $labelKeys = array_keys($labelConfig);
+        
+        // Parse labels and timestamps for each event
+        $events = $events->map(function ($event) use ($labelKeys) {
+            // Parse labels from events table (JSONB)
+            $eventLabels = [];
+            if ($event->labels) {
+                $labels = is_string($event->labels) ? json_decode($event->labels, true) : $event->labels;
+                if (is_array($labels)) {
+                    $eventLabels = $labels;
+                }
+            }
+            
+            // Parse label timestamps from events table (JSONB)
+            $eventLabelTimestamps = [];
+            if ($event->label_timestamps) {
+                $timestamps = is_string($event->label_timestamps) ? json_decode($event->label_timestamps, true) : $event->label_timestamps;
+                if (is_array($timestamps)) {
+                    $eventLabelTimestamps = $timestamps;
+                }
+            }
+            
+            // Normalize labels and timestamps: ensure all label keys exist
+            $parsedLabels = [];
+            $parsedLabelTimestamps = [];
+            foreach ($labelKeys as $labelKey) {
+                $dbKey = strtolower($labelKey);
+                $parsedLabels[$labelKey] = (isset($eventLabels[$dbKey]) && (bool)$eventLabels[$dbKey] === true)
+                    || (isset($eventLabels[$labelKey]) && (bool)$eventLabels[$labelKey] === true);
+                
+                // Parse timestamp (use lowercase key from DB)
+                $parsedLabelTimestamps[$labelKey] = $eventLabelTimestamps[$dbKey] ?? $eventLabelTimestamps[$labelKey] ?? null;
+            }
+            
+            $event->parsedLabels = $parsedLabels;
+            $event->parsedLabelTimestamps = $parsedLabelTimestamps;
+            
+            return $event;
+        });
+
         $paginatedEvents = new \Illuminate\Pagination\LengthAwarePaginator(
             $events,
             $totalCount,
@@ -270,6 +314,7 @@ class EventController extends Controller
             'pageHeading' => 'All Events List',
             'pageSubheading' => 'Browse every scheduled event without date limits',
             'statusSummary' => $statusSummary,
+            'labelConfig' => $labelConfig,
         ]);
     }
 
@@ -297,7 +342,11 @@ class EventController extends Controller
                 'dataSwitch',
                 'createdAt',
                 'updated_at',
-                'created_at'
+                'created_at',
+                'labels',
+                'label_timestamps',
+                'is_interrupted',
+                'remind_me_after'
             ])
             ->where('id', $id)
             ->first();
@@ -309,7 +358,44 @@ class EventController extends Controller
         // Get sport configuration
         $sportConfig = config('sports.sports');
         
-        return view('events.show', compact('event', 'sportConfig'));
+        // Get label configuration
+        $labelConfig = config('labels.labels', []);
+        $labelKeys = array_keys($labelConfig);
+        
+        // Parse labels from events table (JSONB)
+        $eventLabels = [];
+        if ($event->labels) {
+            $labels = is_string($event->labels) ? json_decode($event->labels, true) : $event->labels;
+            if (is_array($labels)) {
+                $eventLabels = $labels;
+            }
+        }
+        
+        // Parse label timestamps from events table (JSONB)
+        $eventLabelTimestamps = [];
+        if ($event->label_timestamps) {
+            $timestamps = is_string($event->label_timestamps) ? json_decode($event->label_timestamps, true) : $event->label_timestamps;
+            if (is_array($timestamps)) {
+                $eventLabelTimestamps = $timestamps;
+            }
+        }
+        
+        // Normalize labels and timestamps: ensure all label keys exist
+        $parsedLabels = [];
+        $parsedLabelTimestamps = [];
+        foreach ($labelKeys as $labelKey) {
+            $dbKey = strtolower($labelKey);
+            $parsedLabels[$labelKey] = (isset($eventLabels[$dbKey]) && (bool)$eventLabels[$dbKey] === true)
+                || (isset($eventLabels[$labelKey]) && (bool)$eventLabels[$labelKey] === true);
+            
+            // Parse timestamp (use lowercase key from DB)
+            $parsedLabelTimestamps[$labelKey] = $eventLabelTimestamps[$dbKey] ?? $eventLabelTimestamps[$labelKey] ?? null;
+        }
+        
+        $event->parsedLabels = $parsedLabels;
+        $event->parsedLabelTimestamps = $parsedLabelTimestamps;
+        
+        return view('events.show', compact('event', 'sportConfig', 'labelConfig'));
     }
 
     /**

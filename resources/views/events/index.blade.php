@@ -896,6 +896,41 @@
                                         </span>
                                     </td>
                                 </tr>
+                                <!-- Scorecard Labels Row - Only show if at least one label is checked -->
+                                @if(isset($labelConfig) && !empty($labelConfig) && isset($event->parsedLabels))
+                                    @php
+                                        $hasCheckedLabels = collect($event->parsedLabels)->filter(fn($v) => (bool)$v === true)->count() > 0;
+                                    @endphp
+                                    @if($hasCheckedLabels)
+                                    <tr class="bg-gray-50/60 dark:bg-gray-800/70 border-t border-gray-200 dark:border-gray-700">
+                                        <td colspan="5" class="px-6 py-3">
+                                            <div class="flex flex-wrap items-center gap-6">
+                                                <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Scorecard:</span>
+                                                @foreach($labelConfig as $labelKey => $labelName)
+                                                    @php
+                                                        $labelChecked = isset($event->parsedLabels[$labelKey]) && (bool)$event->parsedLabels[$labelKey] === true;
+                                                        $labelTimestamp = isset($event->parsedLabelTimestamps[$labelKey]) ? $event->parsedLabelTimestamps[$labelKey] : null;
+                                                        $formattedTimestamp = $labelTimestamp ? \Carbon\Carbon::parse($labelTimestamp)->format('M d, h:i A') : null;
+                                                    @endphp
+                                                    @if($labelChecked)
+                                                        <label class="inline-flex items-center gap-2 cursor-default">
+                                                            <div class="w-4 h-4 rounded border-2 border-primary-600 bg-primary-600 flex items-center justify-center flex-shrink-0">
+                                                                <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                                </svg>
+                                                            </div>
+                                                            <span class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ $labelName }}</span>
+                                                            @if($formattedTimestamp)
+                                                                <span class="text-xs text-gray-500 dark:text-gray-400" title="Checked at: {{ $formattedTimestamp }}">({{ $formattedTimestamp }})</span>
+                                                            @endif
+                                                        </label>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endif
+                                @endif
                             @endforeach
                         </tbody>
                     </table>
