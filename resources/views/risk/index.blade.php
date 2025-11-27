@@ -610,9 +610,13 @@
                                 $defaultLabels = array_fill_keys($labelKeys, false);
                                 $labelStates = array_merge($defaultLabels, is_array($decodedLabels) ? array_intersect_key($decodedLabels, $defaultLabels) : []);
 
-                                $allLabelsChecked = collect($labelStates)->every(fn ($value) => (bool) $value === true);
+                                // Only first 4 labels are required: 4x, b2c, b2b, usdt
+                                $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
+                                $requiredLabelsChecked = collect($requiredLabelKeys)->every(function($key) use ($labelStates) {
+                                    return isset($labelStates[$key]) && (bool) $labelStates[$key] === true;
+                                });
                                 $isDone = (bool) $market->is_done;
-                                $buttonDisabled = !$allLabelsChecked || $isDone;
+                                $buttonDisabled = !$requiredLabelsChecked || $isDone;
                             @endphp
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" data-market-row="{{ $market->id }}">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -660,19 +664,26 @@
                                 <td colspan="5" class="px-6 py-3">
                                     <div class="flex flex-wrap items-center gap-6 market-labels-wrapper" data-market-id="{{ $market->id }}" data-update-url="{{ route('risk.markets.labels', $market->id) }}">
                                         <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Labels:</span>
+                                        @php
+                                            $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
+                                        @endphp
                                         @foreach($labelStates as $key => $value)
-                                            @php $checkboxId = "market-option-{$market->id}-{$key}"; @endphp
+                                            @php 
+                                                $checkboxId = "market-option-{$market->id}-{$key}";
+                                                $isRequired = in_array($key, $requiredLabelKeys);
+                                            @endphp
                                             <label for="{{ $checkboxId }}" class="inline-flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
                                                     id="{{ $checkboxId }}"
-                                                    class="market-label-checkbox rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
+                                                    class="market-label-checkbox rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 {{ $isRequired ? 'js-required-label' : '' }}"
                                                     data-market-id="{{ $market->id }}"
                                                     data-label-key="{{ $key }}"
+                                                    data-required="{{ $isRequired ? 'true' : 'false' }}"
                                                     @checked((bool) $value)
                                                     @disabled($isDone)
                                                 >
-                                                <span class="uppercase">{{ $key }}</span>
+                                                <span class="{{ $isRequired ? '' : 'text-gray-500 dark:text-gray-400' }} uppercase">{{ $key }}</span>
                                             </label>
                                         @endforeach
                                     </div>
@@ -1180,7 +1191,9 @@
     });
 
     function updateDoneButtonState(marketId, labels) {
-        const allChecked = Object.values(labels).every(Boolean);
+        // Only first 4 labels are required: 4x, b2c, b2b, usdt
+        const requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
+        const allRequiredChecked = requiredLabelKeys.every(key => labels[key] === true);
         const button = document.querySelector(`.mark-done-button[data-market-id="${marketId}"]`);
         if (!button) return;
 
@@ -1190,7 +1203,7 @@
             return;
         }
 
-        button.disabled = !allChecked;
+        button.disabled = !allRequiredChecked;
     }
 
     function markMarketAsDone(marketId) {

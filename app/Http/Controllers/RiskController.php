@@ -346,12 +346,16 @@ class RiskController extends Controller
         }
 
         $labels = $this->normalizeLabels(json_decode($market->labels ?? '{}', true));
-        $allChecked = collect($labels)->every(fn ($value) => (bool) $value === true);
+        // Only first 4 labels are required: 4x, b2c, b2b, usdt
+        $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
+        $allRequiredChecked = collect($requiredLabelKeys)->every(function($key) use ($labels) {
+            return isset($labels[$key]) && (bool) $labels[$key] === true;
+        });
 
-        if (!$allChecked) {
+        if (!$allRequiredChecked) {
             return response()->json([
                 'success' => false,
-                'message' => 'Please select all labels before marking as done.',
+                'message' => 'Please select all required labels (4X, B2C, B2B, USDT) before marking as done.',
             ], 422);
         }
 
