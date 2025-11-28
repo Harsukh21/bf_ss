@@ -666,9 +666,14 @@
                                         <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Scorecard:</span>
                                         @php
                                             $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
+                                            $excludedLabels = ['bookmaker', 'unmatch'];
                                         @endphp
                                         @foreach($labelStates as $key => $value)
                                             @php 
+                                                // Skip bookmaker and unmatch labels
+                                                if (in_array($key, $excludedLabels)) {
+                                                    continue;
+                                                }
                                                 $checkboxId = "market-option-{$market->id}-{$key}";
                                                 $isRequired = in_array($key, $requiredLabelKeys);
                                             @endphp
@@ -955,6 +960,12 @@
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Labels</label>
                 <div class="grid grid-cols-2 gap-3">
                     @foreach($labelOptions as $labelKey => $labelName)
+                        @php
+                            // Skip bookmaker and unmatch labels
+                            if (in_array($labelKey, ['bookmaker', 'unmatch'])) {
+                                continue;
+                            }
+                        @endphp
                         <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                             <input type="checkbox" name="labels[]" value="{{ $labelKey }}" class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500" @checked(in_array($labelKey, $selectedLabels))>
                             <span class="uppercase">{{ $labelName }}</span>
