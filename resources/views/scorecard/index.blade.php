@@ -1727,6 +1727,7 @@
                             <option value="Old SC(Cric)">Old SC(Cric)</option>
                             <option value="SR Premium">SR Premium</option>
                             <option value="SpreadeX">SpreadeX</option>
+                            <option value="SpreadeX">N/A</option>
                         </select>
                     </div>
                     <div class="mb-4">
