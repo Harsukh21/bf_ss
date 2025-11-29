@@ -732,17 +732,6 @@ class ScorecardController extends Controller
             ], 422);
         }
 
-        // Check if user has admin role (super-admin or admin)
-        $userRoles = $user->getCachedRoles();
-        $isAdmin = in_array('super-admin', $userRoles) || in_array('admin', $userRoles);
-
-        if (!$isAdmin) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only administrators can perform this action.',
-            ], 403);
-        }
-
         // Update sc_type
         DB::table('events')
             ->where('exEventId', $exEventId)
