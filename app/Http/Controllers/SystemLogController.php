@@ -114,10 +114,10 @@ class SystemLogController extends Controller
 
         try {
             // Clear/truncate the file instead of deleting it
-            file_put_contents($logPath, '');
-            return redirect()->route('system-logs.view', $filename)->with('success', 'Log file cleared successfully.');
+            File::put($logPath, '');
+            return redirect()->route('system-logs.index')->with('success', 'Log file "' . $filename . '" cleared successfully.');
         } catch (\Exception $e) {
-            return redirect()->route('system-logs.view', $filename)->with('error', 'Failed to clear log file: ' . $e->getMessage());
+            return redirect()->route('system-logs.index')->with('error', 'Failed to clear log file: ' . $e->getMessage());
         }
     }
 
@@ -126,12 +126,29 @@ class SystemLogController extends Controller
         $logPath = storage_path('logs');
         
         try {
-            $files = File::files($logPath);
-            foreach ($files as $file) {
-                // Clear/truncate the file instead of deleting it
-                file_put_contents($file->getPathname(), '');
+            if (!File::exists($logPath)) {
+                return redirect()->route('system-logs.index')->with('error', 'Logs directory not found.');
             }
-            return redirect()->route('system-logs.index')->with('success', 'All log files cleared successfully.');
+            
+            $files = File::files($logPath);
+            $clearedCount = 0;
+            
+            foreach ($files as $file) {
+                try {
+                    // Clear/truncate the file instead of deleting it
+                    File::put($file->getPathname(), '');
+                    $clearedCount++;
+                } catch (\Exception $e) {
+                    // Continue with other files if one fails
+                    \Log::error('Failed to clear log file: ' . $file->getFilename() . ' - ' . $e->getMessage());
+                }
+            }
+            
+            if ($clearedCount > 0) {
+                return redirect()->route('system-logs.index')->with('success', 'All log files (' . $clearedCount . ') cleared successfully.');
+            } else {
+                return redirect()->route('system-logs.index')->with('error', 'No log files found to clear.');
+            }
         } catch (\Exception $e) {
             return redirect()->route('system-logs.index')->with('error', 'Failed to clear log files: ' . $e->getMessage());
         }

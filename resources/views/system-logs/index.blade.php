@@ -201,43 +201,21 @@
 @push('js')
 <script>
 function handleClearLog(filename, index) {
-    if (typeof ToastNotification === 'undefined') {
-        // Fallback to browser confirm if toast system not available
-        if (confirm('Are you sure you want to clear this log file? This will remove all log entries but keep the file.')) {
-            document.getElementById('clearLogForm_' + index).submit();
+    if (confirm('Are you sure you want to clear the log file "' + filename + '"? This will remove all log entries but keep the file.')) {
+        const form = document.getElementById('clearLogForm_' + index);
+        if (form) {
+            form.submit();
         }
-        return;
     }
-    
-    ToastNotification.confirm(
-        'Are you sure you want to clear the log file "' + filename + '"? This will remove all log entries but keep the file.',
-        'Clear',
-        'Cancel'
-    ).then((confirmed) => {
-        if (confirmed) {
-            document.getElementById('clearLogForm_' + index).submit();
-        }
-    });
 }
 
 function handleClearAllLogs() {
-    if (typeof ToastNotification === 'undefined') {
-        // Fallback to browser confirm if toast system not available
-        if (confirm('Are you sure you want to clear ALL log files? This will remove all log entries but keep the files.')) {
-            document.getElementById('clearAllLogsForm').submit();
+    if (confirm('Are you sure you want to clear ALL log files? This will remove all log entries but keep the files.')) {
+        const form = document.getElementById('clearAllLogsForm');
+        if (form) {
+            form.submit();
         }
-        return;
     }
-    
-    ToastNotification.confirm(
-        'Are you sure you want to clear ALL log files? This will remove all log entries but keep the files.',
-        'Clear All',
-        'Cancel'
-    ).then((confirmed) => {
-        if (confirmed) {
-            document.getElementById('clearAllLogsForm').submit();
-        }
-    });
 }
 </script>
 @endpush
