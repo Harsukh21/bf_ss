@@ -64,9 +64,14 @@
                 <!-- Logo -->
                 <div class="flex justify-center mb-8">
                     <a href="/" class="flex items-center justify-center">
-                        <img src="{{ asset('assets/img/light_logo.png') }}" 
+                        <!-- Light mode logo -->
+                        <img src="{{ asset('assets/img/white_logo.svg') }}"
                              alt="{{ config('app.name', 'Laravel') }}" 
-                             class="h-20 md:h-28 w-auto object-contain">
+                             class="h-20 md:h-28 w-auto object-contain dark:hidden">
+                        <!-- Dark mode logo -->
+                        <img src="{{ asset('assets/img/dark_logo.svg') }}"
+                             alt="{{ config('app.name', 'Laravel') }}" 
+                             class="h-20 md:h-28 w-auto object-contain hidden dark:block">
                     </a>
                 </div>
 

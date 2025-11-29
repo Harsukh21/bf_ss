@@ -6,11 +6,11 @@
             <div class="flex items-center w-full">
                 <a href="{{ route('dashboard') }}" class="flex items-center justify-center w-full hover:opacity-80 transition-opacity duration-300 ease-in-out">
                     <!-- Light mode logo -->
-                    <img src="{{ asset('assets/img/light_logo.png') }}" 
+                    <img src="{{ asset('assets/img/white_logo.svg') }}" 
                          alt="{{ config('app.name', 'Laravel') }}" 
                          class="h-12 md:h-14 w-auto max-w-full object-contain dark:hidden">
                     <!-- Dark mode logo -->
-                    <img src="{{ asset('assets/img/dark_logo.png') }}" 
+                    <img src="{{ asset('assets/img/dark_logo.svg') }}" 
                          alt="{{ config('app.name', 'Laravel') }}" 
                          class="h-12 md:h-14 w-auto max-w-full object-contain hidden dark:block">
                 </a>

@@ -12,11 +12,11 @@
                 <!-- Mobile Logo -->
                 <a href="{{ route('dashboard') }}" class="md:hidden flex items-center hover:opacity-80 transition-opacity duration-300 ease-in-out">
                     <!-- Light mode logo -->
-                    <img src="{{ asset('assets/img/light_logo.png') }}" 
+                    <img src="{{ asset('assets/img/white_logo.svg') }}" 
                          alt="{{ config('app.name', 'Laravel') }}" 
                          class="h-12 w-auto max-w-[180px] object-contain dark:hidden">
                     <!-- Dark mode logo -->
-                    <img src="{{ asset('assets/img/dark_logo.png') }}" 
+                    <img src="{{ asset('assets/img/dark_logo.svg') }}" 
                          alt="{{ config('app.name', 'Laravel') }}" 
                          class="h-12 w-auto max-w-[180px] object-contain hidden dark:block">
                 </a>

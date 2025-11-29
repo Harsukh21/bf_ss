@@ -8,9 +8,9 @@
     <title>@yield('title', 'Welcome') - {{ config('app.name', 'Laravel') }}</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ asset('assets/img/notification_icon.png') }}">
-    <link rel="shortcut icon" type="image/png" href="{{ asset('assets/img/notification_icon.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('assets/img/notification_icon.png') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('assets/img/notification.svg') }}">
+    <link rel="shortcut icon" type="image/svg+xml" href="{{ asset('assets/img/notification.svg') }}">
+    <link rel="apple-touch-icon" href="{{ asset('assets/img/notification.svg') }}">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -56,10 +56,14 @@
                 <!-- Logo -->
                 <div class="flex items-center">
                     <a href="/" class="flex items-center hover:opacity-80 transition-opacity duration-300 ease-in-out">
-                        <!-- Always show light logo -->
-                        <img src="{{ asset('assets/img/light_logo.png') }}" 
+                        <!-- Light mode logo -->
+                        <img src="{{ asset('assets/img/white_logo.svg') }}" 
                              alt="{{ config('app.name', 'Laravel') }}" 
-                             class="h-12 w-auto object-contain">
+                             class="h-12 w-auto object-contain dark:hidden">
+                        <!-- Dark mode logo -->
+                        <img src="{{ asset('assets/img/dark_logo.svg') }}" 
+                             alt="{{ config('app.name', 'Laravel') }}" 
+                             class="h-12 w-auto object-contain hidden dark:block">
                     </a>
                 </div>
                 

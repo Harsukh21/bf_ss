@@ -8,9 +8,9 @@
     <title>{{ config('app.name', 'Laravel') }} - @yield('title', 'Bulk User Management')</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ asset('assets/img/notification_icon.png') }}">
-    <link rel="shortcut icon" type="image/png" href="{{ asset('assets/img/notification_icon.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('assets/img/notification_icon.png') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('assets/img/notification.svg') }}">
+    <link rel="shortcut icon" type="image/svg+xml" href="{{ asset('assets/img/notification.svg') }}">
+    <link rel="apple-touch-icon" href="{{ asset('assets/img/notification.svg') }}">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -697,8 +697,8 @@
 
                 const options = {
                     body: notification.message,
-                    icon: '{{ asset("assets/img/notification_icon.png") }}',
-                    badge: '{{ asset("assets/img/notification_icon.png") }}',
+                    icon: '{{ asset("assets/img/notification.svg") }}',
+                    badge: '{{ asset("assets/img/notification.svg") }}',
                     tag: 'notification-' + notification.id, // Prevent duplicate notifications
                     requireInteraction: false,
                     silent: false,
