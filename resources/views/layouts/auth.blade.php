@@ -7,6 +7,11 @@
 
     <title>@yield('title', 'Authentication') - {{ config('app.name', 'Laravel') }}</title>
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('assets/img/notification_icon.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('assets/img/notification_icon.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('assets/img/notification_icon.png') }}">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
