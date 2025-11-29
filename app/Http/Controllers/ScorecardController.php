@@ -142,21 +142,24 @@ class ScorecardController extends Controller
             }
         }
 
-        // Get label keys for checking all labels
+        // Get label keys for checking required labels (first 4: 4X, B2C, B2B, USDT)
         $labelConfig = config('labels.labels', []);
         $labelKeys = array_keys($labelConfig);
         $allLabelKeys = array_map('strtolower', $labelKeys); // Labels stored with lowercase keys
+        
+        // Only check the first 4 required labels: 4x, b2c, b2b, usdt
+        $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
         
         // Build custom ordering:
         // 1. is_interrupted = true first
         // 2. Then in-play (marketTime <= now, currently active)
         // 3. Then upcoming (marketTime > now, future in-play)
-        // 4. Then events WITHOUT all labels checked (events with all labels checked will appear later)
+        // 4. Then events WITHOUT all required labels checked (events with all required labels checked will appear later)
         $now = Carbon::now();
         $nowStr = $now->format('Y-m-d H:i:s');
         
-        // Build condition for all labels checked
-        $allLabelsCondition = $this->buildAllLabelsCheckedCondition($allLabelKeys);
+        // Build condition for required labels checked (only first 4)
+        $allLabelsCondition = $this->buildAllLabelsCheckedCondition($requiredLabelKeys);
         
         $events = $query->groupBy(
                 'events.id',
@@ -191,7 +194,7 @@ class ScorecardController extends Controller
             ', [$nowStr, $nowStr])
             ->orderBy('sort_interrupted', 'asc') // 1. is_interrupted = true first
             ->orderBy('sort_time_status', 'asc') // 2. In-play (current) first, then upcoming
-            ->orderBy('sort_all_labels', 'asc') // 3. Events WITHOUT all labels checked first (1 before 2)
+            ->orderBy('sort_all_labels', 'asc') // 3. Events WITHOUT all required labels (4X, B2C, B2B, USDT) checked first (1 before 2)
             ->orderBy('events.marketTime', 'desc') // 4. Then by newest marketTime
             ->paginate(20);
 
