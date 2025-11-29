@@ -456,17 +456,7 @@
             
             // Element detection complete
             
-            // Toggle password button event delegation
-            const togglePasswordBtn = document.getElementById('togglePassword');
-            if (togglePasswordBtn) {
-                togglePasswordBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const targetInput = this.getAttribute('data-target');
-                    const buttonId = this.getAttribute('id');
-                    togglePasswordVisibility(targetInput, buttonId);
-                });
-            }
+            // Toggle password button event delegation - Removed to avoid conflicts with login page implementation
             
             // Form submission handling for login form
             const loginFormMain = document.getElementById('loginForm');

@@ -281,9 +281,9 @@
                     <button 
                         type="button" 
                         id="togglePassword"
-                        data-target="password"
-                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer z-10"
+                        aria-label="Toggle password visibility">
+                        <svg id="togglePasswordIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                         </svg>
@@ -318,9 +318,9 @@
                     <button 
                         type="button" 
                         id="toggleWebPin"
-                        data-target="web_pin"
-                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer z-10"
+                        aria-label="Toggle Web PIN visibility">
+                        <svg id="toggleWebPinIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                         </svg>
@@ -380,6 +380,63 @@
             </button>
         </div>
     </form>
+
+    <!-- Password Toggle Script - Execute Immediately -->
+    <script>
+        // Password toggle functionality - Simple and reliable
+        function initPasswordToggle() {
+            const passwordInput = document.getElementById('password');
+            const passwordToggle = document.getElementById('togglePassword');
+            
+            const webPinInput = document.getElementById('web_pin');
+            const webPinToggle = document.getElementById('toggleWebPin');
+            
+            // Eye icon SVG (show password)
+            const eyeIcon = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>';
+            
+            // Eye-slash icon SVG (hide password)
+            const eyeSlashIcon = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>';
+            
+            // Password toggle handler
+            if (passwordToggle && passwordInput) {
+                passwordToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        passwordToggle.innerHTML = eyeSlashIcon;
+                    } else {
+                        passwordInput.type = 'password';
+                        passwordToggle.innerHTML = eyeIcon;
+                    }
+                });
+            }
+            
+            // Web PIN toggle handler
+            if (webPinToggle && webPinInput) {
+                webPinToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (webPinInput.type === 'password') {
+                        webPinInput.type = 'text';
+                        webPinToggle.innerHTML = eyeSlashIcon;
+                    } else {
+                        webPinInput.type = 'password';
+                        webPinToggle.innerHTML = eyeIcon;
+                    }
+                });
+            }
+        }
+        
+        // Initialize immediately if DOM is ready, otherwise wait for it
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPasswordToggle);
+        } else {
+            initPasswordToggle();
+        }
+    </script>
 
     @push('scripts')
     <script>
@@ -477,35 +534,35 @@
                 });
             }
             
-            // Toggle password visibility
-            const togglePassword = document.getElementById('togglePassword');
-            if (togglePassword) {
-                togglePassword.addEventListener('click', function() {
-                    const target = document.getElementById(this.dataset.target);
-                    if (target.type === 'password') {
-                        target.type = 'text';
-                        this.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>';
-                    } else {
-                        target.type = 'password';
-                        this.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>';
-                    }
-                });
-            }
-            
-            // Toggle Web PIN visibility
-            const toggleWebPin = document.getElementById('toggleWebPin');
-            if (toggleWebPin) {
-                toggleWebPin.addEventListener('click', function() {
-                    const target = document.getElementById(this.dataset.target);
-                    if (target.type === 'password') {
-                        target.type = 'text';
-                        this.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>';
-                    } else {
-                        target.type = 'password';
-                        this.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>';
-                    }
-                });
-            }
+            // Setup password toggle event listeners (backup to onclick)
+            setTimeout(function() {
+                const togglePasswordBtn = document.getElementById('togglePassword');
+                const toggleWebPinBtn = document.getElementById('toggleWebPin');
+                
+                if (togglePasswordBtn) {
+                    // Remove any existing listeners by cloning
+                    const newTogglePasswordBtn = togglePasswordBtn.cloneNode(true);
+                    togglePasswordBtn.parentNode.replaceChild(newTogglePasswordBtn, togglePasswordBtn);
+                    
+                    newTogglePasswordBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        togglePasswordVisibility('password', 'togglePassword');
+                    });
+                }
+                
+                if (toggleWebPinBtn) {
+                    // Remove any existing listeners by cloning
+                    const newToggleWebPinBtn = toggleWebPinBtn.cloneNode(true);
+                    toggleWebPinBtn.parentNode.replaceChild(newToggleWebPinBtn, toggleWebPinBtn);
+                    
+                    newToggleWebPinBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        togglePasswordVisibility('web_pin', 'toggleWebPin');
+                    });
+                }
+            }, 100);
         });
     </script>
     @endpush
