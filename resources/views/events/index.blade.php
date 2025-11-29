@@ -880,9 +880,16 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-                                            {{ $sportConfig[$event->sportId] ?? 'Unknown Sport (ID: ' . $event->sportId . ')' }}
-                                        </span>
+                                        <div class="flex flex-col gap-2">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                                                {{ $sportConfig[$event->sportId] ?? 'Unknown Sport (ID: ' . $event->sportId . ')' }}
+                                            </span>
+                                            @if(!empty($event->sc_type))
+                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300">
+                                                    {{ $event->sc_type }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @php

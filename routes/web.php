@@ -93,6 +93,9 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::post('/events/{exEventId}/update-labels', [\App\Http\Controllers\ScorecardController::class, 'updateLabels'])
             ->middleware('permission:update-scorecard-labels')
             ->name('events.update-labels');
+        Route::post('/events/{exEventId}/update-sc-type', [\App\Http\Controllers\ScorecardController::class, 'updateScType'])
+            ->middleware('permission:update-scorecard-labels')
+            ->name('events.update-sc-type');
     });
 
     // Risk Team

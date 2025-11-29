@@ -400,9 +400,16 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200">
-                                        {{ $event->inplay_markets_count }} Market(s)
-                                    </span>
+                                    <div class="flex flex-col gap-2">
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200">
+                                            {{ $event->inplay_markets_count }} Market(s)
+                                        </span>
+                                        @if(!empty($event->sc_type))
+                                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-200">
+                                                {{ $event->sc_type }}
+                                            </span>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                             <!-- Labels Row with Market Old Limits and Remind Me After -->
@@ -422,11 +429,11 @@
                                 $hasMarketLimits = !empty($event->market_old_limits ?? []);
                                 $hasReminder = !empty($event->remind_me_after ?? null);
                                 
-                                // Show row if: required labels not all checked OR (interrupted AND has market limits/reminder)
-                                $showRow = !$allRequiredChecked || ($isInterrupted && ($hasMarketLimits || $hasReminder));
+                                // Always show row - required labels container will be hidden if all checked, but optional labels and market limits should still be visible
+                                $showRow = true;
                             @endphp
                             @if($showRow)
-                            <tr class="js-labels-row bg-gray-50/60 dark:bg-gray-800/70 text-xs text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700" data-event-id="{{ $event->exEventId }}">
+                            <tr class="js-labels-row bg-gray-50/60 dark:bg-gray-800/70 text-xs text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700" data-event-id="{{ $event->exEventId }}" data-sc-type="{{ $event->sc_type ?? '' }}">
                                 <td colspan="4" class="px-6 py-3">
                                     <div class="flex flex-wrap items-center justify-between gap-6">
                                         <!-- Labels Section (Left Side) -->
@@ -479,7 +486,7 @@
                                                             data-required="false"
                                                             @checked($labelChecked)
                                                         >
-                                                        <span class="text-gray-500 dark:text-gray-400">{{ $labelName }}</span>
+                                                        <span>{{ $labelName }}</span>
                                                         @if($labelChecked && $formattedTimestamp)
                                                             <span class="text-xs text-gray-500 dark:text-gray-400" title="Checked at: {{ $formattedTimestamp }}">({{ $formattedTimestamp }})</span>
                                                         @endif
@@ -913,15 +920,46 @@
                     labelsRow.style.display = '';
                 }
                 
+                // Check if this checkbox is required and was just checked
+                const isRequired = checkbox.getAttribute('data-required') === 'true';
+                const wasJustChecked = checked && isRequired;
+                
                 // Update labels in events table
                 updateEventLabels(exEventId, eventLabels).then((success) => {
+                    // If all 4 required labels are now checked (just checked the 4th one), show SC Type popup
+                    if (wasJustChecked && requiredCheckedCount === 4 && totalRequiredLabels === 4) {
+                        // Check if sc_type is already set, if not show modal
+                        const currentScType = labelsRow.getAttribute('data-sc-type');
+                        if (!currentScType || currentScType === '') {
+                            // Store the checkbox that triggered the popup (the one that was just checked)
+                            window.lastCheckedCheckbox = checkbox;
+                            window.lastCheckedEventId = exEventId;
+                            // Show modal and prevent page refresh
+                            showScTypeModal(exEventId);
+                            // Exit early - don't execute refresh logic below
+                            return;
+                        }
+                    }
+                    
                     // If all required labels are checked (last required label was just checked), refresh the page to reorder records
-                    const isRequired = checkbox.getAttribute('data-required') === 'true';
+                    // But only if popup was not shown (sc_type already exists) and modal is not open
                     if (success && allRequiredChecked && checked === true && isRequired) {
-                        // Small delay to ensure DB update completes
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 300);
+                        // Check if modal is open - if so, don't refresh
+                        if (window.scTypeModalOpen) {
+                            return;
+                        }
+                        
+                        const currentScType = labelsRow.getAttribute('data-sc-type');
+                        // Only refresh if sc_type is already set (popup was not shown)
+                        if (currentScType && currentScType !== '') {
+                            // Small delay to ensure DB update completes
+                            setTimeout(() => {
+                                // Double check modal is still not open before refreshing
+                                if (!window.scTypeModalOpen) {
+                                    window.location.reload();
+                                }
+                            }, 300);
+                        }
                     }
                 });
             }
@@ -1644,6 +1682,253 @@
                 closeEventModal();
             }
         }
+    });
+
+    // SC Type Modal - Global flag to track if modal is open
+    window.scTypeModalOpen = false;
+    
+    function showScTypeModal(exEventId) {
+        // Prevent multiple modals
+        if (window.scTypeModalOpen) {
+            return;
+        }
+        
+        window.scTypeModalOpen = true;
+        
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'scTypeModalOverlay';
+        overlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4';
+        overlay.style.transition = 'opacity 0.3s ease-in-out';
+        
+        // Create modal
+        const modal = document.createElement('div');
+        modal.id = 'scTypeModal';
+        modal.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full transform transition-all duration-300';
+        
+        modal.innerHTML = `
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Select SC Type</h3>
+                    <button onclick="closeScTypeModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <form id="scTypeForm" onsubmit="submitScType(event, '${exEventId}')">
+                    <div class="mb-4">
+                        <label for="sc_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            SC Type <span class="text-red-500">*</span>
+                        </label>
+                        <select id="sc_type" name="sc_type" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500">
+                            <option value="">Select SC Type</option>
+                            <option value="Sportradar">Sportradar</option>
+                            <option value="Old SC(Cric)">Old SC(Cric)</option>
+                            <option value="SR Premium">SR Premium</option>
+                            <option value="SpreadeX">SpreadeX</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="sc_web_pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Web PIN <span class="text-red-500">*</span>
+                        </label>
+                        <input type="password" id="sc_web_pin" name="web_pin" required inputmode="numeric" pattern="[0-9]*" maxlength="20" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500" placeholder="Enter your Web PIN">
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Enter your 6-digit Web PIN</p>
+                    </div>
+                    <div id="scTypeError" class="hidden mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+                        <p class="text-sm text-red-600 dark:text-red-400" id="scTypeErrorMessage"></p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="closeScTypeModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" id="scTypeSubmitBtn" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                            Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+        
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        document.body.style.overflow = 'hidden';
+        
+        // Animate in
+        setTimeout(() => {
+            overlay.style.opacity = '1';
+        }, 10);
+        
+        // Close on overlay click (but prevent accidental closes)
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                // Only close if user explicitly clicks outside (not during initial render)
+                const modal = document.getElementById('scTypeModal');
+                if (modal && modal.contains(e.target)) {
+                    return;
+                }
+                // Don't auto-close - require explicit cancel button click
+            }
+        });
+        
+        // Prevent Escape key from closing (user must use Cancel button)
+        const escapeHandler = function(e) {
+            if (e.key === 'Escape' && window.scTypeModalOpen) {
+                // Don't close on Escape - user must explicitly cancel
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+        
+        // Store handler reference for cleanup
+        overlay._escapeHandler = escapeHandler;
+        
+        // Focus on select
+        setTimeout(() => {
+            const selectEl = document.getElementById('sc_type');
+            if (selectEl) {
+                selectEl.focus();
+            }
+        }, 100);
+    }
+    
+    function closeScTypeModal() {
+        window.scTypeModalOpen = false;
+        const overlay = document.getElementById('scTypeModalOverlay');
+        if (overlay) {
+            // Remove escape handler if it exists
+            if (overlay._escapeHandler) {
+                document.removeEventListener('keydown', overlay._escapeHandler);
+            }
+            
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.remove();
+                document.body.style.overflow = '';
+                
+                // Uncheck the last checkbox that triggered the popup
+                if (window.lastCheckedCheckbox && window.lastCheckedEventId) {
+                    const checkbox = window.lastCheckedCheckbox;
+                    const exEventId = window.lastCheckedEventId;
+                    
+                    // Uncheck the checkbox
+                    checkbox.checked = false;
+                    
+                    // Find the labels row for this event
+                    const labelsRow = document.querySelector(`tr.js-labels-row[data-event-id="${exEventId}"]`);
+                    if (labelsRow) {
+                        // Get all labels for this event
+                        const eventLabels = {};
+                        const eventCheckboxes = labelsRow.querySelectorAll('.js-label-checkbox');
+                        
+                        eventCheckboxes.forEach(cb => {
+                            const key = cb.getAttribute('data-label-key');
+                            eventLabels[key] = cb.checked;
+                        });
+                        
+                        // Update labels in database
+                        updateEventLabels(exEventId, eventLabels).then(() => {
+                            // Show notification
+                            if (typeof ToastNotification !== 'undefined') {
+                                ToastNotification.show('SC Type selection cancelled. Last checkbox unchecked.', 'info', 2000);
+                            }
+                            // Refresh the page after a short delay
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 500);
+                        });
+                    }
+                    
+                    // Clear stored references
+                    window.lastCheckedCheckbox = null;
+                    window.lastCheckedEventId = null;
+                }
+            }, 300);
+        }
+    }
+    
+    async function submitScType(e, exEventId) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const submitBtn = document.getElementById('scTypeSubmitBtn');
+        const errorDiv = document.getElementById('scTypeError');
+        const errorMessage = document.getElementById('scTypeErrorMessage');
+        const scType = document.getElementById('sc_type').value;
+        const webPin = document.getElementById('sc_web_pin').value;
+        
+        // Hide error
+        errorDiv.classList.add('hidden');
+        
+        // Disable submit button
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+        
+        try {
+            const response = await fetch(`/scorecard/events/${exEventId}/update-sc-type`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    sc_type: scType,
+                    web_pin: webPin,
+                }),
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Clear stored checkbox references (successful submission)
+                window.lastCheckedCheckbox = null;
+                window.lastCheckedEventId = null;
+                
+                // Update the data-sc-type attribute on the labels row
+                const labelsRow = document.querySelector(`tr.js-labels-row[data-event-id="${exEventId}"]`);
+                if (labelsRow) {
+                    labelsRow.setAttribute('data-sc-type', scType);
+                }
+                
+                // Close modal
+                closeScTypeModal();
+                
+                // Show success message
+                if (typeof ToastNotification !== 'undefined') {
+                    ToastNotification.show('SC Type updated successfully', 'success', 3000);
+                } else {
+                    alert('SC Type updated successfully');
+                }
+                
+                // Optionally refresh the page or update UI
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                // Show error
+                errorMessage.textContent = data.message || 'Failed to update SC Type';
+                errorDiv.classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit';
+            }
+        } catch (error) {
+            errorMessage.textContent = 'An error occurred. Please try again.';
+            errorDiv.classList.remove('hidden');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit';
+        }
+    }
+    
+    // Web PIN input validation (numeric only)
+    document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('input', function(e) {
+            if (e.target && e.target.id === 'sc_web_pin') {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            }
+        });
     });
 </script>
 @endpush

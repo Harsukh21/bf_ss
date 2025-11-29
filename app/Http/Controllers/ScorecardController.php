@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 use App\Services\TelegramService;
+use App\Models\User;
 
 class ScorecardController extends Controller
 {
@@ -26,6 +29,7 @@ class ScorecardController extends Controller
                 'events.is_interrupted',
                 'events.labels',
                 'events.label_timestamps',
+                'events.sc_type',
                 'events.remind_me_after',
                 DB::raw('COUNT(DISTINCT "market_lists"."id") as inplay_markets_count'),
                 DB::raw('MIN("market_lists"."marketTime") as first_market_time'),
@@ -174,6 +178,7 @@ class ScorecardController extends Controller
                 'events.is_interrupted',
                 'events.labels',
                 'events.label_timestamps',
+                'events.sc_type',
                 'events.remind_me_after'
             )
             ->selectRaw('
@@ -659,6 +664,112 @@ class ScorecardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Labels updated successfully.',
+        ]);
+    }
+
+    public function updateScType(Request $request, $exEventId)
+    {
+        $request->validate([
+            'sc_type' => ['required', 'string', 'in:Sportradar,Old SC(Cric),SR Premium,SpreadeX'],
+            'web_pin' => ['required', 'string', 'regex:/^[0-9]+$/', 'min:6'],
+        ], [
+            'sc_type.required' => 'SC Type is required.',
+            'sc_type.in' => 'Invalid SC Type selected.',
+            'web_pin.required' => 'Web PIN is required.',
+            'web_pin.regex' => 'Web PIN must contain only numbers.',
+            'web_pin.min' => 'Web PIN must be at least 6 digits.',
+        ]);
+
+        $event = DB::table('events')
+            ->where('exEventId', $exEventId)
+            ->first();
+
+        if (!$event) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Event not found.',
+            ], 404);
+        }
+
+        // Verify web_pin and check if user is admin
+        $webPin = $request->input('web_pin');
+        $user = Auth::user();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated.',
+            ], 401);
+        }
+
+        // Get user's web_pin from database
+        $userData = DB::table('users')->where('id', $user->id)->first();
+        
+        if (empty($userData->web_pin)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Web PIN is not set for your account.',
+            ], 422);
+        }
+
+        // Verify web_pin
+        $storedPin = $userData->web_pin;
+        $isVerified = false;
+
+        // Check if stored PIN is hashed
+        if (preg_match('/^\$2[ayb]\$.{56}$/', $storedPin)) {
+            // Hashed PIN - use Hash::check
+            $isVerified = Hash::check($webPin, $storedPin);
+        } else {
+            // Plain text PIN - direct comparison
+            $isVerified = $webPin === $storedPin;
+        }
+
+        if (!$isVerified) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Web PIN.',
+            ], 422);
+        }
+
+        // Check if user has admin role (super-admin or admin)
+        $userRoles = $user->getCachedRoles();
+        $isAdmin = in_array('super-admin', $userRoles) || in_array('admin', $userRoles);
+
+        if (!$isAdmin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only administrators can perform this action.',
+            ], 403);
+        }
+
+        // Update sc_type
+        DB::table('events')
+            ->where('exEventId', $exEventId)
+            ->update([
+                'sc_type' => $request->input('sc_type'),
+                'updated_at' => now(),
+            ]);
+
+        // Log the action (wrap in try-catch to prevent errors if logging fails)
+        try {
+            DB::table('system_logs')->insert([
+                'user_id' => $user->id,
+                'action' => 'update_sc_type',
+                'description' => "Admin {$user->name} ({$user->email}) updated SC Type to '{$request->input('sc_type')}' for event {$exEventId}",
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            // Log error but don't fail the request
+            \Log::error('Failed to log SC Type update: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'SC Type updated successfully.',
         ]);
     }
 }

@@ -20,8 +20,8 @@ return [
         'b2c' => 'B2C',
         'b2b' => 'B2B',
         'usdt' => 'USDT',
-        'bookmaker' => 'Bookmaker',
-        'unmatch' => 'Unmatch',
+        'bookmaker' => 'BOOKMAKER',
+        'unmatch' => 'UNMATCH',
     ],
 
     /*

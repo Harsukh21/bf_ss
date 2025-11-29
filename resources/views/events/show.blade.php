@@ -171,6 +171,72 @@
             </div>
             @endif
 
+            <!-- SC Type & Admin Log -->
+            @if(!empty($event->sc_type) || $scTypeLog)
+            <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">SC Type Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @if(!empty($event->sc_type))
+                    <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">SC Type</label>
+                                <span class="inline-flex px-3 py-1.5 text-sm font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300">
+                                    {{ $event->sc_type }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                    
+                    @if($scTypeLog)
+                    <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Updated By Admin</label>
+                                <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                                    {{ $scTypeLog->admin_name ?? 'Unknown Admin' }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="space-y-2 pt-3 border-t border-gray-200 dark:border-gray-600">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Email</span>
+                                <span class="text-xs text-gray-900 dark:text-gray-100 font-mono">{{ $scTypeLog->admin_email ?? 'Unknown Email' }}</span>
+                            </div>
+                            @if($scTypeLog->ip_address)
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">IP Address</span>
+                                <span class="text-xs text-gray-900 dark:text-gray-100 font-mono">{{ $scTypeLog->ip_address }}</span>
+                            </div>
+                            @endif
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Updated At</span>
+                                <span class="text-xs text-gray-900 dark:text-gray-100">
+                                    {{ \Carbon\Carbon::parse($scTypeLog->created_at)->format('M d, Y h:i A') }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+            </div>
+            @endif
+
             <!-- Timestamps -->
             <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Timestamps</h3>

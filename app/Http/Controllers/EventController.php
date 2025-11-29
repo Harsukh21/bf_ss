@@ -197,7 +197,8 @@ class EventController extends Controller
             'events."createdAt"',
             'events."status"',
             'events."labels"',
-            'events."label_timestamps"'
+            'events."label_timestamps"',
+            'events."sc_type"'
         ];
         $selectList = implode(', ', $selectColumns);
         $selectList .= ', COALESCE(mc.market_count, 0) as "market_count"';
@@ -346,7 +347,8 @@ class EventController extends Controller
                 'labels',
                 'label_timestamps',
                 'is_interrupted',
-                'remind_me_after'
+                'remind_me_after',
+                'sc_type'
             ])
             ->where('id', $id)
             ->first();
@@ -395,7 +397,28 @@ class EventController extends Controller
         $event->parsedLabels = $parsedLabels;
         $event->parsedLabelTimestamps = $parsedLabelTimestamps;
         
-        return view('events.show', compact('event', 'sportConfig', 'labelConfig'));
+        // Get admin log for sc_type update
+        $scTypeLog = null;
+        if ($event->exEventId) {
+            // Try to find log by exEventId in description or by matching the event ID pattern
+            $scTypeLog = DB::table('system_logs')
+                ->where('action', 'update_sc_type')
+                ->where(function($query) use ($event) {
+                    $query->where('description', 'like', "%event {$event->exEventId}%")
+                          ->orWhere('description', 'like', "%{$event->exEventId}%");
+                })
+                ->orderBy('created_at', 'desc')
+                ->first();
+            
+            // If log found, get admin user details
+            if ($scTypeLog && $scTypeLog->user_id) {
+                $adminUser = DB::table('users')->where('id', $scTypeLog->user_id)->first();
+                $scTypeLog->admin_name = $adminUser->name ?? 'Unknown';
+                $scTypeLog->admin_email = $adminUser->email ?? 'Unknown';
+            }
+        }
+        
+        return view('events.show', compact('event', 'sportConfig', 'labelConfig', 'scTypeLog'));
     }
 
     /**
