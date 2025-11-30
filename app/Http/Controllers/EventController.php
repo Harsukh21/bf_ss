@@ -350,7 +350,8 @@ class EventController extends Controller
                 'remind_me_after',
                 'sc_type',
                 'status',
-                'marketTime'
+                'marketTime',
+                'new_limit'
             ])
             ->where('id', $id)
             ->first();
@@ -460,7 +461,8 @@ class EventController extends Controller
                 'is_interrupted',
                 'remind_me_after',
                 'sc_type',
-                'status'
+                'status',
+                'new_limit'
             ])
             ->where('id', $id)
             ->first();

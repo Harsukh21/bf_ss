@@ -1844,7 +1844,7 @@ async function openEventDetailsModal(eventId) {
         }
         
         let scTypeHtml = '';
-        if (event.sc_type || scTypeLog) {
+        if (event.sc_type || scTypeLog || event.new_limit) {
             scTypeHtml = `
                 <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">SC Type Information</h3>
@@ -1862,6 +1862,23 @@ async function openEventDetailsModal(eventId) {
                                     <div class="flex-1 min-w-0">
                                         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">SC Type</label>
                                         <span class="inline-flex px-3 py-1.5 text-sm font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300">${event.sc_type}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${event.new_limit ? `
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                                            <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">New Limit</label>
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">${parseInt(event.new_limit).toLocaleString()}</p>
                                     </div>
                                 </div>
                             </div>

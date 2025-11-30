@@ -905,6 +905,17 @@
                 const labelKey = checkbox.getAttribute('data-label-key');
                 const checked = checkbox.checked;
                 
+                // Check if BOOKMAKER or UNMATCH is being checked - require web_pin
+                const pinRequiredLabels = ['bookmaker', 'unmatch'];
+                if (checked && pinRequiredLabels.includes(labelKey.toLowerCase())) {
+                    // Temporarily uncheck to prevent immediate update
+                    checkbox.checked = false;
+                    
+                    // Show web_pin modal
+                    showLabelPinModal(exEventId, labelKey, checkbox);
+                    return; // Exit early, will continue after PIN verification
+                }
+                
                 // Find the labels row for this event
                 const labelsRow = document.querySelector(`tr.js-labels-row[data-event-id="${exEventId}"]`);
                 if (!labelsRow) return;
@@ -1667,9 +1678,150 @@
         });
     }
 
-    // Update labels in events table (auto-save when checkbox changed)
-    async function updateEventLabels(exEventId, labels) {
+    // Label PIN Modal - Global flag to track if modal is open
+    window.labelPinModalOpen = false;
+    
+    function showLabelPinModal(exEventId, labelKey, checkbox, callback) {
+        // Prevent multiple modals
+        if (window.labelPinModalOpen) {
+            callback(false);
+            return;
+        }
+        
+        window.labelPinModalOpen = true;
+        
+        const labelName = labelKey.toUpperCase();
+        
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'labelPinModalOverlay';
+        overlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4';
+        overlay.style.transition = 'opacity 0.3s ease-in-out';
+        
+        // Create modal
+        const modal = document.createElement('div');
+        modal.id = 'labelPinModal';
+        modal.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full transform transition-all duration-300';
+        
+        modal.innerHTML = `
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Web PIN Required</h3>
+                    <button onclick="closeLabelPinModal(false)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <p class="text-sm text-gray-700 dark:text-gray-300 mb-4">Web PIN is required to check the <strong>${labelName}</strong> label.</p>
+                <form id="labelPinForm" onsubmit="submitLabelPin(event, '${exEventId}', '${labelKey}')">
+                    <div class="mb-4">
+                        <label for="label_web_pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Web PIN <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="password" 
+                            id="label_web_pin" 
+                            name="web_pin" 
+                            required 
+                            inputmode="numeric" 
+                            pattern="[0-9]*" 
+                            maxlength="20" 
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500" 
+                            placeholder="Enter your Web PIN"
+                        >
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Enter your 6-digit Web PIN</p>
+                    </div>
+                    <div id="labelPinError" class="hidden mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+                        <p class="text-sm text-red-600 dark:text-red-400" id="labelPinErrorMessage"></p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="closeLabelPinModal(false)" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" id="labelPinSubmitBtn" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                            Verify
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+        
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        document.body.style.overflow = 'hidden';
+        
+        // Store checkbox reference
+        overlay._checkbox = checkbox;
+        overlay._exEventId = exEventId;
+        overlay._labelKey = labelKey;
+        
+        // Animate in
+        setTimeout(() => {
+            overlay.style.opacity = '1';
+        }, 10);
+        
+        // Close on overlay click
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                closeLabelPinModal(false);
+            }
+        });
+        
+        // Focus on input
+        setTimeout(() => {
+            const inputEl = document.getElementById('label_web_pin');
+            if (inputEl) {
+                inputEl.focus();
+            }
+        }, 100);
+    }
+    
+    async function submitLabelPin(e, exEventId, labelKey) {
+        e.preventDefault();
+        
+        const overlay = document.getElementById('labelPinModalOverlay');
+        if (!overlay) return;
+        
+        const submitBtn = document.getElementById('labelPinSubmitBtn');
+        const errorDiv = document.getElementById('labelPinError');
+        const errorMessage = document.getElementById('labelPinErrorMessage');
+        const webPinInput = document.getElementById('label_web_pin');
+        const webPin = webPinInput.value.trim();
+        
+        // Hide error
+        errorDiv.classList.add('hidden');
+        
+        // Validate: only numbers
+        if (!/^\d+$/.test(webPin)) {
+            errorMessage.textContent = 'Web PIN must contain only numbers.';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+        
+        // Disable submit button
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Verifying...';
+        
         try {
+            // Get current labels state
+            const labelsRow = document.querySelector(`tr.js-labels-row[data-event-id="${exEventId}"]`);
+            if (!labelsRow) {
+                closeLabelPinModal(false);
+                return;
+            }
+            
+            const eventLabels = {};
+            const eventCheckboxes = labelsRow.querySelectorAll('.js-label-checkbox');
+            eventCheckboxes.forEach(cb => {
+                const key = cb.getAttribute('data-label-key');
+                eventLabels[key] = cb.checked;
+            });
+            
+            // Set the label being verified to checked
+            eventLabels[labelKey] = true;
+            
             const response = await fetch(`/scorecard/events/${exEventId}/update-labels`, {
                 method: 'POST',
                 headers: {
@@ -1677,7 +1829,90 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                     'Accept': 'application/json',
                 },
-                body: JSON.stringify({ labels: labels }),
+                body: JSON.stringify({ 
+                    labels: eventLabels,
+                    web_pin: webPin,
+                }),
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Check the checkbox
+                const checkbox = overlay._checkbox;
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+                
+                closeLabelPinModal(true);
+                if (typeof ToastNotification !== 'undefined' && typeof ToastNotification.show === 'function') {
+                    ToastNotification.show('Label updated successfully.', 'success', 3000);
+                }
+                
+                // Trigger page refresh to show updated state
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            } else {
+                // Show error message
+                errorMessage.textContent = data.message || 'Invalid Web PIN.';
+                errorDiv.classList.remove('hidden');
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        } catch (error) {
+            console.error('Error verifying PIN:', error);
+            errorMessage.textContent = 'An error occurred while verifying PIN.';
+            errorDiv.classList.remove('hidden');
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
+    }
+    
+    function closeLabelPinModal(verified) {
+        window.labelPinModalOpen = false;
+        const overlayElement = document.getElementById('labelPinModalOverlay');
+        if (!overlayElement) return;
+        
+        const checkbox = overlayElement._checkbox;
+        
+        // Animate out
+        const modal = overlayElement.querySelector('.bg-white, .bg-gray-800');
+        if (modal) {
+            modal.style.opacity = '0';
+            modal.style.transform = 'scale(0.95)';
+        }
+        overlayElement.style.opacity = '0';
+        
+        setTimeout(() => {
+            document.body.style.overflow = '';
+            overlayElement.remove();
+            
+            // If PIN verification failed, ensure checkbox is unchecked
+            if (!verified && checkbox) {
+                checkbox.checked = false;
+            }
+        }, 300);
+    }
+    
+    // Update labels in events table (auto-save when checkbox changed)
+    async function updateEventLabels(exEventId, labels, webPin = null) {
+        try {
+            const requestBody = { labels: labels };
+            if (webPin) {
+                requestBody.web_pin = webPin;
+            }
+            
+            const response = await fetch(`/scorecard/events/${exEventId}/update-labels`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(requestBody),
             });
 
             const result = await response.json();
@@ -1701,6 +1936,20 @@
                 // Return success status
                 return true;
             } else {
+                // Check if PIN is required
+                if (result.requires_pin) {
+                    // Find the checkbox that triggered this and uncheck it
+                    const labelsRow = document.querySelector(`tr.js-labels-row[data-event-id="${exEventId}"]`);
+                    if (labelsRow && result.labels) {
+                        result.labels.forEach(labelKey => {
+                            const checkbox = labelsRow.querySelector(`input[data-label-key="${labelKey}"]`);
+                            if (checkbox) {
+                                checkbox.checked = false;
+                            }
+                        });
+                    }
+                }
+                
                 // Show error message
                 if (typeof ToastNotification !== 'undefined') {
                     ToastNotification.show('Failed to update labels: ' + (result.message || 'Unknown error'), 'error', 4000);

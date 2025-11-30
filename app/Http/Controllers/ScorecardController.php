@@ -680,6 +680,78 @@ class ScorecardController extends Controller
         $existingLabels = json_decode($event->labels ?? '{}', true);
         $existingTimestamps = json_decode($event->label_timestamps ?? '{}', true);
         
+        // Check if BOOKMAKER or UNMATCH are being checked - require web_pin verification
+        $pinRequiredLabels = ['bookmaker', 'unmatch'];
+        $needsPinVerification = false;
+        $labelsToVerify = [];
+        
+        foreach ($pinRequiredLabels as $pinLabel) {
+            $isChecked = isset($labels[$pinLabel]) ? (bool) $labels[$pinLabel] : false;
+            $wasChecked = isset($existingLabels[$pinLabel]) ? (bool) $existingLabels[$pinLabel] : false;
+            
+            // If trying to check (not uncheck) BOOKMAKER or UNMATCH, require PIN
+            if ($isChecked && !$wasChecked) {
+                $needsPinVerification = true;
+                $labelsToVerify[] = $pinLabel;
+            }
+        }
+        
+        // If PIN is required but not provided or invalid, reject the update
+        if ($needsPinVerification) {
+            if (!$request->has('web_pin')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Web PIN is required to check BOOKMAKER or UNMATCH labels.',
+                    'requires_pin' => true,
+                    'labels' => $labelsToVerify,
+                ], 422);
+            }
+            
+            // Verify web_pin
+            $webPin = $request->input('web_pin');
+            $user = Auth::user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated.',
+                ], 401);
+            }
+            
+            // Get user's web_pin from database
+            $userData = DB::table('users')->where('id', $user->id)->first();
+            
+            if (empty($userData->web_pin)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Web PIN is not set for your account.',
+                    'requires_pin' => true,
+                ], 422);
+            }
+            
+            // Verify web_pin
+            $storedPin = $userData->web_pin;
+            $isVerified = false;
+            
+            // Check if stored PIN is hashed
+            if (preg_match('/^\$2[ayb]\$.{56}$/', $storedPin)) {
+                // Hashed PIN - use Hash::check
+                $isVerified = Hash::check($webPin, $storedPin);
+            } else {
+                // Plain text PIN - direct comparison
+                $isVerified = $webPin === $storedPin;
+            }
+            
+            if (!$isVerified) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid Web PIN. Labels were not updated.',
+                    'requires_pin' => true,
+                    'labels' => $labelsToVerify,
+                ], 422);
+            }
+        }
+        
         // Prepare normalized labels and timestamps
         $normalizedTimestamps = [];
         $now = now()->format('Y-m-d H:i:s');
