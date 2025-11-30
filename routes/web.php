@@ -59,6 +59,7 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
     Route::get('/events/all', [EventController::class, 'all'])->name('events.all');
     Route::get('/events/export', [EventController::class, 'export'])->name('events.export');
     Route::get('/events/{id}', [EventController::class, 'show'])->name('events.show');
+    Route::get('/events/{id}/details', [EventController::class, 'getEventDetails'])->name('events.details');
     Route::post('/events/bulk-update', [EventController::class, 'bulkUpdate'])->name('events.bulk-update');
     Route::post('/events/{event}/update-market-time', [EventController::class, 'updateMarketTime'])->name('events.update-market-time');
     Route::get('/events/stats', [EventController::class, 'getStats'])->name('events.stats');

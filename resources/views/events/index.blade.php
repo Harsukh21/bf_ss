@@ -808,7 +808,7 @@
                                                  :style="`position: fixed; left: ${position.x}px; top: ${position.y}px; z-index: 9999;`"
                                                  class="w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="options-menu-{{ $event->id }}">
                                                 <div class="py-1" role="none">
-                                                    <a href="{{ route('events.show', $event->id) }}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">
+                                                    <a href="#" @click.prevent="open = false; openEventDetailsModal({{ $event->id }})" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">
                                                         <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -843,7 +843,11 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $event->eventName }}</div>
+                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            <a href="{{ route('events.show', $event->id) }}" class="hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors">
+                                                {{ $event->eventName }}
+                                            </a>
+                                        </div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">ID: {{ $event->eventId }}</div>
                                         @if(!empty($event->exEventId))
                                             <div class="text-xs text-gray-400 dark:text-gray-500">Exch Event ID: {{ $event->exEventId }}</div>
@@ -1207,6 +1211,38 @@
     </div>
 </div>
 @endsection
+
+<!-- Event Details Modal -->
+<div id="eventDetailsModalOverlay" class="event-details-modal-overlay" onclick="closeEventDetailsModal()"></div>
+<div id="eventDetailsModal" class="event-details-modal">
+    <div class="event-details-modal-content" id="eventDetailsModalContent">
+        <!-- Modal Header -->
+        <div class="event-details-modal-header">
+            <div class="flex-1 min-w-0">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 truncate" id="eventDetailsModalTitle">Event Details</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1" id="eventDetailsModalSubtitle">Loading event information...</p>
+            </div>
+            <button onclick="closeEventDetailsModal()" class="ml-4 flex-shrink-0 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Modal Body -->
+        <div class="event-details-modal-body" id="eventDetailsModalBody">
+            <div class="flex items-center justify-center py-12">
+                <div class="text-center">
+                    <svg class="animate-spin h-8 w-8 text-primary-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="mt-4 text-sm text-gray-600 dark:text-gray-400">Loading event details...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @push('scripts')
 <script>
@@ -1720,6 +1756,308 @@ document.addEventListener('DOMContentLoaded', function() {
     syncTime(timeFromCheckbox, dateFromInput, dateFromCheckbox);
     syncTime(timeToCheckbox, dateToInput, dateToCheckbox);
 });
+
+// Event Details Modal Functions
+async function openEventDetailsModal(eventId) {
+    const modal = document.getElementById('eventDetailsModal');
+    const overlay = document.getElementById('eventDetailsModalOverlay');
+    const modalBody = document.getElementById('eventDetailsModalBody');
+    const modalTitle = document.getElementById('eventDetailsModalTitle');
+    const modalSubtitle = document.getElementById('eventDetailsModalSubtitle');
+    
+    // Show modal
+    overlay.classList.add('active');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    // Reset content
+    modalTitle.textContent = 'Event Details';
+    modalSubtitle.textContent = 'Loading event information...';
+    modalBody.innerHTML = `
+        <div class="flex items-center justify-center py-12">
+            <div class="text-center">
+                <svg class="animate-spin h-8 w-8 text-primary-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="mt-4 text-sm text-gray-600 dark:text-gray-400">Loading event details...</p>
+            </div>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch(`/events/${eventId}/details`);
+        const data = await response.json();
+        
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Failed to load event details');
+        }
+        
+        const event = data.event;
+        const labelConfig = data.labelConfig || {};
+        const scTypeLog = data.scTypeLog;
+        const statusMap = data.statusMap || {};
+        const statusBadgeMeta = data.statusBadgeMeta || {};
+        const sportConfig = @json($sportConfig ?? []);
+        
+        // Format timestamps
+        const formatDate = (dateStr) => {
+            if (!dateStr) return 'N/A';
+            return new Date(dateStr).toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        };
+        
+        // Build modal content
+        let labelsHtml = '';
+        if (Object.keys(labelConfig).length > 0) {
+            labelsHtml = `
+                <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Scorecard Labels</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        ${Object.entries(labelConfig).map(([key, name]) => {
+                            const checked = event.parsedLabels && event.parsedLabels[key];
+                            const timestamp = event.parsedLabelTimestamps && event.parsedLabelTimestamps[key];
+                            const formattedTimestamp = timestamp ? formatDate(timestamp) : null;
+                            return `
+                                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                                        <div class="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${checked ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-500'}">
+                                            ${checked ? `<svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>` : ''}
+                                        </div>
+                                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">${name}</span>
+                                    </div>
+                                    <div class="ml-2 flex-shrink-0">
+                                        ${checked && formattedTimestamp ? `<span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">${formattedTimestamp}</span>` : '<span class="text-xs text-gray-400 dark:text-gray-500">Not checked</span>'}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        let scTypeHtml = '';
+        if (event.sc_type || scTypeLog) {
+            scTypeHtml = `
+                <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">SC Type Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${event.sc_type ? `
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                                            <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">SC Type</label>
+                                        <span class="inline-flex px-3 py-1.5 text-sm font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300">${event.sc_type}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${scTypeLog ? `
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Updated By Admin</label>
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">${scTypeLog.admin_name || 'Unknown Admin'}</p>
+                                    </div>
+                                </div>
+                                <div class="space-y-2 pt-3 border-t border-gray-200 dark:border-gray-600">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Email</span>
+                                        <span class="text-xs text-gray-900 dark:text-gray-100 font-mono">${scTypeLog.admin_email || 'Unknown Email'}</span>
+                                    </div>
+                                    ${scTypeLog.ip_address ? `
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">IP Address</span>
+                                            <span class="text-xs text-gray-900 dark:text-gray-100 font-mono">${scTypeLog.ip_address}</span>
+                                        </div>
+                                    ` : ''}
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Updated At</span>
+                                        <span class="text-xs text-gray-900 dark:text-gray-100">${formatDate(scTypeLog.created_at)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        modalTitle.textContent = event.eventName || 'Event Details';
+        modalSubtitle.textContent = `Event ID: ${event.eventId || 'N/A'}`;
+        modalBody.innerHTML = `
+            <div class="space-y-8">
+                <!-- Basic Information -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">Basic Information</h3>
+                        <div class="space-y-4">
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Event Name</label>
+                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">${event.eventName || 'N/A'}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Event ID</label>
+                                <p class="text-sm text-gray-900 dark:text-gray-100 font-mono break-all">${event.eventId || 'N/A'}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">External Event ID</label>
+                                <p class="text-sm text-gray-900 dark:text-gray-100 font-mono break-all">${event.exEventId || 'N/A'}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">MongoDB ID</label>
+                                <p class="text-sm text-gray-900 dark:text-gray-100 font-mono break-all">${event._id || 'N/A'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tournament & Sport Information -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">Tournament & Sport</h3>
+                        <div class="space-y-4">
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Tournament</label>
+                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">${event.tournamentsName || 'N/A'}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Tournament ID</label>
+                                <p class="text-sm text-gray-900 dark:text-gray-100 font-mono break-all">${event.tournamentsId || 'N/A'}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Sport</label>
+                                <p class="text-sm text-gray-900 dark:text-gray-100">${event.sportName || 'Unknown Sport'} <span class="text-gray-500 dark:text-gray-400">(ID: ${event.sportId || 'N/A'})</span></p>
+                            </div>
+                            ${event.marketTime ? `
+                                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Market Time</label>
+                                    <p class="text-sm text-gray-900 dark:text-gray-100">${formatDate(event.marketTime)}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Status & Flags -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">Status & Flags</h3>
+                        <div class="space-y-4">
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Status</label>
+                                <div class="flex flex-wrap gap-2">
+                                    ${(function() {
+                                        const eventStatus = event.status !== null && event.status !== undefined ? parseInt(event.status) : null;
+                                        const statusInfo = eventStatus && statusBadgeMeta[eventStatus] ? statusBadgeMeta[eventStatus] : null;
+                                        if (statusInfo) {
+                                            return '<span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full ' + statusInfo.class + '">' + statusInfo.label + '</span>';
+                                        } else {
+                                            return '<span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">Unknown</span>';
+                                        }
+                                    })()}
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Flags</label>
+                                <div class="flex flex-wrap gap-2">
+                                    ${event.highlight ? '<span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">Highlight</span>' : ''}
+                                    ${event.popular ? '<span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">Popular</span>' : ''}
+                                    ${event.quicklink ? '<span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300">Quicklink</span>' : ''}
+                                    ${event.dataSwitch ? '<span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300">Data Switch</span>' : ''}
+                                    ${!event.highlight && !event.popular && !event.quicklink && !event.dataSwitch ? '<span class="text-xs text-gray-500 dark:text-gray-400">No flags set</span>' : ''}
+                                </div>
+                            </div>
+                            ${event.is_interrupted !== null ? `
+                                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Interrupted</label>
+                                    <div>
+                                        ${event.is_interrupted ? '<span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300">Yes</span>' : '<span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">No</span>'}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+                
+                ${labelsHtml}
+                ${scTypeHtml}
+                
+                <!-- Timestamps -->
+                <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Timestamps</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Created At</label>
+                            <p class="text-sm text-gray-900 dark:text-gray-100">${formatDate(event.createdAt)}</p>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Database Created</label>
+                            <p class="text-sm text-gray-900 dark:text-gray-100">${formatDate(event.created_at)}</p>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Last Updated</label>
+                            <p class="text-sm text-gray-900 dark:text-gray-100">${formatDate(event.updated_at)}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Error loading event details:', error);
+        modalBody.innerHTML = `
+            <div class="flex items-center justify-center py-12">
+                <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">Error Loading Event</h3>
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">${error.message || 'Failed to load event details. Please try again.'}</p>
+                    <button onclick="openEventDetailsModal(${eventId})" class="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                        Retry
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function closeEventDetailsModal() {
+    const modal = document.getElementById('eventDetailsModal');
+    const overlay = document.getElementById('eventDetailsModalOverlay');
+    
+    overlay.classList.remove('active');
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('eventDetailsModal');
+        if (modal && modal.classList.contains('active')) {
+            closeEventDetailsModal();
+        }
+    }
+});
 </script>
 
 <style>
@@ -1761,6 +2099,142 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .dark .tournament-dropdown-scrollable::-webkit-scrollbar-thumb:hover {
     background: #9ca3af;
+}
+
+/* Event Details Modal Styles */
+.event-details-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 1040;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.event-details-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.event-details-modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    padding: 1rem;
+}
+
+.event-details-modal.active {
+    pointer-events: auto;
+    opacity: 1;
+    visibility: visible;
+}
+
+.event-details-modal-content {
+    background: #ffffff;
+    border-radius: 0.75rem;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+    max-width: 56rem;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+    transform: scale(0.95) translateY(-10px);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.event-details-modal.active .event-details-modal-content {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+.dark .event-details-modal-content {
+    background: #1f2937;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.event-details-modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.dark .event-details-modal-header {
+    border-color: #374151;
+    background: #374151;
+}
+
+.event-details-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    min-height: 0;
+}
+
+/* Custom scrollbar for modal body */
+.event-details-modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.event-details-modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.event-details-modal-body::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.event-details-modal-body::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.dark .event-details-modal-body::-webkit-scrollbar-track {
+    background: #374151;
+}
+
+.dark .event-details-modal-body::-webkit-scrollbar-thumb {
+    background: #6b7280;
+}
+
+.dark .event-details-modal-body::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .event-details-modal {
+        padding: 0.5rem;
+    }
+    
+    .event-details-modal-content {
+        max-height: 95vh;
+        border-radius: 0.5rem;
+    }
+    
+    .event-details-modal-header {
+        padding: 1rem;
+    }
+    
+    .event-details-modal-body {
+        padding: 1rem;
+    }
 }
 </style>
 @endpush

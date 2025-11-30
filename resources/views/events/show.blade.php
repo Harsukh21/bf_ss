@@ -104,12 +104,20 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
                             <div class="mt-1">
-                                @if($event->IsSettle)
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">Settled</span>
-                                @elseif($event->IsVoid)
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300">Void</span>
-                                @elseif($event->IsUnsettle)
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300">Unsettled</span>
+                                @php
+                                    $eventStatus = isset($event->status) ? (int) $event->status : null;
+                                    $statusInfo = $eventStatus && isset($statusBadgeMeta[$eventStatus])
+                                        ? $statusBadgeMeta[$eventStatus]
+                                        : null;
+                                @endphp
+                                @if($statusInfo)
+                                    <span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full {{ $statusInfo['class'] }}">
+                                        {{ $statusInfo['label'] }}
+                                    </span>
+                                @else
+                                    <span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                                        Unknown
+                                    </span>
                                 @endif
                             </div>
                         </div>

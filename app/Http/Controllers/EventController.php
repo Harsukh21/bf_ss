@@ -348,7 +348,9 @@ class EventController extends Controller
                 'label_timestamps',
                 'is_interrupted',
                 'remind_me_after',
-                'sc_type'
+                'sc_type',
+                'status',
+                'marketTime'
             ])
             ->where('id', $id)
             ->first();
@@ -418,7 +420,135 @@ class EventController extends Controller
             }
         }
         
-        return view('events.show', compact('event', 'sportConfig', 'labelConfig', 'scTypeLog'));
+        // Get status map for display
+        $statusMap = $this->getEventStatusMap();
+        $statusBadgeMeta = [
+            1 => ['label' => 'UNSETTLED', 'class' => 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'],
+            2 => ['label' => 'UPCOMING', 'class' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300'],
+            3 => ['label' => 'INPLAY', 'class' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'],
+            4 => ['label' => 'CLOSED', 'class' => 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300'],
+        ];
+        
+        return view('events.show', compact('event', 'sportConfig', 'labelConfig', 'scTypeLog', 'statusMap', 'statusBadgeMeta'));
+    }
+
+    public function getEventDetails($id)
+    {
+        $event = DB::table('events')
+            ->select([
+                'id',
+                '_id',
+                'eventId',
+                'exEventId',
+                'sportId',
+                'tournamentsId',
+                'tournamentsName',
+                'eventName',
+                'highlight',
+                'quicklink',
+                'popular',
+                'IsSettle',
+                'IsVoid',
+                'IsUnsettle',
+                'dataSwitch',
+                'createdAt',
+                'marketTime',
+                'updated_at',
+                'created_at',
+                'labels',
+                'label_timestamps',
+                'is_interrupted',
+                'remind_me_after',
+                'sc_type',
+                'status'
+            ])
+            ->where('id', $id)
+            ->first();
+
+        if (!$event) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Event not found'
+            ], 404);
+        }
+
+        // Get sport configuration
+        $sportConfig = config('sports.sports');
+        
+        // Get label configuration
+        $labelConfig = config('labels.labels', []);
+        $labelKeys = array_keys($labelConfig);
+        
+        // Parse labels from events table (JSONB)
+        $eventLabels = [];
+        if ($event->labels) {
+            $labels = is_string($event->labels) ? json_decode($event->labels, true) : $event->labels;
+            if (is_array($labels)) {
+                $eventLabels = $labels;
+            }
+        }
+        
+        // Parse label timestamps from events table (JSONB)
+        $eventLabelTimestamps = [];
+        if ($event->label_timestamps) {
+            $timestamps = is_string($event->label_timestamps) ? json_decode($event->label_timestamps, true) : $event->label_timestamps;
+            if (is_array($timestamps)) {
+                $eventLabelTimestamps = $timestamps;
+            }
+        }
+        
+        // Normalize labels and timestamps: ensure all label keys exist
+        $parsedLabels = [];
+        $parsedLabelTimestamps = [];
+        foreach ($labelKeys as $labelKey) {
+            $dbKey = strtolower($labelKey);
+            $parsedLabels[$labelKey] = (isset($eventLabels[$dbKey]) && (bool)$eventLabels[$dbKey] === true)
+                || (isset($eventLabels[$labelKey]) && (bool)$eventLabels[$labelKey] === true);
+            
+            // Parse timestamp (use lowercase key from DB)
+            $parsedLabelTimestamps[$labelKey] = $eventLabelTimestamps[$dbKey] ?? $eventLabelTimestamps[$labelKey] ?? null;
+        }
+        
+        $event->parsedLabels = $parsedLabels;
+        $event->parsedLabelTimestamps = $parsedLabelTimestamps;
+        $event->sportName = $sportConfig[$event->sportId] ?? 'Unknown Sport';
+        
+        // Get admin log for sc_type update
+        $scTypeLog = null;
+        if ($event->exEventId) {
+            $scTypeLog = DB::table('system_logs')
+                ->where('action', 'update_sc_type')
+                ->where(function($query) use ($event) {
+                    $query->where('description', 'like', "%event {$event->exEventId}%")
+                          ->orWhere('description', 'like', "%{$event->exEventId}%");
+                })
+                ->orderBy('created_at', 'desc')
+                ->first();
+            
+            if ($scTypeLog && $scTypeLog->user_id) {
+                $adminUser = DB::table('users')->where('id', $scTypeLog->user_id)->first();
+                $scTypeLog->admin_name = $adminUser->name ?? 'Unknown';
+                $scTypeLog->admin_email = $adminUser->email ?? 'Unknown';
+            }
+        }
+        
+        // Get status map for display
+        $statusMap = $this->getEventStatusMap();
+        $statusBadgeMeta = [
+            1 => ['label' => 'UNSETTLED', 'class' => 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'],
+            2 => ['label' => 'UPCOMING', 'class' => 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300'],
+            3 => ['label' => 'INPLAY', 'class' => 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'],
+            4 => ['label' => 'CLOSED', 'class' => 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300'],
+        ];
+        
+        return response()->json([
+            'success' => true,
+            'event' => $event,
+            'labelConfig' => $labelConfig,
+            'scTypeLog' => $scTypeLog,
+            'statusMap' => $statusMap,
+            'statusBadgeMeta' => $statusBadgeMeta
+        ]);
     }
 
     /**
