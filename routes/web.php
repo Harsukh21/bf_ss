@@ -97,6 +97,9 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::post('/events/{exEventId}/update-sc-type', [\App\Http\Controllers\ScorecardController::class, 'updateScType'])
             ->middleware('permission:update-scorecard-labels')
             ->name('events.update-sc-type');
+        Route::post('/events/{exEventId}/update-new-limit', [\App\Http\Controllers\ScorecardController::class, 'updateNewLimit'])
+            ->middleware('permission:update-scorecard-labels')
+            ->name('events.update-new-limit');
     });
 
     // Risk Team
@@ -161,6 +164,7 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
     // System Logs
     Route::prefix('system-logs')->name('system-logs.')->group(function () {
         Route::get('/', [SystemLogController::class, 'index'])->name('index');
+        Route::get('/database', [SystemLogController::class, 'databaseLogs'])->name('database');
         Route::get('/view/{filename}', [SystemLogController::class, 'view'])->name('view');
         Route::get('/download/{filename}', [SystemLogController::class, 'download'])->name('download');
         Route::post('/clear/{filename}', [SystemLogController::class, 'clear'])->name('clear');

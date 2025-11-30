@@ -493,6 +493,35 @@
                                                     </label>
                                                 @endforeach
                                             </div>
+                                            
+                                            <!-- New Limit (Show only when all 4 required labels are checked) -->
+                                            @if($allRequiredChecked)
+                                            <div class="flex items-center gap-2 js-new-limit-container">
+                                                <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 whitespace-nowrap">New Limit:</span>
+                                                @if($event->new_limit ?? null)
+                                                    <!-- Show only the number if new_limit exists -->
+                                                    <span class="text-xs font-semibold text-primary-600 dark:text-primary-400 js-new-limit-display">
+                                                        {{ number_format($event->new_limit) }}
+                                                    </span>
+                                                    <button 
+                                                        type="button"
+                                                        onclick="showNewLimitModal('{{ $event->exEventId }}', {{ $event->new_limit }})"
+                                                        class="px-2 py-1 text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 underline"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                @else
+                                                    <!-- Show button to open modal if new_limit doesn't exist -->
+                                                    <button 
+                                                        type="button"
+                                                        onclick="showNewLimitModal('{{ $event->exEventId }}')"
+                                                        class="px-3 py-1 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded transition-colors"
+                                                    >
+                                                        Set New Limit
+                                                    </button>
+                                                @endif
+                                            </div>
+                                            @endif
                                         </div>
                                         
                                         <!-- Market Old Limits and Remind Me After (Right Side - Only show when interrupted) -->
@@ -822,27 +851,51 @@
         }
     }
 
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize Flatpickr for date inputs
-        const dateInputs = document.querySelectorAll('.js-date-input');
-        dateInputs.forEach(input => {
-            flatpickr(input, {
-                dateFormat: 'd/m/Y',
-                allowInput: true,
-                parseDate: (datestr, format) => {
-                    // Parse DD/MM/YYYY format
-                    const parts = datestr.split('/');
-                    if (parts.length === 3) {
-                        const day = parseInt(parts[0], 10);
-                        const month = parseInt(parts[1], 10) - 1;
-                        const year = parseInt(parts[2], 10);
-                        return new Date(year, month, day);
-                    }
-                    return null;
-                },
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Flatpickr for date inputs
+            const dateInputs = document.querySelectorAll('.js-date-input');
+            dateInputs.forEach(input => {
+                flatpickr(input, {
+                    dateFormat: 'd/m/Y',
+                    allowInput: true,
+                    parseDate: (datestr, format) => {
+                        // Parse DD/MM/YYYY format
+                        const parts = datestr.split('/');
+                        if (parts.length === 3) {
+                            const day = parseInt(parts[0], 10);
+                            const month = parseInt(parts[1], 10) - 1;
+                            const year = parseInt(parts[2], 10);
+                            return new Date(year, month, day);
+                        }
+                        return null;
+                    },
+                });
             });
-        });
+            
+            // Restrict New Limit inputs to numbers only
+            const newLimitInputs = document.querySelectorAll('input[name="new_limit"]');
+            newLimitInputs.forEach(input => {
+                input.addEventListener('input', function(e) {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                });
+                
+                input.addEventListener('keypress', function(e) {
+                    // Allow: backspace, delete, tab, escape, enter
+                    if ([46, 8, 9, 27, 13].indexOf(e.keyCode) !== -1 ||
+                        // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                        (e.keyCode === 65 && e.ctrlKey === true) ||
+                        (e.keyCode === 67 && e.ctrlKey === true) ||
+                        (e.keyCode === 86 && e.ctrlKey === true) ||
+                        (e.keyCode === 88 && e.ctrlKey === true)) {
+                        return;
+                    }
+                    // Ensure that it is a number and stop the keypress
+                    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                        e.preventDefault();
+                    }
+                });
+            });
 
         // Handle label checkbox changes - update labels in events table
         document.addEventListener('change', function(e) {
@@ -881,6 +934,16 @@
                 const marketLimitsSection = labelsRow.querySelector('.flex.flex-wrap.items-center.gap-3');
                 
                 const allRequiredChecked = requiredCheckedCount === totalRequiredLabels;
+                
+                // Show/hide New Limit container based on whether all required labels are checked
+                const newLimitContainer = labelsRow.querySelector('.js-new-limit-container');
+                if (newLimitContainer) {
+                    if (allRequiredChecked) {
+                        newLimitContainer.style.display = 'flex';
+                    } else {
+                        newLimitContainer.style.display = 'none';
+                    }
+                }
                 
                 // Hide/show required labels container based on whether all required are checked
                 if (allRequiredChecked) {
@@ -1847,6 +1910,281 @@
                     window.lastCheckedEventId = null;
                 }
             }, 300);
+        }
+    }
+    
+    // New Limit Modal - Global flag to track if modal is open
+    window.newLimitModalOpen = false;
+    
+    function showNewLimitModal(exEventId, currentValue = null) {
+        // Prevent multiple modals
+        if (window.newLimitModalOpen) {
+            return;
+        }
+        
+        window.newLimitModalOpen = true;
+        
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'newLimitModalOverlay';
+        overlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4';
+        overlay.style.transition = 'opacity 0.3s ease-in-out';
+        
+        // Create modal
+        const modal = document.createElement('div');
+        modal.id = 'newLimitModal';
+        modal.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full transform transition-all duration-300';
+        
+        modal.innerHTML = `
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Set New Limit</h3>
+                    <button onclick="closeNewLimitModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <form id="newLimitForm" onsubmit="submitNewLimit(event, '${exEventId}')">
+                    <div class="mb-4">
+                        <label for="new_limit_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            New Limit <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="new_limit_input" 
+                            name="new_limit" 
+                            value="${currentValue || ''}" 
+                            placeholder="50000000"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500"
+                        >
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Enter a numeric value (e.g., 50000000)</p>
+                    </div>
+                    <div class="mb-4">
+                        <label for="new_limit_web_pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Web PIN <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="password" 
+                            id="new_limit_web_pin" 
+                            name="web_pin" 
+                            required 
+                            inputmode="numeric" 
+                            pattern="[0-9]*" 
+                            maxlength="20" 
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500" 
+                            placeholder="Enter your Web PIN"
+                        >
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Enter your 6-digit Web PIN</p>
+                    </div>
+                    <div id="newLimitError" class="hidden mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+                        <p class="text-sm text-red-600 dark:text-red-400" id="newLimitErrorMessage"></p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="closeNewLimitModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" id="newLimitSubmitBtn" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                            Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+        
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        document.body.style.overflow = 'hidden';
+        
+        // Animate in
+        setTimeout(() => {
+            overlay.style.opacity = '1';
+        }, 10);
+        
+        // Close on overlay click
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                closeNewLimitModal();
+            }
+        });
+        
+        // Prevent Escape key from closing (user must use Cancel button)
+        const escapeHandler = function(e) {
+            if (e.key === 'Escape' && window.newLimitModalOpen) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+        
+        // Store handler reference for cleanup
+        overlay._escapeHandler = escapeHandler;
+        
+        // Focus on input
+        setTimeout(() => {
+            const inputEl = document.getElementById('new_limit_input');
+            if (inputEl) {
+                inputEl.focus();
+                inputEl.select();
+            }
+        }, 100);
+        
+        // Restrict input to numbers only
+        const newLimitInput = document.getElementById('new_limit_input');
+        if (newLimitInput) {
+            newLimitInput.addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            });
+            
+            newLimitInput.addEventListener('keypress', function(e) {
+                // Allow: backspace, delete, tab, escape, enter
+                if ([46, 8, 9, 27, 13].indexOf(e.keyCode) !== -1 ||
+                    // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                    (e.keyCode === 65 && e.ctrlKey === true) ||
+                    (e.keyCode === 67 && e.ctrlKey === true) ||
+                    (e.keyCode === 86 && e.ctrlKey === true) ||
+                    (e.keyCode === 88 && e.ctrlKey === true)) {
+                    return;
+                }
+                // Ensure that it is a number and stop the keypress
+                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                    e.preventDefault();
+                }
+            });
+        }
+    }
+    
+    function closeNewLimitModal() {
+        window.newLimitModalOpen = false;
+        const overlayElement = document.getElementById('newLimitModalOverlay');
+        if (!overlayElement) return;
+        
+        // Remove escape handler
+        if (overlayElement._escapeHandler) {
+            document.removeEventListener('keydown', overlayElement._escapeHandler);
+        }
+        
+        // Animate out
+        const modal = overlayElement.querySelector('div[class*="bg-white"], div[class*="bg-gray-800"]');
+        if (modal) {
+            modal.style.opacity = '0';
+            modal.style.transform = 'scale(0.95)';
+        }
+        overlayElement.style.opacity = '0';
+        
+        setTimeout(() => {
+            document.body.style.overflow = '';
+            overlayElement.remove();
+        }, 300);
+    }
+    
+    async function submitNewLimit(e, exEventId) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const submitBtn = document.getElementById('newLimitSubmitBtn');
+        const errorDiv = document.getElementById('newLimitError');
+        const errorMessage = document.getElementById('newLimitErrorMessage');
+        const newLimitInput = document.getElementById('new_limit_input');
+        const webPinInput = document.getElementById('new_limit_web_pin');
+        const newLimitValue = newLimitInput.value.trim();
+        const webPin = webPinInput.value.trim();
+        
+        // Hide error
+        errorDiv.classList.add('hidden');
+        
+        // Validate: only numbers
+        if (!/^\d+$/.test(newLimitValue)) {
+            errorMessage.textContent = 'New Limit must contain only numbers.';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+        
+        if (!/^\d+$/.test(webPin)) {
+            errorMessage.textContent = 'Web PIN must contain only numbers.';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+        
+        // Disable submit button
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+        
+        try {
+            const response = await fetch(`/scorecard/events/${exEventId}/update-new-limit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    new_limit: parseInt(newLimitValue),
+                    web_pin: webPin,
+                }),
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Close modal
+                closeNewLimitModal();
+                
+                // Update the displayed value
+                const labelsRow = document.querySelector(`tr.js-labels-row[data-event-id="${exEventId}"]`);
+                if (labelsRow) {
+                    const newLimitContainer = labelsRow.querySelector('.js-new-limit-container');
+                    if (newLimitContainer) {
+                        const formattedValue = parseInt(newLimitValue).toLocaleString();
+                        newLimitContainer.innerHTML = `
+                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 whitespace-nowrap">New Limit:</span>
+                            <span class="text-xs font-semibold text-primary-600 dark:text-primary-400 js-new-limit-display">
+                                ${formattedValue}
+                            </span>
+                            <button 
+                                type="button"
+                                onclick="showNewLimitModal('${exEventId}', ${parseInt(newLimitValue)})"
+                                class="px-2 py-1 text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 underline"
+                            >
+                                Edit
+                            </button>
+                        `;
+                    }
+                }
+                
+                // Show success toast
+                if (typeof ToastNotification !== 'undefined' && typeof ToastNotification.show === 'function') {
+                    ToastNotification.show('New Limit updated successfully.', 'success', 3000);
+                } else {
+                    alert('New Limit updated successfully.');
+                }
+            } else {
+                // Show error message in modal
+                errorMessage.textContent = data.message || 'Failed to update New Limit.';
+                errorDiv.classList.remove('hidden');
+                // Also show toast notification
+                if (typeof ToastNotification !== 'undefined' && typeof ToastNotification.show === 'function') {
+                    ToastNotification.show(data.message || 'Failed to update New Limit.', 'error', 4000);
+                }
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        } catch (error) {
+            console.error('Error updating New Limit:', error);
+            errorMessage.textContent = 'An error occurred while updating New Limit.';
+            errorDiv.classList.remove('hidden');
+            // Also show toast notification
+            if (typeof ToastNotification !== 'undefined' && typeof ToastNotification.show === 'function') {
+                ToastNotification.show('An error occurred while updating New Limit.', 'error', 4000);
+            }
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
         }
     }
     

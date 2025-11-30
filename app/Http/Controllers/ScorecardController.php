@@ -31,6 +31,7 @@ class ScorecardController extends Controller
                 'events.label_timestamps',
                 'events.sc_type',
                 'events.remind_me_after',
+                'events.new_limit',
                 DB::raw('COUNT(DISTINCT "market_lists"."id") as inplay_markets_count'),
                 DB::raw('MIN("market_lists"."marketTime") as first_market_time'),
             ])
@@ -421,6 +422,9 @@ class ScorecardController extends Controller
             $normalizedTimestamps = [];
             $now = now()->format('Y-m-d H:i:s');
             
+            $labelConfig = config('labels.labels', []);
+            $user = Auth::user();
+            
             foreach ($labelKeys as $key) {
                 $dbKey = strtolower($key);
                 // Preserve existing label value if not provided in request
@@ -431,6 +435,19 @@ class ScorecardController extends Controller
                 $wasChecked = $existingValue;
                 
                 $normalizedLabels[$dbKey] = $isChecked;
+                
+                // Log label change if value changed and user is authenticated
+                if ($isChecked !== $wasChecked && $user && isset($labels[$key])) {
+                    $this->logLabelChange(
+                        $exEventId,
+                        $event->eventName ?? 'Unknown Event',
+                        $key,
+                        $labelConfig[$key] ?? strtoupper($key),
+                        $wasChecked ? 'Checked' : 'Unchecked',
+                        $isChecked ? 'Checked' : 'Unchecked',
+                        $request
+                    );
+                }
                 
                 // Update timestamp: set when checked, clear when unchecked
                 if ($isChecked && !$wasChecked) {
@@ -603,6 +620,40 @@ class ScorecardController extends Controller
         return '(' . implode(' AND ', $conditions) . ')';
     }
 
+    /**
+     * Log label change to system_logs table
+     */
+    private function logLabelChange($exEventId, $eventName, $labelKey, $labelName, $oldValue, $newValue, Request $request)
+    {
+        try {
+            $user = Auth::user();
+            $userName = $user ? ($user->name ?? 'Unknown') : 'Unknown';
+            $userEmail = $user ? ($user->email ?? 'N/A') : 'N/A';
+            
+            DB::table('system_logs')->insert([
+                'user_id' => $user ? $user->id : null,
+                'action' => 'update_label',
+                'description' => "User {$userName} ({$userEmail}) updated label '{$labelName}' from '{$oldValue}' to '{$newValue}' for event {$exEventId}",
+                'exEventId' => $exEventId,
+                'label_name' => $labelName,
+                'old_value' => $oldValue,
+                'new_value' => $newValue,
+                'event_name' => $eventName,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            // Log error but don't fail the request
+            \Log::error('Failed to log label change: ' . $e->getMessage(), [
+                'exEventId' => $exEventId,
+                'labelKey' => $labelKey,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
     public function updateLabels(Request $request, $exEventId)
     {
         $request->validate([
@@ -633,12 +684,28 @@ class ScorecardController extends Controller
         $normalizedTimestamps = [];
         $now = now()->format('Y-m-d H:i:s');
         
+        $labelConfig = config('labels.labels', []);
+        $user = Auth::user();
+        
         foreach ($labelKeys as $key) {
             $dbKey = strtolower($key);
             $isChecked = isset($labels[$key]) ? (bool) $labels[$key] : false;
             $wasChecked = isset($existingLabels[$dbKey]) ? (bool) $existingLabels[$dbKey] : false;
             
             $normalizedLabels[$dbKey] = $isChecked;
+            
+            // Log label change if value changed
+            if ($isChecked !== $wasChecked && $user) {
+                $this->logLabelChange(
+                    $exEventId,
+                    $event->eventName ?? 'Unknown Event',
+                    $key,
+                    $labelConfig[$key] ?? strtoupper($key),
+                    $wasChecked ? 'Checked' : 'Unchecked',
+                    $isChecked ? 'Checked' : 'Unchecked',
+                    $request
+                );
+            }
             
             // Update timestamp: set when checked, clear when unchecked
             if ($isChecked && !$wasChecked) {
@@ -759,6 +826,120 @@ class ScorecardController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'SC Type updated successfully.',
+        ]);
+    }
+
+    public function updateNewLimit(Request $request, $exEventId)
+    {
+        $request->validate([
+            'new_limit' => ['required', 'numeric', 'min:0'],
+            'web_pin' => ['required', 'string', 'regex:/^[0-9]+$/', 'min:6'],
+        ], [
+            'new_limit.required' => 'New Limit is required.',
+            'new_limit.numeric' => 'New Limit must be a number.',
+            'new_limit.min' => 'New Limit must be greater than or equal to 0.',
+            'web_pin.required' => 'Web PIN is required.',
+            'web_pin.regex' => 'Web PIN must contain only numbers.',
+            'web_pin.min' => 'Web PIN must be at least 6 digits.',
+        ]);
+
+        $event = DB::table('events')
+            ->where('exEventId', $exEventId)
+            ->first();
+
+        if (!$event) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Event not found.',
+            ], 404);
+        }
+
+        // Verify web_pin and check if user is admin
+        $webPin = $request->input('web_pin');
+        $user = Auth::user();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated.',
+            ], 401);
+        }
+
+        // Get user's web_pin from database
+        $userData = DB::table('users')->where('id', $user->id)->first();
+        
+        if (empty($userData->web_pin)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Web PIN is not set for your account.',
+            ], 422);
+        }
+
+        // Verify web_pin
+        $storedPin = $userData->web_pin;
+        $isVerified = false;
+
+        // Check if stored PIN is hashed
+        if (preg_match('/^\$2[ayb]\$.{56}$/', $storedPin)) {
+            // Hashed PIN - use Hash::check
+            $isVerified = Hash::check($webPin, $storedPin);
+        } else {
+            // Plain text PIN - direct comparison
+            $isVerified = $webPin === $storedPin;
+        }
+
+        if (!$isVerified) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Web PIN.',
+            ], 422);
+        }
+
+        // Verify that all 4 required labels are checked
+        $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
+        $existingLabels = json_decode($event->labels ?? '{}', true);
+        
+        $allRequiredChecked = true;
+        foreach ($requiredLabelKeys as $labelKey) {
+            if (!isset($existingLabels[$labelKey]) || !$existingLabels[$labelKey]) {
+                $allRequiredChecked = false;
+                break;
+            }
+        }
+
+        if (!$allRequiredChecked) {
+            return response()->json([
+                'success' => false,
+                'message' => 'All required labels (4X, B2C, B2B, USDT) must be checked before setting New Limit.',
+            ], 400);
+        }
+
+        // Update new_limit
+        DB::table('events')
+            ->where('exEventId', $exEventId)
+            ->update([
+                'new_limit' => (int) $request->input('new_limit'),
+                'updated_at' => now(),
+            ]);
+
+        // Log the action
+        try {
+            DB::table('system_logs')->insert([
+                'user_id' => $user->id,
+                'action' => 'update_new_limit',
+                'description' => "Admin {$user->name} ({$user->email}) updated New Limit to '{$request->input('new_limit')}' for event {$exEventId}",
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to log New Limit update: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'New Limit updated successfully.',
         ]);
     }
 }
