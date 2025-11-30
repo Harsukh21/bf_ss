@@ -447,6 +447,29 @@ class EventController extends Controller
             }
         }
         
+        // Get new limit logs
+        $newLimitLogs = [];
+        if ($event->exEventId) {
+            $logs = DB::table('system_logs')
+                ->where('action', 'update_new_limit')
+                ->where('exEventId', $event->exEventId)
+                ->orderBy('created_at', 'desc')
+                ->get();
+            
+            foreach ($logs as $log) {
+                if ($log->user_id) {
+                    $user = DB::table('users')->where('id', $log->user_id)->first();
+                    $newLimitLogs[] = [
+                        'name' => $user->name ?? 'Unknown',
+                        'email' => $user->email ?? 'N/A',
+                        'time' => $log->created_at,
+                        'old_value' => $log->old_value,
+                        'new_value' => $log->new_value,
+                    ];
+                }
+            }
+        }
+        
         // Get status map for display
         $statusMap = $this->getEventStatusMap();
         $statusBadgeMeta = [
@@ -456,7 +479,7 @@ class EventController extends Controller
             4 => ['label' => 'CLOSED', 'class' => 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300'],
         ];
         
-        return view('events.show', compact('event', 'sportConfig', 'labelConfig', 'scTypeLog', 'labelLogs', 'statusMap', 'statusBadgeMeta'));
+        return view('events.show', compact('event', 'sportConfig', 'labelConfig', 'scTypeLog', 'labelLogs', 'newLimitLogs', 'statusMap', 'statusBadgeMeta'));
     }
 
     public function getEventDetails($id)
@@ -586,6 +609,29 @@ class EventController extends Controller
             }
         }
         
+        // Get new limit logs
+        $newLimitLogs = [];
+        if ($event->exEventId) {
+            $logs = DB::table('system_logs')
+                ->where('action', 'update_new_limit')
+                ->where('exEventId', $event->exEventId)
+                ->orderBy('created_at', 'desc')
+                ->get();
+            
+            foreach ($logs as $log) {
+                if ($log->user_id) {
+                    $user = DB::table('users')->where('id', $log->user_id)->first();
+                    $newLimitLogs[] = [
+                        'name' => $user->name ?? 'Unknown',
+                        'email' => $user->email ?? 'N/A',
+                        'time' => $log->created_at,
+                        'old_value' => $log->old_value,
+                        'new_value' => $log->new_value,
+                    ];
+                }
+            }
+        }
+        
         // Get status map for display
         $statusMap = $this->getEventStatusMap();
         $statusBadgeMeta = [
@@ -601,6 +647,7 @@ class EventController extends Controller
             'labelConfig' => $labelConfig,
             'scTypeLog' => $scTypeLog,
             'labelLogs' => $labelLogs,
+            'newLimitLogs' => $newLimitLogs,
             'statusMap' => $statusMap,
             'statusBadgeMeta' => $statusBadgeMeta
         ]);

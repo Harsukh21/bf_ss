@@ -986,6 +986,10 @@ class ScorecardController extends Controller
             ], 400);
         }
 
+        // Get old value BEFORE updating
+        $oldValue = $event->new_limit !== null ? (string) $event->new_limit : null;
+        $newValue = (string) $request->input('new_limit');
+
         // Update new_limit
         DB::table('events')
             ->where('exEventId', $exEventId)
@@ -998,8 +1002,14 @@ class ScorecardController extends Controller
         try {
             DB::table('system_logs')->insert([
                 'user_id' => $user->id,
+                'exEventId' => $exEventId,
                 'action' => 'update_new_limit',
-                'description' => "Admin {$user->name} ({$user->email}) updated New Limit to '{$request->input('new_limit')}' for event {$exEventId}",
+                'description' => $oldValue 
+                    ? "Admin {$user->name} ({$user->email}) updated New Limit from '{$oldValue}' to '{$newValue}' for event {$exEventId}"
+                    : "Admin {$user->name} ({$user->email}) set New Limit to '{$newValue}' for event {$exEventId}",
+                'event_name' => $event->eventName ?? null,
+                'old_value' => $oldValue,
+                'new_value' => $newValue,
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'created_at' => now(),

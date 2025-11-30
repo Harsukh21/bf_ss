@@ -235,6 +235,37 @@
                                 <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ number_format($event->new_limit) }}</p>
                             </div>
                         </div>
+                        @if(!empty($newLimitLogs) && count($newLimitLogs) > 0)
+                            <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Change History</label>
+                                <div class="space-y-2 max-h-48 overflow-y-auto">
+                                    @foreach($newLimitLogs as $log)
+                                        <div class="text-xs text-gray-600 dark:text-gray-400 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
+                                            <div class="flex items-center justify-between mb-1">
+                                                <span class="font-medium">{{ $log['name'] }}</span>
+                                                <span class="text-gray-500 dark:text-gray-500">{{ \Carbon\Carbon::parse($log['time'])->format('M d, Y h:i A') }}</span>
+                                            </div>
+                                            <div class="text-gray-500 dark:text-gray-500 text-xs">
+                                                {{ $log['email'] }}
+                                            </div>
+                                            @if($log['old_value'] !== null)
+                                                <div class="mt-1 text-xs">
+                                                    <span class="text-gray-500 dark:text-gray-500">Changed from </span>
+                                                    <span class="font-semibold text-gray-700 dark:text-gray-300">{{ number_format($log['old_value']) }}</span>
+                                                    <span class="text-gray-500 dark:text-gray-500"> to </span>
+                                                    <span class="font-semibold text-green-600 dark:text-green-400">{{ number_format($log['new_value']) }}</span>
+                                                </div>
+                                            @else
+                                                <div class="mt-1 text-xs">
+                                                    <span class="text-gray-500 dark:text-gray-500">Set to </span>
+                                                    <span class="font-semibold text-green-600 dark:text-green-400">{{ number_format($log['new_value']) }}</span>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                     </div>
                     @endif
                 </div>
