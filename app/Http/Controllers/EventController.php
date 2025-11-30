@@ -421,6 +421,32 @@ class EventController extends Controller
             }
         }
         
+        // Get label logs for each checked label
+        $labelLogs = [];
+        if ($event->exEventId) {
+            foreach ($labelConfig as $labelKey => $labelName) {
+                if (isset($parsedLabels[$labelKey]) && $parsedLabels[$labelKey]) {
+                    // Get the most recent log for this label being checked
+                    $log = DB::table('system_logs')
+                        ->where('action', 'update_label')
+                        ->where('exEventId', $event->exEventId)
+                        ->where('label_name', $labelName)
+                        ->where('new_value', 'Checked')
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                    
+                    if ($log && $log->user_id) {
+                        $user = DB::table('users')->where('id', $log->user_id)->first();
+                        $labelLogs[$labelKey] = [
+                            'name' => $user->name ?? 'Unknown',
+                            'email' => $user->email ?? 'N/A',
+                            'time' => $log->created_at,
+                        ];
+                    }
+                }
+            }
+        }
+        
         // Get status map for display
         $statusMap = $this->getEventStatusMap();
         $statusBadgeMeta = [
@@ -430,7 +456,7 @@ class EventController extends Controller
             4 => ['label' => 'CLOSED', 'class' => 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300'],
         ];
         
-        return view('events.show', compact('event', 'sportConfig', 'labelConfig', 'scTypeLog', 'statusMap', 'statusBadgeMeta'));
+        return view('events.show', compact('event', 'sportConfig', 'labelConfig', 'scTypeLog', 'labelLogs', 'statusMap', 'statusBadgeMeta'));
     }
 
     public function getEventDetails($id)
@@ -534,6 +560,32 @@ class EventController extends Controller
             }
         }
         
+        // Get label logs for each checked label
+        $labelLogs = [];
+        if ($event->exEventId) {
+            foreach ($labelConfig as $labelKey => $labelName) {
+                if (isset($parsedLabels[$labelKey]) && $parsedLabels[$labelKey]) {
+                    // Get the most recent log for this label being checked
+                    $log = DB::table('system_logs')
+                        ->where('action', 'update_label')
+                        ->where('exEventId', $event->exEventId)
+                        ->where('label_name', $labelName)
+                        ->where('new_value', 'Checked')
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                    
+                    if ($log && $log->user_id) {
+                        $user = DB::table('users')->where('id', $log->user_id)->first();
+                        $labelLogs[$labelKey] = [
+                            'name' => $user->name ?? 'Unknown',
+                            'email' => $user->email ?? 'N/A',
+                            'time' => $log->created_at,
+                        ];
+                    }
+                }
+            }
+        }
+        
         // Get status map for display
         $statusMap = $this->getEventStatusMap();
         $statusBadgeMeta = [
@@ -548,6 +600,7 @@ class EventController extends Controller
             'event' => $event,
             'labelConfig' => $labelConfig,
             'scTypeLog' => $scTypeLog,
+            'labelLogs' => $labelLogs,
             'statusMap' => $statusMap,
             'statusBadgeMeta' => $statusBadgeMeta
         ]);

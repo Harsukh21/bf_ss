@@ -1796,6 +1796,7 @@ async function openEventDetailsModal(eventId) {
         const event = data.event;
         const labelConfig = data.labelConfig || {};
         const scTypeLog = data.scTypeLog;
+        const labelLogs = data.labelLogs || {};
         const statusMap = data.statusMap || {};
         const statusBadgeMeta = data.statusBadgeMeta || {};
         const sportConfig = @json($sportConfig ?? []);
@@ -1818,23 +1819,40 @@ async function openEventDetailsModal(eventId) {
         if (Object.keys(labelConfig).length > 0) {
             labelsHtml = `
                 <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Scorecard Labels</h3>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Scorecard Labels</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         ${Object.entries(labelConfig).map(([key, name]) => {
                             const checked = event.parsedLabels && event.parsedLabels[key];
                             const timestamp = event.parsedLabelTimestamps && event.parsedLabelTimestamps[key];
                             const formattedTimestamp = timestamp ? formatDate(timestamp) : null;
+                            const labelLog = labelLogs[key] || null;
+                            // Show log info for all checked labels
+                            const showLogInfo = checked && labelLog;
+                            
                             return `
-                                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                    <div class="flex items-center gap-2 flex-1 min-w-0">
-                                        <div class="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${checked ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-500'}">
+                                <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="w-4 h-4 rounded border-2 flex items-center justify-center ${checked ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-500'}">
                                             ${checked ? `<svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>` : ''}
                                         </div>
-                                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">${name}</span>
+                                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">${name}</span>
                                     </div>
-                                    <div class="ml-2 flex-shrink-0">
-                                        ${checked && formattedTimestamp ? `<span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">${formattedTimestamp}</span>` : '<span class="text-xs text-gray-400 dark:text-gray-500">Not checked</span>'}
-                                    </div>
+                                    ${checked && formattedTimestamp ? `
+                                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">${formattedTimestamp}</div>
+                                    ` : '<div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Not checked</div>'}
+                                    ${showLogInfo ? `
+                                        <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600 space-y-1">
+                                            <div class="text-xs text-gray-600 dark:text-gray-400">
+                                                <span class="font-medium">${labelLog.name}</span>
+                                            </div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-500">
+                                                ${labelLog.email}
+                                            </div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-500">
+                                                ${formatDate(labelLog.time)}
+                                            </div>
+                                        </div>
+                                    ` : ''}
                                 </div>
                             `;
                         }).join('')}
@@ -1844,10 +1862,10 @@ async function openEventDetailsModal(eventId) {
         }
         
         let scTypeHtml = '';
-        if (event.sc_type || scTypeLog || event.new_limit) {
+        if (event.sc_type || event.new_limit) {
             scTypeHtml = `
                 <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">SC Type Information</h3>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">SC Type Information</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         ${event.sc_type ? `
                             <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
@@ -1883,39 +1901,6 @@ async function openEventDetailsModal(eventId) {
                                 </div>
                             </div>
                         ` : ''}
-                        ${scTypeLog ? `
-                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <div class="flex-shrink-0">
-                                        <div class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Updated By Admin</label>
-                                        <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">${scTypeLog.admin_name || 'Unknown Admin'}</p>
-                                    </div>
-                                </div>
-                                <div class="space-y-2 pt-3 border-t border-gray-200 dark:border-gray-600">
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Email</span>
-                                        <span class="text-xs text-gray-900 dark:text-gray-100 font-mono">${scTypeLog.admin_email || 'Unknown Email'}</span>
-                                    </div>
-                                    ${scTypeLog.ip_address ? `
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">IP Address</span>
-                                            <span class="text-xs text-gray-900 dark:text-gray-100 font-mono">${scTypeLog.ip_address}</span>
-                                        </div>
-                                    ` : ''}
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Updated At</span>
-                                        <span class="text-xs text-gray-900 dark:text-gray-100">${formatDate(scTypeLog.created_at)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ` : ''}
                     </div>
                 </div>
             `;
@@ -1928,47 +1913,49 @@ async function openEventDetailsModal(eventId) {
                 <!-- Basic Information -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div class="space-y-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">Basic Information</h3>
-                        <div class="space-y-4">
-                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Event Name</label>
-                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">${event.eventName || 'N/A'}</p>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Basic Information</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Event Name</label>
+                                <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">${event.eventName || 'N/A'}</p>
                             </div>
-                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Event ID</label>
-                                <p class="text-sm text-gray-900 dark:text-gray-100 font-mono break-all">${event.eventId || 'N/A'}</p>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Event ID</label>
+                                <p class="mt-1 text-sm text-gray-900 dark:text-gray-100 font-mono">${event.eventId || 'N/A'}</p>
                             </div>
-                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">External Event ID</label>
-                                <p class="text-sm text-gray-900 dark:text-gray-100 font-mono break-all">${event.exEventId || 'N/A'}</p>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">External Event ID</label>
+                                <p class="mt-1 text-sm text-gray-900 dark:text-gray-100 font-mono break-all">${event.exEventId || 'N/A'}</p>
                             </div>
-                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">MongoDB ID</label>
-                                <p class="text-sm text-gray-900 dark:text-gray-100 font-mono break-all">${event._id || 'N/A'}</p>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">MongoDB ID</label>
+                                <p class="mt-1 text-sm text-gray-900 dark:text-gray-100 font-mono break-all">${event._id || 'N/A'}</p>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Tournament & Sport Information -->
                     <div class="space-y-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">Tournament & Sport</h3>
-                        <div class="space-y-4">
-                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Tournament</label>
-                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">${event.tournamentsName || 'N/A'}</p>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Tournament & Sport</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tournament</label>
+                                <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">${event.tournamentsName || 'N/A'}</p>
                             </div>
-                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Tournament ID</label>
-                                <p class="text-sm text-gray-900 dark:text-gray-100 font-mono break-all">${event.tournamentsId || 'N/A'}</p>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tournament ID</label>
+                                <p class="mt-1 text-sm text-gray-900 dark:text-gray-100 font-mono">${event.tournamentsId || 'N/A'}</p>
                             </div>
-                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Sport</label>
-                                <p class="text-sm text-gray-900 dark:text-gray-100">${event.sportName || 'Unknown Sport'} <span class="text-gray-500 dark:text-gray-400">(ID: ${event.sportId || 'N/A'})</span></p>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sport</label>
+                                <p class="mt-1 text-sm text-gray-900 dark:text-gray-100 font-mono">
+                                    ${event.sportName || 'Unknown Sport'} (ID: ${event.sportId || 'N/A'})
+                                </p>
                             </div>
                             ${event.marketTime ? `
-                                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Market Time</label>
-                                    <p class="text-sm text-gray-900 dark:text-gray-100">${formatDate(event.marketTime)}</p>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Market Time</label>
+                                    <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">${formatDate(event.marketTime)}</p>
                                 </div>
                             ` : ''}
                         </div>
@@ -1976,11 +1963,11 @@ async function openEventDetailsModal(eventId) {
                     
                     <!-- Status & Flags -->
                     <div class="space-y-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">Status & Flags</h3>
-                        <div class="space-y-4">
-                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Status</label>
-                                <div class="flex flex-wrap gap-2">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Status & Flags</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+                                <div class="mt-1">
                                     ${(function() {
                                         const eventStatus = event.status !== null && event.status !== undefined ? parseInt(event.status) : null;
                                         const statusInfo = eventStatus && statusBadgeMeta[eventStatus] ? statusBadgeMeta[eventStatus] : null;
@@ -1992,20 +1979,20 @@ async function openEventDetailsModal(eventId) {
                                     })()}
                                 </div>
                             </div>
-                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                                <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Flags</label>
-                                <div class="flex flex-wrap gap-2">
-                                    ${event.highlight ? '<span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">Highlight</span>' : ''}
-                                    ${event.popular ? '<span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">Popular</span>' : ''}
-                                    ${event.quicklink ? '<span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300">Quicklink</span>' : ''}
-                                    ${event.dataSwitch ? '<span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300">Data Switch</span>' : ''}
-                                    ${!event.highlight && !event.popular && !event.quicklink && !event.dataSwitch ? '<span class="text-xs text-gray-500 dark:text-gray-400">No flags set</span>' : ''}
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Flags</label>
+                                <div class="mt-1 flex flex-wrap gap-2">
+                                    ${event.highlight ? '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">Highlight</span>' : ''}
+                                    ${event.popular ? '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">Popular</span>' : ''}
+                                    ${event.quicklink ? '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300">Quicklink</span>' : ''}
+                                    ${event.dataSwitch ? '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300">Data Switch</span>' : ''}
+                                    ${!event.highlight && !event.popular && !event.quicklink && !event.dataSwitch ? '<span class="text-sm text-gray-500 dark:text-gray-400">No flags set</span>' : ''}
                                 </div>
                             </div>
                             ${event.is_interrupted !== null ? `
-                                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Interrupted</label>
-                                    <div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Interrupted</label>
+                                    <div class="mt-1">
                                         ${event.is_interrupted ? '<span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300">Yes</span>' : '<span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">No</span>'}
                                     </div>
                                 </div>
@@ -2019,19 +2006,19 @@ async function openEventDetailsModal(eventId) {
                 
                 <!-- Timestamps -->
                 <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Timestamps</h3>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Timestamps</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Created At</label>
-                            <p class="text-sm text-gray-900 dark:text-gray-100">${formatDate(event.createdAt)}</p>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Created At</label>
+                            <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">${formatDate(event.createdAt)}</p>
                         </div>
-                        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Database Created</label>
-                            <p class="text-sm text-gray-900 dark:text-gray-100">${formatDate(event.created_at)}</p>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Database Created</label>
+                            <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">${formatDate(event.created_at)}</p>
                         </div>
-                        <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
-                            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Last Updated</label>
-                            <p class="text-sm text-gray-900 dark:text-gray-100">${formatDate(event.updated_at)}</p>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Updated</label>
+                            <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">${formatDate(event.updated_at)}</p>
                         </div>
                     </div>
                 </div>

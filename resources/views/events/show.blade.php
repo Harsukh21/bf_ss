@@ -156,9 +156,12 @@
                             $labelChecked = isset($event->parsedLabels[$labelKey]) && (bool)$event->parsedLabels[$labelKey] === true;
                             $labelTimestamp = isset($event->parsedLabelTimestamps[$labelKey]) ? $event->parsedLabelTimestamps[$labelKey] : null;
                             $formattedTimestamp = $labelTimestamp ? \Carbon\Carbon::parse($labelTimestamp)->format('M d, Y h:i A') : null;
+                            $labelLog = isset($labelLogs[$labelKey]) ? $labelLogs[$labelKey] : null;
+                            // Show log info for all checked labels
+                            $showLogInfo = $labelChecked && $labelLog;
                         @endphp
-                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                            <div class="flex items-center gap-2">
+                        <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <div class="flex items-center gap-2 mb-2">
                                 <div class="w-4 h-4 rounded border-2 flex items-center justify-center {{ $labelChecked ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-500' }}">
                                     @if($labelChecked)
                                         <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -169,9 +172,22 @@
                                 <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $labelName }}</span>
                             </div>
                             @if($labelChecked && $formattedTimestamp)
-                                <span class="text-xs text-gray-500 dark:text-gray-400" title="Checked at: {{ $formattedTimestamp }}">{{ $formattedTimestamp }}</span>
+                                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ $formattedTimestamp }}</div>
                             @else
-                                <span class="text-xs text-gray-400 dark:text-gray-500">Not checked</span>
+                                <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Not checked</div>
+                            @endif
+                            @if($showLogInfo)
+                                <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600 space-y-1">
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">
+                                        <span class="font-medium">{{ $labelLog['name'] }}</span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-500">
+                                        {{ $labelLog['email'] }}
+                                    </div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-500">
+                                        {{ \Carbon\Carbon::parse($labelLog['time'])->format('M d, Y h:i A') }}
+                                    </div>
+                                </div>
                             @endif
                         </div>
                     @endforeach
@@ -179,8 +195,8 @@
             </div>
             @endif
 
-            <!-- SC Type & Admin Log -->
-            @if(!empty($event->sc_type) || $scTypeLog || !empty($event->new_limit))
+            <!-- SC Type Information -->
+            @if(!empty($event->sc_type) || !empty($event->new_limit))
             <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">SC Type Information</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -217,44 +233,6 @@
                             <div class="flex-1 min-w-0">
                                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">New Limit</label>
                                 <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ number_format($event->new_limit) }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-                    
-                    @if($scTypeLog)
-                    <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div class="flex-shrink-0">
-                                <div class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Updated By Admin</label>
-                                <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                                    {{ $scTypeLog->admin_name ?? 'Unknown Admin' }}
-                                </p>
-                            </div>
-                        </div>
-                        <div class="space-y-2 pt-3 border-t border-gray-200 dark:border-gray-600">
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Email</span>
-                                <span class="text-xs text-gray-900 dark:text-gray-100 font-mono">{{ $scTypeLog->admin_email ?? 'Unknown Email' }}</span>
-                            </div>
-                            @if($scTypeLog->ip_address)
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">IP Address</span>
-                                <span class="text-xs text-gray-900 dark:text-gray-100 font-mono">{{ $scTypeLog->ip_address }}</span>
-                            </div>
-                            @endif
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Updated At</span>
-                                <span class="text-xs text-gray-900 dark:text-gray-100">
-                                    {{ \Carbon\Carbon::parse($scTypeLog->created_at)->format('M d, Y h:i A') }}
-                                </span>
                             </div>
                         </div>
                     </div>
