@@ -163,13 +163,33 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
 
     // System Logs
     Route::prefix('system-logs')->name('system-logs.')->group(function () {
-        Route::get('/', [SystemLogController::class, 'index'])->name('index');
-        Route::get('/database', [SystemLogController::class, 'databaseLogs'])->name('database');
-        Route::get('/view/{filename}', [SystemLogController::class, 'view'])->name('view');
-        Route::get('/download/{filename}', [SystemLogController::class, 'download'])->name('download');
-        Route::post('/clear/{filename}', [SystemLogController::class, 'clear'])->name('clear');
-        Route::delete('/clear-all', [SystemLogController::class, 'clearAll'])->name('clear-all');
-        Route::post('/refresh', [SystemLogController::class, 'refresh'])->name('refresh');
+        Route::get('/', [SystemLogController::class, 'index'])
+            ->middleware('permission:view-system-logs')
+            ->name('index');
+        Route::get('/database', [SystemLogController::class, 'databaseLogs'])
+            ->middleware('permission:view-database-logs')
+            ->name('database');
+        Route::get('/view/{filename}', [SystemLogController::class, 'view'])
+            ->middleware('permission:view-system-logs')
+            ->name('view');
+        Route::get('/download/{filename}', [SystemLogController::class, 'download'])
+            ->middleware('permission:download-system-logs')
+            ->name('download');
+        Route::post('/clear/{filename}', [SystemLogController::class, 'clear'])
+            ->middleware('permission:clear-system-logs')
+            ->name('clear');
+        Route::delete('/clear-all', [SystemLogController::class, 'clearAll'])
+            ->middleware('permission:clear-system-logs')
+            ->name('clear-all');
+        Route::post('/refresh', [SystemLogController::class, 'refresh'])
+            ->middleware('permission:view-system-logs')
+            ->name('refresh');
+        Route::post('/database/delete-old', [SystemLogController::class, 'deleteOldLogs'])
+            ->middleware('permission:delete-database-logs')
+            ->name('database.delete-old');
+        Route::get('/database/{id}/details', [SystemLogController::class, 'getLogDetails'])
+            ->middleware('permission:view-database-logs')
+            ->name('database.details');
     });
 
     // Performance

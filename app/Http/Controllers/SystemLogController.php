@@ -261,4 +261,66 @@ class SystemLogController extends Controller
 
         return view('system-logs.database', compact('logs', 'actions', 'labelNames', 'users'));
     }
+
+    /**
+     * Delete system logs older than 15 days
+     */
+    public function deleteOldLogs(Request $request)
+    {
+        try {
+            $cutoffDate = \Carbon\Carbon::now()->subDays(15);
+            
+            $deletedCount = DB::table('system_logs')
+                ->where('created_at', '<', $cutoffDate)
+                ->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully deleted {$deletedCount} log(s) older than 15 days.",
+                'deleted_count' => $deletedCount,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete old logs: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete old logs: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get log details by ID
+     */
+    public function getLogDetails($id)
+    {
+        try {
+            $log = DB::table('system_logs')
+                ->leftJoin('users', 'system_logs.user_id', '=', 'users.id')
+                ->select([
+                    'system_logs.*',
+                    'users.name as user_name',
+                    'users.email as user_email',
+                ])
+                ->where('system_logs.id', $id)
+                ->first();
+            
+            if (!$log) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Log not found.',
+                ], 404);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'log' => $log,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to get log details: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get log details: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }

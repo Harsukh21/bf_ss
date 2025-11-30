@@ -165,6 +165,14 @@ class PermissionSeeder extends Seeder
                     'description' => 'View application system logs',
                 ],
                 [
+                    'name' => 'View Database Logs',
+                    'description' => 'View database system logs',
+                ],
+                [
+                    'name' => 'Delete Database Logs',
+                    'description' => 'Delete old database logs',
+                ],
+                [
                     'name' => 'Download System Logs',
                     'description' => 'Download log files',
                 ],

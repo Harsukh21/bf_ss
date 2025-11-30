@@ -38,6 +38,7 @@ class RoleSeeder extends Seeder
             'delete-users',
             'delete-roles',
             'clear-system-logs',
+            'delete-database-logs',
             'optimize-application',
         ])->pluck('id');
         $admin->permissions()->sync($adminPermissions);
