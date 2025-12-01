@@ -6,6 +6,14 @@
 <style>
     #mainNav { display: none; }
     main { padding-top: 0 !important; }
+    .preset-btn.active-preset {
+        border-left: 4px solid #2563eb;
+        background: #eff6ff;
+    }
+    .dark .preset-btn.active-preset {
+        border-left-color: #60a5fa;
+        background: rgba(37, 99, 235, 0.15);
+    }
 </style>
 @endpush
 
@@ -140,8 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const applyPreset = (button) => {
-        presetButtons.forEach(btn => btn.classList.remove('bg-primary-50', 'dark:bg-primary-900/30', 'border-l-4', 'border-primary-500'));
-        button.classList.add('bg-primary-50', 'dark:bg-primary-900/30', 'border-l-4', 'border-primary-500');
+        presetButtons.forEach(btn => btn.classList.remove('bg-primary-50', 'dark:bg-primary-900/30', 'active-preset'));
+        button.classList.add('bg-primary-50', 'dark:bg-primary-900/30', 'active-preset');
 
         const presetMethod = button.dataset.method || 'GET';
         const presetUrl = button.dataset.url || '';
