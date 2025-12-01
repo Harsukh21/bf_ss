@@ -809,7 +809,7 @@ class ScorecardController extends Controller
     public function updateScType(Request $request, $exEventId)
     {
         $request->validate([
-            'sc_type' => ['required', 'string', 'in:Sportradar,Old SC(Cric),SR Premium,SpreadeX'],
+            'sc_type' => ['required', 'string', 'in:Sportradar,Old SC(Cric),SR Premium,SpreadeX,N/A'],
             'web_pin' => ['required', 'string', 'regex:/^[0-9]+$/', 'min:6'],
         ], [
             'sc_type.required' => 'SC Type is required.',

@@ -1001,6 +1001,8 @@
                 // Update labels in events table
                 updateEventLabels(exEventId, eventLabels).then((success) => {
                     // If all 4 required labels are now checked (just checked the 4th one), show SC Type popup
+                    // Check condition: checkbox was just checked (and is required), all 4 required are checked, and there are exactly 4 required labels
+                    // Note: We check the condition based on current checkbox state, not just on update success
                     if (wasJustChecked && requiredCheckedCount === 4 && totalRequiredLabels === 4) {
                         // Check if sc_type is already set, if not show modal
                         const currentScType = labelsRow.getAttribute('data-sc-type');
