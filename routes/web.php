@@ -13,6 +13,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\GeneralSettingsController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ScriptController;
+use App\Http\Controllers\PostmanController;
 
 // Welcome page
 Route::get('/', function () {
@@ -264,3 +265,7 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
 
 Route::get('/script/get-view', [ScriptController::class, 'index']);
 Route::post('/script/store-page', [ScriptController::class, 'store'])->name('runscript');
+
+// postman testing routes
+Route::get('/index/postman/collection', [PostmanController::class, 'index'])->name('postman.index');
+Route::post('/run/postman/collection', [PostmanController::class, 'run'])->name('postman.run');
