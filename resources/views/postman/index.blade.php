@@ -7,11 +7,13 @@
     #mainNav { display: none; }
     main { padding-top: 0 !important; }
     .preset-btn.active-preset {
-        border-left: 4px solid #2563eb;
+        border-left: 4px solid #2563eb !important;
+        box-shadow: inset 4px 0 0 0 #2563eb;
         background: #eff6ff;
     }
     .dark .preset-btn.active-preset {
-        border-left-color: #60a5fa;
+        border-left-color: #60a5fa !important;
+        box-shadow: inset 4px 0 0 0 #60a5fa;
         background: rgba(37, 99, 235, 0.15);
     }
 </style>
@@ -29,19 +31,32 @@
                 <div class="divide-y divide-gray-200 dark:divide-gray-700">
                     <button type="button" class="preset-btn w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-primary-50 dark:hover:bg-gray-700 transition"
                         data-url="https://api4data.com/api/client/eventList"
-                        data-method="GET">
+                        data-method="GET"
+                        data-payload="">
                         <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-green-100 text-green-700">GET</span>
                         <span class="text-sm text-gray-800 dark:text-gray-100 truncate">/api/client/eventList</span>
                     </button>
                     <button type="button" class="preset-btn w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-primary-50 dark:hover:bg-gray-700 transition"
                         data-url="https://api4data.com/api/client/marketList"
-                        data-method="POST">
+                        data-method="POST"
+                        data-payload='{
+    "eventId": [
+        "0c9c1b437617213b9bc66550ec298fe2"
+    ],
+    "page": 1,
+    "limit": 200
+}'>
                         <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-orange-100 text-orange-700">POST</span>
                         <span class="text-sm text-gray-800 dark:text-gray-100 truncate">/api/client/marketList</span>
                     </button>
                     <button type="button" class="preset-btn w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-primary-50 dark:hover:bg-gray-700 transition"
                         data-url="https://api4data.com/api/client/marketPrice"
-                        data-method="POST">
+                        data-method="POST"
+                        data-payload='{
+    "marketId": [
+        "0c9c1b437617213b9bc66550ec298fe2"
+    ]
+}'>
                         <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-orange-100 text-orange-700">POST</span>
                         <span class="text-sm text-gray-800 dark:text-gray-100 truncate">/api/client/marketPrice</span>
                     </button>
@@ -152,9 +167,11 @@ document.addEventListener('DOMContentLoaded', () => {
         button.classList.add('bg-primary-50', 'dark:bg-primary-900/30', 'active-preset');
 
         const presetMethod = button.dataset.method || 'GET';
+        const presetPayload = button.dataset.payload || '';
         const presetUrl = button.dataset.url || '';
 
         methodInput.value = presetMethod;
+        payloadInput.value = presetPayload.trim();
         urlInput.value = presetUrl;
     };
 
