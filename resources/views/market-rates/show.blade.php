@@ -216,8 +216,10 @@
                         </div>
                     </div>
                     @php
-                        $gridStatusRaw = $rate->marketListStatus ?? ($rate->isCompleted ? 'Completed' : ($rate->inplay ? 'In Play' : 'Upcoming'));
+                        // Always use status from market_lists table
+                        $gridStatusRaw = $rate->marketListStatus ?? null;
                         $gridStatusTrimmed = is_string($gridStatusRaw) ? trim($gridStatusRaw) : '';
+                        // If status is null or empty, default to 'Upcoming'
                         $gridStatus = $gridStatusTrimmed !== '' ? ucwords(strtolower($gridStatusTrimmed)) : 'Upcoming';
                         $gridNormalized = strtolower(str_replace(['_', '-'], ' ', $gridStatus));
                         $gridBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
@@ -436,8 +438,10 @@
             </div>
             <!-- End of Screenshot Container -->
             @php
-                $summaryStatusRaw = $marketListStatus ?? ($marketRate->isCompleted ? 'Completed' : ($marketRate->inplay ? 'In Play' : 'Upcoming'));
+                // Always use status from market_lists table
+                $summaryStatusRaw = $marketListStatus ?? null;
                 $summaryStatusTrimmed = is_string($summaryStatusRaw) ? trim($summaryStatusRaw) : '';
+                // If status is null or empty, default to 'Upcoming'
                 $summaryStatus = $summaryStatusTrimmed !== '' ? ucwords(strtolower($summaryStatusTrimmed)) : 'Upcoming';
                 $summaryNormalized = strtolower(str_replace(['_', '-'], ' ', $summaryStatus));
                 $summaryBadgeClasses = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
