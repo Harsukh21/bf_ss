@@ -32,13 +32,13 @@ class CheckInPlayMarkets extends Command
         $this->info('Checking for markets that turned in-play...');
 
         // Get markets with status = 3 (INPLAY) that were updated in the last 3 minutes
-        // Only check markets with type = 'match_odds'
+        // Only check markets where marketName is "Match Odds" or "Moneyline"
         // This catches markets that recently turned in-play
         $threeMinutesAgo = Carbon::now()->subMinutes(3);
         
         $inPlayMarkets = DB::table('market_lists')
             ->where('status', 3) // INPLAY status
-            ->where('type', 'match_odds') // Only match_odds markets
+            ->whereIn('marketName', ['Match Odds', 'Moneyline']) // Only Match Odds and Moneyline markets
             ->where('updated_at', '>=', $threeMinutesAgo)
             ->select('id', 'exMarketId', 'exEventId', 'eventName', 'marketName', 'type', 'marketTime', 'updated_at')
             ->get();
@@ -100,24 +100,21 @@ class CheckInPlayMarkets extends Command
      */
     protected function formatInPlayMessage($market, string $date): string
     {
-        // Format market type: convert "match_odds" to "Match Odds"
-        $marketType = $market->type ?? 'N/A';
-        if ($marketType !== 'N/A') {
-            $marketType = ucwords(str_replace('_', ' ', $marketType));
-        }
+        // Use marketName directly (will be "Match Odds" or "Moneyline")
+        $marketName = $market->marketName ?? 'N/A';
 
         $lines = [
             "🟢🟢🟢 <b>Event Now In-Play</b> 🟢🟢🟢",
             "",
             "<b>Event:</b> " . ($market->eventName ?? 'N/A'),
             "",
-            "<b>Market:</b> " . $marketType,
+            "<b>Market:</b> " . $marketName,
             "",
             "<b>Date:</b> " . $date,
             "",
             "<b>Status:</b> IN-PLAY 🔴🔥",
             "",
-            "🔍✅ Please check that SC has been added to all labels and that all rates are working correctly.",
+            "<b>🔍✅ Please check that SC has been added to all labels and that all rates are working correctly.</b>",
         ];
 
         return implode("\n", $lines);
