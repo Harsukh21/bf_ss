@@ -16,10 +16,10 @@ class ScriptController extends Controller
 
     public function store(Request $request)
     {
-        return back()->with('summary', [
-            'updated' => 'fuck',
-            'not_updated' => 'off',
-        ]);
+        // return back()->with('summary', [
+        //     'updated' => 'fuck',
+        //     'not_updated' => 'off',
+        // ]);
 
         $validated = $request->validate([
             'file' => ['required', 'file', 'mimes:csv,txt'],
