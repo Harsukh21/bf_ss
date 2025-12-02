@@ -40,7 +40,7 @@ class CheckInPlayMarkets extends Command
             ->where('status', 3) // INPLAY status
             ->where('type', 'match_odds') // Only match_odds markets
             ->where('updated_at', '>=', $threeMinutesAgo)
-            ->select('id', 'exMarketId', 'exEventId', 'eventName', 'marketName', 'marketTime', 'updated_at')
+            ->select('id', 'exMarketId', 'exEventId', 'eventName', 'marketName', 'type', 'marketTime', 'updated_at')
             ->get();
 
         if ($inPlayMarkets->isEmpty()) {
@@ -62,10 +62,10 @@ class CheckInPlayMarkets extends Command
                 continue; // Skip if already notified
             }
 
-            // Format the date
+            // Format the date with bullet separator
             $marketDate = $market->marketTime 
-                ? Carbon::parse($market->marketTime)->format('M d, Y h:i A')
-                : Carbon::parse($market->updated_at)->format('M d, Y h:i A');
+                ? Carbon::parse($market->marketTime)->format('M d, Y • h:i A')
+                : Carbon::parse($market->updated_at)->format('M d, Y • h:i A');
 
             // Format Telegram message
             $message = $this->formatInPlayMessage($market, $marketDate);
@@ -100,14 +100,24 @@ class CheckInPlayMarkets extends Command
      */
     protected function formatInPlayMessage($market, string $date): string
     {
+        // Format market type: convert "match_odds" to "Match Odds"
+        $marketType = $market->type ?? 'N/A';
+        if ($marketType !== 'N/A') {
+            $marketType = ucwords(str_replace('_', ' ', $marketType));
+        }
+
         $lines = [
-            "🎮 <b>Market Now In-Play</b> 🎮",
+            "🟢🟢🟢 <b>Event Now In-Play</b> 🟢🟢🟢",
             "",
             "<b>Event:</b> " . ($market->eventName ?? 'N/A'),
-            "<b>Market:</b> " . ($market->marketName ?? 'N/A'),
+            "",
+            "<b>Market:</b> " . $marketType,
+            "",
             "<b>Date:</b> " . $date,
             "",
-            "Status changed to INPLAY",
+            "<b>Status:</b> IN-PLAY 🔴🔥",
+            "",
+            "🔍✅ Please check that SC has been added to all labels and that all rates are working correctly.",
         ];
 
         return implode("\n", $lines);
