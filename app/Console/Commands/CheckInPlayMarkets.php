@@ -32,11 +32,13 @@ class CheckInPlayMarkets extends Command
         $this->info('Checking for markets that turned in-play...');
 
         // Get markets with status = 3 (INPLAY) that were updated in the last 3 minutes
+        // Only check markets with type = 'match_odds'
         // This catches markets that recently turned in-play
         $threeMinutesAgo = Carbon::now()->subMinutes(3);
         
         $inPlayMarkets = DB::table('market_lists')
             ->where('status', 3) // INPLAY status
+            ->where('type', 'match_odds') // Only match_odds markets
             ->where('updated_at', '>=', $threeMinutesAgo)
             ->select('id', 'exMarketId', 'exEventId', 'eventName', 'marketName', 'marketTime', 'updated_at')
             ->get();
