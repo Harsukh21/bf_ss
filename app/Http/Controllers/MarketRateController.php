@@ -255,7 +255,16 @@ class MarketRateController extends Controller
             ->select('status', 'winnerType', 'selectionName')
             ->first();
 
-        $marketListStatus = $marketListMeta->status ?? null;
+        // Map status from integer to readable string
+        $statusMap = [
+            1 => 'UNSETTLED',
+            2 => 'UPCOMING',
+            3 => 'INPLAY',
+            4 => 'CLOSED',
+            5 => 'VOIDED',
+            6 => 'REMOVED',
+        ];
+        $marketListStatus = $marketListMeta && $marketListMeta->status ? ($statusMap[$marketListMeta->status] ?? null) : null;
         $marketListWinnerType = $marketListMeta->winnerType ?? null;
         $marketListSelectionName = $marketListMeta->selectionName ?? null;
 
@@ -386,9 +395,19 @@ class MarketRateController extends Controller
                     ->get()
                     ->keyBy('exMarketId');
 
-                $gridMarketRates = $gridMarketRates->map(function ($rate) use ($gridMeta) {
+                // Map status from integer to readable string
+                $statusMap = [
+                    1 => 'UNSETTLED',
+                    2 => 'UPCOMING',
+                    3 => 'INPLAY',
+                    4 => 'CLOSED',
+                    5 => 'VOIDED',
+                    6 => 'REMOVED',
+                ];
+
+                $gridMarketRates = $gridMarketRates->map(function ($rate) use ($gridMeta, $statusMap) {
                     $meta = $gridMeta->get($rate->exMarketId);
-                    $rate->marketListStatus = $meta->status ?? null;
+                    $rate->marketListStatus = $meta && $meta->status ? ($statusMap[$meta->status] ?? null) : null;
                     $rate->marketListWinnerType = $meta->winnerType ?? null;
                     $rate->marketListSelectionName = $meta->selectionName ?? null;
                     return $rate;
