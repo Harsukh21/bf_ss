@@ -31,17 +31,26 @@ class CheckInPlayMarkets extends Command
     {
         $this->info('Checking for markets that turned in-play...');
 
-        // Get markets with status = 3 (INPLAY) that were updated in the last 3 minutes
-        // Only check markets with type = 'match_odds'
-        // This catches markets that recently turned in-play
-        $threeMinutesAgo = Carbon::now()->subMinutes(3);
+        // Get ALL markets with status = 3 (INPLAY) 
+        // Only check markets where marketName is "Match Odds" or "Moneyline"
+        // We'll filter out already-notified markets using database table for reliable duplicate prevention
         
-        $inPlayMarkets = DB::table('market_lists')
+        $allInPlayMarkets = DB::table('market_lists')
             ->where('status', 3) // INPLAY status
-            ->where('type', 'match_odds') // Only match_odds markets
-            ->where('updated_at', '>=', $threeMinutesAgo)
-            ->select('id', 'exMarketId', 'exEventId', 'eventName', 'marketName', 'marketTime', 'updated_at')
+            ->whereIn('marketName', ['Match Odds', 'Moneyline']) // Only Match Odds and Moneyline markets
+            ->select('id', 'exMarketId', 'exEventId', 'eventName', 'marketName', 'type', 'marketTime', 'updated_at', 'created_at')
             ->get();
+        
+        // Get list of already notified market IDs from database
+        $notifiedMarketIds = DB::table('telegram_notifications')
+            ->whereIn('exMarketId', $allInPlayMarkets->pluck('exMarketId')->toArray())
+            ->pluck('exMarketId')
+            ->toArray();
+        
+        // Filter out markets that have already been notified
+        $inPlayMarkets = $allInPlayMarkets->filter(function($market) use ($notifiedMarketIds) {
+            return !in_array($market->exMarketId, $notifiedMarketIds);
+        });
 
         if ($inPlayMarkets->isEmpty()) {
             $this->info('No new in-play markets found.');
@@ -54,18 +63,20 @@ class CheckInPlayMarkets extends Command
         $skippedCount = 0;
 
         foreach ($inPlayMarkets as $market) {
-            // Check if we've already notified for this market (using cache key)
-            $cacheKey = "inplay_notified_{$market->exMarketId}";
+            // Double-check in database to prevent race conditions
+            $alreadyNotified = DB::table('telegram_notifications')
+                ->where('exMarketId', $market->exMarketId)
+                ->exists();
             
-            if (Cache::has($cacheKey)) {
+            if ($alreadyNotified) {
                 $skippedCount++;
                 continue; // Skip if already notified
             }
 
-            // Format the date
+            // Format the date with bullet separator
             $marketDate = $market->marketTime 
-                ? Carbon::parse($market->marketTime)->format('M d, Y h:i A')
-                : Carbon::parse($market->updated_at)->format('M d, Y h:i A');
+                ? Carbon::parse($market->marketTime)->format('M d, Y • h:i A')
+                : Carbon::parse($market->updated_at)->format('M d, Y • h:i A');
 
             // Format Telegram message
             $message = $this->formatInPlayMessage($market, $marketDate);
@@ -74,10 +85,29 @@ class CheckInPlayMarkets extends Command
             $success = $telegramService->sendMessage($message);
 
             if ($success) {
-                // Mark as notified in cache (store for 24 hours to avoid duplicates)
-                Cache::put($cacheKey, true, now()->addHours(24));
-                $notifiedCount++;
-                $this->info("✓ Notified: {$market->eventName} - {$market->marketName}");
+                // Mark as notified in database (permanent record to prevent duplicates)
+                try {
+                    DB::table('telegram_notifications')->insert([
+                        'exMarketId' => $market->exMarketId,
+                        'exEventId' => $market->exEventId,
+                        'eventName' => $market->eventName,
+                        'marketName' => $market->marketName,
+                        'notified_at' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    
+                    // Also cache for faster future lookups
+                    $cacheKey = "inplay_notified_{$market->exMarketId}";
+                    Cache::put($cacheKey, true, now()->addHours(24));
+                    
+                    $notifiedCount++;
+                    $this->info("✓ Notified: {$market->eventName} - {$market->marketName}");
+                } catch (\Exception $e) {
+                    // If insert fails (e.g., duplicate key), skip
+                    $skippedCount++;
+                    $this->warn("⚠ Skipped (duplicate): {$market->eventName} - {$market->marketName}");
+                }
             } else {
                 $failedCount++;
                 $this->error("✗ Failed: {$market->eventName} - {$market->marketName}");
@@ -100,14 +130,21 @@ class CheckInPlayMarkets extends Command
      */
     protected function formatInPlayMessage($market, string $date): string
     {
+        // Use marketName directly (will be "Match Odds" or "Moneyline")
+        $marketName = $market->marketName ?? 'N/A';
+
         $lines = [
-            "🎮 <b>Market Now In-Play</b> 🎮",
+            "🟢🟢🟢 <b>Event Now In-Play</b> 🟢🟢🟢",
             "",
             "<b>Event:</b> " . ($market->eventName ?? 'N/A'),
-            "<b>Market:</b> " . ($market->marketName ?? 'N/A'),
+            "",
+            "<b>Market:</b> " . $marketName,
+            "",
             "<b>Date:</b> " . $date,
             "",
-            "Status changed to INPLAY",
+            "<b>Status:</b> IN-PLAY 🔴🔥",
+            "",
+            "<b>🔍✅ Please check that SC has been added to all labels and that all rates are working correctly.</b>",
         ];
 
         return implode("\n", $lines);
