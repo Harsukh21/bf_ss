@@ -136,12 +136,12 @@ class CheckInPlayMarkets extends Command
         $sport = $market->sportName ?? 'N/A';
         $exEventId = $market->exEventId ?? '';
         
-        // Create event link
+        // Create event link - make the event name itself clickable
         $eventLink = $exEventId ? "https://cbtfturbo.com/sports/details/{$exEventId}" : '';
-        $eventDisplay = $eventLink ? "{$eventName}(<a href=\"{$eventLink}\">Link</a>)" : $eventName;
+        $eventDisplay = $eventLink ? "<a href=\"{$eventLink}\">{$eventName}</a>" : $eventName;
 
         $lines = [
-            "🟢🟢🟢 Event Now In-Play 🟢🟢🟢",
+            "🟢🟢🟢 Event In-Play 🟢🟢🟢",
             "",
             "<b>Sport:</b> " . $sport,
             "",
@@ -153,7 +153,7 @@ class CheckInPlayMarkets extends Command
             "",
             "<b>Status:</b> IN-PLAY 🔴🔥",
             "",
-            "🔍✅ Please check that SC has been added to all labels and that all rates are working correctly.",
+            "<b>🔍✅ Please check that SC has been added to all labels and that all rates are working correctly.</b>",
         ];
 
         return implode("\n", $lines);
