@@ -99,11 +99,11 @@
                 <!-- Logo -->
                 <div class="flex items-center">
                     <a href="/" class="flex items-center hover:opacity-80 transition-opacity duration-300 ease-in-out">
-                        <!-- Light mode logo -->
+                        <!-- Light mode logo (white_logo.svg has dark text for light background) -->
                         <img src="{{ asset('assets/img/white_logo.svg') }}" 
                              alt="{{ config('app.name', 'Laravel') }}" 
                              class="h-12 w-auto object-contain dark:hidden">
-                        <!-- Dark mode logo -->
+                        <!-- Dark mode logo (dark_logo.svg has light text for dark background) -->
                         <img src="{{ asset('assets/img/dark_logo.svg') }}" 
                              alt="{{ config('app.name', 'Laravel') }}" 
                              class="h-12 w-auto object-contain hidden dark:block">

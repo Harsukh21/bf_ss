@@ -4,153 +4,195 @@
 
 @push('css')
 <style>
+    /* World-Class Landing Page Styles */
+    
+    /* Smooth Scroll */
     html {
         scroll-behavior: smooth;
     }
     
-    /* Enhanced smooth transitions for theme switching */
-    *,
-    *::before,
-    *::after {
-        transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-duration: 500ms;
-    }
-    
-    /* Faster transitions for interactive elements */
-    button,
-    a,
-    input,
-    select,
-    textarea {
-        transition-duration: 300ms;
-    }
-    
-    /* Smooth page transitions */
-    body {
-        transition: background-color 500ms ease-in-out, color 500ms ease-in-out;
-    }
-    
-    section {
-        transition: background-color 500ms ease-in-out;
-    }
-    
+    /* Gradient Text Animation */
     .gradient-text {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        transition: background 400ms ease-in-out;
+        background-size: 200% 200%;
+        animation: gradientShift 3s ease infinite;
     }
     
-    .dark .gradient-text {
-        background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+    @keyframes gradientShift {
+        0%, 100% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
     }
     
+    /* World-Class Hero Section with White Background & Advanced Animations */
+    .hero-section {
+        position: relative;
+        overflow: hidden;
+        min-height: 600px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 30%, #f0f4ff 60%, #e8f0ff 100%);
+        background-size: 400% 400%;
+        animation: heroGradient 20s ease infinite;
+    }
+    
+    /* Center Radar Wave Animation */
+    .hero-radar-waves {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    .hero-radar-wave {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 200px;
+        height: 200px;
+        border: 2px solid rgba(102, 126, 234, 0.3);
+        border-radius: 50%;
+        animation: radarWave 3s ease-out infinite;
+    }
+    
+    .hero-radar-wave:nth-child(2) {
+        animation-delay: 1s;
+        border-color: rgba(118, 75, 162, 0.3);
+    }
+    
+    .hero-radar-wave:nth-child(3) {
+        animation-delay: 2s;
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .dark .hero-radar-wave {
+        border-color: rgba(139, 92, 246, 0.4);
+    }
+    
+    .dark .hero-radar-wave:nth-child(2) {
+        border-color: rgba(99, 102, 241, 0.4);
+    }
+    
+    @keyframes radarWave {
+        0% {
+            transform: translate(-50%, -50%) scale(0.5);
+            opacity: 1;
+        }
+        100% {
+            transform: translate(-50%, -50%) scale(4);
+            opacity: 0;
+        }
+    }
+    
+    .dark .hero-section {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #334155 60%, #475569 100%);
+        background-size: 400% 400%;
+    }
+    
+    @keyframes heroGradient {
+        0%, 100% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+    }
+    
+    
+    
+    /* Premium Feature Cards */
     .feature-card {
-        transition: all 0.3s ease, background-color 500ms cubic-bezier(0.4, 0, 0.2, 1), border-color 500ms cubic-bezier(0.4, 0, 0.2, 1), color 500ms cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+    
+    .feature-card:hover::before {
+        opacity: 1;
     }
     
     .feature-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px -12px rgba(102, 126, 234, 0.3);
     }
     
     .dark .feature-card:hover {
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 20px 40px -12px rgba(139, 92, 246, 0.4);
     }
     
-    /* Statistics Section */
-    .statistics-section {
-        background: #ffffff;
-        padding: 5rem 0;
-        border-top: 1px solid #e5e7eb;
-        border-bottom: 1px solid #e5e7eb;
+    .feature-card svg {
+        transition: transform 0.4s ease;
     }
     
-    .dark .statistics-section {
-        background: #1f2937;
-        border-top-color: #374151;
-        border-bottom-color: #374151;
+    .feature-card:hover svg {
+        transform: scale(1.1) rotate(5deg);
+    }
+    
+    /* Section Padding */
+    .section-padding {
+        padding: 100px 0;
+    }
+    
+    /* Animated Statistics */
+    .stat-number {
+        font-size: 3.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        background-size: 200% 200%;
+        animation: gradientShift 3s ease infinite;
+        line-height: 1.2;
     }
     
     .stat-card {
-        text-align: center;
-        padding: 0;
+        transition: transform 0.3s ease;
     }
     
-    .stat-number {
-        font-size: 4rem;
-        font-weight: 700;
-        letter-spacing: -0.04em;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        transition: background 500ms cubic-bezier(0.4, 0, 0.2, 1);
-        line-height: 1.1;
-        margin-bottom: 0.5rem;
-        display: block;
+    .stat-card:hover {
+        transform: translateY(-5px);
     }
     
-    .dark .stat-number {
-        background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+    .stat-card:hover .stat-number {
+        transform: scale(1.1);
     }
     
-    .stat-label {
-        font-size: 0.875rem;
-        font-weight: 400;
-        color: #4b5563;
-        transition: color 500ms cubic-bezier(0.4, 0, 0.2, 1);
-        line-height: 1.5;
+    /* Premium Step Cards */
+    .step-card {
+        position: relative;
+        padding-left: 4rem;
+        transition: transform 0.3s ease;
     }
     
-    .dark .stat-label {
-        color: #9ca3af;
-    }
-    
-    @media (max-width: 1024px) {
-        .stat-number {
-            font-size: 3rem;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .statistics-section {
-            padding: 3.5rem 0;
-        }
-        
-        .stat-number {
-            font-size: 2.5rem;
-        }
-        
-        .stat-label {
-            font-size: 0.8125rem;
-        }
-    }
-    
-    @media (max-width: 640px) {
-        .stat-number {
-            font-size: 2rem;
-        }
-        
-        .stat-label {
-            font-size: 0.75rem;
-        }
+    .step-card:hover {
+        transform: translateX(10px);
     }
     
     .step-number {
         position: absolute;
         left: 0;
         top: 0;
-        width: 2.5rem;
-        height: 2.5rem;
+        width: 3rem;
+        height: 3rem;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border-radius: 50%;
@@ -158,18 +200,82 @@
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 1.25rem;
-        transition: background 400ms ease-in-out;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     
-    .dark .step-number {
-        background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+    .step-card:hover .step-number {
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
     }
     
-    .section-padding {
-        padding: 80px 0;
+    /* Scroll Reveal Animation */
+    .scroll-reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
+    .scroll-reveal.revealed {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    /* Premium Use Case Cards */
+    .use-case-card {
+        transition: all 0.3s ease;
+    }
+    
+    .use-case-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dark .use-case-card:hover {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* FAQ Cards */
+    .faq-card {
+        transition: all 0.3s ease;
+    }
+    
+    .faq-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dark .faq-card:hover {
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* CTA Section Enhancement */
+    .cta-section {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: 
+            radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 70% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        animation: ctaShimmer 10s ease-in-out infinite;
+    }
+    
+    @keyframes ctaShimmer {
+        0%, 100% {
+            opacity: 0.3;
+        }
+        50% {
+            opacity: 0.6;
+        }
+    }
+    
+    /* Smooth Fade In */
     @keyframes fadeInUp {
         from {
             opacity: 0;
@@ -182,70 +288,71 @@
     }
     
     .fade-in-up {
-        animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: fadeInUp 0.8s ease-out;
     }
     
-    /* Smooth scroll behavior */
-    html {
-        scroll-behavior: smooth;
-    }
-    
-    
-    .hero-pattern {
-        background-image: radial-gradient(circle at 2px 2px, rgba(99, 102, 241, 0.15) 1px, transparent 0);
-        background-size: 40px 40px;
-    }
-    
-    .dark .hero-pattern {
-        background-image: radial-gradient(circle at 2px 2px, rgba(139, 92, 246, 0.2) 1px, transparent 0);
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .section-padding {
+            padding: 60px 0;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+        }
     }
 </style>
 @endpush
 
 @section('content')
     <!-- Hero Section -->
-    <section class="bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 section-padding hero-pattern transition-colors duration-500 relative overflow-hidden">
-        <div class="absolute inset-0 opacity-5 dark:opacity-10">
-            <div class="absolute top-0 left-0 w-96 h-96 bg-primary-500 rounded-full filter blur-3xl"></div>
-            <div class="absolute bottom-0 right-0 w-96 h-96 bg-purple-500 rounded-full filter blur-3xl"></div>
+    <section class="hero-section section-padding">
+        <!-- Center Radar Wave Animation -->
+        <div class="hero-radar-waves">
+            <div class="hero-radar-wave"></div>
+            <div class="hero-radar-wave"></div>
+            <div class="hero-radar-wave"></div>
         </div>
+        
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="text-center fade-in-up">
                 <!-- Logo -->
-                <div class="flex justify-center mb-8">
-                    <a href="/" class="flex items-center justify-center">
-                        <img src="{{ asset('assets/img/white_logo.svg') }}"
+                <div class="flex justify-center mb-10">
+                    <a href="/" class="flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                        <!-- Light mode: white_logo.svg (has dark text for light background) -->
+                        <img src="{{ asset('assets/img/white_logo.svg') }}" 
                              alt="{{ config('app.name', 'Laravel') }}" 
-                             class="h-20 md:h-28 w-auto object-contain dark:hidden">
-                        <img src="{{ asset('assets/img/dark_logo.svg') }}"
+                             class="h-24 md:h-32 w-auto object-contain drop-shadow-2xl dark:hidden">
+                        <!-- Dark mode: dark_logo.svg (has light text for dark background) -->
+                        <img src="{{ asset('assets/img/dark_logo.svg') }}" 
                              alt="{{ config('app.name', 'Laravel') }}" 
-                             class="h-20 md:h-28 w-auto object-contain hidden dark:block">
+                             class="h-24 md:h-32 w-auto object-contain drop-shadow-2xl hidden dark:block">
                     </a>
                 </div>
 
                 <!-- Main Heading -->
-                <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight transition-colors duration-500">
-                    Professional Sports Betting
-                    <span class="gradient-text block mt-3">Management Platform</span>
+                <h1 class="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white mb-8 leading-tight tracking-tight">
+                    Powerful Event
+                    <span class="block mt-2 gradient-text">Management Platform</span>
                 </h1>
 
                 <!-- Subheading -->
-                <p class="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed transition-colors duration-500">
-                    Manage sports events, track betting markets, monitor real-time odds, and handle risk management with our comprehensive platform. Built for sports betting operators, risk managers, and trading teams.
+                <p class="text-xl md:text-2xl text-gray-700 dark:text-white/90 mb-12 max-w-4xl mx-auto leading-relaxed font-light">
+                    Manage sports events, markets, and real-time data with an intuitive, feature-rich dashboard designed for professionals.
                 </p>
 
                 <!-- CTA Buttons -->
-                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
                     <a href="{{ route('login') }}" 
-                       class="bg-gradient-to-r from-primary-600 to-purple-600 dark:from-primary-700 dark:to-purple-700 text-white px-8 py-4 rounded-lg hover:from-primary-700 hover:to-purple-700 dark:hover:from-primary-800 dark:hover:to-purple-800 transition-all font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 inline-flex items-center">
-                        Login to Dashboard
-                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="group bg-gradient-to-r from-primary-600 to-purple-600 dark:from-primary-700 dark:to-purple-700 text-white px-10 py-5 rounded-xl hover:from-primary-700 hover:to-purple-700 dark:hover:from-primary-800 dark:hover:to-purple-800 transition-all font-bold text-lg shadow-2xl hover:shadow-primary-500/30 transform hover:scale-110 inline-flex items-center">
+                        Get Started
+                        <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                         </svg>
                     </a>
                     <a href="#features" 
-                       class="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-8 py-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-primary-600 dark:hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-all font-semibold text-lg shadow-md hover:shadow-lg inline-flex items-center">
-                        Explore Features
+                       class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-10 py-5 rounded-xl border-2 border-gray-300 dark:border-gray-600 hover:border-primary-600 dark:hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-all font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-110 inline-flex items-center">
+                        Learn More
                     </a>
                 </div>
             </div>
@@ -253,156 +360,156 @@
     </section>
 
     <!-- Statistics Section -->
-    <section class="statistics-section transition-colors duration-500">
+    <section class="bg-white dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 py-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 lg:gap-16">
-                <div class="stat-card">
-                    <div class="stat-number">10K+</div>
-                    <div class="stat-label">Events Managed</div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
+                <div class="stat-card scroll-reveal">
+                    <div class="stat-number" data-target="10000" data-suffix="K+">0</div>
+                    <div class="text-gray-600 dark:text-gray-300 mt-3 font-semibold text-lg">Events Managed</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">50K+</div>
-                    <div class="stat-label">Active Markets</div>
+                <div class="stat-card scroll-reveal" style="transition-delay: 0.1s">
+                    <div class="stat-number" data-target="5000" data-suffix="K+">0</div>
+                    <div class="text-gray-600 dark:text-gray-300 mt-3 font-semibold text-lg">Active Users</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">99.9%</div>
-                    <div class="stat-label">System Uptime</div>
+                <div class="stat-card scroll-reveal" style="transition-delay: 0.2s">
+                    <div class="stat-number" data-target="99.9" data-suffix="%">0</div>
+                    <div class="text-gray-600 dark:text-gray-300 mt-3 font-semibold text-lg">Uptime</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card scroll-reveal" style="transition-delay: 0.3s">
                     <div class="stat-number">24/7</div>
-                    <div class="stat-label">Support Available</div>
+                    <div class="text-gray-600 dark:text-gray-300 mt-3 font-semibold text-lg">Support</div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Features Section -->
-    <section id="features" class="bg-white dark:bg-gray-900 section-padding transition-colors duration-500">
+    <section id="features" class="bg-white dark:bg-gray-900 section-padding">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 transition-colors duration-500">
-                    Comprehensive Betting Platform Features
+            <div class="text-center mb-20 scroll-reveal">
+                <h2 class="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white mb-6">
+                    Everything You Need
                 </h2>
-                <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto transition-colors duration-500">
-                    Everything you need to manage sports betting operations efficiently and effectively
+                <p class="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto font-light">
+                    A comprehensive solution for event tracking, market analysis, and real-time data management.
                 </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Event Management -->
-                <div class="feature-card bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-500">
-                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Feature 1 -->
+                <div class="feature-card bg-white dark:bg-gray-800 rounded-2xl p-10 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Event Management</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Track and manage sports events across multiple sports including Soccer, Tennis, Cricket, Basketball, Boxing, and more. Monitor event status, settlement, and void status in real-time.
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Event Management</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Comprehensive event tracking with real-time updates, status management, and detailed event information.
                     </p>
                 </div>
 
-                <!-- Market Tracking -->
-                <div class="feature-card bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-500">
-                    <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Feature 2 -->
+                <div class="feature-card bg-white dark:bg-gray-800 rounded-2xl p-10 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.1s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                         </svg>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Market Tracking</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Monitor betting markets with live rates, pre-bet and in-play status tracking. Filter by sport, tournament, market type, and track market time for comprehensive market analysis.
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Market Analytics</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Advanced market data analysis with live rates, trend tracking, and comprehensive reporting tools.
                     </p>
                 </div>
 
-                <!-- Scorecard System -->
-                <div class="feature-card bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-500">
-                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Feature 3 -->
+                <div class="feature-card bg-white dark:bg-gray-800 rounded-2xl p-10 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.2s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Scorecard Management</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Advanced scorecard system with customizable labels (4X, B2C, B2B, USDT, Bookmaker, Unmatch). Track label status with timestamps and manage SC types (Sportradar, Old SC, SR Premium, SpreadeX).
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Real-Time Updates</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Get instant notifications and updates on events, market changes, and important alerts.
                     </p>
                 </div>
 
-                <!-- Risk Management -->
-                <div class="feature-card bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-500">
-                    <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                <!-- Feature 4 -->
+                <div class="feature-card bg-white dark:bg-gray-800 rounded-2xl p-10 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.3s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-600 dark:from-yellow-600 dark:to-yellow-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                         </svg>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Risk Management</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Comprehensive betlist checking and risk analysis tools. Monitor interrupted events, set market limits, and manage risk parameters with real-time alerts and notifications.
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Secure Access</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Enterprise-grade security with role-based access control and user permission management.
                     </p>
                 </div>
 
-                <!-- Market Rates -->
-                <div class="feature-card bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-500">
-                    <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Dynamic Market Rates</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Track dynamic market rates with real-time updates. Export data in CSV format, search and filter rates, and analyze market trends with comprehensive reporting tools.
-                    </p>
-                </div>
-
-                <!-- User & Role Management -->
-                <div class="feature-card bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-500">
-                    <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">User & Role Management</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Complete user management system with role-based access control. Create users, assign roles and permissions, manage user status, and track user activity with comprehensive system logs.
-                    </p>
-                </div>
-
-                <!-- Real-Time Notifications -->
-                <div class="feature-card bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-500">
-                    <div class="w-12 h-12 bg-pink-100 dark:bg-pink-900/30 rounded-lg flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-pink-600 dark:text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Push Notifications</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Stay informed with real-time push notifications for important events, market changes, risk alerts, and system updates. Never miss critical information.
-                    </p>
-                </div>
-
-                <!-- Data Export -->
-                <div class="feature-card bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-500">
-                    <div class="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Feature 5 -->
+                <div class="feature-card bg-white dark:bg-gray-800 rounded-2xl p-10 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.4s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 dark:from-indigo-600 dark:to-indigo-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                         </svg>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Data Export & Reports</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Export events, markets, and market rates data in CSV format. Generate comprehensive reports with advanced filtering and search capabilities for analysis and record-keeping.
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Data Export</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Export your data easily in CSV format with advanced filtering and customization options.
                     </p>
                 </div>
 
-                <!-- System Logging -->
-                <div class="feature-card bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-500">
-                    <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                <!-- Feature 6 -->
+                <div class="feature-card bg-white dark:bg-gray-800 rounded-2xl p-10 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.5s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">System Logging</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Complete audit trail with system logs tracking all user actions, admin activities, and system changes. Monitor who did what, when, and from where for compliance and security.
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Fast & Reliable</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Built for performance with optimized queries and responsive design for all devices.
+                    </p>
+                </div>
+
+                <!-- Feature 7 -->
+                <div class="feature-card bg-white dark:bg-gray-800 rounded-2xl p-10 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.6s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-600 dark:from-teal-600 dark:to-teal-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Scorecard Management</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Track in-play events with comprehensive scorecard features, labels, and interruption management.
+                    </p>
+                </div>
+
+                <!-- Feature 8 -->
+                <div class="feature-card bg-white dark:bg-gray-800 rounded-2xl p-10 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.7s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-pink-500 to-pink-600 dark:from-pink-600 dark:to-pink-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Risk Management</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Advanced risk market tracking with filters, labels, and status management.
+                    </p>
+                </div>
+
+                <!-- Feature 9 -->
+                <div class="feature-card bg-white dark:bg-gray-800 rounded-2xl p-10 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.8s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 dark:from-orange-600 dark:to-orange-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Time Zone Support</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Multi-timezone support with user-specific timezone preferences.
                     </p>
                 </div>
             </div>
@@ -410,39 +517,42 @@
     </section>
 
     <!-- How It Works Section -->
-    <section class="bg-gray-50 dark:bg-gray-800 section-padding transition-colors duration-500">
+    <section class="bg-gray-50 dark:bg-gray-800 section-padding">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 transition-colors duration-500">
+            <div class="text-center mb-20 scroll-reveal">
+                <h2 class="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white mb-6">
                     How It Works
                 </h2>
-                <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto transition-colors duration-500">
-                    Get started with our platform in three simple steps
+                <p class="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto font-light">
+                    Get started in minutes with our simple, intuitive workflow
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                <div class="step-card relative pl-12">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-6xl mx-auto">
+                <!-- Step 1 -->
+                <div class="step-card scroll-reveal">
                     <div class="step-number">1</div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Login & Access</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Login with your credentials using password authentication or Web PIN. Access the dashboard with role-based permissions tailored to your responsibilities.
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Sign Up & Login</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Create your account or login with your credentials. Get instant access to the dashboard with role-based permissions.
                     </p>
                 </div>
 
-                <div class="step-card relative pl-12">
+                <!-- Step 2 -->
+                <div class="step-card scroll-reveal" style="transition-delay: 0.2s">
                     <div class="step-number">2</div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Monitor Events & Markets</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Browse sports events, track betting markets, monitor real-time rates, manage scorecards, and check risk parameters. Filter by sport, tournament, status, and date ranges.
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Configure Settings</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Set up your preferences, timezone, and notification settings. Customize your dashboard to match your workflow.
                     </p>
                 </div>
 
-                <div class="step-card relative pl-12">
+                <!-- Step 3 -->
+                <div class="step-card scroll-reveal" style="transition-delay: 0.4s">
                     <div class="step-number">3</div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Manage & Export</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Update event status, manage scorecard labels, set market limits, export data, and generate reports. All actions are logged for audit and compliance purposes.
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Start Managing Events</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Browse events, manage markets, track real-time data, and export reports. Everything you need is at your fingertips.
                     </p>
                 </div>
             </div>
@@ -450,78 +560,78 @@
     </section>
 
     <!-- Why Choose Us Section -->
-    <section class="bg-white dark:bg-gray-900 section-padding transition-colors duration-500">
+    <section class="bg-white dark:bg-gray-900 section-padding">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 transition-colors duration-500">
-                    Why Choose Our Platform?
+            <div class="text-center mb-20 scroll-reveal">
+                <h2 class="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white mb-6">
+                    Why Choose Us?
                 </h2>
-                <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto transition-colors duration-500">
-                    Built specifically for sports betting operations with professional-grade features
+                <p class="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto font-light">
+                    Built for professionals who demand reliability and performance
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
-                <div class="flex gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto">
+                <div class="flex gap-6 scroll-reveal">
                     <div class="flex-shrink-0">
-                        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-2xl flex items-center justify-center shadow-lg">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                             </svg>
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-500">Real-Time Data Processing</h3>
-                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                            Process and display market rates, event updates, and status changes in real-time with optimized database queries and efficient caching.
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Lightning Fast Performance</h3>
+                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                            Optimized database queries and efficient caching ensure your dashboard loads instantly, even with thousands of events.
                         </p>
                     </div>
                 </div>
 
-                <div class="flex gap-6">
+                <div class="flex gap-6 scroll-reveal" style="transition-delay: 0.1s">
                     <div class="flex-shrink-0">
-                        <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700 rounded-2xl flex items-center justify-center shadow-lg">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                             </svg>
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-500">Secure & Compliant</h3>
-                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                            Enterprise-grade security with role-based access control, Web PIN authentication, comprehensive audit logs, and IP tracking for compliance.
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Enterprise Security</h3>
+                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                            Your data is protected with industry-standard security practices, role-based access control, and regular security updates.
                         </p>
                     </div>
                 </div>
 
-                <div class="flex gap-6">
+                <div class="flex gap-6 scroll-reveal" style="transition-delay: 0.2s">
                     <div class="flex-shrink-0">
-                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+                        <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700 rounded-2xl flex items-center justify-center shadow-lg">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
                             </svg>
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-500">Multi-Sport Support</h3>
-                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                            Support for Soccer, Tennis, Cricket, Basketball, Boxing, Pro Kabaddi, Politics, and more. Easily extensible to add new sports and tournaments.
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Fully Customizable</h3>
+                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                            White-label solution that can be customized to match your brand. Configure labels, settings, and workflows to fit your needs.
                         </p>
                     </div>
                 </div>
 
-                <div class="flex gap-6">
+                <div class="flex gap-6 scroll-reveal" style="transition-delay: 0.3s">
                     <div class="flex-shrink-0">
-                        <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-600 dark:from-yellow-600 dark:to-yellow-700 rounded-2xl flex items-center justify-center shadow-lg">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path>
                             </svg>
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-500">Advanced Analytics</h3>
-                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                            Comprehensive analytics dashboard with event statistics, market trends, performance metrics, and customizable reports for data-driven decisions.
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">24/7 Support</h3>
+                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                            Get help when you need it with our responsive support team. Comprehensive documentation and quick response times.
                         </p>
                     </div>
                 </div>
@@ -530,57 +640,57 @@
     </section>
 
     <!-- Use Cases Section -->
-    <section class="bg-gray-50 dark:bg-gray-800 section-padding transition-colors duration-500">
+    <section class="bg-gray-50 dark:bg-gray-800 section-padding">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 transition-colors duration-500">
+            <div class="text-center mb-20 scroll-reveal">
+                <h2 class="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white mb-6">
                     Perfect For
                 </h2>
-                <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto transition-colors duration-500">
-                    Designed for professionals in the sports betting industry
+                <p class="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto font-light">
+                    Whether you're a small team or a large enterprise
                 </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-500">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Sports Betting Operators</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Manage multiple sports events, track betting markets, monitor odds, and handle event settlements efficiently.
+                <div class="use-case-card bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Sports Betting Operators</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Manage sports events, track markets, and monitor real-time odds for betting operations.
                     </p>
                 </div>
 
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-500">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Risk Management Teams</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Monitor risk markets, check betlists, set market limits, and manage interrupted events with real-time alerts.
+                <div class="use-case-card bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.1s">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Event Management Companies</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Track and manage multiple events simultaneously with comprehensive status monitoring.
                     </p>
                 </div>
 
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-500">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Trading Teams</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Track real-time market rates, analyze trends, manage scorecards, and make data-driven trading decisions.
+                <div class="use-case-card bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.2s">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Data Analysts</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Analyze market trends, export data, and generate reports for business intelligence.
                     </p>
                 </div>
 
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-500">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Operations Managers</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Oversee event operations, manage user permissions, monitor system activity, and ensure smooth day-to-day operations.
+                <div class="use-case-card bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.3s">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Risk Managers</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Monitor risk markets, set limits, and manage interruptions with real-time alerts.
                     </p>
                 </div>
 
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-500">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Data Analysts</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Export data, generate reports, analyze market trends, and perform comprehensive data analysis for business intelligence.
+                <div class="use-case-card bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.4s">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Trading Platforms</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Integrate real-time market data and event information into trading systems.
                     </p>
                 </div>
 
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-500">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3 transition-colors duration-500">Compliance Officers</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Access comprehensive audit logs, track user activities, monitor system changes, and ensure regulatory compliance.
+                <div class="use-case-card bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.5s">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Sports Organizations</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Track tournament schedules, manage match data, and monitor event status.
                     </p>
                 </div>
             </div>
@@ -588,64 +698,57 @@
     </section>
 
     <!-- FAQ Section -->
-    <section class="bg-white dark:bg-gray-900 section-padding transition-colors duration-500">
+    <section class="bg-white dark:bg-gray-900 section-padding">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 transition-colors duration-500">
+            <div class="text-center mb-20 scroll-reveal">
+                <h2 class="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white mb-6">
                     Frequently Asked Questions
                 </h2>
-                <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto transition-colors duration-500">
+                <p class="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto font-light">
                     Everything you need to know about our platform
                 </p>
             </div>
 
             <div class="space-y-6">
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 transition-colors duration-500">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-500">What sports are supported?</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Our platform supports multiple sports including Soccer, Tennis, Cricket, Basketball, Boxing, Pro Kabaddi, Politics, and more. New sports can be easily added through configuration.
+                <div class="faq-card bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">What is this platform used for?</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Our platform is designed for managing sports events, tracking markets, monitoring real-time data, and handling risk management. It's perfect for sports betting operators, event management companies, and data analysts.
                     </p>
                 </div>
 
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 transition-colors duration-500">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-500">How does the scorecard system work?</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        The scorecard system allows you to label events with customizable tags (4X, B2C, B2B, USDT, Bookmaker, Unmatch). When all required labels are checked, you can assign an SC Type (Sportradar, Old SC, SR Premium, SpreadeX) with admin verification.
+                <div class="faq-card bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.1s">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Do you offer a free trial?</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Yes! You can sign up for a free trial to explore all features. Contact our sales team to learn more about trial duration and features included.
                     </p>
                 </div>
 
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 transition-colors duration-500">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-500">What is Web PIN authentication?</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Web PIN is an alternative authentication method that uses your username and a numeric PIN instead of password. It's designed for quick access and is required for sensitive admin operations like SC Type assignment.
+                <div class="faq-card bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.2s">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Can I customize the platform to match my brand?</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Absolutely! Our white-label solution allows you to customize the platform with your branding, configure labels, settings, and workflows to match your business needs.
                     </p>
                 </div>
 
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 transition-colors duration-500">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-500">How does risk management work?</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        The risk management module allows you to check betlists, monitor interrupted events, set market limits, and track risk parameters. Events can be marked with scorecard labels to indicate their risk status.
+                <div class="faq-card bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.3s">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">What kind of support do you provide?</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        We offer 24/7 support through multiple channels, comprehensive documentation, and a dedicated support team to help you get the most out of the platform.
                     </p>
                 </div>
 
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 transition-colors duration-500">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-500">Can I export data for analysis?</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Yes, you can export events, markets, and market rates data in CSV format. Advanced filtering options allow you to export specific data sets for analysis and reporting.
+                <div class="faq-card bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.4s">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Is my data secure?</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Yes, security is our top priority. We use enterprise-grade security practices, role-based access control, encrypted data transmission, and regular security audits to protect your information.
                     </p>
                 </div>
 
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 transition-colors duration-500">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-500">Is there an audit trail?</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Yes, all user actions, admin activities, and system changes are logged with timestamps, user information, IP addresses, and descriptions. This provides a complete audit trail for compliance and security purposes.
-                    </p>
-                </div>
-
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 transition-colors duration-500">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-500">What are push notifications used for?</h3>
-                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-500">
-                        Push notifications alert you to important events such as market changes, risk alerts, event status updates, and system notifications. You can manage notification preferences in your settings.
+                <div class="faq-card bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg scroll-reveal" style="transition-delay: 0.5s">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Can I export my data?</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                        Yes, you can export your data in CSV format with advanced filtering options. This allows you to create custom reports and perform offline analysis as needed.
                     </p>
                 </div>
             </div>
@@ -653,27 +756,125 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="bg-gradient-to-r from-primary-600 to-purple-600 dark:from-primary-700 dark:to-purple-700 section-padding transition-colors duration-500">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
-                Ready to Get Started?
-            </h2>
-            <p class="text-xl text-primary-100 dark:text-primary-200 mb-8 max-w-2xl mx-auto">
-                Join professional sports betting operators who trust our platform for event management, risk control, and real-time market tracking.
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <a href="{{ route('login') }}" 
-                   class="bg-white text-primary-600 dark:text-primary-700 px-8 py-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-100 transition-all font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 inline-flex items-center">
-                    Login to Dashboard
-                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                    </svg>
-                </a>
-                <a href="#features" 
-                   class="bg-transparent text-white px-8 py-4 rounded-lg border-2 border-white hover:bg-white hover:text-primary-600 dark:hover:text-primary-700 transition-all font-semibold text-lg">
-                    Explore Features
-                </a>
+    <section class="cta-section bg-gradient-to-r from-primary-600 to-purple-600 dark:from-primary-700 dark:to-purple-700 section-padding relative">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <div class="scroll-reveal">
+                <h2 class="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6">
+                    Ready to Get Started?
+                </h2>
+                <p class="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl mx-auto font-light">
+                    Join thousands of professionals who trust our platform for their event management needs. Start your free trial today.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                    <a href="{{ route('login') }}" 
+                       class="group bg-white text-primary-600 px-10 py-5 rounded-xl hover:bg-gray-50 transition-all font-bold text-lg shadow-2xl hover:shadow-white/20 transform hover:scale-110 inline-flex items-center">
+                        Start Free Trial
+                        <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                        </svg>
+                    </a>
+                    <a href="#features" 
+                       class="bg-white/10 backdrop-blur-md text-white px-10 py-5 rounded-xl border-2 border-white/30 hover:border-white/50 hover:bg-white/20 transition-all font-bold text-lg shadow-xl hover:shadow-2xl transform hover:scale-110 inline-flex items-center">
+                        Learn More
+                    </a>
+                </div>
             </div>
         </div>
     </section>
 @endsection
+
+@push('scripts')
+<script>
+    // Scroll Reveal Animation
+    (function() {
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        // Observe all scroll-reveal elements
+        document.querySelectorAll('.scroll-reveal').forEach(el => {
+            observer.observe(el);
+        });
+    })();
+
+    // Animated Number Counter
+    (function() {
+        const animateCounter = (element) => {
+            const target = parseFloat(element.getAttribute('data-target'));
+            const suffix = element.getAttribute('data-suffix') || '';
+            const duration = 2000; // 2 seconds
+            const start = 0;
+            const increment = target / (duration / 16); // 60fps
+            let current = start;
+
+            const updateCounter = () => {
+                current += increment;
+                if (current < target) {
+                    if (suffix === '%') {
+                        element.textContent = current.toFixed(1) + suffix;
+                    } else if (suffix.includes('K+')) {
+                        element.textContent = Math.floor(current / 1000) + suffix;
+                    } else {
+                        element.textContent = Math.floor(current) + suffix;
+                    }
+                    requestAnimationFrame(updateCounter);
+                } else {
+                    if (suffix === '%') {
+                        element.textContent = target.toFixed(1) + suffix;
+                    } else if (suffix.includes('K+')) {
+                        element.textContent = Math.floor(target / 1000) + suffix;
+                    } else {
+                        element.textContent = Math.floor(target) + suffix;
+                    }
+                }
+            };
+
+            updateCounter();
+        };
+
+        const statObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const statNumber = entry.target.querySelector('.stat-number[data-target]');
+                    if (statNumber && !statNumber.classList.contains('animated')) {
+                        statNumber.classList.add('animated');
+                        animateCounter(statNumber);
+                    }
+                    statObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        document.querySelectorAll('.stat-card').forEach(card => {
+            statObserver.observe(card);
+        });
+    })();
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+
+
+</script>
+@endpush
