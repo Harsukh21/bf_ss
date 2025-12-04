@@ -38,7 +38,7 @@ class CheckInPlayMarkets extends Command
         $allInPlayMarkets = DB::table('market_lists')
             ->where('status', 3) // INPLAY status
             ->whereIn('marketName', ['Match Odds', 'Moneyline']) // Only Match Odds and Moneyline markets
-            ->select('id', 'exMarketId', 'exEventId', 'eventName', 'marketName', 'type', 'marketTime', 'updated_at', 'created_at')
+            ->select('id', 'exMarketId', 'exEventId', 'eventName', 'marketName', 'type', 'marketTime', 'sportName', 'updated_at', 'created_at')
             ->get();
         
         // Get list of already notified market IDs from database
@@ -132,11 +132,20 @@ class CheckInPlayMarkets extends Command
     {
         // Use marketName directly (will be "Match Odds" or "Moneyline")
         $marketName = $market->marketName ?? 'N/A';
+        $eventName = $market->eventName ?? 'N/A';
+        $sport = $market->sportName ?? 'N/A';
+        $exEventId = $market->exEventId ?? '';
+        
+        // Create event link - make the event name itself clickable
+        $eventLink = $exEventId ? "https://cbtfturbo.com/sports/details/{$exEventId}" : '';
+        $eventDisplay = $eventLink ? "<a href=\"{$eventLink}\">{$eventName}</a>" : $eventName;
 
         $lines = [
-            "🟢🟢🟢 <b>Event Now In-Play</b> 🟢🟢🟢",
+            "🟢🟢🟢 Event In-Play 🟢🟢🟢",
             "",
-            "<b>Event:</b> " . ($market->eventName ?? 'N/A'),
+            "<b>Sport:</b> " . $sport,
+            "",
+            "<b>Event:</b> " . $eventDisplay,
             "",
             "<b>Market:</b> " . $marketName,
             "",
