@@ -696,6 +696,31 @@ class EventController extends Controller
             $bindings[] = $request->boolean('popular');
         }
 
+        // Scorecard label filter (multiple checkboxes)
+        if ($request->has('label_search') && is_array($request->label_search) && !empty($request->label_search)) {
+            $selectedLabels = array_map('strtolower', array_filter($request->label_search));
+            
+            if (!empty($selectedLabels)) {
+                // Build JSONB condition: check if any selected label key exists and is true
+                // PostgreSQL JSONB: use @> operator to check if the JSONB contains the key-value pair
+                $labelConditions = [];
+                foreach ($selectedLabels as $labelKey) {
+                    // Check if labels JSONB contains {labelKey: true}
+                    $labelConditions[] = $this->quoteColumn('labels') . ' @> ?::jsonb';
+                    $bindings[] = json_encode([$labelKey => true]);
+                }
+                if (!empty($labelConditions)) {
+                    $conditions[] = '(' . implode(' OR ', $labelConditions) . ')';
+                }
+            }
+        }
+
+        // SC Type filter
+        if ($request->filled('sc_type')) {
+            $conditions[] = $this->quoteColumn('sc_type') . ' = ?';
+            $bindings[] = $request->sc_type;
+        }
+
         $isRecentlyAdded = $request->boolean('recently_added');
         if ($isRecentlyAdded) {
             $conditions[] = $this->quoteColumn('isRecentlyAdded') . ' = ?';
