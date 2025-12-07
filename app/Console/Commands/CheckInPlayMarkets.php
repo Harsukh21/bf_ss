@@ -136,16 +136,23 @@ class CheckInPlayMarkets extends Command
         $sport = $market->sportName ?? 'N/A';
         $exEventId = $market->exEventId ?? '';
         
-        // Create event link - make the event name itself clickable
-        $eventLink = $exEventId ? "https://cbtfturbo.com/sports/details/{$exEventId}" : '';
-        $eventDisplay = $eventLink ? "<a href=\"{$eventLink}\">{$eventName}</a>" : $eventName;
+        // Create clickable links for different platforms
+        $trboLink = $exEventId ? "<a href=\"https://cbtfturbo.com/sports/details/{$exEventId}\">TURBO</a>" : 'TURBO';
+        $fourXLink = $exEventId ? "<a href=\"https://d2.4xexch.com/sports/details/{$exEventId}\">4X</a>" : '4X';
+        $usdtLink = $exEventId ? "<a href=\"https://usdtplayer.com/sports/details/{$exEventId}\">USDT</a>" : 'USDT';
 
         $lines = [
             "🟢🟢🟢 Event In-Play 🟢🟢🟢",
             "",
             "<b>Sport:</b> " . $sport,
             "",
-            "<b>Event:</b> " . $eventDisplay,
+            "<b>Event:</b> " . $eventName,
+            "",
+            "<b> " . $trboLink . " </b>",
+            "",
+            "<b> " . $fourXLink . " </b>",
+            "",
+            "<b> " . $usdtLink . " </b>",
             "",
             "<b>Market:</b> " . $marketName,
             "",
