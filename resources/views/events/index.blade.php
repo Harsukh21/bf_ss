@@ -2012,7 +2012,7 @@ async function openEventDetailsModal(eventId) {
                                 <p class="mt-1 text-sm text-gray-900 dark:text-gray-100 font-mono">${event.eventId || 'N/A'}</p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">External Event ID</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Exch Event ID:</label>
                                 <p class="mt-1 text-sm text-gray-900 dark:text-gray-100 font-mono break-all">${event.exEventId || 'N/A'}</p>
                             </div>
                             <div>
