@@ -867,7 +867,6 @@
                                                 {{ $event->eventName }}
                                             </a>
                                         </div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">ID: {{ $event->eventId }}</div>
                                         @if(!empty($event->exEventId))
                                             <div class="text-xs text-gray-400 dark:text-gray-500">Exch Event ID: {{ $event->exEventId }}</div>
                                         @endif

@@ -205,6 +205,11 @@ class EventController extends Controller
 
         $defaultDateFilters = ['conditions' => [], 'bindings' => []];
         $filterSql = $this->buildEventFilterSql($request, $defaultDateFilters);
+        
+        // Exclude event ID 34872738
+        $filterSql['conditions'][] = $this->qualifyColumn('events', 'id') . ' <> ?';
+        $filterSql['bindings'][] = 34872738;
+        
         $whereSql = !empty($filterSql['conditions'])
             ? ' WHERE ' . implode(' AND ', $filterSql['conditions'])
             : '';

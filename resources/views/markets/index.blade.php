@@ -661,7 +661,7 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-900 dark:text-gray-100">{{ $market->eventName }}</div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">Event ID: {{ $market->exEventId }}</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">Exc. ID: {{ $market->exEventId }}</div>
                                         <div class="mt-1">
                                             @if($market->marketTime)
                                                 @php

@@ -378,7 +378,7 @@
                                             {{ $event->eventName }}
                                         </div>
                                         <div class="text-xs text-gray-500 dark:text-gray-400">
-                                            ID: {{ $event->eventId }}
+                                            Exc. ID: {{ $event->exEventId }}
                                         </div>
                                         @if($event->formatted_market_time)
                                             <div>
