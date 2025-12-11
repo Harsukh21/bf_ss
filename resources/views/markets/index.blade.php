@@ -640,13 +640,33 @@
                                                  :style="`position: fixed; left: ${position.x}px; top: ${position.y}px; z-index: 9999;`"
                                                  class="w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="options-menu-{{ $market->id }}">
                                                 <div class="py-1" role="none">
-                                                    <a href="{{ route('markets.show', $market->id) }}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">
+                                                    <button type="button" 
+                                                        class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 view-market-details" 
+                                                        role="menuitem"
+                                                        @click="open = false"
+                                                        data-market='{!! json_encode([
+                                                            'id' => $market->id,
+                                                            '_id' => $market->_id ?? null,
+                                                            'eventName' => $market->eventName ?? 'N/A',
+                                                            'exEventId' => $market->exEventId ?? 'N/A',
+                                                            'exMarketId' => $market->exMarketId ?? 'N/A',
+                                                            'marketName' => $market->marketName ?? 'N/A',
+                                                            'marketTime' => $market->marketTime ? \Carbon\Carbon::parse($market->marketTime)->format('M j, Y g:i A') : 'N/A',
+                                                            'sportName' => $market->sportName ?? 'N/A',
+                                                            'tournamentsName' => $market->tournamentsName ?? 'N/A',
+                                                            'type' => $market->type ?? 'N/A',
+                                                            'status' => $market->status,
+                                                            'isLive' => $market->isLive ?? false,
+                                                            'isPreBet' => $market->isPreBet ?? false,
+                                                            'created_at' => $market->created_at ? \Carbon\Carbon::parse($market->created_at)->format('M j, Y g:i A') : 'N/A',
+                                                            'updated_at' => isset($market->updated_at) && $market->updated_at ? \Carbon\Carbon::parse($market->updated_at)->format('M j, Y g:i A') : 'N/A',
+                                                        ]) !!}'>
                                                         <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                                         </svg>
                                                         View Details
-                                                    </a>
+                                                    </button>
                                                     
                                                     <a href="{{ route('market-rates.index', ['exEventId' => $market->exEventId]) }}" target="_blank" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">
                                                         <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -660,7 +680,11 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900 dark:text-gray-100">{{ $market->eventName }}</div>
+                                        <div class="text-sm text-gray-900 dark:text-gray-100">
+                                            <a href="{{ route('markets.show', $market->id) }}" class="hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors">
+                                                {{ $market->eventName }}
+                                            </a>
+                                        </div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">Exch Event ID: {{ $market->exEventId }}</div>
                                         <div class="mt-1">
                                             @if($market->marketTime)
@@ -1860,7 +1884,227 @@ document.addEventListener('DOMContentLoaded', function() {
     syncTime(timeFromCheckbox, dateFromInput, dateFromCheckbox);
     syncTime(timeToCheckbox, dateToInput, dateToCheckbox);
 });
+
+// Market Details Modal Functions
+window.openMarketModal = function(market) {
+    const modal = document.getElementById('marketDetailsModal');
+    const overlay = document.getElementById('marketDetailsModalOverlay');
+    
+    if (!modal || !overlay) {
+        console.error('Modal elements not found');
+        return;
+    }
+    
+    // Populate modal with market data
+    const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value || 'N/A';
+    };
+    
+    setText('modalTitle', market.marketName || 'Market Details');
+    setText('modalMarketNameText', market.marketName);
+    setText('modalEventName', market.eventName);
+    setText('modalExEventId', market.exEventId);
+    setText('modalExMarketId', market.exMarketId);
+    setText('modalMarketId', market._id);
+    setText('modalMarketTime', market.marketTime);
+    setText('modalSportName', market.sportName);
+    setText('modalTournamentName', market.tournamentsName);
+    setText('modalType', market.type);
+    setText('modalCreatedAt', market.created_at);
+    setText('modalUpdatedAt', market.updated_at);
+    
+    // Status
+    let statusText = 'Unknown';
+    let statusClass = 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+    if (market.status !== null && market.status !== undefined) {
+        const statusMap = {
+            1: 'UNSETTLED',
+            2: 'UPCOMING',
+            3: 'INPLAY',
+            4: 'SETTLED',
+            5: 'VOIDED',
+            6: 'REMOVED'
+        };
+        statusText = statusMap[market.status] || 'Unknown';
+        
+        if (market.status == 3 || market.isLive) {
+            statusClass = 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300';
+        } else if (market.status == 2 || market.isPreBet) {
+            statusClass = 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300';
+        } else if (market.status == 4) {
+            statusClass = 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300';
+        }
+    }
+    
+    const statusEl = document.getElementById('modalStatus');
+    if (statusEl) {
+        statusEl.textContent = statusText;
+        statusEl.className = `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}`;
+    }
+    
+    // Show modal
+    overlay.classList.add('active');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeMarketModal = function() {
+    const modal = document.getElementById('marketDetailsModal');
+    const overlay = document.getElementById('marketDetailsModalOverlay');
+    
+    if (overlay) overlay.classList.remove('active');
+    if (modal) modal.classList.remove('active');
+    document.body.style.overflow = '';
+};
+
+// Close modal on overlay click and setup event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle View Details button clicks
+    document.addEventListener('click', function(e) {
+        const viewDetailsBtn = e.target.closest('.view-market-details');
+        if (viewDetailsBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Close the Alpine.js dropdown menu
+            const dropdownContainer = viewDetailsBtn.closest('[x-data]');
+            if (dropdownContainer && dropdownContainer.__x) {
+                // Access Alpine.js component and set open to false
+                const alpineComponent = dropdownContainer.__x;
+                if (alpineComponent.$data && typeof alpineComponent.$data.open !== 'undefined') {
+                    alpineComponent.$data.open = false;
+                }
+            }
+            
+            const marketData = viewDetailsBtn.getAttribute('data-market');
+            if (marketData) {
+                try {
+                    // Clean the data - remove any HTML entities that might have been double-encoded
+                    let cleanData = marketData.trim();
+                    // If it starts with &quot; or other HTML entities, decode them
+                    if (cleanData.indexOf('&') !== -1) {
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = cleanData;
+                        cleanData = tempDiv.textContent || tempDiv.innerText || cleanData;
+                    }
+                    const market = JSON.parse(cleanData);
+                    openMarketModal(market);
+                } catch (error) {
+                    console.error('Error parsing market data:', error);
+                    console.error('Raw data:', marketData);
+                    alert('Error loading market details. Please try again.');
+                }
+            }
+        }
+    });
+    
+    const overlay = document.getElementById('marketDetailsModalOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                closeMarketModal();
+            }
+        });
+    }
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('marketDetailsModal');
+            if (modal && modal.classList.contains('active')) {
+                closeMarketModal();
+            }
+        }
+    });
+});
 </script>
+
+<!-- Market Details Modal -->
+<div id="marketDetailsModalOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 opacity-0 invisible transition-opacity duration-200"></div>
+<div id="marketDetailsModal" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 invisible transition-opacity duration-200 pointer-events-none" style="display: flex;">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white" id="modalTitle">Market Details</h3>
+            <button onclick="closeMarketModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="px-6 py-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Market Information -->
+                <div class="space-y-4">
+                    <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">Market Information</h4>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Market Name</label>
+                        <p class="mt-1 text-sm text-gray-900 dark:text-white font-medium" id="modalMarketNameText">-</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Market Type</label>
+                        <p class="mt-1">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200" id="modalType">-</span>
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Market ID</label>
+                        <p class="mt-1 text-sm text-gray-900 dark:text-white font-mono" id="modalMarketId">-</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Exch Market ID</label>
+                        <p class="mt-1 text-sm text-gray-900 dark:text-white font-mono break-all" id="modalExMarketId">-</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Market Time</label>
+                        <p class="mt-1 text-sm text-gray-900 dark:text-white" id="modalMarketTime">-</p>
+                    </div>
+                </div>
+                
+                <!-- Event Information -->
+                <div class="space-y-4">
+                    <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">Event Information</h4>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Event Name</label>
+                        <p class="mt-1 text-sm text-gray-900 dark:text-white font-medium" id="modalEventName">-</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Exch Event ID</label>
+                        <p class="mt-1 text-sm text-gray-900 dark:text-white font-mono break-all" id="modalExEventId">-</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Sport</label>
+                        <p class="mt-1">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300" id="modalSportName">-</span>
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Tournament</label>
+                        <p class="mt-1 text-sm text-gray-900 dark:text-white" id="modalTournamentName">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Status & Timestamps -->
+            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Status</label>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200" id="modalStatus">Unknown</span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Created At</label>
+                        <p class="mt-1 text-sm text-gray-900 dark:text-white" id="modalCreatedAt">-</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</label>
+                        <p class="mt-1 text-sm text-gray-900 dark:text-white" id="modalUpdatedAt">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
 /* Custom tournament and market type dropdown styles */
@@ -1897,6 +2141,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .dark .tournament-dropdown-scrollable::-webkit-scrollbar-thumb:hover {
     background: #9ca3af;
+}
+
+/* Market Details Modal Styles */
+#marketDetailsModalOverlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+#marketDetailsModal.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
 }
 </style>
 @endpush
