@@ -827,7 +827,7 @@
                                                  :style="`position: fixed; left: ${position.x}px; top: ${position.y}px; z-index: 9999;`"
                                                  class="w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="options-menu-{{ $event->id }}">
                                                 <div class="py-1" role="none">
-                                                    <a href="#" @click.prevent="open = false; openEventDetailsModal({{ $event->id }})" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">
+                                                    <a href="{{ route('events.show', $event->id) }}" @click="open = false" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">
                                                         <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -863,7 +863,7 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                            <a href="{{ route('events.show', $event->id) }}" class="hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors">
+                                            <a href="#" onclick="openEventDetailsModal({{ $event->id }}); return false;" class="hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors">
                                                 {{ $event->eventName }}
                                             </a>
                                         </div>
@@ -1269,7 +1269,7 @@
 @endsection
 
 <!-- Event Details Modal -->
-<div id="eventDetailsModalOverlay" class="event-details-modal-overlay" onclick="closeEventDetailsModal()"></div>
+<div id="eventDetailsModalOverlay" class="event-details-modal-overlay"></div>
 <div id="eventDetailsModal" class="event-details-modal">
     <div class="event-details-modal-content" id="eventDetailsModalContent">
         <!-- Modal Header -->
@@ -1813,8 +1813,36 @@ document.addEventListener('DOMContentLoaded', function() {
     syncTime(timeToCheckbox, dateToInput, dateToCheckbox);
 });
 
+// Setup modal overlay click handler
+function setupModalOverlayHandler() {
+    const overlay = document.getElementById('eventDetailsModalOverlay');
+    const modalContent = document.getElementById('eventDetailsModalContent');
+    
+    if (overlay && !overlay.dataset.handlerAttached) {
+        overlay.dataset.handlerAttached = 'true';
+        // Add click handler to overlay
+        overlay.addEventListener('click', function(e) {
+            // Only close if clicking directly on the overlay, not on modal content
+            if (e.target === overlay) {
+                closeEventDetailsModal();
+            }
+        });
+    }
+    
+    // Prevent clicks inside modal from closing it
+    if (modalContent && !modalContent.dataset.handlerAttached) {
+        modalContent.dataset.handlerAttached = 'true';
+        modalContent.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    }
+}
+
 // Event Details Modal Functions
-async function openEventDetailsModal(eventId) {
+window.openEventDetailsModal = async function(eventId) {
+    // Ensure overlay handler is set up
+    setupModalOverlayHandler();
+    
     const modal = document.getElementById('eventDetailsModal');
     const overlay = document.getElementById('eventDetailsModalOverlay');
     const modalBody = document.getElementById('eventDetailsModalBody');
@@ -2139,6 +2167,13 @@ function closeEventDetailsModal() {
     overlay.classList.remove('active');
     modal.classList.remove('active');
     document.body.style.overflow = '';
+}
+
+// Setup handlers when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupModalOverlayHandler);
+} else {
+    setupModalOverlayHandler();
 }
 
 // Close modal on Escape key

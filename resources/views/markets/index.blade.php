@@ -640,33 +640,13 @@
                                                  :style="`position: fixed; left: ${position.x}px; top: ${position.y}px; z-index: 9999;`"
                                                  class="w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="options-menu-{{ $market->id }}">
                                                 <div class="py-1" role="none">
-                                                    <button type="button" 
-                                                        class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 view-market-details" 
-                                                        role="menuitem"
-                                                        @click="open = false"
-                                                        data-market='{!! json_encode([
-                                                            'id' => $market->id,
-                                                            '_id' => $market->_id ?? null,
-                                                            'eventName' => $market->eventName ?? 'N/A',
-                                                            'exEventId' => $market->exEventId ?? 'N/A',
-                                                            'exMarketId' => $market->exMarketId ?? 'N/A',
-                                                            'marketName' => $market->marketName ?? 'N/A',
-                                                            'marketTime' => $market->marketTime ? \Carbon\Carbon::parse($market->marketTime)->format('M j, Y g:i A') : 'N/A',
-                                                            'sportName' => $market->sportName ?? 'N/A',
-                                                            'tournamentsName' => $market->tournamentsName ?? 'N/A',
-                                                            'type' => $market->type ?? 'N/A',
-                                                            'status' => $market->status,
-                                                            'isLive' => $market->isLive ?? false,
-                                                            'isPreBet' => $market->isPreBet ?? false,
-                                                            'created_at' => $market->created_at ? \Carbon\Carbon::parse($market->created_at)->format('M j, Y g:i A') : 'N/A',
-                                                            'updated_at' => isset($market->updated_at) && $market->updated_at ? \Carbon\Carbon::parse($market->updated_at)->format('M j, Y g:i A') : 'N/A',
-                                                        ]) !!}'>
+                                                    <a href="{{ route('markets.show', $market->id) }}" @click="open = false" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">
                                                         <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                                         </svg>
                                                         View Details
-                                                    </button>
+                                                    </a>
                                                     
                                                     <a href="{{ route('market-rates.index', ['exEventId' => $market->exEventId]) }}" target="_blank" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">
                                                         <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -681,7 +661,25 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-900 dark:text-gray-100">
-                                            <a href="{{ route('markets.show', $market->id) }}" class="hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors">
+                                            <a href="#" 
+                                                class="hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors view-market-modal"
+                                                data-market='{!! json_encode([
+                                                    'id' => $market->id,
+                                                    '_id' => $market->_id ?? null,
+                                                    'eventName' => $market->eventName ?? 'N/A',
+                                                    'exEventId' => $market->exEventId ?? 'N/A',
+                                                    'exMarketId' => $market->exMarketId ?? 'N/A',
+                                                    'marketName' => $market->marketName ?? 'N/A',
+                                                    'marketTime' => $market->marketTime ? \Carbon\Carbon::parse($market->marketTime)->format('M j, Y g:i A') : 'N/A',
+                                                    'sportName' => $market->sportName ?? 'N/A',
+                                                    'tournamentsName' => $market->tournamentsName ?? 'N/A',
+                                                    'type' => $market->type ?? 'N/A',
+                                                    'status' => $market->status,
+                                                    'isLive' => $market->isLive ?? false,
+                                                    'isPreBet' => $market->isPreBet ?? false,
+                                                    'created_at' => $market->created_at ? \Carbon\Carbon::parse($market->created_at)->format('M j, Y g:i A') : 'N/A',
+                                                    'updated_at' => isset($market->updated_at) && $market->updated_at ? \Carbon\Carbon::parse($market->updated_at)->format('M j, Y g:i A') : 'N/A',
+                                                ]) !!}'>
                                                 {{ $market->eventName }}
                                             </a>
                                         </div>
@@ -1958,55 +1956,52 @@ window.closeMarketModal = function() {
     document.body.style.overflow = '';
 };
 
-// Close modal on overlay click and setup event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Handle View Details button clicks
-    document.addEventListener('click', function(e) {
-        const viewDetailsBtn = e.target.closest('.view-market-details');
-        if (viewDetailsBtn) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Close the Alpine.js dropdown menu
-            const dropdownContainer = viewDetailsBtn.closest('[x-data]');
-            if (dropdownContainer && dropdownContainer.__x) {
-                // Access Alpine.js component and set open to false
-                const alpineComponent = dropdownContainer.__x;
-                if (alpineComponent.$data && typeof alpineComponent.$data.open !== 'undefined') {
-                    alpineComponent.$data.open = false;
-                }
-            }
-            
-            const marketData = viewDetailsBtn.getAttribute('data-market');
-            if (marketData) {
-                try {
-                    // Clean the data - remove any HTML entities that might have been double-encoded
-                    let cleanData = marketData.trim();
-                    // If it starts with &quot; or other HTML entities, decode them
-                    if (cleanData.indexOf('&') !== -1) {
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = cleanData;
-                        cleanData = tempDiv.textContent || tempDiv.innerText || cleanData;
-                    }
-                    const market = JSON.parse(cleanData);
-                    openMarketModal(market);
-                } catch (error) {
-                    console.error('Error parsing market data:', error);
-                    console.error('Raw data:', marketData);
-                    alert('Error loading market details. Please try again.');
-                }
-            }
-        }
-    });
-    
+// Setup modal overlay click handler
+function setupMarketModalOverlayHandler() {
     const overlay = document.getElementById('marketDetailsModalOverlay');
-    if (overlay) {
+    const modalContent = document.querySelector('#marketDetailsModal > div');
+    
+    if (overlay && !overlay.dataset.handlerAttached) {
+        overlay.dataset.handlerAttached = 'true';
         overlay.addEventListener('click', function(e) {
             if (e.target === overlay) {
                 closeMarketModal();
             }
         });
     }
+    
+    // Prevent clicks inside modal from closing it
+    if (modalContent && !modalContent.dataset.handlerAttached) {
+        modalContent.dataset.handlerAttached = 'true';
+        modalContent.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    }
+}
+
+// Handle event name clicks to open modal
+document.addEventListener('click', function(e) {
+    const eventNameLink = e.target.closest('.view-market-modal');
+    if (eventNameLink) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const marketData = eventNameLink.getAttribute('data-market');
+        if (marketData) {
+            try {
+                const market = JSON.parse(marketData);
+                openMarketModal(market);
+            } catch (error) {
+                console.error('Error parsing market data:', error);
+                console.error('Raw data:', marketData);
+            }
+        }
+    }
+});
+
+// Close modal on overlay click and setup event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    setupMarketModalOverlayHandler();
     
     // Close modal on Escape key
     document.addEventListener('keydown', function(e) {
@@ -2018,6 +2013,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Ensure overlay handler is set up when modal is opened
+const originalOpenMarketModal = window.openMarketModal;
+window.openMarketModal = function(market) {
+    setupMarketModalOverlayHandler();
+    return originalOpenMarketModal(market);
+};
 </script>
 
 <!-- Market Details Modal -->

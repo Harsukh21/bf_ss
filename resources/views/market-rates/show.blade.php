@@ -13,10 +13,10 @@
                     </h1>
                     <div class="text-[13px] text-gray-600 dark:text-gray-400 mt-1">
                         <div>
-                            <span class="font-medium">Market ID:</span> {{ $marketRate->exMarketId }}
+                            <span class="font-medium">Exch Market ID:</span> {{ $marketRate->exMarketId }}
                         </div>
                         <div>
-                            <span class="font-medium">Event ID:</span> {{ $selectedEventId }}
+                            <span class="font-medium">Exch Event ID:</span> {{ $selectedEventId }}
                         </div>
                     </div>
                 </div>
