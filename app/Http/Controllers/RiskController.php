@@ -141,10 +141,9 @@ class RiskController extends Controller
                 'market_lists.is_done',
                 'market_lists.name',
                 'market_lists.remark',
-                'events.completeTime',
+                'market_lists.completeTime',
                 'market_lists.created_at',
             ])
-            ->leftJoin('events', 'events.exEventId', '=', 'market_lists.exEventId')
             ->whereIn('market_lists.status', $statuses)
             ->when($onlyDone, function ($q) {
                 $q->where('market_lists.is_done', true);
@@ -235,20 +234,20 @@ class RiskController extends Controller
         }
 
         if ($startDateTime && $endDateTime) {
-            $query->whereBetween('events.completeTime', [
+            $query->whereBetween('market_lists.completeTime', [
                 $startDateTime->format('Y-m-d H:i:s'),
                 $endDateTime->format('Y-m-d H:i:s'),
             ]);
         } elseif ($startDateTime) {
-            $query->where('events.completeTime', '>=', $startDateTime->format('Y-m-d H:i:s'));
+            $query->where('market_lists.completeTime', '>=', $startDateTime->format('Y-m-d H:i:s'));
         } elseif ($endDateTime) {
-            $query->where('events.completeTime', '<=', $endDateTime->format('Y-m-d H:i:s'));
+            $query->where('market_lists.completeTime', '<=', $endDateTime->format('Y-m-d H:i:s'));
         } elseif ($filters['date_from'] && !$startDateTime) {
             // Fallback to date-only filtering if date parsing failed
-            $query->whereDate('events.completeTime', '>=', $filters['date_from']);
+            $query->whereDate('market_lists.completeTime', '>=', $filters['date_from']);
         } elseif ($filters['date_to'] && !$endDateTime) {
             // Fallback to date-only filtering if date parsing failed
-            $query->whereDate('events.completeTime', '<=', $filters['date_to']);
+            $query->whereDate('market_lists.completeTime', '<=', $filters['date_to']);
         }
 
         // Filter for recently added (markets closed in the past 30 minutes)
@@ -259,11 +258,11 @@ class RiskController extends Controller
             $query->where(function ($q) use ($now, $thirtyMinutesAgo) {
                 // Check completeTime first, fallback to marketTime
                 $q->where(function ($subQ) use ($now, $thirtyMinutesAgo) {
-                    $subQ->whereNotNull('events.completeTime')
-                        ->where('events.completeTime', '>=', $thirtyMinutesAgo->format('Y-m-d H:i:s'))
-                        ->where('events.completeTime', '<=', $now->format('Y-m-d H:i:s'));
+                    $subQ->whereNotNull('market_lists.completeTime')
+                        ->where('market_lists.completeTime', '>=', $thirtyMinutesAgo->format('Y-m-d H:i:s'))
+                        ->where('market_lists.completeTime', '<=', $now->format('Y-m-d H:i:s'));
                 })->orWhere(function ($subQ) use ($now, $thirtyMinutesAgo) {
-                    $subQ->whereNull('events.completeTime')
+                    $subQ->whereNull('market_lists.completeTime')
                         ->whereNotNull('market_lists.marketTime')
                         ->where('market_lists.marketTime', '>=', $thirtyMinutesAgo->format('Y-m-d H:i:s'))
                         ->where('market_lists.marketTime', '<=', $now->format('Y-m-d H:i:s'));
