@@ -597,8 +597,7 @@
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event & Market</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tournament</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sport & Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sport & Tourn.. & Status & Winner</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -639,11 +638,13 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ $market->tournamentsName }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center gap-2">
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-wrap items-center gap-2">
                                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300">
                                             {{ $market->sportName ?? 'N/A' }}
+                                        </span>
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                            {{ $market->tournamentsName ?? 'N/A' }}
                                         </span>
                                         @php
                                             $statusMap = [
@@ -653,11 +654,16 @@
                                             $meta = $statusMap[$market->status] ?? ['label' => 'Unknown', 'class' => 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'];
                                         @endphp
                                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $meta['class'] }}">{{ $meta['label'] }}</span>
+                                        @if(!empty($market->selectionName))
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300">
+                                                Winner: {{ $market->selectionName }}
+                                            </span>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
                             <tr class="bg-gray-50/60 dark:bg-gray-800/70 text-xs text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700">
-                                <td colspan="4" class="px-6 py-3">
+                                <td colspan="3" class="px-6 py-3">
                                     <div class="flex flex-wrap items-center gap-6 market-labels-wrapper" data-market-id="{{ $market->id }}" data-update-url="{{ route('risk.markets.labels', $market->id) }}">
                                         <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Scorecard:</span>
                                         @php
@@ -707,8 +713,7 @@
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event & Market</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tournament</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sport & Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sport & Tourn.. & Status & Winner</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Remark</th>
                         </tr>
                     </thead>
@@ -724,11 +729,13 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ $market->tournamentsName }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center gap-2">
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-wrap items-center gap-2">
                                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300">
                                             {{ $market->sportName ?? 'N/A' }}
+                                        </span>
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                            {{ $market->tournamentsName ?? 'N/A' }}
                                         </span>
                                         @php
                                             $statusMap = [
@@ -738,13 +745,16 @@
                                             $meta = $statusMap[$market->status] ?? ['label' => 'Unknown', 'class' => 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'];
                                         @endphp
                                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $meta['class'] }}">{{ $meta['label'] }}</span>
+                                        @if(!empty($market->selectionName))
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300">
+                                                Winner: {{ $market->selectionName }}
+                                            </span>
+                                        @endif
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                    {{ $market->name ?: '—' }}
-                                </td>
                                 <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                                    {{ $market->remark ? Str::limit($market->remark, 120) : '—' }}
+                                    <div>{{ $market->name ?: '—' }}</div>
+                                    <div class="mt-1">{{ $market->remark ? Str::limit($market->remark, 120) : '—' }}</div>
                                 </td>
                             </tr>
                         @endforeach
