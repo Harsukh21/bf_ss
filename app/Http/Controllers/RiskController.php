@@ -141,6 +141,7 @@ class RiskController extends Controller
                 'market_lists.labels',
                 'market_lists.is_done',
                 'market_lists.name',
+                'market_lists.chor_id',
                 'market_lists.remark',
                 'market_lists.completeTime',
                 'market_lists.created_at',
@@ -168,7 +169,17 @@ class RiskController extends Controller
 
         if (!empty($filters['labels'])) {
             foreach ($filters['labels'] as $labelKey) {
-                $query->whereRaw("(market_lists.labels ->> ?)::boolean = true", [$labelKey]);
+                // Handle both old format (boolean) and new format (object with checked property)
+                // Old format: labels->>'4x' = 'true' (boolean true stored as text 'true')
+                // New format: labels->'4x'->>'checked' = 'true' (object with checked property)
+                $query->where(function ($q) use ($labelKey) {
+                    // Check old format: direct boolean value
+                    $q->whereRaw("(market_lists.labels ->> ?)::boolean = true", [$labelKey])
+                      // Check new format: object with checked property (as boolean)
+                      ->orWhereRaw("(market_lists.labels -> ? ->> 'checked')::boolean = true", [$labelKey])
+                      // Check new format: object with checked property (as string 'true')
+                      ->orWhereRaw("market_lists.labels -> ? ->> 'checked' = 'true'", [$labelKey]);
+                });
             }
         }
 
@@ -316,18 +327,225 @@ class RiskController extends Controller
 
     public function updateLabels(Request $request, int $marketId)
     {
-        $labels = $this->normalizeLabels($request->input('labels', []));
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated.',
+            ], 401);
+        }
+
+        $market = DB::table('market_lists')->where('id', $marketId)->first();
+        if (!$market) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Market not found.',
+            ], 404);
+        }
+
+        $existingLabels = json_decode($market->labels ?? '{}', true);
+        $requestLabels = $request->input('labels', []);
+        $labelMetadata = $request->input('label_metadata');
+        $isUnchecking = $request->input('is_unchecking', false);
+        $checkPermission = $request->input('check_permission', false);
+        $labelKey = $request->input('label_key') ?? ($labelMetadata['label_key'] ?? null);
+
+        // If just checking permission (before opening modal)
+        if ($checkPermission && $labelKey) {
+            if (isset($existingLabels[$labelKey])) {
+                $existingValue = $existingLabels[$labelKey];
+                $isAlreadyChecked = false;
+                $checkedBy = null;
+                
+                if (is_bool($existingValue) && $existingValue === true) {
+                    // Old format - treat as checked but no owner, allow checking
+                    return response()->json([
+                        'success' => true,
+                        'can_check' => true,
+                    ]);
+                } elseif (is_array($existingValue) && isset($existingValue['checked']) && $existingValue['checked'] === true) {
+                    $isAlreadyChecked = true;
+                    $checkedBy = $existingValue['checked_by'] ?? null;
+                }
+                
+                if ($isAlreadyChecked && $checkedBy !== null && $checkedBy != $user->id) {
+                    $checkerName = $existingValue['checker_name'] ?? 'Another admin';
+                    return response()->json([
+                        'success' => true,
+                        'can_check' => false,
+                        'message' => "This checkbox is already checked by {$checkerName}. Only they can uncheck it.",
+                    ]);
+                }
+            }
+            
+            return response()->json([
+                'success' => true,
+                'can_check' => true,
+            ]);
+        }
+
+        // If checking a checkbox with metadata
+        if ($labelMetadata && isset($labelMetadata['label_key'])) {
+            $labelKey = $labelMetadata['label_key'];
+            $webPin = $labelMetadata['web_pin'] ?? '';
+            
+            // Check if checkbox is already checked by another admin
+            if (isset($existingLabels[$labelKey])) {
+                $existingValue = $existingLabels[$labelKey];
+                $isAlreadyChecked = false;
+                $checkedBy = null;
+                
+                if (is_bool($existingValue) && $existingValue === true) {
+                    // Old format - treat as checked but no owner
+                    $isAlreadyChecked = true;
+                } elseif (is_array($existingValue) && isset($existingValue['checked']) && $existingValue['checked'] === true) {
+                    $isAlreadyChecked = true;
+                    $checkedBy = $existingValue['checked_by'] ?? null;
+                }
+                
+                if ($isAlreadyChecked && $checkedBy !== null && $checkedBy != $user->id) {
+                    $checkerName = $existingValue['checker_name'] ?? 'Another admin';
+                    return response()->json([
+                        'success' => false,
+                        'message' => "This checkbox is already checked by {$checkerName}. Only they can uncheck it.",
+                    ], 422);
+                }
+            }
+            
+            // Verify web_pin
+            $userData = DB::table('users')->where('id', $user->id)->first();
+            
+            if (empty($userData->web_pin)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Web PIN is not set for your account.',
+                ], 422);
+            }
+            
+            $storedPin = $userData->web_pin;
+            $isVerified = false;
+            
+            if (preg_match('/^\$2[ayb]\$.{56}$/', $storedPin)) {
+                $isVerified = Hash::check($webPin, $storedPin);
+            } else {
+                $isVerified = ($webPin === $storedPin);
+            }
+            
+            if (!$isVerified) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid Web PIN. Please try again.',
+                ], 422);
+            }
+            
+            // Store metadata for this checkbox
+            $labels = $this->normalizeLabels($existingLabels);
+            $labels[$labelKey] = [
+                'checked' => true,
+                'checker_name' => $labelMetadata['checker_name'] ?? auth()->user()->name,
+                'chor_id' => $labelMetadata['chor_id'] ?? null,
+                'remark' => $labelMetadata['remark'] ?? null,
+                'checked_by' => auth()->id(),
+                'checked_at' => now()->toDateTimeString(),
+            ];
+        } 
+        // If unchecking a checkbox
+        elseif ($isUnchecking && $labelKey) {
+            // Check if checkbox exists and is checked
+            if (!isset($existingLabels[$labelKey])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Checkbox is not checked.',
+                ], 422);
+            }
+            
+            $existingValue = $existingLabels[$labelKey];
+            $isChecked = false;
+            $checkedBy = null;
+            
+            if (is_bool($existingValue) && $existingValue === true) {
+                // Old format - allow unchecking
+                $isChecked = true;
+            } elseif (is_array($existingValue) && isset($existingValue['checked']) && $existingValue['checked'] === true) {
+                $isChecked = true;
+                $checkedBy = $existingValue['checked_by'] ?? null;
+            }
+            
+            if (!$isChecked) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Checkbox is not checked.',
+                ], 422);
+            }
+            
+            // Verify that current user is the one who checked it
+            if ($checkedBy !== null && $checkedBy != $user->id) {
+                $checkerName = $existingValue['checker_name'] ?? 'Another admin';
+                return response()->json([
+                    'success' => false,
+                    'message' => "Only {$checkerName} (who checked this) can uncheck it.",
+                ], 422);
+            }
+            
+            // Uncheck the checkbox
+            $labels = $this->normalizeLabels($existingLabels);
+            $labels[$labelKey] = false;
+        } 
+        // Regular label update (for backward compatibility)
+        else {
+            $labels = $this->normalizeLabels($requestLabels);
+        }
+
+        // Helper function to check if label is checked (handles both boolean and object formats)
+        $isLabelChecked = function($value) {
+            if (is_bool($value)) {
+                return $value === true;
+            }
+            if (is_array($value) && isset($value['checked'])) {
+                return (bool) $value['checked'];
+            }
+            return false;
+        };
+
+        // Check if all 4 required labels are checked: 4x, b2c, b2b, usdt
+        $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
+        $allRequiredChecked = true;
+        foreach ($requiredLabelKeys as $key) {
+            // Check if label exists and is checked
+            if (!isset($labels[$key])) {
+                $allRequiredChecked = false;
+                break;
+            }
+            $labelValue = $labels[$key];
+            if (!$isLabelChecked($labelValue)) {
+                $allRequiredChecked = false;
+                break;
+            }
+        }
+
+        // Prepare update data
+        $updateData = [
+            'labels' => json_encode($labels),
+            'updated_at' => now(),
+        ];
+
+        // Always set is_done based on whether all required checkboxes are checked
+        // This ensures markets move between pending and completed lists correctly
+        if ($allRequiredChecked) {
+            $updateData['is_done'] = true;
+        } else {
+            $updateData['is_done'] = false;
+        }
 
         DB::table('market_lists')
             ->where('id', $marketId)
-            ->update([
-                'labels' => json_encode($labels),
-                'updated_at' => now(),
-            ]);
+            ->update($updateData);
 
         return response()->json([
             'success' => true,
             'labels' => $labels,
+            'is_done' => $updateData['is_done'],
+            'all_required_checked' => $allRequiredChecked,
         ]);
     }
 
@@ -391,7 +609,7 @@ class RiskController extends Controller
         // Only first 4 labels are required: 4x, b2c, b2b, usdt
         $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
         $allRequiredChecked = collect($requiredLabelKeys)->every(function($key) use ($labels) {
-            return isset($labels[$key]) && (bool) $labels[$key] === true;
+            return $this->isLabelChecked($labels[$key] ?? false);
         });
 
         if (!$allRequiredChecked) {
@@ -428,10 +646,49 @@ class RiskController extends Controller
         }
 
         foreach ($default as $key => $value) {
-            $default[$key] = (bool) ($labels[$key] ?? $value);
+            if (isset($labels[$key])) {
+                // Handle both formats: boolean (old) and object (new)
+                if (is_bool($labels[$key])) {
+                    // Old format: simple boolean - keep as boolean for backward compatibility
+                    $default[$key] = $labels[$key];
+                } elseif (is_array($labels[$key]) && isset($labels[$key]['checked'])) {
+                    // New format: object with metadata - keep full object
+                    $default[$key] = $labels[$key];
+                } else {
+                    // Invalid format - default to false
+                    $default[$key] = false;
+                }
+            } else {
+                $default[$key] = false;
+            }
         }
 
         return $default;
+    }
+    
+    /**
+     * Get checkbox checked state (handles both boolean and object formats)
+     */
+    private function isLabelChecked($labelValue): bool
+    {
+        if (is_bool($labelValue)) {
+            return $labelValue;
+        }
+        if (is_array($labelValue) && isset($labelValue['checked'])) {
+            return (bool) $labelValue['checked'];
+        }
+        return false;
+    }
+    
+    /**
+     * Get label metadata if available
+     */
+    private function getLabelMetadata($labelValue): ?array
+    {
+        if (is_array($labelValue) && isset($labelValue['checked']) && $labelValue['checked']) {
+            return $labelValue;
+        }
+        return null;
     }
 
     private function getLabelKeys(): array

@@ -425,9 +425,6 @@
         $statusMap = [4 => 'Settled', 5 => 'Voided'];
         $activeFilters[] = ['label' => 'Market Status', 'value' => $statusMap[$statusValue] ?? $statusValue, 'query' => 'status'];
     }
-    if (request('recently_added') == '1') {
-        $activeFilters[] = ['label' => 'Recently Added', 'value' => 'Within 30 min', 'query' => 'recently_added'];
-    }
     if ($hasDateFrom) {
         $activeFilters[] = ['label' => 'Complete From', 'value' => $dateFromValue . ($hasTimeFrom ? ' ' . $timeFromValue : ''), 'query' => 'date_from'];
     }
@@ -559,33 +556,6 @@
         </div>
     </div>
 
-    <!-- Recently Added Toggle -->
-    <div class="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
-            <div class="flex items-center gap-3">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Recently Added</span>
-                <form method="GET" action="{{ route('risk.index') }}" id="recentlyAddedForm" class="inline">
-                    @foreach(request()->except('recently_added', 'page') as $key => $value)
-                        @if(is_array($value))
-                            @foreach($value as $val)
-                                <input type="hidden" name="{{ $key }}[]" value="{{ $val }}">
-                            @endforeach
-                        @else
-                            <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-                        @endif
-                    @endforeach
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="recently_added" value="1" class="sr-only peer" 
-                               @checked(request('recently_added') == '1')
-                               onchange="document.getElementById('recentlyAddedForm').submit()">
-                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-                    </label>
-                </form>
-                <span class="text-xs text-gray-500 dark:text-gray-400">(Show markets closing within 30 minutes)</span>
-            </div>
-        </div>
-    </div>
-
     @if($pendingMarkets->count() > 0)
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden mb-6">
             <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -598,6 +568,9 @@
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event & Market</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sport & Tourn.. & Status & Winner</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Checker</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Froude IDs</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Remarks</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -608,26 +581,44 @@
                                 $defaultLabels = array_fill_keys($labelKeys, false);
                                 $labelStates = array_merge($defaultLabels, is_array($decodedLabels) ? array_intersect_key($decodedLabels, $defaultLabels) : []);
 
+                                // Helper function to check if label is checked (handles both boolean and object formats)
+                                $isLabelChecked = function($value) {
+                                    if (is_bool($value)) {
+                                        return $value;
+                                    }
+                                    if (is_array($value) && isset($value['checked'])) {
+                                        return (bool) $value['checked'];
+                                    }
+                                    return false;
+                                };
+
                                 // Only first 4 labels are required: 4x, b2c, b2b, usdt
                                 $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
-                                $requiredLabelsChecked = collect($requiredLabelKeys)->every(function($key) use ($labelStates) {
-                                    return isset($labelStates[$key]) && (bool) $labelStates[$key] === true;
+                                $requiredLabelsChecked = collect($requiredLabelKeys)->every(function($key) use ($labelStates, $isLabelChecked) {
+                                    return $isLabelChecked($labelStates[$key] ?? false);
                                 });
                                 $isDone = (bool) $market->is_done;
                                 $buttonDisabled = !$requiredLabelsChecked || $isDone;
+                                
+                                // Determine badge text and color
+                                if ($isDone) {
+                                    $badgeText = 'Completed';
+                                    $badgeClass = 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
+                                } elseif ($requiredLabelsChecked) {
+                                    $badgeText = 'Checked';
+                                    $badgeClass = 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300';
+                                } else {
+                                    $badgeText = 'Pending';
+                                    $badgeClass = 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300';
+                                }
                             @endphp
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" data-market-row="{{ $market->id }}">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <button
-                                        class="mark-done-button inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed {{ $isDone ? 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300' }}"
-                                        data-market-id="{{ $market->id }}"
-                                        data-market-name="{{ $market->marketName }}"
-                                        data-done-url="{{ route('risk.markets.done', $market->id) }}"
-                                        data-is-done="{{ $isDone ? 'true' : 'false' }}"
-                                        @if($buttonDisabled) disabled @endif
+                                    <span
+                                        class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full {{ $badgeClass }}"
                                     >
-                                        {{ $isDone ? 'Completed' : 'Pending' }}
-                                    </button>
+                                        {{ $badgeText }}
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 align-top">
                                     <div class="font-semibold text-gray-900 dark:text-gray-100">{{ $market->eventName }}</div>
@@ -661,9 +652,81 @@
                                         @endif
                                     </div>
                                 </td>
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-top">
+                                    @php
+                                        $checkerData = [];
+                                        foreach ($labelStates as $key => $value) {
+                                            if ($isLabelChecked($value)) {
+                                                if (is_array($value) && isset($value['checker_name']) && !empty($value['checker_name'])) {
+                                                    $checkerData[] = strtoupper($key) . ' : ' . $value['checker_name'];
+                                                } elseif (is_bool($value) && $value === true) {
+                                                    // Old format - no checker name available
+                                                    $checkerData[] = strtoupper($key) . ' : —';
+                                                }
+                                            }
+                                        }
+                                    @endphp
+                                    @if(!empty($checkerData))
+                                        <div class="flex flex-col gap-1">
+                                            @foreach($checkerData as $checker)
+                                                <div>{{ $checker }}</div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-top">
+                                    @php
+                                        $chorIdData = [];
+                                        foreach ($labelStates as $key => $value) {
+                                            if ($isLabelChecked($value)) {
+                                                if (is_array($value) && isset($value['chor_id']) && !empty($value['chor_id'])) {
+                                                    $chorIdData[] = strtoupper($key) . ' : ' . $value['chor_id'];
+                                                } elseif (is_bool($value) && $value === true) {
+                                                    // Old format - no chor_id available
+                                                    $chorIdData[] = strtoupper($key) . ' : —';
+                                                }
+                                            }
+                                        }
+                                    @endphp
+                                    @if(!empty($chorIdData))
+                                        <div class="flex flex-col gap-1">
+                                            @foreach($chorIdData as $chorId)
+                                                <div>{{ $chorId }}</div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-top">
+                                    @php
+                                        $remarkData = [];
+                                        foreach ($labelStates as $key => $value) {
+                                            if ($isLabelChecked($value)) {
+                                                if (is_array($value) && isset($value['remark']) && !empty($value['remark'])) {
+                                                    $remarkData[] = strtoupper($key) . ' : ' . $value['remark'];
+                                                } elseif (is_bool($value) && $value === true) {
+                                                    // Old format - no remark available
+                                                    $remarkData[] = strtoupper($key) . ' : —';
+                                                }
+                                            }
+                                        }
+                                    @endphp
+                                    @if(!empty($remarkData))
+                                        <div class="flex flex-col gap-1">
+                                            @foreach($remarkData as $remark)
+                                                <div>{{ $remark }}</div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
                             </tr>
                             <tr class="bg-gray-50/60 dark:bg-gray-800/70 text-xs text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700">
-                                <td colspan="3" class="px-6 py-3">
+                                <td colspan="6" class="px-6 py-3">
                                     <div class="flex flex-wrap items-center gap-6 market-labels-wrapper" data-market-id="{{ $market->id }}" data-update-url="{{ route('risk.markets.labels', $market->id) }}">
                                         <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Scorecard:</span>
                                         @php
@@ -678,6 +741,22 @@
                                                 }
                                                 $checkboxId = "market-option-{$market->id}-{$key}";
                                                 $isRequired = in_array($key, $requiredLabelKeys);
+                                                
+                                                // Check if checkbox is checked by another admin
+                                                $isCheckedByOther = false;
+                                                $checkedBy = null;
+                                                $checkerName = null;
+                                                $isChecked = is_bool($value) ? $value : (is_array($value) && isset($value['checked']) ? (bool) $value['checked'] : false);
+                                                
+                                                if (is_array($value) && isset($value['checked']) && $value['checked'] === true) {
+                                                    $checkedBy = $value['checked_by'] ?? null;
+                                                    $checkerName = $value['checker_name'] ?? null;
+                                                    if ($checkedBy !== null && $checkedBy != auth()->id()) {
+                                                        $isCheckedByOther = true;
+                                                    }
+                                                }
+                                                
+                                                $isDisabled = $isDone || $isCheckedByOther;
                                             @endphp
                                             <label for="{{ $checkboxId }}" class="inline-flex items-center gap-2">
                                                 <input
@@ -686,11 +765,18 @@
                                                     class="market-label-checkbox rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 {{ $isRequired ? 'js-required-label' : '' }}"
                                                     data-market-id="{{ $market->id }}"
                                                     data-label-key="{{ $key }}"
+                                                    data-market-name="{{ $market->eventName }} / {{ $market->marketName }}"
                                                     data-required="{{ $isRequired ? 'true' : 'false' }}"
-                                                    @checked((bool) $value)
-                                                    @disabled($isDone)
+                                                    data-checked-by="{{ $checkedBy ?? '' }}"
+                                                    @checked($isChecked)
+                                                    @disabled($isDisabled)
                                                 >
-                                                <span class="{{ $isRequired ? '' : 'text-gray-500 dark:text-gray-400' }} uppercase">{{ $key }}</span>
+                                                <span class="{{ $isRequired ? '' : 'text-gray-500 dark:text-gray-400' }} uppercase">
+                                                    {{ $key }}
+                                                    @if($isChecked && $checkerName)
+                                                        <span class="text-xs font-normal text-gray-400 dark:text-gray-500">({{ $checkerName }})</span>
+                                                    @endif
+                                                </span>
                                             </label>
                                         @endforeach
                                     </div>
@@ -714,11 +800,30 @@
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event & Market</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sport & Tourn.. & Status & Winner</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Remark</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Checker</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Froude IDs</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Remarks</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @foreach($doneMarkets as $market)
+                            @php
+                                $decodedLabels = json_decode($market->labels ?? '{}', true);
+                                $labelKeys = array_keys($labelOptions);
+                                $defaultLabels = array_fill_keys($labelKeys, false);
+                                $labelStates = array_merge($defaultLabels, is_array($decodedLabels) ? array_intersect_key($decodedLabels, $defaultLabels) : []);
+
+                                // Helper function to check if label is checked (handles both boolean and object formats)
+                                $isLabelChecked = function($value) {
+                                    if (is_bool($value)) {
+                                        return $value;
+                                    }
+                                    if (is_array($value) && isset($value['checked'])) {
+                                        return (bool) $value['checked'];
+                                    }
+                                    return false;
+                                };
+                            @endphp
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 align-top">
                                     <div class="font-semibold text-gray-900 dark:text-gray-100">{{ $market->eventName }}</div>
@@ -752,9 +857,77 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                                    <div>{{ $market->name ?: '—' }}</div>
-                                    <div class="mt-1">{{ $market->remark ? Str::limit($market->remark, 120) : '—' }}</div>
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-top">
+                                    @php
+                                        $checkerData = [];
+                                        foreach ($labelStates as $key => $value) {
+                                            if ($isLabelChecked($value)) {
+                                                if (is_array($value) && isset($value['checker_name']) && !empty($value['checker_name'])) {
+                                                    $checkerData[] = strtoupper($key) . ' : ' . $value['checker_name'];
+                                                } elseif (is_bool($value) && $value === true) {
+                                                    // Old format - no checker name available
+                                                    $checkerData[] = strtoupper($key) . ' : —';
+                                                }
+                                            }
+                                        }
+                                    @endphp
+                                    @if(!empty($checkerData))
+                                        <div class="flex flex-col gap-1">
+                                            @foreach($checkerData as $checker)
+                                                <div>{{ $checker }}</div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-top">
+                                    @php
+                                        $chorIdData = [];
+                                        foreach ($labelStates as $key => $value) {
+                                            if ($isLabelChecked($value)) {
+                                                if (is_array($value) && isset($value['chor_id']) && !empty($value['chor_id'])) {
+                                                    $chorIdData[] = strtoupper($key) . ' : ' . $value['chor_id'];
+                                                } elseif (is_bool($value) && $value === true) {
+                                                    // Old format - no chor_id available
+                                                    $chorIdData[] = strtoupper($key) . ' : —';
+                                                }
+                                            }
+                                        }
+                                    @endphp
+                                    @if(!empty($chorIdData))
+                                        <div class="flex flex-col gap-1">
+                                            @foreach($chorIdData as $chorId)
+                                                <div>{{ $chorId }}</div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-top">
+                                    @php
+                                        $remarkData = [];
+                                        foreach ($labelStates as $key => $value) {
+                                            if ($isLabelChecked($value)) {
+                                                if (is_array($value) && isset($value['remark']) && !empty($value['remark'])) {
+                                                    $remarkData[] = strtoupper($key) . ' : ' . $value['remark'];
+                                                } elseif (is_bool($value) && $value === true) {
+                                                    // Old format - no remark available
+                                                    $remarkData[] = strtoupper($key) . ' : —';
+                                                }
+                                            }
+                                        }
+                                    @endphp
+                                    @if(!empty($remarkData))
+                                        <div class="flex flex-col gap-1">
+                                            @foreach($remarkData as $remark)
+                                                <div>{{ $remark }}</div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        —
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach
@@ -949,16 +1122,6 @@
                 <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Times apply to the selected dates (completeTime).</p>
             </div>
             <div>
-                <label class="flex items-center justify-between cursor-pointer">
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Recently Added</span>
-                    <div class="relative inline-block w-11 h-6">
-                        <input type="checkbox" name="recently_added" value="1" class="sr-only peer" @checked(request('recently_added') == '1')>
-                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-                    </div>
-                </label>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Show markets closing within 30 minutes</p>
-            </div>
-            <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Labels</label>
                 <div class="grid grid-cols-2 gap-3">
                     @foreach($labelOptions as $labelKey => $labelName)
@@ -987,7 +1150,8 @@
 <div id="remarkModal" class="remark-modal">
     <div class="remark-modal__content">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Add Remark</h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4" id="remarkModalMarketName"></p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2" id="remarkModalMarketName"></p>
+        <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4" id="remarkModalLabelKey"></p>
         <div class="space-y-4">
             <div>
                 <label for="nameInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1077,38 +1241,105 @@
     });
 
     const marketLabelWrappers = document.querySelectorAll('.market-labels-wrapper');
+    let activeLabelKey = null;
+    let activeUpdateUrl = null;
+    let pendingCheckboxState = null; // Store checkbox state before modal
+
     marketLabelWrappers.forEach(wrapper => {
         wrapper.addEventListener('change', (event) => {
             if (!event.target.classList.contains('market-label-checkbox')) {
                 return;
             }
-            const updateUrl = wrapper.dataset.updateUrl;
+            
+            const checkbox = event.target;
             const marketId = wrapper.dataset.marketId;
-            const checkboxes = wrapper.querySelectorAll('.market-label-checkbox');
-            const labels = {};
-            checkboxes.forEach(box => {
-                labels[box.dataset.labelKey] = box.checked;
-            });
-
-            fetch(updateUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ labels }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    updateDoneButtonState(marketId, data.labels);
-                    showRiskToast('Labels updated', 'success');
-                } else {
-                    showRiskToast(data.message || 'Unable to update labels', 'error');
-                }
-            })
-            .catch(() => showRiskToast('Unable to update labels', 'error'));
+            const labelKey = checkbox.dataset.labelKey;
+            const updateUrl = wrapper.dataset.updateUrl;
+            
+            // If checking a checkbox, verify it's not already checked by another admin
+            if (checkbox.checked) {
+                // First check if checkbox is already checked by another admin
+                fetch(updateUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        check_permission: true,
+                        label_key: labelKey
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.can_check) {
+                        // Get market name from checkbox data attribute
+                        const marketName = checkbox.dataset.marketName || 'Market';
+                        
+                        // Store state
+                        activeLabelKey = labelKey;
+                        activeUpdateUrl = updateUrl;
+                        pendingCheckboxState = true;
+                        
+                        // Temporarily uncheck until modal is submitted
+                        checkbox.checked = false;
+                        
+                        // Open modal
+                        openCheckboxModal(marketId, marketName, labelKey);
+                    } else {
+                        // Already checked by another admin
+                        checkbox.checked = false;
+                        showRiskToast(data.message || 'This checkbox is already checked by another admin', 'error');
+                    }
+                })
+                .catch(() => {
+                    checkbox.checked = false;
+                    showRiskToast('Unable to verify checkbox status', 'error');
+                });
+            } else {
+                // If unchecking, verify permission first
+                fetch(updateUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        is_unchecking: true,
+                        label_key: labelKey,
+                        labels: {}
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update all checkboxes state
+                        const checkboxes = wrapper.querySelectorAll('.market-label-checkbox');
+                        const labels = {};
+                        checkboxes.forEach(box => {
+                            labels[box.dataset.labelKey] = box.checked;
+                        });
+                        
+                        // Update done button state
+                        updateDoneButtonState(marketId, data.labels);
+                        showRiskToast('Label unchecked', 'success');
+                        
+                        // Refresh page to show updated state
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    } else {
+                        showRiskToast(data.message || 'Unable to uncheck label', 'error');
+                        checkbox.checked = true; // Revert on error
+                    }
+                })
+                .catch(() => {
+                    showRiskToast('Unable to uncheck label', 'error');
+                    checkbox.checked = true; // Revert on error
+                });
+            }
         });
     });
 
@@ -1125,11 +1356,27 @@
     let activeMarketId = null;
     let activeDoneUrl = null;
 
+    function openCheckboxModal(marketId, marketName, labelKey) {
+        activeMarketId = marketId;
+        activeMarketName = marketName;
+        activeDoneUrl = null; // Not using done URL for checkbox modal
+        remarkMarketName.textContent = `Market: ${marketName}`;
+        document.getElementById('remarkModalLabelKey').textContent = `Checkbox: ${labelKey.toUpperCase()}`;
+        remarkInput.value = '';
+        nameInput.value = '{{ auth()->user()->name }}';
+        chorIdInput.value = '';
+        webPinInput.value = '';
+        remarkModal.classList.add('active');
+        remarkOverlay.classList.add('active');
+    }
+
     function openRemarkModal(marketId, marketName, doneUrl) {
         activeMarketId = marketId;
         activeMarketName = marketName;
         activeDoneUrl = doneUrl;
+        activeLabelKey = null; // Clear label key for mark done modal
         remarkMarketName.textContent = `Market: ${marketName}`;
+        document.getElementById('remarkModalLabelKey').textContent = '';
         remarkInput.value = '';
         nameInput.value = '{{ auth()->user()->name }}';
         chorIdInput.value = '';
@@ -1139,11 +1386,22 @@
     }
 
     function closeRemarkModal() {
+        // If closing checkbox modal, revert checkbox state
+        if (activeLabelKey && pendingCheckboxState !== null) {
+            const checkbox = document.querySelector(`.market-label-checkbox[data-label-key="${activeLabelKey}"][data-market-id="${activeMarketId}"]`);
+            if (checkbox) {
+                checkbox.checked = false; // Keep unchecked since modal was cancelled
+            }
+        }
+        
         activeMarketId = null;
         activeDoneUrl = null;
+        activeLabelKey = null;
+        pendingCheckboxState = null;
         remarkInput.value = '';
         nameInput.value = '';
         chorIdInput.value = '';
+        webPinInput.value = '';
         remarkModal.classList.remove('active');
         remarkOverlay.classList.remove('active');
     }
@@ -1151,17 +1409,23 @@
     remarkCancelBtn.addEventListener('click', closeRemarkModal);
     remarkOverlay.addEventListener('click', closeRemarkModal);
 
-    document.querySelectorAll('.mark-done-button').forEach(button => {
-        button.addEventListener('click', () => {
-            if (button.disabled) return;
-            openRemarkModal(button.dataset.marketId, button.dataset.marketName, button.dataset.doneUrl);
+    // Submit form on Enter key press
+    [remarkInput, chorIdInput, webPinInput].forEach(input => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                remarkSubmitBtn.click();
+            }
         });
     });
+
+    // Removed mark-done-button click handler - no longer needed since we use checkbox popups
 
     let activeMarketName = null;
 
     remarkSubmitBtn.addEventListener('click', () => {
-        if (!activeMarketId || !activeDoneUrl) return;
+        if (!activeMarketId) return;
+        
         const remark = remarkInput.value.trim();
         const name = nameInput.value.trim();
         const chorId = chorIdInput.value.trim();
@@ -1193,66 +1457,135 @@
 
         remarkSubmitBtn.disabled = true;
 
-        // Submit with web_pin
-        fetch(activeDoneUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({ remark, name, chor_id: chorId, web_pin: webPin }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                markMarketAsDone(activeMarketId);
-                showRiskToast('Market marked as done', 'success');
-                closeRemarkModal();
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            } else {
-                showRiskToast(data.message || 'Unable to mark as done', 'error');
+        // Check if this is for a checkbox or mark done
+        if (activeLabelKey && activeUpdateUrl) {
+            // Submit checkbox with metadata
+            fetch(activeUpdateUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    labels: { [activeLabelKey]: true },
+                    label_metadata: {
+                        label_key: activeLabelKey,
+                        checker_name: name,
+                        chor_id: chorId,
+                        remark: remark,
+                        web_pin: webPin
+                    }
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showRiskToast('Checkbox checked successfully', 'success');
+                    closeRemarkModal();
+                    // Refresh page to show updated checkbox state
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                } else {
+                    showRiskToast(data.message || 'Unable to update checkbox', 'error');
+                    webPinInput.value = '';
+                    webPinInput.focus();
+                }
+            })
+            .catch(() => {
+                showRiskToast('Unable to update checkbox', 'error');
                 webPinInput.value = '';
                 webPinInput.focus();
-            }
-        })
-        .catch(() => {
-            showRiskToast('Unable to mark as done', 'error');
-            webPinInput.value = '';
-            webPinInput.focus();
-        })
-        .finally(() => {
+            })
+            .finally(() => {
+                remarkSubmitBtn.disabled = false;
+            });
+        } else if (activeDoneUrl) {
+            // Submit mark as done
+            fetch(activeDoneUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ remark, name, chor_id: chorId, web_pin: webPin }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    markMarketAsDone(activeMarketId);
+                    showRiskToast('Market marked as done', 'success');
+                    closeRemarkModal();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showRiskToast(data.message || 'Unable to mark as done', 'error');
+                    webPinInput.value = '';
+                    webPinInput.focus();
+                }
+            })
+            .catch(() => {
+                showRiskToast('Unable to mark as done', 'error');
+                webPinInput.value = '';
+                webPinInput.focus();
+            })
+            .finally(() => {
+                remarkSubmitBtn.disabled = false;
+            });
+        } else {
             remarkSubmitBtn.disabled = false;
-        });
+        }
     });
 
     function updateDoneButtonState(marketId, labels) {
         // Only first 4 labels are required: 4x, b2c, b2b, usdt
         const requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
-        const allRequiredChecked = requiredLabelKeys.every(key => labels[key] === true);
-        const button = document.querySelector(`.mark-done-button[data-market-id="${marketId}"]`);
-        if (!button) return;
+        
+        // Helper function to check if label is checked (handles both boolean and object formats)
+        const isLabelChecked = (value) => {
+            if (typeof value === 'boolean') {
+                return value === true;
+            }
+            if (typeof value === 'object' && value !== null && value.checked !== undefined) {
+                return value.checked === true;
+            }
+            return false;
+        };
+        
+        const allRequiredChecked = requiredLabelKeys.every(key => isLabelChecked(labels[key]));
+        // Find the badge span in the same row
+        const row = document.querySelector(`tr[data-market-row="${marketId}"]`);
+        if (!row) return;
+        
+        const badge = row.querySelector('td:first-child span');
+        if (!badge) return;
 
-        if (button.dataset.isDone === 'true') {
-            button.disabled = true;
-            button.textContent = 'Completed';
-            return;
+        // Update badge based on checkbox state
+        if (allRequiredChecked) {
+            badge.textContent = 'Checked';
+            badge.classList.remove('bg-yellow-100', 'text-yellow-700', 'dark:bg-yellow-900/20', 'dark:text-yellow-300', 'bg-gray-200', 'text-gray-600', 'dark:bg-gray-700', 'dark:text-gray-300');
+            badge.classList.add('bg-green-100', 'text-green-700', 'dark:bg-green-900/20', 'dark:text-green-300');
+        } else {
+            badge.textContent = 'Pending';
+            badge.classList.remove('bg-green-100', 'text-green-700', 'dark:bg-green-900/20', 'dark:text-green-300', 'bg-gray-200', 'text-gray-600', 'dark:bg-gray-700', 'dark:text-gray-300');
+            badge.classList.add('bg-yellow-100', 'text-yellow-700', 'dark:bg-yellow-900/20', 'dark:text-yellow-300');
         }
-
-        button.disabled = !allRequiredChecked;
     }
 
     function markMarketAsDone(marketId) {
-        const button = document.querySelector(`.mark-done-button[data-market-id="${marketId}"]`);
-        if (!button) return;
+        // Find the badge span in the same row
+        const row = document.querySelector(`tr[data-market-row="${marketId}"]`);
+        if (!row) return;
+        
+        const badge = row.querySelector('td:first-child span');
+        if (!badge) return;
 
-        button.disabled = true;
-        button.dataset.isDone = 'true';
-        button.textContent = 'Completed';
-        button.classList.remove('bg-yellow-100', 'text-yellow-700', 'dark:bg-yellow-900/20', 'dark:text-yellow-300');
-        button.classList.add('bg-gray-200', 'text-gray-600', 'dark:bg-gray-700', 'dark:text-gray-300');
+        badge.textContent = 'Completed';
+        badge.classList.remove('bg-yellow-100', 'text-yellow-700', 'dark:bg-yellow-900/20', 'dark:text-yellow-300', 'bg-green-100', 'text-green-700', 'dark:bg-green-900/20', 'dark:text-green-300');
+        badge.classList.add('bg-gray-200', 'text-gray-600', 'dark:bg-gray-700', 'dark:text-gray-300');
 
         const checkboxes = document.querySelectorAll(`.market-label-checkbox[data-market-id="${marketId}"]`);
         checkboxes.forEach(box => box.disabled = true);
