@@ -596,8 +596,7 @@
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Market</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Market & Event</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tournament</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sport & Status</th>
                         </tr>
@@ -633,10 +632,7 @@
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 align-top">
                                     <div class="font-medium">{{ $market->marketName }}</div>
-                                    <div class="text-xs text-gray-500 dark:text-gray-400">ID: {{ $market->id }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                    <div class="font-semibold text-gray-900 dark:text-gray-100">{{ $market->eventName }}</div>
+                                    <div class="mt-2 font-semibold text-gray-900 dark:text-gray-100">{{ $market->eventName }}</div>
                                     @if(!empty($market->completeTime))
                                         <span class="mt-2 inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-200">
                                             Complete: {{ \Carbon\Carbon::parse($market->completeTime)->format('M d, Y h:i A') }}
@@ -661,7 +657,7 @@
                                 </td>
                             </tr>
                             <tr class="bg-gray-50/60 dark:bg-gray-800/70 text-xs text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700">
-                                <td colspan="5" class="px-6 py-3">
+                                <td colspan="4" class="px-6 py-3">
                                     <div class="flex flex-wrap items-center gap-6 market-labels-wrapper" data-market-id="{{ $market->id }}" data-update-url="{{ route('risk.markets.labels', $market->id) }}">
                                         <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Scorecard:</span>
                                         @php
@@ -710,8 +706,7 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Market</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Market & Event</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tournament</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sport & Status</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Remark</th>
@@ -720,12 +715,9 @@
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @foreach($doneMarkets as $market)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                                <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 align-top">
                                     <div class="font-medium">{{ $market->marketName }}</div>
-                                    <div class="text-xs text-gray-500 dark:text-gray-400">ID: {{ $market->id }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                    <div class="font-semibold text-gray-900 dark:text-gray-100">{{ $market->eventName }}</div>
+                                    <div class="mt-2 font-semibold text-gray-900 dark:text-gray-100">{{ $market->eventName }}</div>
                                     @if(!empty($market->completeTime))
                                         <span class="mt-2 inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-200">
                                             Complete: {{ \Carbon\Carbon::parse($market->completeTime)->format('M d, Y h:i A') }}
