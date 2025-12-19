@@ -1946,79 +1946,57 @@ window.openEventDetailsModal = async function(eventId) {
             `;
         }
         
-        let scTypeHtml = '';
+        // SC Type Information HTML (will be added to Status & Flags section)
+        let scTypeInfoHtml = '';
         if (event.sc_type || event.new_limit) {
-            scTypeHtml = `
-                <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">SC Type Information</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${event.sc_type ? `
-                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <div class="flex-shrink-0">
-                                        <div class="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                                            <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">SC Type</label>
-                                        <span class="inline-flex px-3 py-1.5 text-sm font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300">${event.sc_type}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ` : ''}
-                        ${event.new_limit ? `
-                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <div class="flex-shrink-0">
-                                        <div class="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                                            <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">New Limit</label>
-                                        <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">${parseInt(event.new_limit).toLocaleString()}</p>
-                                    </div>
-                                </div>
-                                ${newLimitLogs.length > 0 ? `
-                                    <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Change History</label>
-                                        <div class="space-y-2 max-h-48 overflow-y-auto">
-                                            ${newLimitLogs.map(log => `
-                                                <div class="text-xs text-gray-600 dark:text-gray-400 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
-                                                    <div class="flex items-center justify-between mb-1">
-                                                        <span class="font-medium">${log.name}</span>
-                                                        <span class="text-gray-500 dark:text-gray-500">${formatDate(log.time)}</span>
-                                                    </div>
-                                                    <div class="text-gray-500 dark:text-gray-500 text-xs">
-                                                        ${log.email}
-                                                    </div>
-                                                    ${log.old_value !== null ? `
-                                                        <div class="mt-1 text-xs">
-                                                            <span class="text-gray-500 dark:text-gray-500">Changed from </span>
-                                                            <span class="font-semibold text-gray-700 dark:text-gray-300">${parseInt(log.old_value).toLocaleString()}</span>
-                                                            <span class="text-gray-500 dark:text-gray-500"> to </span>
-                                                            <span class="font-semibold text-green-600 dark:text-green-400">${parseInt(log.new_value).toLocaleString()}</span>
-                                                        </div>
-                                                    ` : `
-                                                        <div class="mt-1 text-xs">
-                                                            <span class="text-gray-500 dark:text-gray-500">Set to </span>
-                                                            <span class="font-semibold text-green-600 dark:text-green-400">${parseInt(log.new_value).toLocaleString()}</span>
-                                                        </div>
-                                                    `}
-                                                </div>
-                                            `).join('')}
-                                        </div>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        ` : ''}
+            scTypeInfoHtml = `
+                ${event.sc_type ? `
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">SC Type</label>
+                        <div class="mt-1">
+                            <span class="inline-flex px-3 py-1.5 text-sm font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300">${event.sc_type}</span>
+                        </div>
                     </div>
-                </div>
+                ` : ''}
+                ${event.new_limit ? `
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">New Limit</label>
+                        <div class="mt-1">
+                            <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">${parseInt(event.new_limit).toLocaleString()}</p>
+                            ${newLimitLogs.length > 0 ? `
+                                <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Change History</label>
+                                    <div class="space-y-2 max-h-48 overflow-y-auto">
+                                        ${newLimitLogs.map(log => `
+                                            <div class="text-xs text-gray-600 dark:text-gray-400 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
+                                                <div class="flex items-center justify-between mb-1">
+                                                    <span class="font-medium">${log.name}</span>
+                                                    <span class="text-gray-500 dark:text-gray-500">${formatDate(log.time)}</span>
+                                                </div>
+                                                <div class="text-gray-500 dark:text-gray-500 text-xs">
+                                                    ${log.email}
+                                                </div>
+                                                ${log.old_value !== null ? `
+                                                    <div class="mt-1 text-xs">
+                                                        <span class="text-gray-500 dark:text-gray-500">Changed from </span>
+                                                        <span class="font-semibold text-gray-700 dark:text-gray-300">${parseInt(log.old_value).toLocaleString()}</span>
+                                                        <span class="text-gray-500 dark:text-gray-500"> to </span>
+                                                        <span class="font-semibold text-green-600 dark:text-green-400">${parseInt(log.new_value).toLocaleString()}</span>
+                                                    </div>
+                                                ` : `
+                                                    <div class="mt-1 text-xs">
+                                                        <span class="text-gray-500 dark:text-gray-500">Set to </span>
+                                                        <span class="font-semibold text-green-600 dark:text-green-400">${parseInt(log.new_value).toLocaleString()}</span>
+                                                    </div>
+                                                `}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                ` : ''}
             `;
         }
         
@@ -2113,12 +2091,12 @@ window.openEventDetailsModal = async function(eventId) {
                                     </div>
                                 </div>
                             ` : ''}
+                            ${scTypeInfoHtml}
                         </div>
                     </div>
                 </div>
                 
                 ${labelsHtml}
-                ${scTypeHtml}
                 
                 <!-- Timestamps -->
                 <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
