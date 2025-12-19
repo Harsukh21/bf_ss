@@ -16,7 +16,7 @@ return [
         2 => 'Tennis',
         4 => 'Cricket',
         6 => 'Boxing',
-        7 => 'HR',
+        7 => 'Horse Racing',
         9 => 'Pro Kabaddi',
         7522 => 'Basketball',
         76548427 => 'Politics',
