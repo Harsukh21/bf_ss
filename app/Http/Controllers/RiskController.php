@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class RiskController extends Controller
 {
@@ -336,7 +337,49 @@ class RiskController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'chor_id' => ['required', 'string'],
             'remark' => ['required', 'string', 'max:2000'],
+            'web_pin' => ['required', 'string'],
         ]);
+
+        // Verify web_pin
+        $webPin = $request->input('web_pin');
+        $user = auth()->user();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated.',
+            ], 401);
+        }
+        
+        // Get user's web_pin from database
+        $userData = DB::table('users')->where('id', $user->id)->first();
+        
+        if (empty($userData->web_pin)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Web PIN is not set for your account.',
+            ], 422);
+        }
+        
+        // Verify web_pin
+        $storedPin = $userData->web_pin;
+        $isVerified = false;
+        
+        // Check if stored PIN is hashed
+        if (preg_match('/^\$2[ayb]\$.{56}$/', $storedPin)) {
+            // PIN is hashed, use Hash::check
+            $isVerified = \Illuminate\Support\Facades\Hash::check($webPin, $storedPin);
+        } else {
+            // PIN is plain text (backward compatibility)
+            $isVerified = ($webPin === $storedPin);
+        }
+        
+        if (!$isVerified) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Web PIN. Please try again.',
+            ], 422);
+        }
 
         $market = DB::table('market_lists')->where('id', $marketId)->first();
 

@@ -991,9 +991,9 @@
         <div class="space-y-4">
             <div>
                 <label for="nameInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Name <span class="text-red-500">*</span>
+                    Checker Name <span class="text-red-500">*</span>
                 </label>
-                <input type="text" id="nameInput" class="w-full border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500" placeholder="Enter your name..." required>
+                <input type="text" id="nameInput" value="{{ auth()->user()->name }}" readonly class="w-full border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed" required>
             </div>
             <div>
                 <label for="chorIdInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1006,6 +1006,12 @@
                     Remark <span class="text-red-500">*</span>
                 </label>
                 <textarea id="remarkInput" class="w-full border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500" rows="4" placeholder="Add remark..." required></textarea>
+            </div>
+            <div>
+                <label for="webPinInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Web PIN <span class="text-red-500">*</span>
+                </label>
+                <input type="password" id="webPinInput" class="w-full border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500" placeholder="Enter your web PIN..." autocomplete="off" required>
             </div>
         </div>
         <div class="mt-4 flex justify-end gap-3">
@@ -1111,6 +1117,7 @@
     const remarkInput = document.getElementById('remarkInput');
     const nameInput = document.getElementById('nameInput');
     const chorIdInput = document.getElementById('chorIdInput');
+    const webPinInput = document.getElementById('webPinInput');
     const remarkMarketName = document.getElementById('remarkModalMarketName');
     const remarkCancelBtn = document.getElementById('remarkCancelBtn');
     const remarkSubmitBtn = document.getElementById('remarkSubmitBtn');
@@ -1120,11 +1127,13 @@
 
     function openRemarkModal(marketId, marketName, doneUrl) {
         activeMarketId = marketId;
+        activeMarketName = marketName;
         activeDoneUrl = doneUrl;
         remarkMarketName.textContent = `Market: ${marketName}`;
         remarkInput.value = '';
-        nameInput.value = '';
+        nameInput.value = '{{ auth()->user()->name }}';
         chorIdInput.value = '';
+        webPinInput.value = '';
         remarkModal.classList.add('active');
         remarkOverlay.classList.add('active');
     }
@@ -1149,14 +1158,17 @@
         });
     });
 
+    let activeMarketName = null;
+
     remarkSubmitBtn.addEventListener('click', () => {
         if (!activeMarketId || !activeDoneUrl) return;
         const remark = remarkInput.value.trim();
         const name = nameInput.value.trim();
         const chorId = chorIdInput.value.trim();
+        const webPin = webPinInput.value.trim();
         
         if (!name.length) {
-            showRiskToast('Name is required', 'error');
+            showRiskToast('Checker Name is required', 'error');
             nameInput.focus();
             return;
         }
@@ -1173,8 +1185,15 @@
             return;
         }
 
+        if (!webPin.length) {
+            showRiskToast('Web PIN is required', 'error');
+            webPinInput.focus();
+            return;
+        }
+
         remarkSubmitBtn.disabled = true;
 
+        // Submit with web_pin
         fetch(activeDoneUrl, {
             method: 'POST',
             headers: {
@@ -1182,7 +1201,7 @@
                 'X-CSRF-TOKEN': csrfToken,
                 'Accept': 'application/json',
             },
-            body: JSON.stringify({ remark, name, chor_id: chorId }),
+            body: JSON.stringify({ remark, name, chor_id: chorId, web_pin: webPin }),
         })
         .then(response => response.json())
         .then(data => {
@@ -1195,9 +1214,15 @@
                 }, 1000);
             } else {
                 showRiskToast(data.message || 'Unable to mark as done', 'error');
+                webPinInput.value = '';
+                webPinInput.focus();
             }
         })
-        .catch(() => showRiskToast('Unable to mark as done', 'error'))
+        .catch(() => {
+            showRiskToast('Unable to mark as done', 'error');
+            webPinInput.value = '';
+            webPinInput.focus();
+        })
         .finally(() => {
             remarkSubmitBtn.disabled = false;
         });
