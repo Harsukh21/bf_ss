@@ -439,15 +439,40 @@ class RiskController extends Controller
             }
             
             // Store metadata for this checkbox
+            $checkerName = $labelMetadata['checker_name'] ?? auth()->user()->name;
+            $chorId = $labelMetadata['chor_id'] ?? null;
+            $remark = $labelMetadata['remark'] ?? null;
+            
             $labels = $this->normalizeLabels($existingLabels);
             $labels[$labelKey] = [
                 'checked' => true,
-                'checker_name' => $labelMetadata['checker_name'] ?? auth()->user()->name,
-                'chor_id' => $labelMetadata['chor_id'] ?? null,
-                'remark' => $labelMetadata['remark'] ?? null,
+                'checker_name' => $checkerName,
+                'chor_id' => $chorId,
+                'remark' => $remark,
                 'checked_by' => auth()->id(),
                 'checked_at' => now()->toDateTimeString(),
             ];
+            
+            // Log checkbox submission to system_logs table
+            try {
+                DB::table('system_logs')->insert([
+                    'user_id' => auth()->id(),
+                    'action' => 'update_sc_label',
+                    'description' => "User {$checkerName} checked label '{$labelKey}' for market '{$market->marketName}' (Event: {$market->eventName}). Chor ID: {$chorId}, Remark: {$remark}",
+                    'exEventId' => $market->exEventId ?? null,
+                    'label_name' => strtoupper($labelKey),
+                    'old_value' => 'unchecked',
+                    'new_value' => 'checked',
+                    'event_name' => $market->eventName ?? 'N/A',
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } catch (\Exception $e) {
+                // Log error but don't fail the request
+                \Log::error('Failed to log checkbox check to system_logs: ' . $e->getMessage());
+            }
         } 
         // If unchecking a checkbox
         elseif ($isUnchecking && $labelKey) {
@@ -531,6 +556,7 @@ class RiskController extends Controller
 
         // Always set is_done based on whether all required checkboxes are checked
         // This ensures markets move between pending and completed lists correctly
+        $previousIsDone = $market->is_done ?? false;
         if ($allRequiredChecked) {
             $updateData['is_done'] = true;
         } else {
@@ -540,6 +566,41 @@ class RiskController extends Controller
         DB::table('market_lists')
             ->where('id', $marketId)
             ->update($updateData);
+
+        // Log if market status changed (moved to/from completed) to system_logs table
+        if ($previousIsDone != $updateData['is_done']) {
+            $statusChange = $updateData['is_done'] ? 'moved to Completed Markets' : 'moved to Pending Markets';
+            $checkedLabels = [];
+            foreach ($labels as $key => $value) {
+                if ($isLabelChecked($value)) {
+                    $checkedLabels[$key] = is_array($value) ? ($value['checker_name'] ?? 'N/A') : 'checked';
+                }
+            }
+            
+            $checkedLabelsStr = implode(', ', array_map(function($key, $value) {
+                return strtoupper($key) . ': ' . (is_array($value) ? $value : 'checked');
+            }, array_keys($checkedLabels), $checkedLabels));
+            
+            try {
+                DB::table('system_logs')->insert([
+                    'user_id' => auth()->id(),
+                    'action' => 'market_status_changed',
+                    'description' => "Market '{$market->marketName}' (Event: {$market->eventName}) {$statusChange}. Previous status: " . ($previousIsDone ? 'completed' : 'pending') . ", New status: " . ($updateData['is_done'] ? 'completed' : 'pending') . ". Checked labels: {$checkedLabelsStr}",
+                    'exEventId' => $market->exEventId ?? null,
+                    'label_name' => null,
+                    'old_value' => $previousIsDone ? 'completed' : 'pending',
+                    'new_value' => $updateData['is_done'] ? 'completed' : 'pending',
+                    'event_name' => $market->eventName ?? 'N/A',
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } catch (\Exception $e) {
+                // Log error but don't fail the request
+                \Log::error('Failed to log market status change to system_logs: ' . $e->getMessage());
+            }
+        }
 
         return response()->json([
             'success' => true,
