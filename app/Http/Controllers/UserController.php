@@ -325,6 +325,28 @@ class UserController extends Controller
     /**
      * Search users (redirects to index with search parameter)
      */
+    /**
+     * Get user emails by IDs (API endpoint)
+     */
+    public function getEmails(Request $request)
+    {
+        $ids = $request->get('ids', '');
+        $idsArray = array_filter(array_map('intval', explode(',', $ids)));
+        
+        if (empty($idsArray)) {
+            return response()->json([]);
+        }
+        
+        $users = User::whereIn('id', $idsArray)->select('id', 'email')->get();
+        $emails = [];
+        
+        foreach ($users as $user) {
+            $emails[$user->id] = $user->email;
+        }
+        
+        return response()->json($emails);
+    }
+
     public function search(Request $request)
     {
         return redirect()->route('users.index', $request->all());

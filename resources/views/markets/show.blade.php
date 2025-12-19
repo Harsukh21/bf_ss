@@ -175,6 +175,97 @@
                 </div>
             </div>
 
+            <!-- Scorecard Labels -->
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                        Scorecard Labels
+                    </h3>
+                    @php
+                        $decodedLabels = json_decode($market->labels ?? '{}', true);
+                        $labelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
+                        $labelNames = [
+                            '4x' => '4X',
+                            'b2c' => 'B2C',
+                            'b2b' => 'B2B',
+                            'usdt' => 'USDT'
+                        ];
+                        
+                        $isLabelChecked = function($value) {
+                            if (is_bool($value)) {
+                                return $value === true;
+                            }
+                            if (is_array($value) && isset($value['checked'])) {
+                                return (bool) $value['checked'];
+                            }
+                            return false;
+                        };
+                    @endphp
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        @foreach($labelKeys as $key)
+                            @php
+                                $value = $decodedLabels[$key] ?? null;
+                                $isChecked = $isLabelChecked($value);
+                            @endphp
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex-shrink-0 mt-0.5">
+                                        @if($isChecked)
+                                            <div class="w-5 h-5 bg-blue-600 rounded border-2 border-blue-600 flex items-center justify-center">
+                                                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                                </svg>
+                                            </div>
+                                        @else
+                                            <div class="w-5 h-5 bg-gray-200 dark:bg-gray-600 rounded border-2 border-gray-300 dark:border-gray-500"></div>
+                                        @endif
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-semibold text-gray-900 dark:text-white text-sm mb-2">{{ $labelNames[$key] }}</div>
+                                        @if($isChecked)
+                                            @php
+                                                $checkerName = is_array($value) && isset($value['checker_name']) && !empty($value['checker_name']) ? $value['checker_name'] : null;
+                                                $checkedAt = is_array($value) && isset($value['checked_at']) && !empty($value['checked_at']) ? $value['checked_at'] : null;
+                                                $checkedBy = is_array($value) && isset($value['checked_by']) && !empty($value['checked_by']) ? $value['checked_by'] : null;
+                                                
+                                                $formattedTime = '';
+                                                if ($checkedAt) {
+                                                    try {
+                                                        $formattedTime = \Carbon\Carbon::parse($checkedAt)->format('M j, Y, g:i A');
+                                                    } catch (\Exception $e) {
+                                                        $formattedTime = $checkedAt;
+                                                    }
+                                                }
+                                                
+                                                $userEmail = null;
+                                                if ($checkedBy) {
+                                                    $user = \App\Models\User::find($checkedBy);
+                                                    $userEmail = $user ? $user->email : null;
+                                                }
+                                            @endphp
+                                            @if($formattedTime)
+                                                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ $formattedTime }}</div>
+                                            @endif
+                                            @if($checkerName)
+                                                <div class="text-sm text-gray-900 dark:text-white font-medium mb-1">{{ $checkerName }}</div>
+                                            @endif
+                                            @if($userEmail)
+                                                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ $userEmail }}</div>
+                                            @endif
+                                            @if($formattedTime)
+                                                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $formattedTime }}</div>
+                                            @endif
+                                        @else
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">Not checked</div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
             <!-- Quick Actions -->
             <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
                 <div class="px-4 py-5 sm:p-6">

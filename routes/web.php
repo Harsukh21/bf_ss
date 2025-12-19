@@ -42,6 +42,11 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::put('/{user}', [UserController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
     });
+    
+    // API Routes for user emails
+    Route::prefix('api/users')->name('api.users.')->group(function () {
+        Route::get('/emails', [UserController::class, 'getEmails'])->name('emails');
+    });
 
     // Roles & Permissions Management
     Route::prefix('roles')->name('roles.')->group(function () {

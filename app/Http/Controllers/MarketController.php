@@ -229,6 +229,7 @@ class MarketController extends Controller
             'isLive',
             'isRecentlyAdded',
             'status',
+            'labels',
             'created_at'
         ];
         $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
