@@ -175,11 +175,11 @@
                 </div>
             </div>
 
-            <!-- Scorecard Labels -->
+            <!-- Betlist Check Details -->
             <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
                 <div class="px-4 py-5 sm:p-6">
                     <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
-                        Scorecard Labels
+                        Betlist Check Details
                     </h3>
                     @php
                         $decodedLabels = json_decode($market->labels ?? '{}', true);
@@ -221,12 +221,12 @@
                                         @endif
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <div class="font-semibold text-gray-900 dark:text-white text-sm mb-2">{{ $labelNames[$key] }}</div>
                                         @if($isChecked)
                                             @php
                                                 $checkerName = is_array($value) && isset($value['checker_name']) && !empty($value['checker_name']) ? $value['checker_name'] : null;
+                                                $chorId = is_array($value) && isset($value['chor_id']) && !empty($value['chor_id']) ? $value['chor_id'] : null;
+                                                $remark = is_array($value) && isset($value['remark']) && !empty($value['remark']) ? $value['remark'] : null;
                                                 $checkedAt = is_array($value) && isset($value['checked_at']) && !empty($value['checked_at']) ? $value['checked_at'] : null;
-                                                $checkedBy = is_array($value) && isset($value['checked_by']) && !empty($value['checked_by']) ? $value['checked_by'] : null;
                                                 
                                                 $formattedTime = '';
                                                 if ($checkedAt) {
@@ -237,25 +237,24 @@
                                                     }
                                                 }
                                                 
-                                                $userEmail = null;
-                                                if ($checkedBy) {
-                                                    $user = \App\Models\User::find($checkedBy);
-                                                    $userEmail = $user ? $user->email : null;
+                                                // Build label name with checker name
+                                                $labelDisplay = $labelNames[$key];
+                                                if ($checkerName) {
+                                                    $labelDisplay = $labelNames[$key] . ' - ' . $checkerName;
                                                 }
                                             @endphp
-                                            @if($formattedTime)
-                                                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ $formattedTime }}</div>
+                                            <div class="font-semibold text-gray-900 dark:text-white text-sm mb-2">{{ $labelDisplay }}</div>
+                                            @if($chorId)
+                                                <div class="text-xs text-gray-600 dark:text-gray-300 mb-1">Froude IDs: {{ $chorId }}</div>
                                             @endif
-                                            @if($checkerName)
-                                                <div class="text-sm text-gray-900 dark:text-white font-medium mb-1">{{ $checkerName }}</div>
-                                            @endif
-                                            @if($userEmail)
-                                                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ $userEmail }}</div>
+                                            @if($remark)
+                                                <div class="text-xs text-gray-600 dark:text-gray-300 mb-1">remark: {{ $remark }}</div>
                                             @endif
                                             @if($formattedTime)
                                                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $formattedTime }}</div>
                                             @endif
                                         @else
+                                            <div class="font-semibold text-gray-900 dark:text-white text-sm mb-2">{{ $labelNames[$key] }}</div>
                                             <div class="text-xs text-gray-500 dark:text-gray-400">Not checked</div>
                                         @endif
                                     </div>

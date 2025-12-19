@@ -1935,8 +1935,9 @@ window.openMarketModal = function(market) {
                     
                     if (isChecked) {
                         const checkerName = typeof value === 'object' && value.checker_name ? value.checker_name : null;
+                        const chorId = typeof value === 'object' && value.chor_id ? value.chor_id : null;
+                        const remark = typeof value === 'object' && value.remark ? value.remark : null;
                         const checkedAt = typeof value === 'object' && value.checked_at ? value.checked_at : null;
-                        const checkedBy = typeof value === 'object' && value.checked_by ? value.checked_by : null;
                         
                         // Format timestamp
                         let formattedTime = '';
@@ -1958,6 +1959,12 @@ window.openMarketModal = function(market) {
                             }
                         }
                         
+                        // Build label name with checker name
+                        let labelDisplay = labelNames[key];
+                        if (checkerName) {
+                            labelDisplay = `${labelNames[key]} - ${checkerName}`;
+                        }
+                        
                         // Build card for checked label
                         labelsHtml += `
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
@@ -1970,10 +1977,9 @@ window.openMarketModal = function(market) {
                                         </div>
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <div class="font-semibold text-gray-900 dark:text-white text-sm mb-2">${labelNames[key]}</div>
-                                        ${formattedTime ? `<div class="text-xs text-gray-500 dark:text-gray-400 mb-1">${formattedTime}</div>` : ''}
-                                        ${checkerName ? `<div class="text-sm text-gray-900 dark:text-white font-medium mb-1">${checkerName}</div>` : ''}
-                                        ${checkedBy ? `<div class="text-xs text-gray-500 dark:text-gray-400" data-user-id="${checkedBy}">Loading email...</div>` : ''}
+                                        <div class="font-semibold text-gray-900 dark:text-white text-sm mb-2">${labelDisplay}</div>
+                                        ${chorId ? `<div class="text-xs text-gray-600 dark:text-gray-300 mb-1">Froude IDs: ${chorId}</div>` : ''}
+                                        ${remark ? `<div class="text-xs text-gray-600 dark:text-gray-300 mb-1">remark: ${remark}</div>` : ''}
                                         ${formattedTime ? `<div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${formattedTime}</div>` : ''}
                                     </div>
                                 </div>
@@ -1998,38 +2004,6 @@ window.openMarketModal = function(market) {
                 });
                 
                 labelsContainer.innerHTML = labelsHtml;
-                
-                // Fetch user emails for checked labels
-                const userEmailElements = labelsContainer.querySelectorAll('[data-user-id]');
-                if (userEmailElements.length > 0) {
-                    const userIds = Array.from(userEmailElements).map(el => el.getAttribute('data-user-id')).filter((v, i, a) => a.indexOf(v) === i);
-                    
-                    // Fetch user emails
-                    fetch('/api/users/emails?ids=' + userIds.join(','), {
-                        method: 'GET',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        userEmailElements.forEach(el => {
-                            const userId = el.getAttribute('data-user-id');
-                            if (data[userId]) {
-                                el.textContent = data[userId];
-                            } else {
-                                el.textContent = '';
-                            }
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Error fetching user emails:', error);
-                        userEmailElements.forEach(el => {
-                            el.textContent = '';
-                        });
-                    });
-                }
             } catch (e) {
                 labelsContainer.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">No labels checked</p>';
             }
@@ -2233,7 +2207,7 @@ window.openMarketModal = function(market) {
             
             <!-- Labels Information -->
             <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">Scorecard Labels</h4>
+                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">Betlist Check Details</h4>
                 <div id="modalLabelsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <p class="text-sm text-gray-500 dark:text-gray-400 col-span-full">No labels checked</p>
                 </div>
