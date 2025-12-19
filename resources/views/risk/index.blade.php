@@ -596,7 +596,7 @@
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Market & Event</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event & Market</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tournament</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sport & Status</th>
                         </tr>
@@ -631,8 +631,8 @@
                                     </button>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 align-top">
-                                    <div class="font-medium">{{ $market->marketName }}</div>
-                                    <div class="mt-2 font-semibold text-gray-900 dark:text-gray-100">{{ $market->eventName }}</div>
+                                    <div class="font-semibold text-gray-900 dark:text-gray-100">{{ $market->eventName }}</div>
+                                    <div class="mt-2 font-medium">{{ $market->marketName }}</div>
                                     @if(!empty($market->completeTime))
                                         <span class="mt-2 inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-200">
                                             Complete: {{ \Carbon\Carbon::parse($market->completeTime)->format('M d, Y h:i A') }}
@@ -706,7 +706,7 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Market & Event</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event & Market</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tournament</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sport & Status</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Remark</th>
@@ -716,8 +716,8 @@
                         @foreach($doneMarkets as $market)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 align-top">
-                                    <div class="font-medium">{{ $market->marketName }}</div>
-                                    <div class="mt-2 font-semibold text-gray-900 dark:text-gray-100">{{ $market->eventName }}</div>
+                                    <div class="font-semibold text-gray-900 dark:text-gray-100">{{ $market->eventName }}</div>
+                                    <div class="mt-2 font-medium">{{ $market->marketName }}</div>
                                     @if(!empty($market->completeTime))
                                         <span class="mt-2 inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-200">
                                             Complete: {{ \Carbon\Carbon::parse($market->completeTime)->format('M d, Y h:i A') }}
