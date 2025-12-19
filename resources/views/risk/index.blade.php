@@ -639,11 +639,11 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="flex flex-wrap items-center gap-2">
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300">
+                                    <div class="flex flex-col gap-2">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 w-fit">
                                             {{ $market->sportName ?? 'N/A' }}
                                         </span>
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 w-fit">
                                             {{ $market->tournamentsName ?? 'N/A' }}
                                         </span>
                                         @php
@@ -653,9 +653,9 @@
                                             ];
                                             $meta = $statusMap[$market->status] ?? ['label' => 'Unknown', 'class' => 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'];
                                         @endphp
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $meta['class'] }}">{{ $meta['label'] }}</span>
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $meta['class'] }} w-fit">{{ $meta['label'] }}</span>
                                         @if(!empty($market->selectionName))
-                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 w-fit">
                                                 Winner: {{ $market->selectionName }}
                                             </span>
                                         @endif
@@ -730,11 +730,11 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="flex flex-wrap items-center gap-2">
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300">
+                                    <div class="flex flex-col gap-2">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 w-fit">
                                             {{ $market->sportName ?? 'N/A' }}
                                         </span>
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 w-fit">
                                             {{ $market->tournamentsName ?? 'N/A' }}
                                         </span>
                                         @php
@@ -744,9 +744,9 @@
                                             ];
                                             $meta = $statusMap[$market->status] ?? ['label' => 'Unknown', 'class' => 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'];
                                         @endphp
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $meta['class'] }}">{{ $meta['label'] }}</span>
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $meta['class'] }} w-fit">{{ $meta['label'] }}</span>
                                         @if(!empty($market->selectionName))
-                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 w-fit">
                                                 Winner: {{ $market->selectionName }}
                                             </span>
                                         @endif
