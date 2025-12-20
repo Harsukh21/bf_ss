@@ -1884,6 +1884,7 @@ window.openEventDetailsModal = async function(eventId) {
         const newLimitLogs = data.newLimitLogs || [];
         const statusMap = data.statusMap || {};
         const statusBadgeMeta = data.statusBadgeMeta || {};
+        const markets = data.markets || [];
         const sportConfig = @json($sportConfig ?? []);
         
         // Format timestamps
@@ -2097,6 +2098,120 @@ window.openEventDetailsModal = async function(eventId) {
                 </div>
                 
                 ${labelsHtml}
+                
+                <!-- Betlist Check Details -->
+                ${(function() {
+                    if (!markets || markets.length === 0) {
+                        return '';
+                    }
+                    
+                    const labelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
+                    const labelNames = {
+                        '4x': '4X',
+                        'b2c': 'B2C',
+                        'b2b': 'B2B',
+                        'usdt': 'USDT'
+                    };
+                    
+                    // Filter markets to only include those with at least one checked label
+                    const marketsWithCheckedLabels = markets.filter(market => {
+                        if (!market.labels) return false;
+                        return labelKeys.some(key => {
+                            const value = market.labels[key];
+                            return typeof value === 'boolean' ? value : (value && value.checked === true);
+                        });
+                    });
+                    
+                    if (marketsWithCheckedLabels.length === 0) {
+                        return '';
+                    }
+                    
+                    let marketsHtml = '<div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">';
+                    marketsHtml += '<h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Betlist Check Details</h3>';
+                    
+                    marketsWithCheckedLabels.forEach(market => {
+                        marketsHtml += `<div class="mb-6 last:mb-0">`;
+                        marketsHtml += `<h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">${market.marketName || 'N/A'}</h4>`;
+                        marketsHtml += `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">`;
+                        
+                        labelKeys.forEach(key => {
+                            const value = market.labels && market.labels[key];
+                            const isChecked = typeof value === 'boolean' ? value : (value && value.checked === true);
+                            
+                            if (isChecked) {
+                                const checkerName = typeof value === 'object' && value.checker_name ? value.checker_name : null;
+                                const chorId = typeof value === 'object' && value.chor_id ? value.chor_id : null;
+                                const remark = typeof value === 'object' && value.remark ? value.remark : null;
+                                const checkedAt = typeof value === 'object' && value.checked_at ? value.checked_at : null;
+                                
+                                // Format timestamp
+                                let formattedTime = '';
+                                if (checkedAt) {
+                                    try {
+                                        const date = new Date(checkedAt);
+                                        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                        const month = monthNames[date.getMonth()];
+                                        const day = date.getDate();
+                                        const year = date.getFullYear();
+                                        let hours = date.getHours();
+                                        const minutes = date.getMinutes().toString().padStart(2, '0');
+                                        const ampm = hours >= 12 ? 'PM' : 'AM';
+                                        hours = hours % 12;
+                                        hours = hours ? hours : 12;
+                                        formattedTime = `${month} ${day}, ${year}, ${hours}:${minutes} ${ampm}`;
+                                    } catch (e) {
+                                        formattedTime = checkedAt;
+                                    }
+                                }
+                                
+                                // Build label name with checker name
+                                let labelDisplay = labelNames[key];
+                                if (checkerName) {
+                                    labelDisplay = `${labelNames[key]} - ${checkerName}`;
+                                }
+                                
+                                marketsHtml += `
+                                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                                        <div class="flex items-start gap-3">
+                                            <div class="flex-shrink-0 mt-0.5">
+                                                <div class="w-5 h-5 bg-blue-600 rounded border-2 border-blue-600 flex items-center justify-center">
+                                                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="font-semibold text-gray-900 dark:text-white text-sm mb-2">${labelDisplay}</div>
+                                                ${chorId ? `<div class="text-xs text-gray-600 dark:text-gray-300 mb-1">Froude IDs: ${chorId}</div>` : ''}
+                                                ${remark ? `<div class="text-xs text-gray-600 dark:text-gray-300 mb-1">remark: ${remark}</div>` : ''}
+                                                ${formattedTime ? `<div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${formattedTime}</div>` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                marketsHtml += `
+                                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                                        <div class="flex items-start gap-3">
+                                            <div class="flex-shrink-0 mt-0.5">
+                                                <div class="w-5 h-5 bg-gray-200 dark:bg-gray-600 rounded border-2 border-gray-300 dark:border-gray-500"></div>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="font-semibold text-gray-900 dark:text-white text-sm mb-2">${labelNames[key]}</div>
+                                                <div class="text-xs text-gray-500 dark:text-gray-400">Not checked</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        });
+                        
+                        marketsHtml += `</div></div>`;
+                    });
+                    
+                    marketsHtml += '</div>';
+                    return marketsHtml;
+                })()}
                 
                 <!-- Timestamps -->
                 <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">

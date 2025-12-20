@@ -637,6 +637,29 @@ class EventController extends Controller
             }
         }
         
+        // Get markets for this event
+        $markets = [];
+        if ($event->exEventId) {
+            $marketsData = DB::table('market_lists')
+                ->select('id', 'marketName', 'labels')
+                ->where('exEventId', $event->exEventId)
+                ->orderBy('marketName')
+                ->get();
+            
+            foreach ($marketsData as $market) {
+                $labels = null;
+                if ($market->labels) {
+                    $labels = is_string($market->labels) ? json_decode($market->labels, true) : $market->labels;
+                }
+                
+                $markets[] = [
+                    'id' => $market->id,
+                    'marketName' => $market->marketName,
+                    'labels' => $labels
+                ];
+            }
+        }
+        
         // Get status map for display
         $statusMap = $this->getEventStatusMap();
         $statusBadgeMeta = [
@@ -654,7 +677,8 @@ class EventController extends Controller
             'labelLogs' => $labelLogs,
             'newLimitLogs' => $newLimitLogs,
             'statusMap' => $statusMap,
-            'statusBadgeMeta' => $statusBadgeMeta
+            'statusBadgeMeta' => $statusBadgeMeta,
+            'markets' => $markets
         ]);
     }
 
