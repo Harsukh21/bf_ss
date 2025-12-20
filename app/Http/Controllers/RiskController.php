@@ -173,12 +173,25 @@ class RiskController extends Controller
                 // Old format: labels->>'4x' = 'true' (boolean true stored as text 'true')
                 // New format: labels->'4x'->>'checked' = 'true' (object with checked property)
                 $query->where(function ($q) use ($labelKey) {
-                    // Check old format: direct boolean value
-                    $q->whereRaw("(market_lists.labels ->> ?)::boolean = true", [$labelKey])
-                      // Check new format: object with checked property (as boolean)
-                      ->orWhereRaw("(market_lists.labels -> ? ->> 'checked')::boolean = true", [$labelKey])
-                      // Check new format: object with checked property (as string 'true')
-                      ->orWhereRaw("market_lists.labels -> ? ->> 'checked' = 'true'", [$labelKey]);
+                    // Check if value exists and is not null
+                    $q->whereNotNull("market_lists.labels -> ?", [$labelKey])
+                      ->where(function ($subQ) use ($labelKey) {
+                          // Check old format: direct boolean value (only if it's a boolean, not an object)
+                          $subQ->whereRaw(
+                              "(jsonb_typeof(market_lists.labels -> ?) = 'boolean' AND (market_lists.labels ->> ?)::boolean = true)",
+                              [$labelKey, $labelKey]
+                          )
+                          // Check new format: object with checked property (as boolean)
+                          ->orWhereRaw(
+                              "(jsonb_typeof(market_lists.labels -> ?) = 'object' AND jsonb_typeof(market_lists.labels -> ? -> 'checked') = 'boolean' AND (market_lists.labels -> ? ->> 'checked')::boolean = true)",
+                              [$labelKey, $labelKey, $labelKey]
+                          )
+                          // Check new format: object with checked property (as string 'true')
+                          ->orWhereRaw(
+                              "(jsonb_typeof(market_lists.labels -> ?) = 'object' AND market_lists.labels -> ? ->> 'checked' = 'true')",
+                              [$labelKey, $labelKey]
+                          );
+                      });
                 });
             }
         }
