@@ -230,6 +230,8 @@ class MarketController extends Controller
             'isRecentlyAdded',
             'status',
             'labels',
+            'selectionName',
+            'winnerType',
             'created_at'
         ];
         $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));

@@ -678,8 +678,8 @@
                                                     'isLive' => $market->isLive ?? false,
                                                     'isPreBet' => $market->isPreBet ?? false,
                                                     'labels' => $market->labels ?? null,
-                                                    'created_at' => $market->created_at ? \Carbon\Carbon::parse($market->created_at)->format('M j, Y g:i A') : 'N/A',
-                                                    'updated_at' => isset($market->updated_at) && $market->updated_at ? \Carbon\Carbon::parse($market->updated_at)->format('M j, Y g:i A') : 'N/A',
+                                                    'selectionName' => $market->selectionName ?? null,
+                                                    'winnerType' => $market->winnerType ?? null,
                                                 ]) !!}'>
                                                 {{ $market->eventName }}
                                             </a>
@@ -1910,8 +1910,18 @@ window.openMarketModal = function(market) {
     setText('modalSportName', market.sportName);
     setText('modalTournamentName', market.tournamentsName);
     setText('modalType', market.type);
-    setText('modalCreatedAt', market.created_at);
-    setText('modalUpdatedAt', market.updated_at);
+    
+    // Winner badge
+    const winnerEl = document.getElementById('modalWinner');
+    if (winnerEl) {
+        winnerEl.textContent = market.selectionName || 'N/A';
+    }
+    
+    // Result badge
+    const resultEl = document.getElementById('modalResult');
+    if (resultEl) {
+        resultEl.textContent = market.winnerType || 'N/A';
+    }
     
     // Labels
     const labelsContainer = document.getElementById('modalLabelsContainer');
@@ -2187,7 +2197,7 @@ window.openMarketModal = function(market) {
                 </div>
             </div>
             
-            <!-- Status & Timestamps -->
+            <!-- Status & Results -->
             <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -2195,12 +2205,12 @@ window.openMarketModal = function(market) {
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200" id="modalStatus">Unknown</span>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Created At</label>
-                        <p class="mt-1 text-sm text-gray-900 dark:text-white" id="modalCreatedAt">-</p>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Winner</label>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300" id="modalWinner">-</span>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</label>
-                        <p class="mt-1 text-sm text-gray-900 dark:text-white" id="modalUpdatedAt">-</p>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Result</label>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300" id="modalResult">-</span>
                     </div>
                 </div>
             </div>
