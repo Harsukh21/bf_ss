@@ -221,9 +221,9 @@
                             @enderror
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 @if($user->web_pin)
-                                    Leave blank to keep your current PIN. Only numbers, minimum 6 digits.
+                                    Leave blank to keep your current PIN. Only numbers, minimum 4 digits.
                                 @else
-                                    Only numbers, minimum 6 digits
+                                    Only numbers, minimum 4 digits
                                 @endif
                             </p>
                         </div>
@@ -545,7 +545,7 @@
 @push('js')
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    // Web Pin validation - only allow numbers and minimum 6 digits
+    // Web Pin validation - only allow numbers and minimum 4 digits
     document.addEventListener('DOMContentLoaded', function() {
         const webPinInput = document.getElementById('web_pin');
         
@@ -556,9 +556,9 @@
             });
             
             webPinInput.addEventListener('blur', function(e) {
-                // Validate minimum 6 digits if field has value
-                if (this.value && this.value.length < 6) {
-                    this.setCustomValidity('Web Pin must be at least 6 digits');
+                // Validate minimum 4 digits if field has value
+                if (this.value && this.value.length < 4) {
+                    this.setCustomValidity('Web Pin must be at least 4 digits');
                     this.reportValidity();
                 } else {
                     this.setCustomValidity('');
