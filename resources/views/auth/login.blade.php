@@ -314,7 +314,7 @@
                         maxlength="20"
                         autocomplete="off"
                         class="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 @error('web_pin') border-red-500 @enderror"
-                        placeholder="Enter your 6-digit Web PIN">
+                        placeholder="Enter your 4+ digit Web PIN">
                     <button 
                         type="button" 
                         id="toggleWebPin"
@@ -326,7 +326,7 @@
                         </svg>
                     </button>
                 </div>
-                <p class="mt-1 text-xs text-gray-500">Enter your 6-digit Web PIN</p>
+                <p class="mt-1 text-xs text-gray-500">Enter your 4+ digit Web PIN</p>
                 @error('web_pin')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror

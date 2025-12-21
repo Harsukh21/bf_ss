@@ -106,13 +106,13 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'username' => ['nullable', 'string', 'max:255', 'unique:users', 'regex:/^[a-zA-Z0-9_]+$/'],
             'password' => ['required', 'confirmed', Password::defaults()],
-            'web_pin' => ['nullable', 'string', 'regex:/^[0-9]+$/', 'min:6'],
+            'web_pin' => ['nullable', 'string', 'regex:/^[0-9]+$/', 'min:4'],
             'telegram_id' => ['nullable', 'string', 'max:100'],
         ], [
             'username.unique' => 'This username is already taken.',
             'username.regex' => 'Username can only contain letters, numbers, and underscores.',
             'web_pin.regex' => 'Web Pin must contain only numbers.',
-            'web_pin.min' => 'Web Pin must be at least 6 digits.',
+            'web_pin.min' => 'Web Pin must be at least 4 digits.',
             'telegram_id.max' => 'Telegram ID must not exceed 100 characters.',
         ]);
 
@@ -194,7 +194,7 @@ class UserController extends Controller
             'username' => ['nullable', 'string', 'max:255', 'unique:users,username,' . $user->id, 'regex:/^[a-zA-Z0-9_]+$/'],
             'phone' => ['nullable', 'string', 'max:20'],
             'password' => ['nullable', 'confirmed', Password::defaults()],
-            'web_pin' => ['nullable', 'string', 'regex:/^[0-9]+$/', 'min:6'],
+            'web_pin' => ['nullable', 'string', 'regex:/^[0-9]+$/', 'min:4'],
             'telegram_id' => ['nullable', 'string', 'max:100'],
             'date_of_birth' => ['nullable', 'date'],
             'bio' => ['nullable', 'string', 'max:1000'],
@@ -204,7 +204,7 @@ class UserController extends Controller
             'username.unique' => 'This username is already taken.',
             'username.regex' => 'Username can only contain letters, numbers, and underscores.',
             'web_pin.regex' => 'Web Pin must contain only numbers.',
-            'web_pin.min' => 'Web Pin must be at least 6 digits.',
+            'web_pin.min' => 'Web Pin must be at least 4 digits.',
             'telegram_id.max' => 'Telegram ID must not exceed 100 characters.',
         ]);
 

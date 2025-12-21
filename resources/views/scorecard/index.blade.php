@@ -1732,7 +1732,7 @@
                             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500" 
                             placeholder="Enter your Web PIN"
                         >
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Enter your 6-digit Web PIN</p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Enter your 4+ digit Web PIN</p>
                     </div>
                     <div id="labelPinError" class="hidden mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
                         <p class="text-sm text-red-600 dark:text-red-400" id="labelPinErrorMessage"></p>
@@ -2049,7 +2049,7 @@
                             Web PIN <span class="text-red-500">*</span>
                         </label>
                         <input type="password" id="sc_web_pin" name="web_pin" required inputmode="numeric" pattern="[0-9]*" maxlength="20" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500" placeholder="Enter your Web PIN">
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Enter your 6-digit Web PIN</p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Enter your 4+ digit Web PIN</p>
                     </div>
                     <div id="scTypeError" class="hidden mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
                         <p class="text-sm text-red-600 dark:text-red-400" id="scTypeErrorMessage"></p>
@@ -2229,7 +2229,7 @@
                             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500" 
                             placeholder="Enter your Web PIN"
                         >
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Enter your 6-digit Web PIN</p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Enter your 4+ digit Web PIN</p>
                     </div>
                     <div id="newLimitError" class="hidden mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
                         <p class="text-sm text-red-600 dark:text-red-400" id="newLimitErrorMessage"></p>

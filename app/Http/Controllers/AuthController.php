@@ -65,10 +65,10 @@ class AuthController extends Controller
         } else if ($loginMethod === 'web_pin') {
             $request->validate([
                 'username' => 'required|string|max:255',
-                'web_pin' => 'required|string|regex:/^[0-9]+$/|min:6',
+                'web_pin' => 'required|string|regex:/^[0-9]+$/|min:4',
             ], [
                 'web_pin.regex' => 'Web PIN must contain only numbers.',
-                'web_pin.min' => 'Web PIN must be at least 6 digits.',
+                'web_pin.min' => 'Web PIN must be at least 4 digits.',
             ]);
             
             $username = $request->input('username');

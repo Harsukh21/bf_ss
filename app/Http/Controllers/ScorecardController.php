@@ -810,13 +810,13 @@ class ScorecardController extends Controller
     {
         $request->validate([
             'sc_type' => ['required', 'string', 'in:Sportradar,Old SC(Cric),SR Premium,SpreadeX,N/A'],
-            'web_pin' => ['required', 'string', 'regex:/^[0-9]+$/', 'min:6'],
+            'web_pin' => ['required', 'string', 'regex:/^[0-9]+$/', 'min:4'],
         ], [
             'sc_type.required' => 'SC Type is required.',
             'sc_type.in' => 'Invalid SC Type selected.',
             'web_pin.required' => 'Web PIN is required.',
             'web_pin.regex' => 'Web PIN must contain only numbers.',
-            'web_pin.min' => 'Web PIN must be at least 6 digits.',
+            'web_pin.min' => 'Web PIN must be at least 4 digits.',
         ]);
 
         $event = DB::table('events')
@@ -905,14 +905,14 @@ class ScorecardController extends Controller
     {
         $request->validate([
             'new_limit' => ['required', 'numeric', 'min:0'],
-            'web_pin' => ['required', 'string', 'regex:/^[0-9]+$/', 'min:6'],
+            'web_pin' => ['required', 'string', 'regex:/^[0-9]+$/', 'min:4'],
         ], [
             'new_limit.required' => 'New Limit is required.',
             'new_limit.numeric' => 'New Limit must be a number.',
             'new_limit.min' => 'New Limit must be greater than or equal to 0.',
             'web_pin.required' => 'Web PIN is required.',
             'web_pin.regex' => 'Web PIN must contain only numbers.',
-            'web_pin.min' => 'Web PIN must be at least 6 digits.',
+            'web_pin.min' => 'Web PIN must be at least 4 digits.',
         ]);
 
         $event = DB::table('events')
