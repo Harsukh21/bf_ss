@@ -181,26 +181,26 @@
         <!-- Login Method Toggle - Professional Segmented Control -->
         <div class="relative flex justify-center mb-4">
             <div class="login-method-toggle relative inline-flex items-center" role="group">
-                <input type="radio" name="login_method" value="password" id="loginMethodPassword" {{ old('login_method', 'password') === 'password' ? 'checked' : '' }} class="sr-only">
-                <input type="radio" name="login_method" value="web_pin" id="loginMethodWebPin" {{ old('login_method') === 'web_pin' ? 'checked' : '' }} class="sr-only">
+                <input type="radio" name="login_method" value="web_pin" id="loginMethodWebPin" {{ old('login_method', 'web_pin') === 'web_pin' ? 'checked' : '' }} class="sr-only">
+                <input type="radio" name="login_method" value="password" id="loginMethodPassword" {{ old('login_method') === 'password' ? 'checked' : '' }} class="sr-only">
                 
                 <!-- Sliding Background Indicator -->
-                <div id="toggleIndicator" class="{{ old('login_method', 'password') === 'web_pin' ? 'translate-right' : '' }}"></div>
-                
-                <!-- Password Option -->
-                <label for="loginMethodPassword" class="{{ old('login_method', 'password') === 'password' ? 'active' : '' }}" id="passwordLabel">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
-                    <span>Password</span>
-                </label>
+                <div id="toggleIndicator" class="{{ old('login_method', 'web_pin') === 'password' ? 'translate-right' : '' }}"></div>
                 
                 <!-- Web PIN Option -->
-                <label for="loginMethodWebPin" class="{{ old('login_method') === 'web_pin' ? 'active' : '' }}" id="webPinLabel">
+                <label for="loginMethodWebPin" class="{{ old('login_method', 'web_pin') === 'web_pin' ? 'active' : '' }}" id="webPinLabel">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                     </svg>
                     <span>Web PIN</span>
+                </label>
+                
+                <!-- Password Option -->
+                <label for="loginMethodPassword" class="{{ old('login_method') === 'password' ? 'active' : '' }}" id="passwordLabel">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    <span>Password</span>
                 </label>
             </div>
         </div>
@@ -208,7 +208,7 @@
         <!-- Email/Username Field Container -->
         <div class="auth-field-container">
             <!-- Email Field (for Password login) -->
-            <div id="emailField" class="{{ old('login_method', 'password') === 'password' ? 'active' : '' }}">
+            <div id="emailField" class="{{ old('login_method', 'web_pin') === 'password' ? 'active' : '' }}">
             <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
             </label>
@@ -233,7 +233,7 @@
             </div>
 
             <!-- Username Field (for Web PIN login) -->
-            <div id="usernameField" class="{{ old('login_method') === 'web_pin' ? 'active' : '' }}">
+            <div id="usernameField" class="{{ old('login_method', 'web_pin') === 'web_pin' ? 'active' : '' }}">
                 <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
                     Username
                 </label>
@@ -261,7 +261,7 @@
         <!-- Auth Field Container - Prevents layout shifts -->
         <div class="auth-field-container">
             <!-- Password Field -->
-            <div id="passwordField" class="{{ old('login_method', 'password') === 'password' ? 'active' : '' }}">
+            <div id="passwordField" class="{{ old('login_method', 'web_pin') === 'password' ? 'active' : '' }}">
                 <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
                     Password
                 </label>
@@ -295,7 +295,7 @@
             </div>
 
             <!-- Web PIN Field -->
-            <div id="webPinField" class="{{ old('login_method', 'password') === 'web_pin' ? 'active' : '' }}">
+            <div id="webPinField" class="{{ old('login_method', 'web_pin') === 'web_pin' ? 'active' : '' }}">
                 <label for="web_pin" class="block text-sm font-medium text-gray-700 mb-2">
                     Web PIN
                 </label>
@@ -457,34 +457,9 @@
             
             // Toggle between password and web_pin fields with smooth animations
             function toggleLoginMethod() {
-                if (loginMethodPassword.checked) {
-                    // Move indicator to left (Password)
+                if (loginMethodWebPin.checked) {
+                    // Move indicator to left (Web PIN - first tab)
                     toggleIndicator.classList.remove('translate-right');
-                    
-                    // Update label classes
-                    passwordLabel.classList.add('active');
-                    webPinLabel.classList.remove('active');
-                    
-                    // Smooth field transitions - Hide Web PIN fields first
-                    usernameField.classList.remove('active');
-                    webPinField.classList.remove('active');
-                    
-                    // After fade out starts, fade in Password fields
-                    setTimeout(() => {
-                        emailField.classList.add('active');
-                        passwordField.classList.add('active');
-                    }, 100);
-                    
-                    // Update required attributes
-                    emailInput.setAttribute('required', 'required');
-                    passwordInput.setAttribute('required', 'required');
-                    usernameInput.removeAttribute('required');
-                    webPinInput.removeAttribute('required');
-                    usernameInput.value = ''; // Clear username when switching
-                    webPinInput.value = ''; // Clear web_pin when switching
-                } else if (loginMethodWebPin.checked) {
-                    // Move indicator to right (Web PIN)
-                    toggleIndicator.classList.add('translate-right');
                     
                     // Update label classes
                     webPinLabel.classList.add('active');
@@ -507,6 +482,31 @@
                     passwordInput.removeAttribute('required');
                     emailInput.value = ''; // Clear email when switching
                     passwordInput.value = ''; // Clear password when switching
+                } else if (loginMethodPassword.checked) {
+                    // Move indicator to right (Password - second tab)
+                    toggleIndicator.classList.add('translate-right');
+                    
+                    // Update label classes
+                    passwordLabel.classList.add('active');
+                    webPinLabel.classList.remove('active');
+                    
+                    // Smooth field transitions - Hide Web PIN fields first
+                    usernameField.classList.remove('active');
+                    webPinField.classList.remove('active');
+                    
+                    // After fade out starts, fade in Password fields
+                    setTimeout(() => {
+                        emailField.classList.add('active');
+                        passwordField.classList.add('active');
+                    }, 100);
+                    
+                    // Update required attributes
+                    emailInput.setAttribute('required', 'required');
+                    passwordInput.setAttribute('required', 'required');
+                    usernameInput.removeAttribute('required');
+                    webPinInput.removeAttribute('required');
+                    usernameInput.value = ''; // Clear username when switching
+                    webPinInput.value = ''; // Clear web_pin when switching
                 }
             }
             
@@ -514,17 +514,19 @@
             loginMethodPassword.addEventListener('change', toggleLoginMethod);
             loginMethodWebPin.addEventListener('change', toggleLoginMethod);
             
-            // Initial state - ensure correct fields are active on page load
-            if (loginMethodPassword.checked) {
-                emailField.classList.add('active');
-                passwordField.classList.add('active');
-                usernameField.classList.remove('active');
-                webPinField.classList.remove('active');
-            } else if (loginMethodWebPin.checked) {
+            // Initial state - ensure correct fields are active on page load (Web PIN is default)
+            if (loginMethodWebPin.checked) {
                 usernameField.classList.add('active');
                 webPinField.classList.add('active');
                 emailField.classList.remove('active');
                 passwordField.classList.remove('active');
+                toggleIndicator.classList.remove('translate-right');
+            } else if (loginMethodPassword.checked) {
+                emailField.classList.add('active');
+                passwordField.classList.add('active');
+                usernameField.classList.remove('active');
+                webPinField.classList.remove('active');
+                toggleIndicator.classList.add('translate-right');
             }
             
             // Web PIN input validation - only numbers
