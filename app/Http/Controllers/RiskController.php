@@ -597,8 +597,8 @@ class RiskController extends Controller
                     'ip_address' => request()->ip(),
                     'user_agent' => request()->userAgent(),
                     'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                'updated_at' => now(),
+            ]);
             } catch (\Exception $e) {
                 // Log error but don't fail the request
                 \Log::error('Failed to log market status change to system_logs: ' . $e->getMessage());
@@ -1135,6 +1135,185 @@ class RiskController extends Controller
             'date_from' => $request->input('date_from'),
             'date_to' => $request->input('date_to'),
         ];
+    }
+
+    public function export(Request $request)
+    {
+        $filters = $this->buildFilters($request);
+        
+        // Get pending markets query (is_done = false or null)
+        $pendingQuery = $this->buildMarketQuery([4, 5], $filters, false);
+        
+        // Get done markets query (is_done = true)
+        $doneQuery = $this->buildMarketQuery([4, 5], $filters, true);
+        
+        // Apply status filter if selected (pending/done)
+        $statusFilter = $request->input('risk_status'); // 'pending' or 'done'
+        
+        $allMarkets = collect();
+        
+        if (!$statusFilter || $statusFilter === 'pending') {
+            $pendingMarkets = (clone $pendingQuery)->get();
+            foreach ($pendingMarkets as $market) {
+                $market->risk_status = 'pending';
+                $allMarkets->push($market);
+            }
+        }
+        
+        if (!$statusFilter || $statusFilter === 'done') {
+            $doneMarkets = (clone $doneQuery)->get();
+            foreach ($doneMarkets as $market) {
+                $market->risk_status = 'done';
+                $allMarkets->push($market);
+            }
+        }
+        
+        // Group by risk_status first (pending on top, done at bottom)
+        $grouped = $allMarkets->groupBy('risk_status');
+        $pendingMarkets = $grouped->get('pending', collect());
+        $doneMarkets = $grouped->get('done', collect());
+        
+        // Define sport priority order
+        $sportPriority = [
+            'Basketball' => 1,
+            'Boxing' => 2,
+            'Cricket' => 3,
+            'Soccer' => 4,
+            'Tennis' => 5,
+        ];
+        
+        // Sort each group: first by sport priority, then by close time (newest first)
+        $pendingMarkets = $pendingMarkets->sortBy(function ($market) use ($sportPriority) {
+            $sportName = $market->sportName ?? '';
+            $sportOrder = $sportPriority[$sportName] ?? 999;
+            $timeField = !empty($market->completeTime) ? $market->completeTime : $market->marketTime;
+            $timeValue = $timeField ? strtotime($timeField) : 0;
+            return [$sportOrder, -$timeValue];
+        });
+        
+        $doneMarkets = $doneMarkets->sortBy(function ($market) use ($sportPriority) {
+            $sportName = $market->sportName ?? '';
+            $sportOrder = $sportPriority[$sportName] ?? 999;
+            $timeField = !empty($market->completeTime) ? $market->completeTime : $market->marketTime;
+            $timeValue = $timeField ? strtotime($timeField) : 0;
+            return [$sportOrder, -$timeValue];
+        });
+        
+        // Combine: pending first, then done
+        $sortedMarkets = $pendingMarkets->concat($doneMarkets);
+        
+        // Prepare CSV data
+        $filename = 'betlist_check_export_' . date('Y-m-d_His') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+        
+        $callback = function() use ($sortedMarkets) {
+            $file = fopen('php://output', 'w');
+            
+            // Add CSV headers
+            fputcsv($file, [
+                'Event & Market',
+                'Sport & Tournament & Status & Winner',
+                'Checker',
+                'Froude IDs',
+                'Remarks'
+            ]);
+            
+            $labelOptions = config('labels.labels', [
+                '4x' => '4X',
+                'b2c' => 'B2C',
+                'b2b' => 'B2B',
+                'usdt' => 'USDT',
+            ]);
+            
+            // Helper function to check if label is checked
+            $isLabelChecked = function($value) {
+                if (is_bool($value)) {
+                    return $value === true;
+                }
+                if (is_array($value) && isset($value['checked'])) {
+                    return (bool) $value['checked'];
+                }
+                return false;
+            };
+            
+            foreach ($sortedMarkets as $market) {
+                // Decode labels
+                $decodedLabels = json_decode($market->labels ?? '{}', true);
+                $labelKeys = array_keys($labelOptions);
+                $defaultLabels = array_fill_keys($labelKeys, false);
+                $labelStates = array_merge($defaultLabels, is_array($decodedLabels) ? array_intersect_key($decodedLabels, $defaultLabels) : []);
+                
+                // Event & Market
+                $eventMarket = trim($market->eventName ?? '') . ' / ' . trim($market->marketName ?? '');
+                
+                // Sport & Tournament & Status & Winner
+                $sport = $market->sportName ?? 'N/A';
+                $tournament = $market->tournamentsName ?? 'N/A';
+                $statusMap = [
+                    4 => 'Settled',
+                    5 => 'Voided',
+                ];
+                $status = $statusMap[$market->status] ?? 'Unknown';
+                $winner = !empty($market->selectionName) ? 'Winner: ' . $market->selectionName : '';
+                $sportTournamentStatusWinner = $sport . ' / ' . $tournament . ' / ' . $status . ($winner ? ' / ' . $winner : '');
+                
+                // Checker - collect all checker names from checked labels
+                $checkerData = [];
+                foreach ($labelStates as $key => $value) {
+                    if ($isLabelChecked($value)) {
+                        if (is_array($value) && isset($value['checker_name']) && !empty($value['checker_name'])) {
+                            $checkerData[] = strtoupper($key) . ' : ' . $value['checker_name'];
+                        } elseif (is_bool($value) && $value === true) {
+                            $checkerData[] = strtoupper($key) . ' : —';
+                        }
+                    }
+                }
+                $checker = !empty($checkerData) ? implode(' | ', $checkerData) : '—';
+                
+                // Froude IDs (Chor IDs) - collect all chor_ids from checked labels
+                $chorIdData = [];
+                foreach ($labelStates as $key => $value) {
+                    if ($isLabelChecked($value)) {
+                        if (is_array($value) && isset($value['chor_id']) && !empty($value['chor_id'])) {
+                            $chorIdData[] = strtoupper($key) . ' : ' . $value['chor_id'];
+                        } elseif (is_bool($value) && $value === true) {
+                            $chorIdData[] = strtoupper($key) . ' : —';
+                        }
+                    }
+                }
+                $froudeIds = !empty($chorIdData) ? implode(' | ', $chorIdData) : '—';
+                
+                // Remarks - collect all remarks from checked labels
+                $remarkData = [];
+                foreach ($labelStates as $key => $value) {
+                    if ($isLabelChecked($value)) {
+                        if (is_array($value) && isset($value['remark']) && !empty($value['remark'])) {
+                            $remarkData[] = strtoupper($key) . ' : ' . $value['remark'];
+                        } elseif (is_bool($value) && $value === true) {
+                            $remarkData[] = strtoupper($key) . ' : —';
+                        }
+                    }
+                }
+                $remarks = !empty($remarkData) ? implode(' | ', $remarkData) : '—';
+                
+                // Write CSV row
+                fputcsv($file, [
+                    $eventMarket,
+                    $sportTournamentStatusWinner,
+                    $checker,
+                    $froudeIds,
+                    $remarks
+                ]);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
     }
 }
 

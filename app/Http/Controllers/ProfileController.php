@@ -49,13 +49,13 @@ class ProfileController extends Controller
             'date_of_birth' => 'nullable|date|before:today',
             'timezone' => 'nullable|string|max:50',
             'language' => 'nullable|string|max:10',
-            'web_pin' => 'nullable|string|regex:/^[0-9]+$/|min:6',
+            'web_pin' => 'nullable|string|regex:/^[0-9]+$/|min:4',
             'telegram_id' => 'nullable|string|max:100',
         ], [
             'username.unique' => 'This username is already taken.',
             'username.regex' => 'Username can only contain letters, numbers, and underscores.',
             'web_pin.regex' => 'Web Pin must contain only numbers.',
-            'web_pin.min' => 'Web Pin must be at least 6 digits.',
+            'web_pin.min' => 'Web Pin must be at least 4 digits.',
             'telegram_id.max' => 'Telegram ID must not exceed 100 characters.',
         ]);
         

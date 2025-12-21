@@ -42,7 +42,7 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::put('/{user}', [UserController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
     });
-    
+
     // API Routes for user emails
     Route::prefix('api/users')->name('api.users.')->group(function () {
         Route::get('/emails', [UserController::class, 'getEmails'])->name('emails');
@@ -114,6 +114,7 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/', [\App\Http\Controllers\RiskController::class, 'index'])->name('index');
         Route::get('/pending', [\App\Http\Controllers\RiskController::class, 'pending'])->name('pending');
         Route::get('/done', [\App\Http\Controllers\RiskController::class, 'done'])->name('done');
+        Route::get('/export', [\App\Http\Controllers\RiskController::class, 'export'])->name('export');
         Route::post('/markets/{market}/labels', [\App\Http\Controllers\RiskController::class, 'updateLabels'])->name('markets.labels');
         Route::post('/markets/{market}/done', [\App\Http\Controllers\RiskController::class, 'markDone'])->name('markets.done');
         });

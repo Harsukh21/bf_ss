@@ -476,6 +476,14 @@
                     Clear Filters
                 </a>
             @endif
+            <a 
+                href="{{ route('risk.export', request()->query()) }}"
+                class="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-800 transition-colors flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Export Excel
+            </a>
         </div>
     </div>
 
@@ -746,11 +754,15 @@
                                                 $isCheckedByOther = false;
                                                 $checkedBy = null;
                                                 $checkerName = null;
+                                                $chorId = null;
+                                                $remark = null;
                                                 $isChecked = is_bool($value) ? $value : (is_array($value) && isset($value['checked']) ? (bool) $value['checked'] : false);
                                                 
                                                 if (is_array($value) && isset($value['checked']) && $value['checked'] === true) {
                                                     $checkedBy = $value['checked_by'] ?? null;
                                                     $checkerName = $value['checker_name'] ?? null;
+                                                    $chorId = $value['chor_id'] ?? null;
+                                                    $remark = $value['remark'] ?? null;
                                                     if ($checkedBy !== null && $checkedBy != auth()->id()) {
                                                         $isCheckedByOther = true;
                                                     }
@@ -768,6 +780,9 @@
                                                     data-market-name="{{ $market->eventName }} / {{ $market->marketName }}"
                                                     data-required="{{ $isRequired ? 'true' : 'false' }}"
                                                     data-checked-by="{{ $checkedBy ?? '' }}"
+                                                    data-checker-name="{{ $checkerName ?? '' }}"
+                                                    data-chor-id="{{ $chorId ?? '' }}"
+                                                    data-remark="{{ $remark ?? '' }}"
                                                     @checked($isChecked)
                                                     @disabled($isDisabled)
                                                 >
@@ -1244,10 +1259,64 @@
     let activeLabelKey = null;
     let activeUpdateUrl = null;
     let pendingCheckboxState = null; // Store checkbox state before modal
+    let isEditingMode = false; // Flag to track if we're editing an existing checkbox
 
     marketLabelWrappers.forEach(wrapper => {
+        // Add click handler for editing already checked checkboxes
+        wrapper.addEventListener('click', (event) => {
+            if (!event.target.classList.contains('market-label-checkbox')) {
+                return;
+            }
+            
+            const checkbox = event.target;
+            
+            // Check if checkbox has existing data (was previously checked)
+            const hasExistingData = checkbox.dataset.checkerName || checkbox.dataset.chorId || checkbox.dataset.remark;
+            
+            // If checkbox is checked and has existing data, allow editing
+            if (checkbox.checked && hasExistingData && !checkbox.disabled) {
+                const checkedBy = checkbox.dataset.checkedBy || '';
+                const currentUserId = '{{ auth()->id() }}';
+                
+                // If user owns this checkbox or it's not owned by anyone, allow editing
+                if (!checkedBy || checkedBy === currentUserId) {
+                    const marketId = wrapper.dataset.marketId;
+                    const labelKey = checkbox.dataset.labelKey;
+                    const updateUrl = wrapper.dataset.updateUrl;
+                    const existingCheckerName = checkbox.dataset.checkerName || '';
+                    const existingChorId = checkbox.dataset.chorId || '';
+                    const existingRemark = checkbox.dataset.remark || '';
+                    
+                    // Prevent default checkbox behavior (unchecking)
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    // Set editing mode flag
+                    isEditingMode = true;
+                    
+                    const marketName = checkbox.dataset.marketName || 'Market';
+                    activeLabelKey = labelKey;
+                    activeUpdateUrl = updateUrl;
+                    pendingCheckboxState = checkbox.checked;
+                    
+                    // Open modal with existing values
+                    openCheckboxModal(marketId, marketName, labelKey, existingCheckerName, existingChorId, existingRemark);
+                    
+                    // Reset editing mode flag after a short delay
+                    setTimeout(() => {
+                        isEditingMode = false;
+                    }, 100);
+                }
+            }
+        });
+        
         wrapper.addEventListener('change', (event) => {
             if (!event.target.classList.contains('market-label-checkbox')) {
+                return;
+            }
+            
+            // Skip change handler if we're in editing mode
+            if (isEditingMode) {
                 return;
             }
             
@@ -1256,16 +1325,20 @@
             const labelKey = checkbox.dataset.labelKey;
             const updateUrl = wrapper.dataset.updateUrl;
             
+            const existingCheckerName = checkbox.dataset.checkerName || '';
+            const existingChorId = checkbox.dataset.chorId || '';
+            const existingRemark = checkbox.dataset.remark || '';
+            
             // If checking a checkbox, verify it's not already checked by another admin
             if (checkbox.checked) {
                 // First check if checkbox is already checked by another admin
-                fetch(updateUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json',
-                    },
+            fetch(updateUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
                     body: JSON.stringify({ 
                         check_permission: true,
                         label_key: labelKey
@@ -1285,8 +1358,8 @@
                         // Temporarily uncheck until modal is submitted
                         checkbox.checked = false;
                         
-                        // Open modal
-                        openCheckboxModal(marketId, marketName, labelKey);
+                        // Open modal with existing values if available
+                        openCheckboxModal(marketId, marketName, labelKey, existingCheckerName, existingChorId, existingRemark);
                     } else {
                         // Already checked by another admin
                         checkbox.checked = false;
@@ -1311,10 +1384,10 @@
                         label_key: labelKey,
                         labels: {}
                     }),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
                         // Update all checkboxes state
                         const checkboxes = wrapper.querySelectorAll('.market-label-checkbox');
                         const labels = {};
@@ -1323,18 +1396,18 @@
                         });
                         
                         // Update done button state
-                        updateDoneButtonState(marketId, data.labels);
+                    updateDoneButtonState(marketId, data.labels);
                         showRiskToast('Label unchecked', 'success');
                         
                         // Refresh page to show updated state
                         setTimeout(() => {
                             window.location.reload();
                         }, 500);
-                    } else {
+                } else {
                         showRiskToast(data.message || 'Unable to uncheck label', 'error');
                         checkbox.checked = true; // Revert on error
-                    }
-                })
+                }
+            })
                 .catch(() => {
                     showRiskToast('Unable to uncheck label', 'error');
                     checkbox.checked = true; // Revert on error
@@ -1356,16 +1429,19 @@
     let activeMarketId = null;
     let activeDoneUrl = null;
 
-    function openCheckboxModal(marketId, marketName, labelKey) {
+    function openCheckboxModal(marketId, marketName, labelKey, existingCheckerName = '', existingChorId = '', existingRemark = '') {
         activeMarketId = marketId;
         activeMarketName = marketName;
         activeDoneUrl = null; // Not using done URL for checkbox modal
         remarkMarketName.textContent = `Market: ${marketName}`;
         document.getElementById('remarkModalLabelKey').textContent = `Checkbox: ${labelKey.toUpperCase()}`;
-        remarkInput.value = '';
-        nameInput.value = '{{ auth()->user()->name }}';
-        chorIdInput.value = '';
+        
+        // Pre-fill with existing values if available, otherwise use defaults
+        nameInput.value = existingCheckerName || '{{ auth()->user()->name }}';
+        chorIdInput.value = existingChorId || 'NULL';
+        remarkInput.value = existingRemark || 'Checking';
         webPinInput.value = '';
+        
         remarkModal.classList.add('active');
         remarkOverlay.classList.add('active');
     }
@@ -1377,17 +1453,17 @@
         activeLabelKey = null; // Clear label key for mark done modal
         remarkMarketName.textContent = `Market: ${marketName}`;
         document.getElementById('remarkModalLabelKey').textContent = '';
-        remarkInput.value = '';
+        remarkInput.value = 'Checking';
         nameInput.value = '{{ auth()->user()->name }}';
-        chorIdInput.value = '';
+        chorIdInput.value = 'NULL';
         webPinInput.value = '';
         remarkModal.classList.add('active');
         remarkOverlay.classList.add('active');
     }
 
     function closeRemarkModal() {
-        // If closing checkbox modal, revert checkbox state
-        if (activeLabelKey && pendingCheckboxState !== null) {
+        // If closing checkbox modal, revert checkbox state only if not in editing mode
+        if (activeLabelKey && pendingCheckboxState !== null && !isEditingMode) {
             const checkbox = document.querySelector(`.market-label-checkbox[data-label-key="${activeLabelKey}"][data-market-id="${activeMarketId}"]`);
             if (checkbox) {
                 checkbox.checked = false; // Keep unchecked since modal was cancelled
@@ -1398,6 +1474,7 @@
         activeDoneUrl = null;
         activeLabelKey = null;
         pendingCheckboxState = null;
+        isEditingMode = false;
         remarkInput.value = '';
         nameInput.value = '';
         chorIdInput.value = '';
@@ -1503,38 +1580,38 @@
             });
         } else if (activeDoneUrl) {
             // Submit mark as done
-            fetch(activeDoneUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json',
-                },
+        fetch(activeDoneUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+            },
                 body: JSON.stringify({ remark, name, chor_id: chorId, web_pin: webPin }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    markMarketAsDone(activeMarketId);
-                    showRiskToast('Market marked as done', 'success');
-                    closeRemarkModal();
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    showRiskToast(data.message || 'Unable to mark as done', 'error');
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                markMarketAsDone(activeMarketId);
+                showRiskToast('Market marked as done', 'success');
+                closeRemarkModal();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showRiskToast(data.message || 'Unable to mark as done', 'error');
                     webPinInput.value = '';
                     webPinInput.focus();
-                }
-            })
+            }
+        })
             .catch(() => {
                 showRiskToast('Unable to mark as done', 'error');
                 webPinInput.value = '';
                 webPinInput.focus();
             })
-            .finally(() => {
-                remarkSubmitBtn.disabled = false;
-            });
+        .finally(() => {
+            remarkSubmitBtn.disabled = false;
+        });
         } else {
             remarkSubmitBtn.disabled = false;
         }

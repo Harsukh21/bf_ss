@@ -1951,51 +1951,51 @@ window.openEventDetailsModal = async function(eventId) {
         let scTypeInfoHtml = '';
         if (event.sc_type || event.new_limit) {
             scTypeInfoHtml = `
-                ${event.sc_type ? `
+                        ${event.sc_type ? `
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">SC Type</label>
                         <div class="mt-1">
-                            <span class="inline-flex px-3 py-1.5 text-sm font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300">${event.sc_type}</span>
-                        </div>
-                    </div>
-                ` : ''}
-                ${event.new_limit ? `
+                                        <span class="inline-flex px-3 py-1.5 text-sm font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300">${event.sc_type}</span>
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${event.new_limit ? `
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">New Limit</label>
                         <div class="mt-1">
-                            <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">${parseInt(event.new_limit).toLocaleString()}</p>
-                            ${newLimitLogs.length > 0 ? `
-                                <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Change History</label>
-                                    <div class="space-y-2 max-h-48 overflow-y-auto">
-                                        ${newLimitLogs.map(log => `
-                                            <div class="text-xs text-gray-600 dark:text-gray-400 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
-                                                <div class="flex items-center justify-between mb-1">
-                                                    <span class="font-medium">${log.name}</span>
-                                                    <span class="text-gray-500 dark:text-gray-500">${formatDate(log.time)}</span>
-                                                </div>
-                                                <div class="text-gray-500 dark:text-gray-500 text-xs">
-                                                    ${log.email}
-                                                </div>
-                                                ${log.old_value !== null ? `
-                                                    <div class="mt-1 text-xs">
-                                                        <span class="text-gray-500 dark:text-gray-500">Changed from </span>
-                                                        <span class="font-semibold text-gray-700 dark:text-gray-300">${parseInt(log.old_value).toLocaleString()}</span>
-                                                        <span class="text-gray-500 dark:text-gray-500"> to </span>
-                                                        <span class="font-semibold text-green-600 dark:text-green-400">${parseInt(log.new_value).toLocaleString()}</span>
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">${parseInt(event.new_limit).toLocaleString()}</p>
+                                ${newLimitLogs.length > 0 ? `
+                                    <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Change History</label>
+                                        <div class="space-y-2 max-h-48 overflow-y-auto">
+                                            ${newLimitLogs.map(log => `
+                                                <div class="text-xs text-gray-600 dark:text-gray-400 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
+                                                    <div class="flex items-center justify-between mb-1">
+                                                        <span class="font-medium">${log.name}</span>
+                                                        <span class="text-gray-500 dark:text-gray-500">${formatDate(log.time)}</span>
                                                     </div>
-                                                ` : `
-                                                    <div class="mt-1 text-xs">
-                                                        <span class="text-gray-500 dark:text-gray-500">Set to </span>
-                                                        <span class="font-semibold text-green-600 dark:text-green-400">${parseInt(log.new_value).toLocaleString()}</span>
+                                                    <div class="text-gray-500 dark:text-gray-500 text-xs">
+                                                        ${log.email}
                                                     </div>
-                                                `}
-                                            </div>
-                                        `).join('')}
+                                                    ${log.old_value !== null ? `
+                                                        <div class="mt-1 text-xs">
+                                                            <span class="text-gray-500 dark:text-gray-500">Changed from </span>
+                                                            <span class="font-semibold text-gray-700 dark:text-gray-300">${parseInt(log.old_value).toLocaleString()}</span>
+                                                            <span class="text-gray-500 dark:text-gray-500"> to </span>
+                                                            <span class="font-semibold text-green-600 dark:text-green-400">${parseInt(log.new_value).toLocaleString()}</span>
+                                                        </div>
+                                                    ` : `
+                                                        <div class="mt-1 text-xs">
+                                                            <span class="text-gray-500 dark:text-gray-500">Set to </span>
+                                                            <span class="font-semibold text-green-600 dark:text-green-400">${parseInt(log.new_value).toLocaleString()}</span>
+                                                        </div>
+                                                    `}
+                                                </div>
+                                            `).join('')}
+                                        </div>
                                     </div>
-                                </div>
-                            ` : ''}
-                        </div>
+                                ` : ''}
+                            </div>
                     </div>
                 ` : ''}
             `;
