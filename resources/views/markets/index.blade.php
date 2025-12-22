@@ -703,12 +703,12 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $market->marketName }}</div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">Exch Market ID: {{ $market->exMarketId ?? 'N/A' }}</div>
-                                        <div class="mt-1">
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ $market->exMarketId ?? 'N/A' }}</div>
+                                        <!-- <div class="mt-1">
                                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 w-fit">
                                                 {{ $market->type ?? 'N/A' }}
                                             </span>
-                                        </div>
+                                        </div> -->
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex flex-col">
@@ -758,11 +758,6 @@
                                             @if($market->selectionName)
                                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 w-fit">
                                                     Winner: {{ $market->selectionName }}
-                                                </span>
-                                            @endif
-                                            @if($market->winnerType)
-                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 w-fit">
-                                                    Result: {{ $market->winnerType }}
                                                 </span>
                                             @endif
                                         </div>
