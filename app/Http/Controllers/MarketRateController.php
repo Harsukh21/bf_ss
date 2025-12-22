@@ -241,15 +241,6 @@ class MarketRateController extends Controller
             $targetEventId = '676873ecb35427af405acc1a18c54538';
             $isTargetEvent = ($selectedEventId === $targetEventId);
             
-            if ($isTargetEvent) {
-                Log::info('MarketRateController::show - START', [
-                    'exEventId' => $selectedEventId,
-                    'id' => $id,
-                    'gridEnabled' => $gridEnabled,
-                    'gridCount' => $gridCount
-                ]);
-            }
-            
             if (!$selectedEventId || !MarketRate::tableExistsForEvent($selectedEventId)) {
                 if ($isTargetEvent) {
                     Log::warning('MarketRateController::show - Table does not exist', [
@@ -259,13 +250,6 @@ class MarketRateController extends Controller
                 }
                 return redirect()->route('market-rates.index')
                     ->with('error', 'Market rates not found for this event.');
-            }
-
-            if ($isTargetEvent) {
-                Log::info('MarketRateController::show - Table exists, querying market rate', [
-                    'exEventId' => $selectedEventId,
-                    'id' => $id
-                ]);
             }
 
             $query = MarketRate::forEvent($selectedEventId);
@@ -280,16 +264,6 @@ class MarketRateController extends Controller
                 }
                 return redirect()->route('market-rates.index')
                     ->with('error', 'Market rate not found.');
-            }
-
-            if ($isTargetEvent) {
-                Log::info('MarketRateController::show - Market rate found', [
-                    'exEventId' => $selectedEventId,
-                    'id' => $id,
-                    'exMarketId' => $marketRate->exMarketId ?? 'NULL',
-                    'marketName' => $marketRate->marketName ?? 'NULL',
-                    'hasCreatedAt' => !empty($marketRate->created_at)
-                ]);
             }
 
             // Validate required fields
@@ -307,12 +281,6 @@ class MarketRateController extends Controller
             $eventInfo = null;
             try {
                 $eventInfo = Event::where('exEventId', $selectedEventId)->first();
-                if ($isTargetEvent) {
-                    Log::info('MarketRateController::show - Event query completed', [
-                        'exEventId' => $selectedEventId,
-                        'eventFound' => !is_null($eventInfo)
-                    ]);
-                }
             } catch (\Exception $e) {
                 if ($isTargetEvent) {
                     Log::error('MarketRateController::show - Event query failed', [
@@ -329,14 +297,6 @@ class MarketRateController extends Controller
                     ->where('exMarketId', $marketRate->exMarketId)
                     ->select('status', 'winnerType', 'selectionName')
                     ->first();
-                if ($isTargetEvent) {
-                    Log::info('MarketRateController::show - Market list meta query completed', [
-                        'exEventId' => $selectedEventId,
-                        'exMarketId' => $marketRate->exMarketId,
-                        'metaFound' => !is_null($marketListMeta),
-                        'status' => $marketListMeta->status ?? 'NULL'
-                    ]);
-                }
             } catch (\Exception $e) {
                 if ($isTargetEvent) {
                     Log::error('MarketRateController::show - Market list meta query failed', [
@@ -361,80 +321,24 @@ class MarketRateController extends Controller
             $marketListWinnerType = $marketListMeta->winnerType ?? null;
             $marketListSelectionName = $marketListMeta->selectionName ?? null;
 
-            if ($isTargetEvent) {
-                Log::info('MarketRateController::show - Status mapping completed', [
-                    'exEventId' => $selectedEventId,
-                    'marketListStatus' => $marketListStatus,
-                    'marketListWinnerType' => $marketListWinnerType ?? 'NULL',
-                    'marketListSelectionName' => $marketListSelectionName ?? 'NULL'
-                ]);
-            }
-
             // Extract all unique runners from all market rates for this market
-            if ($isTargetEvent) {
-                Log::info('MarketRateController::show - Starting runner list query', [
-                    'exEventId' => $selectedEventId,
-                    'marketName' => $marketRate->marketName ?? 'NULL',
-                    'timestamp' => now()->toDateTimeString()
-                ]);
-            }
-            
             $allMarketRatesForRunnerList = collect([]);
             try {
-                $queryStartTime = microtime(true);
-                
                 if (empty($marketRate->marketName)) {
-                    if ($isTargetEvent) {
-                        Log::info('MarketRateController::show - Building query for NULL marketName', [
-                            'exEventId' => $selectedEventId
-                        ]);
-                    }
                     $query = MarketRate::forEvent($selectedEventId)
                         ->whereNull('marketName')
                         ->whereNotNull('runners')
                         ->limit(1000); // Limit to prevent memory issues
                     
-                    if ($isTargetEvent) {
-                        Log::info('MarketRateController::show - Executing query for NULL marketName', [
-                            'exEventId' => $selectedEventId
-                        ]);
-                    }
-                    
                     $allMarketRatesForRunnerList = $query->get();
                 } else {
-                    if ($isTargetEvent) {
-                        Log::info('MarketRateController::show - Building query for marketName', [
-                            'exEventId' => $selectedEventId,
-                            'marketName' => $marketRate->marketName
-                        ]);
-                    }
                     $query = MarketRate::forEvent($selectedEventId)
                         ->where('marketName', $marketRate->marketName)
                         ->whereNotNull('marketName')
                         ->whereNotNull('runners')
                         ->limit(1000); // Limit to prevent memory issues
                     
-                    if ($isTargetEvent) {
-                        Log::info('MarketRateController::show - Executing query for marketName', [
-                            'exEventId' => $selectedEventId,
-                            'marketName' => $marketRate->marketName
-                        ]);
-                    }
-                    
                     $allMarketRatesForRunnerList = $query->get();
-                }
-                
-                $queryEndTime = microtime(true);
-                $queryDuration = round(($queryEndTime - $queryStartTime) * 1000, 2); // Convert to milliseconds
-                
-                if ($isTargetEvent) {
-                    Log::info('MarketRateController::show - Runner list query completed', [
-                        'exEventId' => $selectedEventId,
-                        'marketName' => $marketRate->marketName ?? 'NULL',
-                        'count' => $allMarketRatesForRunnerList->count(),
-                        'duration_ms' => $queryDuration,
-                        'timestamp' => now()->toDateTimeString()
-                    ]);
                 }
             } catch (\Exception $e) {
                 if ($isTargetEvent) {
@@ -464,13 +368,6 @@ class MarketRateController extends Controller
                 $allMarketRatesForRunnerList = collect([]);
             }
             
-            if ($isTargetEvent) {
-                Log::info('MarketRateController::show - Starting runner processing', [
-                    'exEventId' => $selectedEventId,
-                    'ratesToProcess' => $allMarketRatesForRunnerList->count()
-                ]);
-            }
-            
             $allRunners = collect();
             $processedCount = 0;
             $processingStartTime = microtime(true);
@@ -478,15 +375,6 @@ class MarketRateController extends Controller
             try {
                 foreach ($allMarketRatesForRunnerList as $index => $rate) {
                     try {
-                        if ($isTargetEvent && $index % 100 === 0) {
-                            Log::info('MarketRateController::show - Processing runner batch', [
-                                'exEventId' => $selectedEventId,
-                                'processed' => $processedCount,
-                                'total' => $allMarketRatesForRunnerList->count(),
-                                'index' => $index
-                            ]);
-                        }
-                        
                         $runners = is_string($rate->runners) ? json_decode($rate->runners, true) : $rate->runners;
                         if (is_array($runners)) {
                             foreach ($runners as $runner) {
@@ -550,34 +438,13 @@ class MarketRateController extends Controller
                 }
             }
             
-            $processingEndTime = microtime(true);
-            $processingDuration = round(($processingEndTime - $processingStartTime) * 1000, 2);
             $allRunners = $allRunners->sort()->values();
-            
-            if ($isTargetEvent) {
-                Log::info('MarketRateController::show - Runner processing completed', [
-                    'exEventId' => $selectedEventId,
-                    'processedCount' => $processedCount,
-                    'totalRates' => $allMarketRatesForRunnerList->count(),
-                    'uniqueRunnersCount' => $allRunners->count(),
-                    'processingDuration_ms' => $processingDuration,
-                    'timestamp' => now()->toDateTimeString()
-                ]);
-            }
             
             // Get selected runner from request
             $selectedRunner = $request->get('runner');
             
-            if ($isTargetEvent) {
-                Log::info('MarketRateController::show - Starting navigation query', [
-                    'exEventId' => $selectedEventId,
-                    'selectedRunner' => $selectedRunner ?? 'NULL'
-                ]);
-            }
-            
             // Get next and previous market rates for navigation (filtered by marketName)
             // For performance, limit to 200 records within 24 hours around the current record
-            $navQueryStartTime = microtime(true);
             try {
                 if (empty($marketRate->created_at)) {
                     if ($isTargetEvent) {
@@ -601,13 +468,6 @@ class MarketRateController extends Controller
                     
                     // Limit to 200 records within 24 hours to prevent timeout on large datasets
                     try {
-                        if ($isTargetEvent) {
-                            Log::info('MarketRateController::show - Executing navigation query with date filter', [
-                                'exEventId' => $selectedEventId,
-                                'created_at' => $currentCreatedAt
-                            ]);
-                        }
-                        
                         $allMarketRates = $baseQuery
                             ->where(function($q) use ($currentCreatedAt, $isTargetEvent, $selectedEventId) {
                                 try {
@@ -630,18 +490,6 @@ class MarketRateController extends Controller
                             ->orderBy('created_at', 'desc')
                             ->limit(200)
                             ->get();
-                            
-                        $navQueryEndTime = microtime(true);
-                        $navQueryDuration = round(($navQueryEndTime - $navQueryStartTime) * 1000, 2);
-                        
-                        if ($isTargetEvent) {
-                            Log::info('MarketRateController::show - Navigation query completed', [
-                                'exEventId' => $selectedEventId,
-                                'count' => $allMarketRates->count(),
-                                'duration_ms' => $navQueryDuration,
-                                'timestamp' => now()->toDateTimeString()
-                            ]);
-                        }
                     } catch (\Exception $e) {
                         if ($isTargetEvent) {
                             Log::error('MarketRateController::show - Navigation query failed, using fallback', [
@@ -705,23 +553,9 @@ class MarketRateController extends Controller
                 $allMarketRates = collect([$marketRate]);
             }
             
-            if ($isTargetEvent) {
-                Log::info('MarketRateController::show - Navigation query completed', [
-                    'exEventId' => $selectedEventId,
-                    'allMarketRatesCount' => $allMarketRates->count()
-                ]);
-            }
-            
             $currentIndex = $allMarketRates->search(function($item) use ($id) {
                 return isset($item->id) && $item->id == $id;
             });
-            
-            if ($isTargetEvent) {
-                Log::info('MarketRateController::show - Current index found', [
-                    'exEventId' => $selectedEventId,
-                    'currentIndex' => $currentIndex !== false ? $currentIndex : 'NOT_FOUND'
-                ]);
-            }
             
             $previousMarketRate = null;
             $nextMarketRate = null;
@@ -737,12 +571,6 @@ class MarketRateController extends Controller
 
                 // When grid mode is enabled, get current record + (count-1) newer records
                 if ($gridEnabled) {
-                    if ($isTargetEvent) {
-                        Log::info('MarketRateController::show - Grid mode enabled, fetching grid data', [
-                            'exEventId' => $selectedEventId,
-                            'gridCountValue' => $gridCountValue
-                        ]);
-                    }
                     try {
                         if (empty($marketRate->created_at)) {
                             $newerRecords = collect([]);
@@ -815,35 +643,7 @@ class MarketRateController extends Controller
                         $rate->marketListSelectionName = $meta->selectionName ?? null;
                         return $rate;
                     });
-                    
-                    if ($isTargetEvent) {
-                        Log::info('MarketRateController::show - Grid data processing completed', [
-                            'exEventId' => $selectedEventId,
-                            'gridMarketRatesCount' => $gridMarketRates->count()
-                        ]);
-                    }
                 }
-            }
-
-            if ($isTargetEvent) {
-                Log::info('MarketRateController::show - All data prepared, preparing view', [
-                    'exEventId' => $selectedEventId,
-                    'hasPrevious' => !is_null($previousMarketRate),
-                    'hasNext' => !is_null($nextMarketRate),
-                    'runnersCount' => $allRunners->count(),
-                    'gridEnabled' => $gridEnabled
-                ]);
-            }
-
-            if ($isTargetEvent) {
-                Log::info('MarketRateController::show - SUCCESS - Rendering view', [
-                    'exEventId' => $selectedEventId,
-                    'id' => $id,
-                    'hasPrevious' => !is_null($previousMarketRate),
-                    'hasNext' => !is_null($nextMarketRate),
-                    'runnersCount' => $allRunners->count(),
-                    'gridEnabled' => $gridEnabled
-                ]);
             }
 
             return view('market-rates.show', compact(
