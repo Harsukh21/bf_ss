@@ -712,7 +712,12 @@
 
         <!-- Status Summary Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6 mb-6">
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+            @php
+                $currentStatus = request('status');
+                $allParams = request()->except(['status', 'page']);
+                $allEventsUrl = !empty($allParams) ? $baseRoute . '?' . http_build_query($allParams) : $baseRoute;
+            @endphp
+            <a href="{{ $allEventsUrl }}" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5 hover:shadow-md transition-shadow cursor-pointer {{ !$currentStatus ? 'ring-2 ring-primary-500' : '' }}">
                 <div class="flex items-center">
                     <div class="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
                         <svg class="w-5 h-5 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -724,15 +729,18 @@
                         <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($paginatedEvents->total()) }}</p>
                     </div>
                 </div>
-            </div>
+            </a>
             @foreach([1, 2, 3, 4] as $statusId)
                 @php
                     $meta = $statusBadgeMeta[$statusId] ?? null;
                     $count = $statusSummary[$statusId] ?? 0;
                     $cardStyle = $statusCardStyles[$statusId] ?? ['iconBg' => 'bg-gray-200 dark:bg-gray-700/50', 'iconColor' => 'text-gray-600 dark:text-gray-300'];
+                    $statusParams = array_merge(request()->except(['status', 'page']), ['status' => $statusId]);
+                    $statusUrl = $baseRoute . '?' . http_build_query($statusParams);
+                    $isActive = $currentStatus == $statusId;
                 @endphp
                 @if($meta)
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+                    <a href="{{ $statusUrl }}" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5 hover:shadow-md transition-shadow cursor-pointer {{ $isActive ? 'ring-2 ring-primary-500' : '' }}">
                         <div class="flex items-center">
                             <div class="p-2 rounded-lg {{ $cardStyle['iconBg'] }}">
                                 <svg class="w-5 h-5 {{ $cardStyle['iconColor'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -748,7 +756,7 @@
                                 <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($count) }}</p>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 @endif
             @endforeach
         </div>

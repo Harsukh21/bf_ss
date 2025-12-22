@@ -467,7 +467,13 @@
 
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 md:gap-6 mb-6">
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+            @php
+                $currentStatus = request('status');
+                $currentPrebet = request('is_prebet');
+                $allParams = request()->except(['status', 'is_prebet', 'page']);
+                $allMarketsUrl = !empty($allParams) ? $marketsBaseRoute . '?' . http_build_query($allParams) : $marketsBaseRoute;
+            @endphp
+            <a href="{{ $allMarketsUrl }}" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5 hover:shadow-md transition-shadow cursor-pointer {{ !$currentStatus && !$currentPrebet ? 'ring-2 ring-primary-500' : '' }}">
                 <div class="flex items-center">
                     <div class="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
                         <svg class="w-5 h-5 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -479,9 +485,14 @@
                         <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($paginatedMarkets->total()) }}</p>
                     </div>
                 </div>
-            </div>
+            </a>
             
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+            @php
+                $unsettledParams = array_merge(request()->except(['status', 'is_prebet', 'page']), ['status' => 1]);
+                $unsettledUrl = $marketsBaseRoute . '?' . http_build_query($unsettledParams);
+                $isUnsettledActive = $currentStatus == 1;
+            @endphp
+            <a href="{{ $unsettledUrl }}" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5 hover:shadow-md transition-shadow cursor-pointer {{ $isUnsettledActive ? 'ring-2 ring-primary-500' : '' }}">
                 <div class="flex items-center">
                     <div class="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/20">
                         <svg class="w-5 h-5 text-purple-600 dark:text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -493,9 +504,14 @@
                         <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(DB::table('market_lists')->where('status', 1)->count()) }}</p>
                     </div>
                 </div>
-            </div>
+            </a>
             
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+            @php
+                $upcomingParams = array_merge(request()->except(['status', 'is_prebet', 'page']), ['status' => 2]);
+                $upcomingUrl = $marketsBaseRoute . '?' . http_build_query($upcomingParams);
+                $isUpcomingActive = $currentStatus == 2;
+            @endphp
+            <a href="{{ $upcomingUrl }}" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5 hover:shadow-md transition-shadow cursor-pointer {{ $isUpcomingActive ? 'ring-2 ring-primary-500' : '' }}">
                 <div class="flex items-center">
                     <div class="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/20">
                         <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -507,9 +523,14 @@
                         <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(DB::table('market_lists')->where('status', 2)->count()) }}</p>
                     </div>
                 </div>
-            </div>
+            </a>
             
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+            @php
+                $inplayParams = array_merge(request()->except(['status', 'is_prebet', 'page']), ['status' => 3]);
+                $inplayUrl = $marketsBaseRoute . '?' . http_build_query($inplayParams);
+                $isInplayActive = $currentStatus == 3;
+            @endphp
+            <a href="{{ $inplayUrl }}" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5 hover:shadow-md transition-shadow cursor-pointer {{ $isInplayActive ? 'ring-2 ring-primary-500' : '' }}">
                 <div class="flex items-center">
                     <div class="p-2 rounded-lg bg-red-100 dark:bg-red-900/20">
                         <svg class="w-5 h-5 text-red-600 dark:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -521,9 +542,14 @@
                         <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(DB::table('market_lists')->where('status', 3)->count()) }}</p>
                     </div>
                 </div>
-            </div>
+            </a>
             
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+            @php
+                $prebetParams = array_merge(request()->except(['status', 'is_prebet', 'page']), ['is_prebet' => 1]);
+                $prebetUrl = $marketsBaseRoute . '?' . http_build_query($prebetParams);
+                $isPrebetActive = $currentPrebet == 1;
+            @endphp
+            <a href="{{ $prebetUrl }}" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5 hover:shadow-md transition-shadow cursor-pointer {{ $isPrebetActive ? 'ring-2 ring-primary-500' : '' }}">
                 <div class="flex items-center">
                     <div class="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/20">
                         <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -535,9 +561,14 @@
                         <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(DB::table('market_lists')->where('isPreBet', true)->count()) }}</p>
                     </div>
                 </div>
-            </div>
+            </a>
             
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+            @php
+                $settledParams = array_merge(request()->except(['status', 'is_prebet', 'page']), ['status' => 4]);
+                $settledUrl = $marketsBaseRoute . '?' . http_build_query($settledParams);
+                $isSettledActive = $currentStatus == 4;
+            @endphp
+            <a href="{{ $settledUrl }}" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5 hover:shadow-md transition-shadow cursor-pointer {{ $isSettledActive ? 'ring-2 ring-primary-500' : '' }}">
                 <div class="flex items-center">
                     <div class="p-2 rounded-lg bg-green-100 dark:bg-green-900/20">
                         <svg class="w-5 h-5 text-green-600 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -549,9 +580,14 @@
                         <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(DB::table('market_lists')->where('status', 4)->count()) }}</p>
                     </div>
                 </div>
-            </div>
+            </a>
             
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5">
+            @php
+                $voidedParams = array_merge(request()->except(['status', 'is_prebet', 'page']), ['status' => 5]);
+                $voidedUrl = $marketsBaseRoute . '?' . http_build_query($voidedParams);
+                $isVoidedActive = $currentStatus == 5;
+            @endphp
+            <a href="{{ $voidedUrl }}" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-5 hover:shadow-md transition-shadow cursor-pointer {{ $isVoidedActive ? 'ring-2 ring-primary-500' : '' }}">
                 <div class="flex items-center">
                     <div class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700/50">
                         <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -563,7 +599,7 @@
                         <p class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(DB::table('market_lists')->where('status', 5)->count()) }}</p>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <!-- Recently Added Switcher -->
