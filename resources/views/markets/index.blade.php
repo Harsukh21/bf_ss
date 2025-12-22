@@ -1872,6 +1872,25 @@ window.openMarketModal = function(market) {
             </button>
         </div>
         <div class="px-6 py-5">
+            <!-- Status & Results -->
+            <div class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">Status, Winner & Result</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Status</label>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200" id="modalStatus">Unknown</span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Winner</label>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300" id="modalWinner">-</span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Result</label>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300" id="modalResult">-</span>
+                    </div>
+                </div>
+            </div>
+            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Market Information -->
                 <div class="space-y-4">
@@ -1920,24 +1939,6 @@ window.openMarketModal = function(market) {
                     <div>
                         <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">Tournament</label>
                         <p class="mt-1 text-sm text-gray-900 dark:text-white" id="modalTournamentName">-</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Status & Results -->
-            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Status</label>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200" id="modalStatus">Unknown</span>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Winner</label>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300" id="modalWinner">-</span>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Result</label>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300" id="modalResult">-</span>
                     </div>
                 </div>
             </div>
