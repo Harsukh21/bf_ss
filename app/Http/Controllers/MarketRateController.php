@@ -24,12 +24,19 @@ class MarketRateController extends Controller
                 $dateSource = $event->marketTime ?? $event->createdAt;
                 $formattedDate = $dateSource ? Carbon::parse($dateSource)->timezone(config('app.timezone', 'UTC'))->format('M d, Y h:i A') : null;
 
+                // Get market IDs for this event
+                $marketIds = DB::table('market_lists')
+                    ->where('exEventId', $event->exEventId)
+                    ->pluck('exMarketId')
+                    ->toArray();
+
                 return (object) [
                     'eventId' => $event->eventId,
                     'eventName' => $event->eventName,
                     'exEventId' => $event->exEventId,
                     'marketTime' => $dateSource ? Carbon::parse($dateSource)->format('Y-m-d H:i:s') : null,
                     'formattedDate' => $formattedDate,
+                    'exMarketIds' => $marketIds,
                 ];
             });
         
@@ -43,12 +50,20 @@ class MarketRateController extends Controller
         // Convert to proper objects with consistent property names
         $eventsFromMarkets = $marketEvents->map(function ($event) {
             $formattedDate = $event->marketTime ? Carbon::parse($event->marketTime)->timezone(config('app.timezone', 'UTC'))->format('M d, Y h:i A') : null;
+            
+            // Get market IDs for this event
+            $marketIds = DB::table('market_lists')
+                ->where('exEventId', $event->exEventId)
+                ->pluck('exMarketId')
+                ->toArray();
+            
             return (object) [
                 'eventId' => 'market_' . time() . '_' . rand(1000, 9999),
                 'eventName' => $event->eventName,
                 'exEventId' => $event->exEventId,
                 'marketTime' => $event->marketTime ? Carbon::parse($event->marketTime)->format('Y-m-d H:i:s') : null,
                 'formattedDate' => $formattedDate,
+                'exMarketIds' => $marketIds,
             ];
         });
         
@@ -80,6 +95,15 @@ class MarketRateController extends Controller
                     ->whereNotNull('marketName')
                     ->orderBy('marketName')
                     ->pluck('marketName');
+
+                // Apply search filter (market name and exMarketId)
+                if ($request->filled('search')) {
+                    $searchTerm = $request->get('search');
+                    $query->where(function ($q) use ($searchTerm) {
+                        $q->where('marketName', 'ILIKE', "%{$searchTerm}%")
+                          ->orWhere('exMarketId', 'ILIKE', "%{$searchTerm}%");
+                    });
+                }
 
                 // Apply market filter
                 if ($request->filled('market_name')) {

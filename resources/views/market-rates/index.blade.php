@@ -459,6 +459,12 @@
                     <a href="{{ route('market-rates.index', ['exEventId' => $selectedEventId]) }}" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">Clear All</a>
                 </div>
                 <div class="mt-2 flex flex-wrap gap-2">
+                    @if(request('search'))
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                            Search: {{ request('search') }}
+                            <button onclick="removeFilter('search')" class="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">×</button>
+                        </span>
+                    @endif
                     @if(request('market_name'))
                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
                             Market: {{ request('market_name') }}
@@ -527,7 +533,7 @@
                         </label>
                         <input type="text" 
                                id="eventSearch" 
-                               placeholder="Search events..." 
+                               placeholder="Search Events By Name and Ex. ID" 
                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
                                value="{{ $eventInfo ? trim($eventInfo->eventName . ($eventInfo->formattedDate ?? false ? ' - ' . $eventInfo->formattedDate : '')) : '' }}"
                                autocomplete="off">
@@ -839,6 +845,14 @@
                     }
                 }
             @endphp
+            
+            <!-- Search -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
+                <input type="text" name="search" value="{{ request('search') }}" 
+                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400" 
+                       placeholder="Search Events or Markets By Name and Ex. ID">
+            </div>
             
             <!-- Market Type -->
             <div class="mb-4">
@@ -1570,8 +1584,29 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const filteredEvents = events.filter(event => {
             const searchLower = searchTerm.toLowerCase();
-            return event.eventName.toLowerCase().includes(searchLower) || 
-                   event.eventId.toString().includes(searchTerm);
+            const searchTermLower = searchTerm.toLowerCase();
+            
+            // Search by event name
+            if (event.eventName.toLowerCase().includes(searchLower)) {
+                return true;
+            }
+            
+            // Search by exEventId
+            if (event.exEventId && event.exEventId.toLowerCase().includes(searchLower)) {
+                return true;
+            }
+            
+            // Search by exMarketId
+            if (event.exMarketIds && Array.isArray(event.exMarketIds)) {
+                const hasMatchingMarket = event.exMarketIds.some(marketId => 
+                    marketId && marketId.toLowerCase().includes(searchTermLower)
+                );
+                if (hasMatchingMarket) {
+                    return true;
+                }
+            }
+            
+            return false;
         });
         
         if (filteredEvents.length === 0) {
@@ -1585,7 +1620,7 @@ document.addEventListener('DOMContentLoaded', function() {
             div.innerHTML = `
                 <div class="flex flex-col">
                     <span class="font-medium">${event.eventName}</span>
-                    <span class="text-xs text-gray-400 dark:text-gray-500">ID: ${event.eventId}</span>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">Exch Event ID: ${event.exEventId || 'N/A'}</span>
                     ${event.formattedDate ? `<span class="text-xs text-gray-500 dark:text-gray-400">${event.formattedDate}</span>` : ''}
                 </div>
             `;
