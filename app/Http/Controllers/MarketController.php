@@ -328,6 +328,16 @@ class MarketController extends Controller
             });
         }
 
+        // Exch Event ID filter
+        if ($request->filled('ex_event_id')) {
+            $query->where('exEventId', $request->ex_event_id);
+        }
+
+        // Exch Market ID filter
+        if ($request->filled('ex_market_id')) {
+            $query->where('exMarketId', $request->ex_market_id);
+        }
+
         if ($request->filled('status')) {
             $query->where('status', (int) $request->status);
         }
@@ -391,6 +401,14 @@ class MarketController extends Controller
             $activeFilters['Market'] = $request->market_name;
         } elseif ($request->filled('type')) {
             $activeFilters['Market'] = $request->type;
+        }
+
+        if ($request->filled('ex_event_id')) {
+            $activeFilters['Exch Event ID'] = $request->ex_event_id;
+        }
+
+        if ($request->filled('ex_market_id')) {
+            $activeFilters['Exch Market ID'] = $request->ex_market_id;
         }
 
         if ($request->has('is_live')) {
@@ -467,6 +485,16 @@ class MarketController extends Controller
             $conditions[] = '(' . $this->quoteColumn('marketName') . ' = ? OR ' . $this->quoteColumn('type') . ' = ?)';
             $bindings[] = $request->type;
             $bindings[] = $request->type;
+        }
+
+        if ($request->filled('ex_event_id')) {
+            $conditions[] = $this->quoteColumn('exEventId') . ' = ?';
+            $bindings[] = $request->ex_event_id;
+        }
+
+        if ($request->filled('ex_market_id')) {
+            $conditions[] = $this->quoteColumn('exMarketId') . ' = ?';
+            $bindings[] = $request->ex_market_id;
         }
 
         if ($request->filled('status')) {
