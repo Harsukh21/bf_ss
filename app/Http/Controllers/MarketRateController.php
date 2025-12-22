@@ -6,6 +6,7 @@ use App\Models\MarketRate;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Exception;
 
@@ -236,21 +237,69 @@ class MarketRateController extends Controller
             $gridEnabled = !empty($gridCount) && in_array((int)$gridCount, [10, 20, 40, 60]);
             $gridCountValue = $gridEnabled ? (int)$gridCount : null;
             
+            // Log for specific exEventId
+            $targetEventId = '676873ecb35427af405acc1a18c54538';
+            $isTargetEvent = ($selectedEventId === $targetEventId);
+            
+            if ($isTargetEvent) {
+                Log::info('MarketRateController::show - START', [
+                    'exEventId' => $selectedEventId,
+                    'id' => $id,
+                    'gridEnabled' => $gridEnabled,
+                    'gridCount' => $gridCount
+                ]);
+            }
+            
             if (!$selectedEventId || !MarketRate::tableExistsForEvent($selectedEventId)) {
+                if ($isTargetEvent) {
+                    Log::warning('MarketRateController::show - Table does not exist', [
+                        'exEventId' => $selectedEventId,
+                        'id' => $id
+                    ]);
+                }
                 return redirect()->route('market-rates.index')
                     ->with('error', 'Market rates not found for this event.');
+            }
+
+            if ($isTargetEvent) {
+                Log::info('MarketRateController::show - Table exists, querying market rate', [
+                    'exEventId' => $selectedEventId,
+                    'id' => $id
+                ]);
             }
 
             $query = MarketRate::forEvent($selectedEventId);
             $marketRate = $query->find($id);
 
             if (!$marketRate) {
+                if ($isTargetEvent) {
+                    Log::warning('MarketRateController::show - Market rate not found', [
+                        'exEventId' => $selectedEventId,
+                        'id' => $id
+                    ]);
+                }
                 return redirect()->route('market-rates.index')
                     ->with('error', 'Market rate not found.');
             }
 
+            if ($isTargetEvent) {
+                Log::info('MarketRateController::show - Market rate found', [
+                    'exEventId' => $selectedEventId,
+                    'id' => $id,
+                    'exMarketId' => $marketRate->exMarketId ?? 'NULL',
+                    'marketName' => $marketRate->marketName ?? 'NULL',
+                    'hasCreatedAt' => !empty($marketRate->created_at)
+                ]);
+            }
+
             // Validate required fields
             if (empty($marketRate->exMarketId)) {
+                if ($isTargetEvent) {
+                    Log::error('MarketRateController::show - Invalid market rate data (missing exMarketId)', [
+                        'exEventId' => $selectedEventId,
+                        'id' => $id
+                    ]);
+                }
                 return redirect()->route('market-rates.index')
                     ->with('error', 'Invalid market rate data.');
             }
@@ -258,7 +307,19 @@ class MarketRateController extends Controller
             $eventInfo = null;
             try {
                 $eventInfo = Event::where('exEventId', $selectedEventId)->first();
+                if ($isTargetEvent) {
+                    Log::info('MarketRateController::show - Event query completed', [
+                        'exEventId' => $selectedEventId,
+                        'eventFound' => !is_null($eventInfo)
+                    ]);
+                }
             } catch (\Exception $e) {
+                if ($isTargetEvent) {
+                    Log::error('MarketRateController::show - Event query failed', [
+                        'exEventId' => $selectedEventId,
+                        'error' => $e->getMessage()
+                    ]);
+                }
                 // Event not found, continue with null
             }
 
@@ -268,7 +329,22 @@ class MarketRateController extends Controller
                     ->where('exMarketId', $marketRate->exMarketId)
                     ->select('status', 'winnerType', 'selectionName')
                     ->first();
+                if ($isTargetEvent) {
+                    Log::info('MarketRateController::show - Market list meta query completed', [
+                        'exEventId' => $selectedEventId,
+                        'exMarketId' => $marketRate->exMarketId,
+                        'metaFound' => !is_null($marketListMeta),
+                        'status' => $marketListMeta->status ?? 'NULL'
+                    ]);
+                }
             } catch (\Exception $e) {
+                if ($isTargetEvent) {
+                    Log::error('MarketRateController::show - Market list meta query failed', [
+                        'exEventId' => $selectedEventId,
+                        'exMarketId' => $marketRate->exMarketId,
+                        'error' => $e->getMessage()
+                    ]);
+                }
                 // Market list meta not found, continue with null
             }
 
@@ -299,7 +375,20 @@ class MarketRateController extends Controller
                         ->whereNotNull('runners')
                         ->get();
                 }
+                if ($isTargetEvent) {
+                    Log::info('MarketRateController::show - Runner list query completed', [
+                        'exEventId' => $selectedEventId,
+                        'marketName' => $marketRate->marketName ?? 'NULL',
+                        'count' => $allMarketRatesForRunnerList->count()
+                    ]);
+                }
             } catch (\Exception $e) {
+                if ($isTargetEvent) {
+                    Log::error('MarketRateController::show - Runner list query failed', [
+                        'exEventId' => $selectedEventId,
+                        'error' => $e->getMessage()
+                    ]);
+                }
                 $allMarketRatesForRunnerList = collect([]);
             }
             
@@ -330,6 +419,12 @@ class MarketRateController extends Controller
             // For performance, limit to 200 records within 24 hours around the current record
             try {
                 if (empty($marketRate->created_at)) {
+                    if ($isTargetEvent) {
+                        Log::warning('MarketRateController::show - Market rate has no created_at', [
+                            'exEventId' => $selectedEventId,
+                            'id' => $id
+                        ]);
+                    }
                     $allMarketRates = collect([$marketRate]);
                 } else {
                     $currentCreatedAt = $marketRate->created_at;
@@ -360,7 +455,19 @@ class MarketRateController extends Controller
                             ->orderBy('created_at', 'desc')
                             ->limit(200)
                             ->get();
+                        if ($isTargetEvent) {
+                            Log::info('MarketRateController::show - Navigation query completed', [
+                                'exEventId' => $selectedEventId,
+                                'count' => $allMarketRates->count()
+                            ]);
+                        }
                     } catch (\Exception $e) {
+                        if ($isTargetEvent) {
+                            Log::error('MarketRateController::show - Navigation query failed, using fallback', [
+                                'exEventId' => $selectedEventId,
+                                'error' => $e->getMessage()
+                            ]);
+                        }
                         // Fallback: just get recent records without date filter
                         $allMarketRates = $baseQuery
                             ->orderBy('created_at', 'desc')
@@ -379,6 +486,12 @@ class MarketRateController extends Controller
                     }
                 }
             } catch (\Exception $e) {
+                if ($isTargetEvent) {
+                    Log::error('MarketRateController::show - Navigation query exception', [
+                        'exEventId' => $selectedEventId,
+                        'error' => $e->getMessage()
+                    ]);
+                }
                 $allMarketRates = collect([$marketRate]);
             }
             
@@ -475,6 +588,17 @@ class MarketRateController extends Controller
                 }
             }
 
+            if ($isTargetEvent) {
+                Log::info('MarketRateController::show - SUCCESS - Rendering view', [
+                    'exEventId' => $selectedEventId,
+                    'id' => $id,
+                    'hasPrevious' => !is_null($previousMarketRate),
+                    'hasNext' => !is_null($nextMarketRate),
+                    'runnersCount' => $allRunners->count(),
+                    'gridEnabled' => $gridEnabled
+                ]);
+            }
+
             return view('market-rates.show', compact(
                 'marketRate',
                 'eventInfo',
@@ -491,13 +615,29 @@ class MarketRateController extends Controller
                 'selectedRunner'
             ));
         } catch (\Exception $e) {
+            $selectedEventId = $request->get('exEventId');
+            $targetEventId = '676873ecb35427af405acc1a18c54538';
+            $isTargetEvent = ($selectedEventId === $targetEventId);
+            
             // Log the error for debugging
-            \Log::error('MarketRateController::show error: ' . $e->getMessage(), [
+            Log::error('MarketRateController::show error: ' . $e->getMessage(), [
                 'id' => $id,
-                'exEventId' => $request->get('exEventId'),
+                'exEventId' => $selectedEventId,
+                'isTargetEvent' => $isTargetEvent,
                 'exception' => $e,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
+            
+            if ($isTargetEvent) {
+                Log::error('MarketRateController::show - CRITICAL ERROR for target event', [
+                    'exEventId' => $selectedEventId,
+                    'id' => $id,
+                    'error' => $e->getMessage(),
+                    'class' => get_class($e)
+                ]);
+            }
             
             // Return user-friendly error page
             return redirect()->route('market-rates.index')
