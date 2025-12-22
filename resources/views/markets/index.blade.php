@@ -2069,6 +2069,7 @@ window.closeMarketModal = function() {
 // Setup modal overlay click handler
 function setupMarketModalOverlayHandler() {
     const overlay = document.getElementById('marketDetailsModalOverlay');
+    const modal = document.getElementById('marketDetailsModal');
     const modalContent = document.querySelector('#marketDetailsModal > div');
     
     if (overlay && !overlay.dataset.handlerAttached) {
@@ -2080,7 +2081,18 @@ function setupMarketModalOverlayHandler() {
         });
     }
     
-    // Prevent clicks inside modal from closing it
+    // Add click handler to modal container (but not content)
+    if (modal && !modal.dataset.handlerAttached) {
+        modal.dataset.handlerAttached = 'true';
+        modal.addEventListener('click', function(e) {
+            // Close if clicking on the modal container itself (not the content)
+            if (e.target === modal) {
+                closeMarketModal();
+            }
+        });
+    }
+    
+    // Prevent clicks inside modal content from closing it
     if (modalContent && !modalContent.dataset.handlerAttached) {
         modalContent.dataset.handlerAttached = 'true';
         modalContent.addEventListener('click', function(e) {

@@ -1484,7 +1484,36 @@
     }
 
     remarkCancelBtn.addEventListener('click', closeRemarkModal);
-    remarkOverlay.addEventListener('click', closeRemarkModal);
+    
+    // Setup overlay and modal click handlers
+    if (remarkOverlay && !remarkOverlay.dataset.handlerAttached) {
+        remarkOverlay.dataset.handlerAttached = 'true';
+        remarkOverlay.addEventListener('click', function(e) {
+            if (e.target === remarkOverlay) {
+                closeRemarkModal();
+            }
+        });
+    }
+    
+    // Add click handler to modal container (but not content)
+    if (remarkModal && !remarkModal.dataset.handlerAttached) {
+        remarkModal.dataset.handlerAttached = 'true';
+        remarkModal.addEventListener('click', function(e) {
+            // Close if clicking on the modal container itself (not the content)
+            if (e.target === remarkModal) {
+                closeRemarkModal();
+            }
+        });
+    }
+    
+    // Prevent clicks inside modal content from closing it
+    const remarkModalContent = document.querySelector('#remarkModal .remark-modal__content');
+    if (remarkModalContent && !remarkModalContent.dataset.handlerAttached) {
+        remarkModalContent.dataset.handlerAttached = 'true';
+        remarkModalContent.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    }
 
     // Submit form on Enter key press
     [remarkInput, chorIdInput, webPinInput].forEach(input => {

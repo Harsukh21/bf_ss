@@ -1216,6 +1216,35 @@
         overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
         
+        // Setup overlay click handlers if not already attached
+        if (!overlay.dataset.handlerAttached) {
+            overlay.dataset.handlerAttached = 'true';
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeEventModal();
+                }
+            });
+        }
+        
+        if (!modal.dataset.handlerAttached) {
+            modal.dataset.handlerAttached = 'true';
+            modal.addEventListener('click', function(e) {
+                // Close if clicking on the modal container itself (not the content)
+                if (e.target === modal) {
+                    closeEventModal();
+                }
+            });
+        }
+        
+        // Prevent clicks inside modal content from closing it
+        const modalContent = document.querySelector('#eventModal .event-modal__content');
+        if (modalContent && !modalContent.dataset.handlerAttached) {
+            modalContent.dataset.handlerAttached = 'true';
+            modalContent.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+        
         console.log('Modal elements activated');
         
         // Fetch markets for this event
@@ -1770,6 +1799,22 @@
             }
         });
         
+        // Add click handler to modal container (but not content)
+        modal.addEventListener('click', function(e) {
+            // Close if clicking on the modal container itself (not the content)
+            if (e.target === modal) {
+                closeLabelPinModal(false);
+            }
+        });
+        
+        // Prevent clicks inside modal content from closing it
+        const modalContent = modal.querySelector('div');
+        if (modalContent) {
+            modalContent.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+        
         // Focus on input
         setTimeout(() => {
             const inputEl = document.getElementById('label_web_pin');
@@ -2075,15 +2120,20 @@
             overlay.style.opacity = '1';
         }, 10);
         
-        // Close on overlay click (but prevent accidental closes)
+        // Prevent clicks inside modal content from closing it
+        const modalContent = modal.querySelector('div');
+        if (modalContent) {
+            modalContent.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+        
+        // Close on overlay click (outside modal content)
         overlay.addEventListener('click', function(e) {
-            if (e.target === overlay) {
-                // Only close if user explicitly clicks outside (not during initial render)
-                const modal = document.getElementById('scTypeModal');
-                if (modal && modal.contains(e.target)) {
-                    return;
-                }
-                // Don't auto-close - require explicit cancel button click
+            // Close if clicking directly on overlay or on modal container (but not content)
+            // Since modalContent has stopPropagation, clicks inside won't bubble here
+            if (e.target === overlay || e.target === modal) {
+                closeScTypeModal();
             }
         });
         
@@ -2261,6 +2311,22 @@
                 closeNewLimitModal();
             }
         });
+        
+        // Add click handler to modal container (but not content)
+        modal.addEventListener('click', function(e) {
+            // Close if clicking on the modal container itself (not the content)
+            if (e.target === modal) {
+                closeNewLimitModal();
+            }
+        });
+        
+        // Prevent clicks inside modal content from closing it
+        const modalContent = modal.querySelector('div');
+        if (modalContent) {
+            modalContent.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
         
         // Prevent Escape key from closing (user must use Cancel button)
         const escapeHandler = function(e) {

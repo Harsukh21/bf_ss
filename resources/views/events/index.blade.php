@@ -1816,6 +1816,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Setup modal overlay click handler
 function setupModalOverlayHandler() {
     const overlay = document.getElementById('eventDetailsModalOverlay');
+    const modal = document.getElementById('eventDetailsModal');
     const modalContent = document.getElementById('eventDetailsModalContent');
     
     if (overlay && !overlay.dataset.handlerAttached) {
@@ -1829,7 +1830,18 @@ function setupModalOverlayHandler() {
         });
     }
     
-    // Prevent clicks inside modal from closing it
+    // Add click handler to modal container (but not content)
+    if (modal && !modal.dataset.handlerAttached) {
+        modal.dataset.handlerAttached = 'true';
+        modal.addEventListener('click', function(e) {
+            // Close if clicking on the modal container itself (not the content)
+            if (e.target === modal) {
+                closeEventDetailsModal();
+            }
+        });
+    }
+    
+    // Prevent clicks inside modal content from closing it
     if (modalContent && !modalContent.dataset.handlerAttached) {
         modalContent.dataset.handlerAttached = 'true';
         modalContent.addEventListener('click', function(e) {
