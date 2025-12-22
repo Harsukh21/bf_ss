@@ -317,8 +317,12 @@ class ProfileController extends Controller
             return redirect()->route('login');
         }
         
+        // Refresh user model to get latest data from database
+        $user->refresh();
+        
         // Get recent login history (last 20 logins)
         $loginHistory = $user->login_history ?? [];
+        // Reverse to show most recent first, then take last 20
         $recentLogins = array_slice(array_reverse($loginHistory), 0, 20);
         
         // Get active sessions
@@ -394,57 +398,68 @@ class ProfileController extends Controller
      */
     public static function trackLogin($user, $request)
     {
-        $sessionId = session()->getId();
-        $ipAddress = $request->ip();
-        $userAgent = $request->userAgent();
-        
-        // Get existing login history
-        $loginHistory = $user->login_history ?? [];
-        
-        // Add new login record
-        $loginRecord = [
-            'session_id' => $sessionId,
-            'ip_address' => $ipAddress,
-            'user_agent' => $userAgent,
-            'login_time' => now()->toISOString(),
-            'location' => self::getLocationFromIP($ipAddress),
-        ];
-        
-        array_unshift($loginHistory, $loginRecord);
-        
-        // Keep only last 50 login records
-        $loginHistory = array_slice($loginHistory, 0, 50);
-        
-        // Get existing active sessions
-        $activeSessions = $user->active_sessions ?? [];
-        
-        // Add current session to active sessions
-        $currentSession = [
-            'session_id' => $sessionId,
-            'ip_address' => $ipAddress,
-            'user_agent' => $userAgent,
-            'last_activity' => now()->toISOString(),
-        ];
-        
-        // Remove any existing session with same ID
-        $activeSessions = array_filter($activeSessions, function ($session) use ($sessionId) {
-            return $session['session_id'] !== $sessionId;
-        });
-        
-        // Add current session
-        $activeSessions[] = $currentSession;
-        
-        // Keep only last 10 active sessions
-        $activeSessions = array_slice($activeSessions, -10);
-        
-        $user->update([
-            'last_login_at' => now(),
-            'last_login_ip' => $ipAddress,
-            'last_login_user_agent' => $userAgent,
-            'login_history' => $loginHistory,
-            'active_sessions' => array_values($activeSessions),
-            'current_session_id' => $sessionId,
-        ]);
+        try {
+            $sessionId = session()->getId();
+            $ipAddress = $request->ip();
+            $userAgent = $request->userAgent();
+            
+            // Refresh user to get latest login_history from database
+            $user->refresh();
+            
+            // Get existing login history
+            $loginHistory = $user->login_history ?? [];
+            
+            // Add new login record
+            $loginRecord = [
+                'session_id' => $sessionId,
+                'ip_address' => $ipAddress,
+                'user_agent' => $userAgent,
+                'login_time' => now()->toISOString(),
+                'location' => self::getLocationFromIP($ipAddress),
+            ];
+            
+            array_unshift($loginHistory, $loginRecord);
+            
+            // Keep only last 50 login records
+            $loginHistory = array_slice($loginHistory, 0, 50);
+            
+            // Get existing active sessions
+            $activeSessions = $user->active_sessions ?? [];
+            
+            // Add current session to active sessions
+            $currentSession = [
+                'session_id' => $sessionId,
+                'ip_address' => $ipAddress,
+                'user_agent' => $userAgent,
+                'last_activity' => now()->toISOString(),
+            ];
+            
+            // Remove any existing session with same ID
+            $activeSessions = array_filter($activeSessions, function ($session) use ($sessionId) {
+                return $session['session_id'] !== $sessionId;
+            });
+            
+            // Add current session
+            $activeSessions[] = $currentSession;
+            
+            // Keep only last 10 active sessions
+            $activeSessions = array_slice($activeSessions, -10);
+            
+            $user->update([
+                'last_login_at' => now(),
+                'last_login_ip' => $ipAddress,
+                'last_login_user_agent' => $userAgent,
+                'login_history' => $loginHistory,
+                'active_sessions' => array_values($activeSessions),
+                'current_session_id' => $sessionId,
+            ]);
+        } catch (\Exception $e) {
+            // Log error but don't break login flow
+            Log::error('Failed to track login history: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'exception' => $e
+            ]);
+        }
     }
     
     /**
