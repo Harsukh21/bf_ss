@@ -381,7 +381,7 @@ class MarketRateController extends Controller
             } catch (\Exception $e) {
                 $allMarketRates = collect([$marketRate]);
             }
-        
+            
             $currentIndex = $allMarketRates->search(function($item) use ($id) {
                 return isset($item->id) && $item->id == $id;
             });
@@ -391,87 +391,88 @@ class MarketRateController extends Controller
             $gridMarketRates = collect();
             
             if ($currentIndex !== false) {
-            if ($currentIndex > 0) {
-                $previousMarketRate = $allMarketRates[$currentIndex - 1];
-            }
-            if ($currentIndex < $allMarketRates->count() - 1) {
-                $nextMarketRate = $allMarketRates[$currentIndex + 1];
-            }
-
-            // When grid mode is enabled, get current record + (count-1) newer records
-            if ($gridEnabled) {
-                try {
-                    if (empty($marketRate->created_at)) {
-                        $newerRecords = collect([]);
-                    } else {
-                        $currentCreatedAt = $marketRate->created_at;
-                        $additionalRecords = $gridCountValue - 1;
-                        
-                        if (empty($marketRate->marketName)) {
-                            $newerRecords = MarketRate::forEvent($selectedEventId)
-                                ->whereNull('marketName')
-                                ->where('created_at', '>', $currentCreatedAt)
-                                ->orderBy('created_at', 'asc')
-                                ->limit($additionalRecords)
-                                ->get();
-                        } else {
-                            $newerRecords = MarketRate::forEvent($selectedEventId)
-                                ->where('marketName', $marketRate->marketName)
-                                ->whereNotNull('marketName')
-                                ->where('created_at', '>', $currentCreatedAt)
-                                ->orderBy('created_at', 'asc')
-                                ->limit($additionalRecords)
-                                ->get();
-                        }
-                    }
-                } catch (\Exception $e) {
-                    $newerRecords = collect([]);
+                if ($currentIndex > 0) {
+                    $previousMarketRate = $allMarketRates[$currentIndex - 1];
                 }
-                
-                $gridMarketRates = collect([$marketRate])
-                    ->merge($newerRecords->filter(function($item) use ($marketRate) {
-                        return isset($item->marketName) && $item->marketName === $marketRate->marketName;
-                    }))
-                    ->values();
+                if ($currentIndex < $allMarketRates->count() - 1) {
+                    $nextMarketRate = $allMarketRates[$currentIndex + 1];
+                }
 
-                try {
-                    $exMarketIds = $gridMarketRates->pluck('exMarketId')->filter()->all();
-                    if (!empty($exMarketIds)) {
-                        $gridMeta = DB::table('market_lists')
-                            ->whereIn('exMarketId', $exMarketIds)
-                            ->select('exMarketId', 'status', 'winnerType', 'selectionName')
-                            ->get()
-                            ->keyBy('exMarketId');
-                    } else {
+                // When grid mode is enabled, get current record + (count-1) newer records
+                if ($gridEnabled) {
+                    try {
+                        if (empty($marketRate->created_at)) {
+                            $newerRecords = collect([]);
+                        } else {
+                            $currentCreatedAt = $marketRate->created_at;
+                            $additionalRecords = $gridCountValue - 1;
+                            
+                            if (empty($marketRate->marketName)) {
+                                $newerRecords = MarketRate::forEvent($selectedEventId)
+                                    ->whereNull('marketName')
+                                    ->where('created_at', '>', $currentCreatedAt)
+                                    ->orderBy('created_at', 'asc')
+                                    ->limit($additionalRecords)
+                                    ->get();
+                            } else {
+                                $newerRecords = MarketRate::forEvent($selectedEventId)
+                                    ->where('marketName', $marketRate->marketName)
+                                    ->whereNotNull('marketName')
+                                    ->where('created_at', '>', $currentCreatedAt)
+                                    ->orderBy('created_at', 'asc')
+                                    ->limit($additionalRecords)
+                                    ->get();
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        $newerRecords = collect([]);
+                    }
+                    
+                    $gridMarketRates = collect([$marketRate])
+                        ->merge($newerRecords->filter(function($item) use ($marketRate) {
+                            return isset($item->marketName) && $item->marketName === $marketRate->marketName;
+                        }))
+                        ->values();
+
+                    try {
+                        $exMarketIds = $gridMarketRates->pluck('exMarketId')->filter()->all();
+                        if (!empty($exMarketIds)) {
+                            $gridMeta = DB::table('market_lists')
+                                ->whereIn('exMarketId', $exMarketIds)
+                                ->select('exMarketId', 'status', 'winnerType', 'selectionName')
+                                ->get()
+                                ->keyBy('exMarketId');
+                        } else {
+                            $gridMeta = collect();
+                        }
+                    } catch (\Exception $e) {
                         $gridMeta = collect();
                     }
-                } catch (\Exception $e) {
-                    $gridMeta = collect();
-                }
 
-                // Map status from integer to readable string
-                $statusMap = [
-                    1 => 'UNSETTLED',
-                    2 => 'UPCOMING',
-                    3 => 'INPLAY',
-                    4 => 'CLOSED',
-                    5 => 'VOIDED',
-                    6 => 'REMOVED',
-                ];
+                    // Map status from integer to readable string
+                    $statusMap = [
+                        1 => 'UNSETTLED',
+                        2 => 'UPCOMING',
+                        3 => 'INPLAY',
+                        4 => 'CLOSED',
+                        5 => 'VOIDED',
+                        6 => 'REMOVED',
+                    ];
 
-                $gridMarketRates = $gridMarketRates->map(function ($rate) use ($gridMeta, $statusMap) {
-                    if (empty($rate->exMarketId)) {
-                        $rate->marketListStatus = null;
-                        $rate->marketListWinnerType = null;
-                        $rate->marketListSelectionName = null;
+                    $gridMarketRates = $gridMarketRates->map(function ($rate) use ($gridMeta, $statusMap) {
+                        if (empty($rate->exMarketId)) {
+                            $rate->marketListStatus = null;
+                            $rate->marketListWinnerType = null;
+                            $rate->marketListSelectionName = null;
+                            return $rate;
+                        }
+                        $meta = $gridMeta->get($rate->exMarketId);
+                        $rate->marketListStatus = ($meta && isset($meta->status)) ? ($statusMap[$meta->status] ?? null) : null;
+                        $rate->marketListWinnerType = $meta->winnerType ?? null;
+                        $rate->marketListSelectionName = $meta->selectionName ?? null;
                         return $rate;
-                    }
-                    $meta = $gridMeta->get($rate->exMarketId);
-                    $rate->marketListStatus = ($meta && isset($meta->status)) ? ($statusMap[$meta->status] ?? null) : null;
-                    $rate->marketListWinnerType = $meta->winnerType ?? null;
-                    $rate->marketListSelectionName = $meta->selectionName ?? null;
-                    return $rate;
-                });
+                    });
+                }
             }
 
             return view('market-rates.show', compact(
