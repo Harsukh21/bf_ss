@@ -313,31 +313,6 @@ class MarketController extends Controller
             $query->where('tournamentsName', $request->tournament);
         }
 
-        if ($request->filled('event_name')) {
-            $query->where('eventName', $request->event_name);
-        }
-
-        // Market name filter
-        if ($request->filled('market_name')) {
-            $query->where('marketName', $request->market_name);
-        } elseif ($request->filled('type')) {
-            // Backward compatibility if legacy parameter is present
-            $query->where(function ($q) use ($request) {
-                $q->where('marketName', $request->type)
-                  ->orWhere('type', $request->type);
-            });
-        }
-
-        // Exch Event ID filter
-        if ($request->filled('ex_event_id')) {
-            $query->where('exEventId', $request->ex_event_id);
-        }
-
-        // Exch Market ID filter
-        if ($request->filled('ex_market_id')) {
-            $query->where('exMarketId', $request->ex_market_id);
-        }
-
         if ($request->filled('status')) {
             $query->where('status', (int) $request->status);
         }
@@ -368,7 +343,7 @@ class MarketController extends Controller
             $query->where($dateFilters['column'], '<=', $dateFilters['end']);
         }
 
-        // Search filter
+        // Search filter (includes Event Name, Market Name, Exch Event ID, and Exch Market ID)
         if ($request->filled('search')) {
             $searchTerm = $request->search;
             $query->where(function ($q) use ($searchTerm) {
@@ -376,7 +351,8 @@ class MarketController extends Controller
                   ->orWhere('eventName', 'ILIKE', "%{$searchTerm}%")
                   ->orWhere('sportName', 'ILIKE', "%{$searchTerm}%")
                   ->orWhere('tournamentsName', 'ILIKE', "%{$searchTerm}%")
-                  ->orWhere('exEventId', 'ILIKE', "%{$searchTerm}%");
+                  ->orWhere('exEventId', 'ILIKE', "%{$searchTerm}%")
+                  ->orWhere('exMarketId', 'ILIKE', "%{$searchTerm}%");
             });
         }
     }
@@ -391,24 +367,6 @@ class MarketController extends Controller
 
         if ($request->filled('tournament')) {
             $activeFilters['Tournament'] = $request->tournament;
-        }
-
-        if ($request->filled('event_name')) {
-            $activeFilters['Event'] = $request->event_name;
-        }
-
-        if ($request->filled('market_name')) {
-            $activeFilters['Market'] = $request->market_name;
-        } elseif ($request->filled('type')) {
-            $activeFilters['Market'] = $request->type;
-        }
-
-        if ($request->filled('ex_event_id')) {
-            $activeFilters['Exch Event ID'] = $request->ex_event_id;
-        }
-
-        if ($request->filled('ex_market_id')) {
-            $activeFilters['Exch Market ID'] = $request->ex_market_id;
         }
 
         if ($request->has('is_live')) {
@@ -473,30 +431,6 @@ class MarketController extends Controller
             $bindings[] = $request->tournament;
         }
 
-        if ($request->filled('event_name')) {
-            $conditions[] = $this->quoteColumn('eventName') . ' = ?';
-            $bindings[] = $request->event_name;
-        }
-
-        if ($request->filled('market_name')) {
-            $conditions[] = $this->quoteColumn('marketName') . ' = ?';
-            $bindings[] = $request->market_name;
-        } elseif ($request->filled('type')) {
-            $conditions[] = '(' . $this->quoteColumn('marketName') . ' = ? OR ' . $this->quoteColumn('type') . ' = ?)';
-            $bindings[] = $request->type;
-            $bindings[] = $request->type;
-        }
-
-        if ($request->filled('ex_event_id')) {
-            $conditions[] = $this->quoteColumn('exEventId') . ' = ?';
-            $bindings[] = $request->ex_event_id;
-        }
-
-        if ($request->filled('ex_market_id')) {
-            $conditions[] = $this->quoteColumn('exMarketId') . ' = ?';
-            $bindings[] = $request->ex_market_id;
-        }
-
         if ($request->filled('status')) {
             $conditions[] = $this->quoteColumn('status') . ' = ?';
             $bindings[] = (int) $request->status;
@@ -536,8 +470,10 @@ class MarketController extends Controller
             $conditions[] = '('
                 . $this->quoteColumn('eventName') . " ILIKE ? OR "
                 . $this->quoteColumn('marketName') . " ILIKE ? OR "
-                . $this->quoteColumn('exEventId') . " ILIKE ?)";
+                . $this->quoteColumn('exEventId') . " ILIKE ? OR "
+                . $this->quoteColumn('exMarketId') . " ILIKE ?)";
             $searchBinding = '%' . $request->search . '%';
+            $bindings[] = $searchBinding;
             $bindings[] = $searchBinding;
             $bindings[] = $searchBinding;
             $bindings[] = $searchBinding;
