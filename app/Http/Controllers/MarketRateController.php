@@ -232,6 +232,7 @@ class MarketRateController extends Controller
         }
 
         $filterCount = 0;
+        if ($request->filled('search')) $filterCount++;
         if ($request->filled('market_name')) $filterCount++;
         if ($request->filled('filter_date')) $filterCount++;
         if ($request->filled('time_from')) $filterCount++;

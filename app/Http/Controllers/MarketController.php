@@ -82,6 +82,7 @@ class MarketController extends Controller
                 'isLive',
                 'isRecentlyAdded',
                 'status',
+                'completeTime',
                 'created_at'
             ]);
 
@@ -232,6 +233,7 @@ class MarketController extends Controller
             'labels',
             'selectionName',
             'winnerType',
+            'completeTime',
             'created_at'
         ];
         $selectList = implode(', ', array_map([$this, 'quoteColumn'], $selectColumns));
