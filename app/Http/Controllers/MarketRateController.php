@@ -230,126 +230,167 @@ class MarketRateController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $selectedEventId = $request->get('exEventId');
-        $gridCount = $request->get('grid');
-        $gridEnabled = !empty($gridCount) && in_array((int)$gridCount, [10, 20, 40, 60]);
-        $gridCountValue = $gridEnabled ? (int)$gridCount : null;
-        
-        if (!$selectedEventId || !MarketRate::tableExistsForEvent($selectedEventId)) {
-            return redirect()->route('market-rates.index')
-                ->with('error', 'Market rates not found for this event.');
-        }
-
-        $query = MarketRate::forEvent($selectedEventId);
-        $marketRate = $query->find($id);
-
-        if (!$marketRate) {
-            return redirect()->route('market-rates.index')
-                ->with('error', 'Market rate not found.');
-        }
-
-        $eventInfo = Event::where('exEventId', $selectedEventId)->first();
-
-        $marketListMeta = DB::table('market_lists')
-            ->where('exMarketId', $marketRate->exMarketId)
-            ->select('status', 'winnerType', 'selectionName')
-            ->first();
-
-        // Map status from integer to readable string
-        $statusMap = [
-            1 => 'UNSETTLED',
-            2 => 'UPCOMING',
-            3 => 'INPLAY',
-            4 => 'CLOSED',
-            5 => 'VOIDED',
-            6 => 'REMOVED',
-        ];
-        $marketListStatus = $marketListMeta && $marketListMeta->status ? ($statusMap[$marketListMeta->status] ?? null) : null;
-        $marketListWinnerType = $marketListMeta->winnerType ?? null;
-        $marketListSelectionName = $marketListMeta->selectionName ?? null;
-
-        // Extract all unique runners from all market rates for this market
         try {
-            if (empty($marketRate->marketName)) {
-                $allMarketRatesForRunnerList = MarketRate::forEvent($selectedEventId)
-                    ->whereNull('marketName')
-                    ->whereNotNull('runners')
-                    ->get();
-            } else {
-                $allMarketRatesForRunnerList = MarketRate::forEvent($selectedEventId)
-                    ->where('marketName', $marketRate->marketName)
-                    ->whereNotNull('marketName')
-                    ->whereNotNull('runners')
-                    ->get();
+            $selectedEventId = $request->get('exEventId');
+            $gridCount = $request->get('grid');
+            $gridEnabled = !empty($gridCount) && in_array((int)$gridCount, [10, 20, 40, 60]);
+            $gridCountValue = $gridEnabled ? (int)$gridCount : null;
+            
+            if (!$selectedEventId || !MarketRate::tableExistsForEvent($selectedEventId)) {
+                return redirect()->route('market-rates.index')
+                    ->with('error', 'Market rates not found for this event.');
             }
-        } catch (\Exception $e) {
-            $allMarketRatesForRunnerList = collect([]);
-        }
-        
-        $allRunners = collect();
-        foreach ($allMarketRatesForRunnerList as $rate) {
-            $runners = is_string($rate->runners) ? json_decode($rate->runners, true) : $rate->runners;
-            if (is_array($runners)) {
-                foreach ($runners as $runner) {
-                    $runner = is_array($runner) ? $runner : (array) $runner;
-                    $runnerName = $runner['runnerName'] ?? null;
-                    if ($runnerName && !$allRunners->contains($runnerName)) {
-                        $allRunners->push($runnerName);
+
+            $query = MarketRate::forEvent($selectedEventId);
+            $marketRate = $query->find($id);
+
+            if (!$marketRate) {
+                return redirect()->route('market-rates.index')
+                    ->with('error', 'Market rate not found.');
+            }
+
+            // Validate required fields
+            if (empty($marketRate->exMarketId)) {
+                return redirect()->route('market-rates.index')
+                    ->with('error', 'Invalid market rate data.');
+            }
+
+            $eventInfo = null;
+            try {
+                $eventInfo = Event::where('exEventId', $selectedEventId)->first();
+            } catch (\Exception $e) {
+                // Event not found, continue with null
+            }
+
+            $marketListMeta = null;
+            try {
+                $marketListMeta = DB::table('market_lists')
+                    ->where('exMarketId', $marketRate->exMarketId)
+                    ->select('status', 'winnerType', 'selectionName')
+                    ->first();
+            } catch (\Exception $e) {
+                // Market list meta not found, continue with null
+            }
+
+            // Map status from integer to readable string
+            $statusMap = [
+                1 => 'UNSETTLED',
+                2 => 'UPCOMING',
+                3 => 'INPLAY',
+                4 => 'CLOSED',
+                5 => 'VOIDED',
+                6 => 'REMOVED',
+            ];
+            $marketListStatus = ($marketListMeta && isset($marketListMeta->status)) ? ($statusMap[$marketListMeta->status] ?? null) : null;
+            $marketListWinnerType = $marketListMeta->winnerType ?? null;
+            $marketListSelectionName = $marketListMeta->selectionName ?? null;
+
+            // Extract all unique runners from all market rates for this market
+            try {
+                if (empty($marketRate->marketName)) {
+                    $allMarketRatesForRunnerList = MarketRate::forEvent($selectedEventId)
+                        ->whereNull('marketName')
+                        ->whereNotNull('runners')
+                        ->get();
+                } else {
+                    $allMarketRatesForRunnerList = MarketRate::forEvent($selectedEventId)
+                        ->where('marketName', $marketRate->marketName)
+                        ->whereNotNull('marketName')
+                        ->whereNotNull('runners')
+                        ->get();
+                }
+            } catch (\Exception $e) {
+                $allMarketRatesForRunnerList = collect([]);
+            }
+            
+            $allRunners = collect();
+            foreach ($allMarketRatesForRunnerList as $rate) {
+                try {
+                    $runners = is_string($rate->runners) ? json_decode($rate->runners, true) : $rate->runners;
+                    if (is_array($runners)) {
+                        foreach ($runners as $runner) {
+                            $runner = is_array($runner) ? $runner : (array) $runner;
+                            $runnerName = $runner['runnerName'] ?? null;
+                            if ($runnerName && !$allRunners->contains($runnerName)) {
+                                $allRunners->push($runnerName);
+                            }
+                        }
                     }
+                } catch (\Exception $e) {
+                    // Skip invalid runner data
+                    continue;
                 }
             }
-        }
-        $allRunners = $allRunners->sort()->values();
-        
-        // Get selected runner from request
-        $selectedRunner = $request->get('runner');
-        // Get next and previous market rates for navigation (filtered by marketName)
-        // For performance, limit to 200 records within 24 hours around the current record
-        try {
-            $currentCreatedAt = $marketRate->created_at;
-            $baseQuery = MarketRate::forEvent($selectedEventId);
+            $allRunners = $allRunners->sort()->values();
             
-            if (empty($marketRate->marketName)) {
-                $baseQuery->whereNull('marketName');
-            } else {
-                $baseQuery->where('marketName', $marketRate->marketName)
-                    ->whereNotNull('marketName');
+            // Get selected runner from request
+            $selectedRunner = $request->get('runner');
+            
+            // Get next and previous market rates for navigation (filtered by marketName)
+            // For performance, limit to 200 records within 24 hours around the current record
+            try {
+                if (empty($marketRate->created_at)) {
+                    $allMarketRates = collect([$marketRate]);
+                } else {
+                    $currentCreatedAt = $marketRate->created_at;
+                    $baseQuery = MarketRate::forEvent($selectedEventId);
+                    
+                    if (empty($marketRate->marketName)) {
+                        $baseQuery->whereNull('marketName');
+                    } else {
+                        $baseQuery->where('marketName', $marketRate->marketName)
+                            ->whereNotNull('marketName');
+                    }
+                    
+                    // Limit to 200 records within 24 hours to prevent timeout on large datasets
+                    try {
+                        $allMarketRates = $baseQuery
+                            ->where(function($q) use ($currentCreatedAt) {
+                                try {
+                                    $parsedDate = Carbon::parse($currentCreatedAt);
+                                    $q->whereBetween('created_at', [
+                                        $parsedDate->copy()->subHours(24)->format('Y-m-d H:i:s'),
+                                        $parsedDate->copy()->addHours(24)->format('Y-m-d H:i:s')
+                                    ]);
+                                } catch (\Exception $e) {
+                                    // If date parsing fails, just get recent records
+                                    $q->whereNotNull('created_at');
+                                }
+                            })
+                            ->orderBy('created_at', 'desc')
+                            ->limit(200)
+                            ->get();
+                    } catch (\Exception $e) {
+                        // Fallback: just get recent records without date filter
+                        $allMarketRates = $baseQuery
+                            ->orderBy('created_at', 'desc')
+                            ->limit(200)
+                            ->get();
+                    }
+                    
+                    // Ensure current record is included for proper navigation
+                    $foundCurrent = $allMarketRates->contains(function($item) use ($id) {
+                        return isset($item->id) && $item->id == $id;
+                    });
+                    
+                    if (!$foundCurrent) {
+                        $allMarketRates->prepend($marketRate);
+                        $allMarketRates = $allMarketRates->sortByDesc('created_at')->values();
+                    }
+                }
+            } catch (\Exception $e) {
+                $allMarketRates = collect([$marketRate]);
             }
-            
-            // Limit to 200 records within 24 hours to prevent timeout on large datasets
-            $allMarketRates = $baseQuery
-                ->where(function($q) use ($currentCreatedAt) {
-                    $q->whereBetween('created_at', [
-                        Carbon::parse($currentCreatedAt)->subHours(24),
-                        Carbon::parse($currentCreatedAt)->addHours(24)
-                    ]);
-                })
-                ->orderBy('created_at', 'desc')
-                ->limit(200)
-                ->get();
-            
-            // Ensure current record is included for proper navigation
-            $foundCurrent = $allMarketRates->contains(function($item) use ($id) {
-                return $item->id == $id;
+        
+            $currentIndex = $allMarketRates->search(function($item) use ($id) {
+                return isset($item->id) && $item->id == $id;
             });
             
-            if (!$foundCurrent) {
-                $allMarketRates->prepend($marketRate);
-                $allMarketRates = $allMarketRates->sortByDesc('created_at')->values();
-            }
-        } catch (\Exception $e) {
-            $allMarketRates = collect([$marketRate]);
-        }
-        
-        $currentIndex = $allMarketRates->search(function($item) use ($id) {
-            return $item->id == $id;
-        });
-        
-        $previousMarketRate = null;
-        $nextMarketRate = null;
-        $gridMarketRates = collect();
-        
-        if ($currentIndex !== false) {
+            $previousMarketRate = null;
+            $nextMarketRate = null;
+            $gridMarketRates = collect();
+            
+            if ($currentIndex !== false) {
             if ($currentIndex > 0) {
                 $previousMarketRate = $allMarketRates[$currentIndex - 1];
             }
@@ -360,24 +401,28 @@ class MarketRateController extends Controller
             // When grid mode is enabled, get current record + (count-1) newer records
             if ($gridEnabled) {
                 try {
-                    $currentCreatedAt = $marketRate->created_at;
-                    $additionalRecords = $gridCountValue - 1;
-                    
-                    if (empty($marketRate->marketName)) {
-                        $newerRecords = MarketRate::forEvent($selectedEventId)
-                            ->whereNull('marketName')
-                            ->where('created_at', '>', $currentCreatedAt)
-                            ->orderBy('created_at', 'asc')
-                            ->limit($additionalRecords)
-                            ->get();
+                    if (empty($marketRate->created_at)) {
+                        $newerRecords = collect([]);
                     } else {
-                        $newerRecords = MarketRate::forEvent($selectedEventId)
-                            ->where('marketName', $marketRate->marketName)
-                            ->whereNotNull('marketName')
-                            ->where('created_at', '>', $currentCreatedAt)
-                            ->orderBy('created_at', 'asc')
-                            ->limit($additionalRecords)
-                            ->get();
+                        $currentCreatedAt = $marketRate->created_at;
+                        $additionalRecords = $gridCountValue - 1;
+                        
+                        if (empty($marketRate->marketName)) {
+                            $newerRecords = MarketRate::forEvent($selectedEventId)
+                                ->whereNull('marketName')
+                                ->where('created_at', '>', $currentCreatedAt)
+                                ->orderBy('created_at', 'asc')
+                                ->limit($additionalRecords)
+                                ->get();
+                        } else {
+                            $newerRecords = MarketRate::forEvent($selectedEventId)
+                                ->where('marketName', $marketRate->marketName)
+                                ->whereNotNull('marketName')
+                                ->where('created_at', '>', $currentCreatedAt)
+                                ->orderBy('created_at', 'asc')
+                                ->limit($additionalRecords)
+                                ->get();
+                        }
                     }
                 } catch (\Exception $e) {
                     $newerRecords = collect([]);
@@ -385,15 +430,24 @@ class MarketRateController extends Controller
                 
                 $gridMarketRates = collect([$marketRate])
                     ->merge($newerRecords->filter(function($item) use ($marketRate) {
-                        return $item->marketName === $marketRate->marketName;
+                        return isset($item->marketName) && $item->marketName === $marketRate->marketName;
                     }))
                     ->values();
 
-                $gridMeta = DB::table('market_lists')
-                    ->whereIn('exMarketId', $gridMarketRates->pluck('exMarketId')->filter()->all())
-                    ->select('exMarketId', 'status', 'winnerType', 'selectionName')
-                    ->get()
-                    ->keyBy('exMarketId');
+                try {
+                    $exMarketIds = $gridMarketRates->pluck('exMarketId')->filter()->all();
+                    if (!empty($exMarketIds)) {
+                        $gridMeta = DB::table('market_lists')
+                            ->whereIn('exMarketId', $exMarketIds)
+                            ->select('exMarketId', 'status', 'winnerType', 'selectionName')
+                            ->get()
+                            ->keyBy('exMarketId');
+                    } else {
+                        $gridMeta = collect();
+                    }
+                } catch (\Exception $e) {
+                    $gridMeta = collect();
+                }
 
                 // Map status from integer to readable string
                 $statusMap = [
@@ -406,30 +460,48 @@ class MarketRateController extends Controller
                 ];
 
                 $gridMarketRates = $gridMarketRates->map(function ($rate) use ($gridMeta, $statusMap) {
+                    if (empty($rate->exMarketId)) {
+                        $rate->marketListStatus = null;
+                        $rate->marketListWinnerType = null;
+                        $rate->marketListSelectionName = null;
+                        return $rate;
+                    }
                     $meta = $gridMeta->get($rate->exMarketId);
-                    $rate->marketListStatus = $meta && $meta->status ? ($statusMap[$meta->status] ?? null) : null;
+                    $rate->marketListStatus = ($meta && isset($meta->status)) ? ($statusMap[$meta->status] ?? null) : null;
                     $rate->marketListWinnerType = $meta->winnerType ?? null;
                     $rate->marketListSelectionName = $meta->selectionName ?? null;
                     return $rate;
                 });
             }
-        }
 
-        return view('market-rates.show', compact(
-            'marketRate',
-            'eventInfo',
-            'selectedEventId',
-            'previousMarketRate',
-            'nextMarketRate',
-            'gridEnabled',
-            'gridCountValue',
-            'gridMarketRates',
-            'marketListStatus',
-            'marketListWinnerType',
-            'marketListSelectionName',
-            'allRunners',
-            'selectedRunner'
-        ));
+            return view('market-rates.show', compact(
+                'marketRate',
+                'eventInfo',
+                'selectedEventId',
+                'previousMarketRate',
+                'nextMarketRate',
+                'gridEnabled',
+                'gridCountValue',
+                'gridMarketRates',
+                'marketListStatus',
+                'marketListWinnerType',
+                'marketListSelectionName',
+                'allRunners',
+                'selectedRunner'
+            ));
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('MarketRateController::show error: ' . $e->getMessage(), [
+                'id' => $id,
+                'exEventId' => $request->get('exEventId'),
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Return user-friendly error page
+            return redirect()->route('market-rates.index')
+                ->with('error', 'Unable to load market rate details. Please try again.');
+        }
     }
 
     /**
