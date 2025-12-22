@@ -1047,44 +1047,6 @@
                 </select>
             </div>
             
-            <!-- Scorecard Label Checkboxes -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Scorecard Label</label>
-                <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 max-h-48 overflow-y-auto">
-                    @php
-                        $labelConfig = config('labels.labels', []);
-                        $selectedLabels = request('label_search', []);
-                        if (!is_array($selectedLabels)) {
-                            $selectedLabels = $selectedLabels ? [$selectedLabels] : [];
-                        }
-                    @endphp
-                    @foreach($labelConfig as $labelKey => $labelName)
-                        <label class="flex items-center py-2 px-2 hover:bg-gray-50 dark:hover:bg-gray-600 rounded cursor-pointer">
-                            <input type="checkbox" name="label_search[]" value="{{ $labelKey }}" 
-                                   {{ in_array($labelKey, $selectedLabels) ? 'checked' : '' }}
-                                   class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:bg-gray-600 dark:border-gray-500">
-                            <span class="ml-2 text-sm text-gray-900 dark:text-gray-100">{{ $labelName }}</span>
-                        </label>
-                    @endforeach
-                    @if(empty($labelConfig))
-                        <p class="text-sm text-gray-500 dark:text-gray-400 py-2">No labels available</p>
-                    @endif
-                </div>
-            </div>
-            
-            <!-- SC Type -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">SC Type</label>
-                <select name="sc_type" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    <option value="">All SC Types</option>
-                    <option value="Sportradar" {{ request('sc_type') === 'Sportradar' ? 'selected' : '' }}>Sportradar</option>
-                    <option value="Old SC(Cric)" {{ request('sc_type') === 'Old SC(Cric)' ? 'selected' : '' }}>Old SC(Cric)</option>
-                    <option value="SR Premium" {{ request('sc_type') === 'SR Premium' ? 'selected' : '' }}>SR Premium</option>
-                    <option value="SpreadeX" {{ request('sc_type') === 'SpreadeX' ? 'selected' : '' }}>SpreadeX</option>
-                    <option value="N/A" {{ request('sc_type') === 'N/A' ? 'selected' : '' }}>N/A</option>
-                </select>
-            </div>
-            
             <!-- Event Date Range -->
             <div class="mb-4 filter-field-group">
                 <div class="filter-field-title">Event Date Range</div>
@@ -1229,6 +1191,44 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Scorecard Label Checkboxes -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Scorecard Label</label>
+                <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 max-h-48 overflow-y-auto">
+                    @php
+                        $labelConfig = config('labels.labels', []);
+                        $selectedLabels = request('label_search', []);
+                        if (!is_array($selectedLabels)) {
+                            $selectedLabels = $selectedLabels ? [$selectedLabels] : [];
+                        }
+                    @endphp
+                    @foreach($labelConfig as $labelKey => $labelName)
+                        <label class="flex items-center py-2 px-2 hover:bg-gray-50 dark:hover:bg-gray-600 rounded cursor-pointer">
+                            <input type="checkbox" name="label_search[]" value="{{ $labelKey }}" 
+                                   {{ in_array($labelKey, $selectedLabels) ? 'checked' : '' }}
+                                   class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:bg-gray-600 dark:border-gray-500">
+                            <span class="ml-2 text-sm text-gray-900 dark:text-gray-100">{{ $labelName }}</span>
+                        </label>
+                    @endforeach
+                    @if(empty($labelConfig))
+                        <p class="text-sm text-gray-500 dark:text-gray-400 py-2">No labels available</p>
+                    @endif
+                </div>
+            </div>
+            
+            <!-- SC Type -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">SC Type</label>
+                <select name="sc_type" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <option value="">All SC Types</option>
+                    <option value="Sportradar" {{ request('sc_type') === 'Sportradar' ? 'selected' : '' }}>Sportradar</option>
+                    <option value="Old SC(Cric)" {{ request('sc_type') === 'Old SC(Cric)' ? 'selected' : '' }}>Old SC(Cric)</option>
+                    <option value="SR Premium" {{ request('sc_type') === 'SR Premium' ? 'selected' : '' }}>SR Premium</option>
+                    <option value="SpreadeX" {{ request('sc_type') === 'SpreadeX' ? 'selected' : '' }}>SpreadeX</option>
+                    <option value="N/A" {{ request('sc_type') === 'N/A' ? 'selected' : '' }}>N/A</option>
+                </select>
             </div>
             
             <!-- Filter Buttons -->
