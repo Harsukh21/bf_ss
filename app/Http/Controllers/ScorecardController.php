@@ -871,11 +871,15 @@ class ScorecardController extends Controller
             ], 422);
         }
 
-        // Update sc_type
+        // Update sc_type with admin information
         DB::table('events')
             ->where('exEventId', $exEventId)
             ->update([
                 'sc_type' => $request->input('sc_type'),
+                'sc_type_updated_by' => $user->id,
+                'sc_type_updated_by_name' => $user->name,
+                'sc_type_updated_by_email' => $user->email,
+                'sc_type_updated_at' => now(),
                 'updated_at' => now(),
             ]);
 

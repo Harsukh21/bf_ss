@@ -585,10 +585,11 @@
                         $activeFilters[] = ['label' => 'Tournament', 'value' => $tournamentName ?? request('tournament'), 'remove' => ['tournament']];
                     }
 
-                    if (request()->filled('status')) {
-                        $statusValue = (int) request('status');
-                        $statusLabel = $statusOptions[$statusValue] ?? request('status');
-                        $activeFilters[] = ['label' => 'Status', 'value' => $statusLabel, 'remove' => ['status']];
+                    if (request()->filled('sc_added_by')) {
+                        $adminId = request('sc_added_by');
+                        $admin = $scAddedByAdmins->firstWhere('id', $adminId);
+                        $adminName = $admin ? ($admin->name . ($admin->email ? ' (' . $admin->email . ')' : '')) : 'Unknown Admin';
+                        $activeFilters[] = ['label' => 'SC Added By', 'value' => $adminName, 'remove' => ['sc_added_by']];
                     }
 
                     if (request()->has('label_search')) {
@@ -1042,17 +1043,26 @@
                 </div>
             </div>
             
-            <!-- Status -->
+            <!-- SC Added By -->
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
-                <select name="status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    <option value="">All Status</option>
-                    @foreach($statusOptions as $value => $label)
-                        <option value="{{ $value }}" {{ (string) request('status') === (string) $value ? 'selected' : '' }}>
-                            {{ $label }}
-                        </option>
-                    @endforeach
-                </select>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">SC Added By</label>
+                <div class="relative">
+                    @php
+                        $selectedAdmin = request('sc_added_by') ? ($scAddedByAdmins->firstWhere('id', request('sc_added_by')) ?? null) : null;
+                        $selectedAdminName = $selectedAdmin ? $selectedAdmin->name : '';
+                    @endphp
+                    <input type="text" id="scAddedBySearch" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Search admin..." autocomplete="off" value="{{ $selectedAdminName }}">
+                    <select name="sc_added_by" id="scAddedBySelect" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 absolute inset-0 opacity-0 pointer-events-none">
+                        <option value="">-- Select Admin --</option>
+                        @foreach($scAddedByAdmins ?? [] as $admin)
+                            <option value="{{ $admin->id }}" data-name="{{ $admin->name }}" data-email="{{ $admin->email }}" {{ request('sc_added_by') == $admin->id ? 'selected' : '' }}>
+                                {{ $admin->name }}@if($admin->email) ({{ $admin->email }})@endif
+                            </option>
+                        @endforeach
+                    </select>
+                    <div id="scAddedByDropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden">
+                    </div>
+                </div>
             </div>
             
             <!-- Event Date Range -->
@@ -1681,6 +1691,75 @@ document.addEventListener('DOMContentLoaded', function() {
     if (initialSport) {
         filterTournamentsBySport(initialSport, true);
     }
+
+    // SC Added By searchable dropdown
+    const scAddedBySearch = document.getElementById('scAddedBySearch');
+    const scAddedBySelect = document.getElementById('scAddedBySelect');
+    const scAddedByDropdown = document.getElementById('scAddedByDropdown');
+    const scAddedByAdmins = @json($scAddedByAdmins ?? []);
+
+    function updateScAddedByInputDisplay() {
+        const selectedOption = scAddedBySelect.options[scAddedBySelect.selectedIndex];
+        if (selectedOption && selectedOption.value !== '') {
+            scAddedBySearch.value = selectedOption.getAttribute('data-name');
+            scAddedBySearch.classList.add('text-gray-900', 'dark:text-gray-100');
+            scAddedBySearch.classList.remove('text-gray-400', 'dark:text-gray-500');
+        } else {
+            scAddedBySearch.value = '';
+        }
+    }
+
+    updateScAddedByInputDisplay();
+
+    function showScAddedByDropdown() {
+        const searchTerm = scAddedBySearch.value.toLowerCase();
+        scAddedByDropdown.innerHTML = '';
+
+        const filteredAdmins = Array.from(scAddedBySelect.options).filter(option => {
+            if (option.value === '') return false;
+            const name = (option.getAttribute('data-name') || '').toLowerCase();
+            const email = (option.getAttribute('data-email') || '').toLowerCase();
+            return name.includes(searchTerm) || email.includes(searchTerm);
+        });
+
+        if (filteredAdmins.length === 0) {
+            scAddedByDropdown.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No admins found</div>';
+        } else {
+            filteredAdmins.forEach(option => {
+                const div = document.createElement('div');
+                div.className = 'px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-sm text-gray-900 dark:text-gray-100';
+                const name = option.getAttribute('data-name');
+                const email = option.getAttribute('data-email');
+                div.innerHTML = `<div class="font-medium">${name}</div>${email ? `<div class="text-xs text-gray-500 dark:text-gray-400">${email}</div>` : ''}`;
+                div.addEventListener('click', function() {
+                    scAddedBySelect.value = option.value;
+                    updateScAddedByInputDisplay();
+                    scAddedByDropdown.classList.add('hidden');
+                });
+                scAddedByDropdown.appendChild(div);
+            });
+        }
+
+        scAddedByDropdown.classList.remove('hidden');
+    }
+
+    scAddedBySearch.addEventListener('focus', function() {
+        showScAddedByDropdown();
+    });
+
+    scAddedBySearch.addEventListener('input', function() {
+        showScAddedByDropdown();
+    });
+
+    scAddedBySearch.addEventListener('click', function() {
+        showScAddedByDropdown();
+    });
+
+    document.addEventListener('click', function(event) {
+        if (!scAddedBySearch.contains(event.target) && !scAddedByDropdown.contains(event.target)) {
+            scAddedByDropdown.classList.add('hidden');
+        }
+    });
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 

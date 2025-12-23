@@ -198,7 +198,10 @@ class EventController extends Controller
             'events."status"',
             'events."labels"',
             'events."label_timestamps"',
-            'events."sc_type"'
+            'events."sc_type"',
+            'events."sc_type_updated_by"',
+            'events."sc_type_updated_by_name"',
+            'events."sc_type_updated_by_email"'
         ];
         $selectList = implode(', ', $selectColumns);
         $selectList .= ', COALESCE(mc.market_count, 0) as "market_count"';
@@ -309,6 +312,19 @@ class EventController extends Controller
         $sportConfig = config('sports.sports');
         $statusSummary = $this->fetchEventStatusSummary($whereSql, $filterSql['bindings']);
 
+        // Get list of all users/admins from users table
+        $scAddedByAdmins = DB::table('users')
+            ->select('id', 'name', 'email')
+            ->orderBy('name')
+            ->get()
+            ->map(function ($user) {
+                return (object) [
+                    'id' => $user->id,
+                    'name' => $user->name ?? 'Unknown',
+                    'email' => $user->email ?? '',
+                ];
+            });
+
         return view('events.all', [
             'paginatedEvents' => $paginatedEvents,
             'sports' => $sports,
@@ -321,6 +337,7 @@ class EventController extends Controller
             'pageSubheading' => 'Browse every scheduled event without date limits',
             'statusSummary' => $statusSummary,
             'labelConfig' => $labelConfig,
+            'scAddedByAdmins' => $scAddedByAdmins,
         ]);
     }
 
@@ -707,12 +724,10 @@ class EventController extends Controller
             $bindings[] = $request->tournament;
         }
 
-        if ($request->filled('status')) {
-            $statusCondition = $this->mapEventStatusCondition($request->status);
-            if ($statusCondition) {
-                $conditions[] = $statusCondition['sql'];
-                $bindings = array_merge($bindings, $statusCondition['bindings']);
-            }
+        // SC Added By filter
+        if ($request->filled('sc_added_by')) {
+            $conditions[] = $this->qualifyColumn('events', 'sc_type_updated_by') . ' = ?';
+            $bindings[] = $request->sc_added_by;
         }
 
         if ($request->filled('highlight')) {
