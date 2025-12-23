@@ -12,6 +12,26 @@
     <link rel="shortcut icon" type="image/svg+xml" href="{{ asset('assets/img/notification.svg') }}">
     <link rel="apple-touch-icon" href="{{ asset('assets/img/notification.svg') }}">
 
+    <!-- Dark Mode Script - Must run before page render to prevent flash -->
+    <script>
+        (function() {
+            try {
+                const savedTheme = localStorage.getItem('theme');
+                const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                const theme = savedTheme || systemTheme;
+                
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch (e) {
+                // Fallback to light mode if localStorage is not available
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -43,6 +63,23 @@
     
     <!-- Custom Scrollbar Styles -->
     <style>
+        /* Prevent flash of light mode - apply dark mode immediately */
+        html {
+            color-scheme: light dark;
+        }
+        
+        /* Smooth dark mode transitions for key elements */
+        body,
+        .bg-white,
+        .bg-gray-900,
+        .dark\:bg-gray-900,
+        .text-gray-900,
+        .dark\:text-gray-100,
+        .border-gray-200,
+        .dark\:border-gray-700 {
+            transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+        }
+        
         /* WebKit Scrollbar (Chrome, Safari, Edge) */
         .sidebar-scrollbar::-webkit-scrollbar {
             width: 8px;
