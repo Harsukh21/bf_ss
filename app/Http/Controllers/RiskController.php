@@ -104,6 +104,45 @@ class RiskController extends Controller
         );
         $markets->appends($request->query());
 
+        // Get list of all users who have checked checkboxes
+        $betlistCheckers = DB::table('market_lists')
+            ->select('labels')
+            ->whereNotNull('labels')
+            ->get()
+            ->flatMap(function ($market) {
+                $labels = json_decode($market->labels ?? '{}', true);
+                $checkers = [];
+                if (is_array($labels)) {
+                    foreach ($labels as $labelKey => $labelValue) {
+                        if (is_array($labelValue) && isset($labelValue['checked']) && $labelValue['checked'] === true && isset($labelValue['checked_by'])) {
+                            $checkers[] = $labelValue['checked_by'];
+                        }
+                    }
+                }
+                return $checkers;
+            })
+            ->unique()
+            ->filter()
+            ->values();
+
+        // Get user details for checkers
+        $betlistCheckersList = collect();
+        if ($betlistCheckers->isNotEmpty()) {
+            $users = DB::table('users')
+                ->select('id', 'name', 'email')
+                ->whereIn('id', $betlistCheckers->toArray())
+                ->orderBy('name')
+                ->get()
+                ->map(function ($user) {
+                    return (object) [
+                        'id' => $user->id,
+                        'name' => $user->name ?? 'Unknown',
+                        'email' => $user->email ?? '',
+                    ];
+                });
+            $betlistCheckersList = $users;
+        }
+
         return view('risk.index', [
             'markets' => $markets,
             'statusFilter' => [4, 5],
@@ -112,6 +151,7 @@ class RiskController extends Controller
             'sports' => $this->getSportsList(),
             'tournamentsBySport' => $this->getTournamentsBySport(),
             'riskStatusFilter' => $statusFilter,
+            'betlistCheckers' => $betlistCheckersList,
         ]);
     }
 
@@ -285,6 +325,21 @@ class RiskController extends Controller
             });
         }
 
+        // Filter by checked_by (betlist check by)
+        if (!empty($filters['checked_by'])) {
+            $checkedByUserId = (int) $filters['checked_by'];
+            $query->where(function ($q) use ($checkedByUserId) {
+                // Check if any label has this user as checked_by
+                $labelKeys = $this->getLabelKeys();
+                foreach ($labelKeys as $labelKey) {
+                    $q->orWhereRaw(
+                        "(market_lists.labels -> ? -> 'checked_by')::text = ?",
+                        [$labelKey, (string) $checkedByUserId]
+                    );
+                }
+            });
+        }
+
         return $query->orderByDesc('market_lists.marketTime');
     }
 
@@ -325,6 +380,7 @@ class RiskController extends Controller
             'time_to' => $request->input('time_to'),
             'risk_status' => $request->input('risk_status'), // 'pending' or 'done'
             'recently_added' => $request->input('recently_added') == '1', // Recently added filter
+            'checked_by' => $request->input('checked_by'), // Betlist check by filter
         ];
     }
 

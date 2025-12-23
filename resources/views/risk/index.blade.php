@@ -445,6 +445,14 @@
             'query_value' => $labelKey,
         ];
     }
+    
+    // Betlist Check By filter
+    if (request()->filled('checked_by')) {
+        $checkedById = request('checked_by');
+        $checker = $betlistCheckers->firstWhere('id', $checkedById);
+        $checkerName = $checker ? ($checker->name . ($checker->email ? ' (' . $checker->email . ')' : '')) : 'Unknown Checker';
+        $activeFilters[] = ['label' => 'Betlist Check By', 'value' => $checkerName, 'query' => 'checked_by'];
+    }
 
     $filterCount = count($activeFilters);
     
@@ -1135,6 +1143,27 @@
                     </div>
                 </div>
                 <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Times apply to the selected dates (completeTime).</p>
+            </div>
+            <!-- Betlist Check By -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Betlist Check By</label>
+                <div class="relative">
+                    @php
+                        $selectedChecker = request('checked_by') ? ($betlistCheckers->firstWhere('id', request('checked_by')) ?? null) : null;
+                        $selectedCheckerName = $selectedChecker ? $selectedChecker->name : '';
+                    @endphp
+                    <input type="text" id="betlistCheckerSearch" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Search checker..." autocomplete="off" value="{{ $selectedCheckerName }}">
+                    <select name="checked_by" id="betlistCheckerSelect" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 absolute inset-0 opacity-0 pointer-events-none">
+                        <option value="">-- Select Checker --</option>
+                        @foreach($betlistCheckers ?? [] as $checker)
+                            <option value="{{ $checker->id }}" data-name="{{ $checker->name }}" data-email="{{ $checker->email }}" {{ request('checked_by') == $checker->id ? 'selected' : '' }}>
+                                {{ $checker->name }}@if($checker->email) ({{ $checker->email }})@endif
+                            </option>
+                        @endforeach
+                    </select>
+                    <div id="betlistCheckerDropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden">
+                    </div>
+                </div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Labels</label>
@@ -2079,6 +2108,77 @@
                 });
             }
         });
+    });
+
+    // Betlist Check By searchable dropdown
+    const betlistCheckerSearch = document.getElementById('betlistCheckerSearch');
+    const betlistCheckerSelect = document.getElementById('betlistCheckerSelect');
+    const betlistCheckerDropdown = document.getElementById('betlistCheckerDropdown');
+    const betlistCheckers = @json($betlistCheckers ?? []);
+
+    function updateBetlistCheckerInputDisplay() {
+        const selectedOption = betlistCheckerSelect.options[betlistCheckerSelect.selectedIndex];
+        if (selectedOption && selectedOption.value !== '') {
+            betlistCheckerSearch.value = selectedOption.getAttribute('data-name');
+            betlistCheckerSearch.classList.add('text-gray-900', 'dark:text-gray-100');
+            betlistCheckerSearch.classList.remove('text-gray-400', 'dark:text-gray-500');
+        } else {
+            betlistCheckerSearch.value = '';
+        }
+    }
+
+    updateBetlistCheckerInputDisplay();
+
+    function showBetlistCheckerDropdown() {
+        const searchTerm = betlistCheckerSearch.value.toLowerCase();
+        betlistCheckerDropdown.innerHTML = '';
+
+        const filteredCheckers = Array.from(betlistCheckerSelect.options).filter(option => {
+            if (option.value === '') return false;
+            const name = (option.getAttribute('data-name') || '').toLowerCase();
+            const email = (option.getAttribute('data-email') || '').toLowerCase();
+            return name.includes(searchTerm) || email.includes(searchTerm);
+        });
+
+        if (filteredCheckers.length === 0) {
+            betlistCheckerDropdown.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No checkers found</div>';
+        } else {
+            filteredCheckers.forEach(option => {
+                const div = document.createElement('div');
+                div.className = 'px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-sm text-gray-900 dark:text-gray-100';
+                const name = option.getAttribute('data-name');
+                const email = option.getAttribute('data-email');
+                div.innerHTML = `<div class="font-medium">${name}</div>${email ? `<div class="text-xs text-gray-500 dark:text-gray-400">${email}</div>` : ''}`;
+                div.addEventListener('click', function() {
+                    betlistCheckerSelect.value = option.value;
+                    updateBetlistCheckerInputDisplay();
+                    betlistCheckerDropdown.classList.add('hidden');
+                });
+                betlistCheckerDropdown.appendChild(div);
+            });
+        }
+
+        betlistCheckerDropdown.classList.remove('hidden');
+    }
+
+    if (betlistCheckerSearch) {
+        betlistCheckerSearch.addEventListener('focus', function() {
+            showBetlistCheckerDropdown();
+        });
+
+        betlistCheckerSearch.addEventListener('input', function() {
+            showBetlistCheckerDropdown();
+        });
+
+        betlistCheckerSearch.addEventListener('click', function() {
+            showBetlistCheckerDropdown();
+        });
+    }
+
+    document.addEventListener('click', function(event) {
+        if (betlistCheckerSearch && betlistCheckerDropdown && !betlistCheckerSearch.contains(event.target) && !betlistCheckerDropdown.contains(event.target)) {
+            betlistCheckerDropdown.classList.add('hidden');
+        }
     });
 </script>
 @endpush
