@@ -32,16 +32,20 @@ class CheckScorecardLabels extends Command
 
         $now = Carbon::now();
         $tenMinutesAgo = $now->copy()->subMinutes(10);
+        // Only check events from today onwards (ignore old events)
+        $todayStart = $now->copy()->startOfDay();
 
         // Get events where:
         // 1. marketTime is not null
-        // 2. marketTime was at least 10 minutes ago (marketTime <= now - 10 minutes)
-        // 3. At least one of the 4 required labels (4X, B2C, B2B, USDT) is NOT checked
+        // 2. marketTime is from today onwards (ignore old events)
+        // 3. marketTime was at least 10 minutes ago (marketTime <= now - 10 minutes)
+        // 4. At least one of the 4 required labels (4X, B2C, B2B, USDT) is NOT checked
         $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
 
         $events = DB::table('events')
             ->whereNotNull('marketTime')
-            ->where('marketTime', '<=', $tenMinutesAgo->format('Y-m-d H:i:s'))
+            ->where('marketTime', '>=', $todayStart->format('Y-m-d H:i:s')) // Only check events from today onwards
+            ->where('marketTime', '<=', $tenMinutesAgo->format('Y-m-d H:i:s')) // marketTime was at least 10 minutes ago
             ->select('id', 'exEventId', 'eventName', 'sportId', 'tournamentsName', 'marketTime', 'labels')
             ->get();
 
