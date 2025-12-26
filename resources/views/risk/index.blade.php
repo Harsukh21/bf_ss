@@ -921,7 +921,7 @@
                             <tr class="bg-gray-50/60 dark:bg-gray-800/70 text-xs text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700">
                                 <td colspan="6" class="px-6 py-3">
                                     <div class="flex flex-wrap items-center gap-6 market-labels-wrapper" data-market-id="{{ $market->id }}" data-update-url="{{ route('risk.markets.labels', $market->id) }}">
-                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Scorecard:</span>
+                                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Labels:</span>
                                         @php
                                             $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
                                             $excludedLabels = ['bookmaker', 'unmatch'];
@@ -1003,6 +1003,7 @@
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Checker</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Froude IDs</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Remarks</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Completed By</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -1124,6 +1125,27 @@
                                             @foreach($remarkData as $remark)
                                                 <div>{{ $remark }}</div>
                                             @endforeach
+                                        </div>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 align-top">
+                                    @if(!empty($market->completed_by_name))
+                                        <div class="flex flex-col gap-1">
+                                            <div class="font-medium text-gray-900 dark:text-gray-100">
+                                                {{ $market->completed_by_name }}
+                                            </div>
+                                            @if(!empty($market->completed_by_email))
+                                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                    {{ $market->completed_by_email }}
+                                                </div>
+                                            @endif
+                                            @if(!empty($market->completed_at))
+                                                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                    {{ \Carbon\Carbon::parse($market->completed_at)->format('M d, Y h:i A') }}
+                                                </div>
+                                            @endif
                                         </div>
                                     @else
                                         —

@@ -184,6 +184,10 @@ class RiskController extends Controller
                 'market_lists.chor_id',
                 'market_lists.remark',
                 'market_lists.completeTime',
+                'market_lists.completed_by',
+                'market_lists.completed_by_name',
+                'market_lists.completed_by_email',
+                'market_lists.completed_at',
                 'market_lists.created_at',
             ])
             ->whereIn('market_lists.status', $statuses)
@@ -699,6 +703,7 @@ class RiskController extends Controller
             ], 422);
         }
 
+        // Store admin information who completed the market
         DB::table('market_lists')
             ->where('id', $marketId)
             ->update([
@@ -706,8 +711,33 @@ class RiskController extends Controller
                 'name' => $request->input('name'),
                 'chor_id' => $request->input('chor_id'),
                 'remark' => $request->input('remark'),
+                'completed_by' => $user->id,
+                'completed_by_name' => $user->name,
+                'completed_by_email' => $user->email,
+                'completed_at' => now(),
                 'updated_at' => now(),
             ]);
+
+        // Log to system_logs
+        try {
+            DB::table('system_logs')->insert([
+                'user_id' => $user->id,
+                'action' => 'market_marked_as_done',
+                'description' => "Market '{$market->marketName}' (Event: {$market->eventName}) marked as completed by {$user->name} ({$user->email}).",
+                'exEventId' => $market->exEventId ?? null,
+                'label_name' => null,
+                'old_value' => 'pending',
+                'new_value' => 'completed',
+                'event_name' => $market->eventName ?? 'N/A',
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            // Log error but don't fail the request
+            \Log::error('Failed to log market completion to system_logs: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,
