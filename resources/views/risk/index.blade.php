@@ -1934,14 +1934,111 @@
         showConfirmToast(
             `Are you sure you want to mark "${marketName}" as completed?\n\nThis will move the market to Completed Markets section.`,
             () => {
-                // User confirmed - open the remark modal for final confirmation with details
-                openRemarkModal(marketId, marketName, doneUrl);
+                // User confirmed - get data from labels and only ask for web PIN
+                markMarketAsDoneDirectly(marketId, marketName, doneUrl);
             },
             () => {
                 // User cancelled - do nothing
             }
         );
     });
+    
+    // Function to mark market as done directly using data from labels
+    async function markMarketAsDoneDirectly(marketId, marketName, doneUrl) {
+        try {
+            // Get data from the table row (checker, froude IDs, remarks columns)
+            const row = document.querySelector(`tr[data-market-row="${marketId}"]`);
+            if (!row) {
+                showRiskToast('Unable to find market row', 'error');
+                return;
+            }
+            
+            // Extract data from the table - get the last non-empty checker name
+            const checkerCell = row.querySelector('td:nth-child(4)'); // CHECKER column
+            const froudeCell = row.querySelector('td:nth-child(5)'); // FROUDE IDS column
+            const remarkCell = row.querySelector('td:nth-child(6)'); // REMARKS column
+            
+            let name = '{{ auth()->user()->name }}';
+            let chorId = 'NULL';
+            let remark = 'Checking';
+            
+            // Try to extract from checker cell (format: "USDT : Harsukh" or "B2B : Harsukh")
+            if (checkerCell) {
+                const checkerText = checkerCell.textContent.trim();
+                const checkerLines = checkerText.split('\n').filter(line => line.trim() && line.trim() !== '—');
+                if (checkerLines.length > 0) {
+                    // Get the last checker (prefer USDT, then B2B, then B2C, then 4X)
+                    const lastChecker = checkerLines[checkerLines.length - 1];
+                    const match = lastChecker.match(/:\s*(.+)$/);
+                    if (match && match[1]) {
+                        name = match[1].trim();
+                    }
+                }
+            }
+            
+            // Try to extract chor_id from froude IDs cell
+            if (froudeCell) {
+                const froudeText = froudeCell.textContent.trim();
+                const froudeLines = froudeText.split('\n').filter(line => line.trim() && line.trim() !== '—');
+                if (froudeLines.length > 0) {
+                    const lastFroude = froudeLines[froudeLines.length - 1];
+                    const match = lastFroude.match(/:\s*(.+)$/);
+                    if (match && match[1] && match[1].trim() !== '—' && match[1].trim() !== '-' && match[1].trim().toUpperCase() !== 'NULL') {
+                        chorId = match[1].trim();
+                    }
+                }
+            }
+            
+            // Try to extract remark from remarks cell
+            if (remarkCell) {
+                const remarkText = remarkCell.textContent.trim();
+                const remarkLines = remarkText.split('\n').filter(line => line.trim() && line.trim() !== '—');
+                if (remarkLines.length > 0) {
+                    const lastRemark = remarkLines[remarkLines.length - 1];
+                    const match = lastRemark.match(/:\s*(.+)$/);
+                    if (match && match[1] && match[1].trim() !== '—' && match[1].trim() !== '-') {
+                        remark = match[1].trim();
+                    }
+                }
+            }
+            
+            // Only ask for Web PIN using a simple prompt
+            const webPin = prompt(`Enter your Web PIN to complete "${marketName}":`);
+            if (!webPin) {
+                return; // User cancelled
+            }
+            
+            // Mark as done with the data from labels
+            const markDoneResponse = await fetch(doneUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name,
+                    chor_id: chorId,
+                    remark: remark,
+                    web_pin: webPin
+                }),
+            });
+            
+            const markDoneData = await markDoneResponse.json();
+            if (markDoneData.success) {
+                markMarketAsDone(marketId);
+                showRiskToast('Market marked as done', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showRiskToast(markDoneData.message || 'Unable to mark as done', 'error');
+            }
+        } catch (error) {
+            console.error('Error marking market as done:', error);
+            showRiskToast('Unable to mark as done', 'error');
+        }
+    }
 
     function showRiskToast(message, type = 'success') {
         if (!toastElement) return;
