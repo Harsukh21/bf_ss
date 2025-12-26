@@ -801,7 +801,7 @@
                                         <div class="flex flex-col gap-2">
                                             <button 
                                                 type="button"
-                                                class="js-send-telegram-btn inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                                                class="js-send-telegram-btn inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded-md bg-[#0088cc] hover:bg-[#006699] text-white transition-colors"
                                                 data-market-id="{{ $market->id }}"
                                                 data-market-name="{{ $market->eventName }}"
                                                 data-market-market-name="{{ $market->marketName }}"
@@ -1049,7 +1049,7 @@
                                     <div class="mt-2">
                                         <button 
                                             type="button"
-                                            class="js-send-telegram-btn-completed inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                                            class="js-send-telegram-btn-completed inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded-md bg-[#0088cc] hover:bg-[#006699] text-white transition-colors"
                                             data-market-id="{{ $market->id }}"
                                             data-market-name="{{ $market->eventName }}"
                                             data-market-market-name="{{ $market->marketName }}"
@@ -1982,7 +1982,7 @@
                 existingBadge.outerHTML = `<div class="flex flex-col gap-2">
                     <button 
                         type="button"
-                        class="js-send-telegram-btn inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                        class="js-send-telegram-btn inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded-md bg-[#0088cc] hover:bg-[#006699] text-white transition-colors"
                         data-market-id="${marketId}"
                         data-market-name="${eventNameForTG}"
                         data-market-market-name="${marketNameForTG}"
@@ -2237,6 +2237,9 @@
         .then(data => {
             if (data.success) {
                 showRiskToast('Notification sent to Telegram successfully', 'success');
+                // Re-enable button and restore text after success
+                button.disabled = false;
+                button.textContent = originalText;
             } else {
                 showRiskToast(data.message || 'Failed to send notification', 'error');
                 button.disabled = false;
