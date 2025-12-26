@@ -797,16 +797,13 @@ class RiskController extends Controller
         // Get admin/sender information
         $user = auth()->user();
         $senderName = $user ? $user->name : 'System';
-        $senderEmail = $user ? $user->email : 'N/A';
         
         $message = "🚨🚨🚨 Fraudulent Activity Notification 🚨🚨🚨\n\n";
-        $message .= "👤 Sent By:\n";
-        $message .= "   Name: {$senderName}\n";
-        $message .= "   Email: {$senderEmail}\n\n";
         $message .= "📊 Event Details\n\n";
         $message .= "📍 Event Name: {$market->eventName}\n";
         $message .= "🏢 Market Name: {$market->marketName}\n\n";
         $message .= implode("\n", $labelLines);
+        $message .= "\n\n👤 Sent By: {$senderName}";
 
         // Get Telegram bot token and chat ID from config
         $botToken = config('services.telegram.bot_token');
