@@ -778,7 +778,20 @@ class RiskController extends Controller
             if ($this->isLabelChecked($label)) {
                 $labelName = strtoupper($key);
                 $checkerName = is_array($label) && isset($label['checker_name']) ? $label['checker_name'] : 'N/A';
-                $chorId = is_array($label) && isset($label['chor_id']) && !empty($label['chor_id']) && strtoupper($label['chor_id']) !== 'NULL' ? $label['chor_id'] : 'N/A';
+                
+                // Handle Chor ID - show "NULL" if stored as "NULL", otherwise show value or "N/A"
+                $chorId = 'N/A';
+                if (is_array($label) && isset($label['chor_id'])) {
+                    $chorIdValue = $label['chor_id'];
+                    if (!empty($chorIdValue)) {
+                        if (strtoupper($chorIdValue) === 'NULL') {
+                            $chorId = 'NULL';
+                        } else {
+                            $chorId = $chorIdValue;
+                        }
+                    }
+                }
+                
                 $remark = is_array($label) && isset($label['remark']) && !empty($label['remark']) ? $label['remark'] : 'N/A';
                 
                 $labelLines[] = "🏷 Label: {$labelName}";
