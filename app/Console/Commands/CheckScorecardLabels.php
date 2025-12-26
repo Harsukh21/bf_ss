@@ -21,7 +21,7 @@ class CheckScorecardLabels extends Command
      *
      * @var string
      */
-    protected $description = 'Check for events after 10 minutes of marketTime with missing scorecard labels and send Telegram notifications every 2 minutes';
+    protected $description = 'Check for events after 10 minutes of marketTime with missing scorecard labels and send Telegram notifications every 10 minutes';
 
     /**
      * Execute the console command.
@@ -93,26 +93,26 @@ class CheckScorecardLabels extends Command
             return 0;
         }
 
-        // Get list of events that were notified in the last 2 minutes
-        // We allow sending notifications every 2 minutes until all labels are checked
+        // Get list of events that were notified in the last 10 minutes
+        // We allow sending notifications every 10 minutes until all labels are checked
         $eventIds = collect($eventsToNotify)->pluck('event.exEventId')->toArray();
-        $twoMinutesAgo = $now->copy()->subMinutes(2);
+        $tenMinutesAgo = $now->copy()->subMinutes(10);
         
         $recentlyNotifiedEventIds = DB::table('telegram_notifications')
             ->where('notification_type', 'scorecard_labels')
             ->whereIn('exMarketId', $eventIds) // exMarketId stores exEventId for scorecard notifications
-            ->where('notified_at', '>=', $twoMinutesAgo->format('Y-m-d H:i:s'))
+            ->where('notified_at', '>=', $tenMinutesAgo->format('Y-m-d H:i:s'))
             ->pluck('exMarketId')
             ->toArray();
 
-        // Filter out events that were notified in the last 2 minutes
-        // This allows sending notifications every 2 minutes until all labels are checked
+        // Filter out events that were notified in the last 10 minutes
+        // This allows sending notifications every 10 minutes until all labels are checked
         $eventsToSend = array_filter($eventsToNotify, function($item) use ($recentlyNotifiedEventIds) {
             return !in_array($item['event']->exEventId, $recentlyNotifiedEventIds);
         });
 
         if (empty($eventsToSend)) {
-            $this->info('All events were notified in the last 2 minutes. Will check again in next run.');
+            $this->info('All events were notified in the last 10 minutes. Will check again in next run.');
             return 0;
         }
 
@@ -125,13 +125,13 @@ class CheckScorecardLabels extends Command
             $event = $item['event'];
             $missingLabels = $item['missingLabels'];
 
-            // Double-check if notified in the last 2 minutes to prevent race conditions
+            // Double-check if notified in the last 10 minutes to prevent race conditions
             // For scorecard notifications, exMarketId stores exEventId
-            $twoMinutesAgo = Carbon::now()->subMinutes(2);
+            $tenMinutesAgo = Carbon::now()->subMinutes(10);
             $recentlyNotified = DB::table('telegram_notifications')
                 ->where('exMarketId', $event->exEventId)
                 ->where('notification_type', 'scorecard_labels')
-                ->where('notified_at', '>=', $twoMinutesAgo->format('Y-m-d H:i:s'))
+                ->where('notified_at', '>=', $tenMinutesAgo->format('Y-m-d H:i:s'))
                 ->exists();
 
             if ($recentlyNotified) {
@@ -212,7 +212,7 @@ class CheckScorecardLabels extends Command
             "",
             "<b>Missing Labels:</b> " . $missingLabelsText,
             "",
-            "<b>⚠️ Please check and update the scorecard labels. This message will be sent every 2 minutes until all 4 labels are checked.</b>",
+            "<b>⚠️ Please check and update the scorecard labels. This message will be sent every 10 minutes until all 4 labels are checked.</b>",
         ];
 
         return implode("\n", $lines);

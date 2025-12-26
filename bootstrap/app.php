@@ -41,9 +41,9 @@ return Application::configure(basePath: dirname(__DIR__))
             ->withoutOverlapping()
             ->runInBackground();
         
-        // Schedule scorecard labels check to run every 2 minutes
+        // Schedule scorecard labels check to run every 10 minutes
         $schedule->command('scorecard:check-labels')
-            ->cron('*/2 * * * *')
+            ->everyTenMinutes()
             ->withoutOverlapping()
             ->runInBackground();
     })
