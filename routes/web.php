@@ -117,6 +117,7 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/export', [\App\Http\Controllers\RiskController::class, 'export'])->name('export');
         Route::post('/markets/{market}/labels', [\App\Http\Controllers\RiskController::class, 'updateLabels'])->name('markets.labels');
         Route::post('/markets/{market}/done', [\App\Http\Controllers\RiskController::class, 'markDone'])->name('markets.done');
+        Route::post('/markets/{market}/send-telegram', [\App\Http\Controllers\RiskController::class, 'sendTelegram'])->name('markets.send-telegram');
         });
         
         // Vol. Base Markets (placeholder for future functionality)

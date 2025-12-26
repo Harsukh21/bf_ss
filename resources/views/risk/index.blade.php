@@ -798,15 +798,27 @@
                                             Completed
                                         </span>
                                     @elseif($requiredLabelsChecked)
-                                        <button 
-                                            type="button"
-                                            class="js-complete-market-btn inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-md bg-green-600 hover:bg-green-700 text-white transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-                                            data-market-id="{{ $market->id }}"
-                                            data-market-name="{{ $market->eventName }} - {{ $market->marketName }}"
-                                            data-done-url="{{ route('risk.markets.done', $market->id) }}"
-                                        >
-                                            Complete
-                                        </button>
+                                        <div class="flex flex-col gap-2">
+                                            <button 
+                                                type="button"
+                                                class="js-send-telegram-btn inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                                                data-market-id="{{ $market->id }}"
+                                                data-market-name="{{ $market->eventName }}"
+                                                data-market-market-name="{{ $market->marketName }}"
+                                                data-telegram-url="{{ route('risk.markets.send-telegram', $market->id) }}"
+                                            >
+                                                Send to TG
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                class="js-complete-market-btn inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded-md bg-green-600 hover:bg-green-700 text-white transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+                                                data-market-id="{{ $market->id }}"
+                                                data-market-name="{{ $market->eventName }} - {{ $market->marketName }}"
+                                                data-done-url="{{ route('risk.markets.done', $market->id) }}"
+                                            >
+                                                Complete
+                                            </button>
+                                        </div>
                                     @else
                                         <span class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300">
                                             Pending
@@ -1034,6 +1046,18 @@
                                             Complete: {{ \Carbon\Carbon::parse($market->completeTime)->format('M d, Y h:i A') }}
                                         </span>
                                     @endif
+                                    <div class="mt-2">
+                                        <button 
+                                            type="button"
+                                            class="js-send-telegram-btn-completed inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                                            data-market-id="{{ $market->id }}"
+                                            data-market-name="{{ $market->eventName }}"
+                                            data-market-market-name="{{ $market->marketName }}"
+                                            data-telegram-url="{{ route('risk.markets.send-telegram', $market->id) }}"
+                                        >
+                                            Send to TG
+                                        </button>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex flex-col gap-2">
@@ -1950,21 +1974,42 @@
                 // Get done URL from existing button data or construct it
                 const doneUrl = existingButton?.dataset.doneUrl || `/risk/markets/${marketId}/done`;
                 
-                // Replace Pending badge with Complete button
-                existingBadge.outerHTML = `<button 
-                    type="button"
-                    class="js-complete-market-btn inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-md bg-green-600 hover:bg-green-700 text-white transition-colors"
-                    data-market-id="${marketId}"
-                    data-market-name="${marketNameFull}"
-                    data-done-url="${doneUrl}"
-                >
-                    Complete
-                </button>`;
+                // Get market names for Telegram button
+                const eventNameForTG = eventName;
+                const marketNameForTG = marketName;
+                
+                // Replace Pending badge with Send to TG and Complete buttons
+                existingBadge.outerHTML = `<div class="flex flex-col gap-2">
+                    <button 
+                        type="button"
+                        class="js-send-telegram-btn inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                        data-market-id="${marketId}"
+                        data-market-name="${eventNameForTG}"
+                        data-market-market-name="${marketNameForTG}"
+                        data-telegram-url="/risk/betlist-check/markets/${marketId}/send-telegram"
+                    >
+                        Send to TG
+                    </button>
+                    <button 
+                        type="button"
+                        class="js-complete-market-btn inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded-md bg-green-600 hover:bg-green-700 text-white transition-colors"
+                        data-market-id="${marketId}"
+                        data-market-name="${marketNameFull}"
+                        data-done-url="${doneUrl}"
+                    >
+                        Complete
+                    </button>
+                </div>`;
             }
         } else {
-            // Show Pending badge if Complete button exists
+            // Show Pending badge if buttons exist
+            const existingButtonsContainer = actionCell.querySelector('.flex.flex-col');
             const existingButton = actionCell.querySelector('.js-complete-market-btn');
-            if (existingButton) {
+            if (existingButtonsContainer) {
+                existingButtonsContainer.outerHTML = `<span class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300">
+                    Pending
+                </span>`;
+            } else if (existingButton) {
                 existingButton.outerHTML = `<span class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300">
                     Pending
                 </span>`;
@@ -2162,6 +2207,49 @@
         }
     }
     
+    
+    // Add click handler for Send to Telegram buttons (using event delegation)
+    document.addEventListener('click', function(e) {
+        const button = e.target.closest('.js-send-telegram-btn, .js-send-telegram-btn-completed');
+        if (!button) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const marketId = button.dataset.marketId;
+        const telegramUrl = button.dataset.telegramUrl;
+        
+        // Disable button to prevent multiple clicks
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = 'Sending...';
+        
+        // Send to Telegram
+        fetch(telegramUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showRiskToast('Notification sent to Telegram successfully', 'success');
+            } else {
+                showRiskToast(data.message || 'Failed to send notification', 'error');
+                button.disabled = false;
+                button.textContent = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error sending to Telegram:', error);
+            showRiskToast('Failed to send notification', 'error');
+            button.disabled = false;
+            button.textContent = originalText;
+        });
+    });
     
     // Add click handler for Complete buttons (using event delegation)
     document.addEventListener('click', function(e) {

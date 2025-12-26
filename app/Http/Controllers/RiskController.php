@@ -745,6 +745,114 @@ class RiskController extends Controller
         ]);
     }
 
+    public function sendTelegram(Request $request, int $marketId)
+    {
+        $market = DB::table('market_lists')->where('id', $marketId)->first();
+
+        if (!$market) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Market not found.',
+            ], 404);
+        }
+
+        $labels = $this->normalizeLabels(json_decode($market->labels ?? '{}', true));
+        $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
+        
+        // Check if all required labels are checked
+        $allRequiredChecked = collect($requiredLabelKeys)->every(function($key) use ($labels) {
+            return $this->isLabelChecked($labels[$key] ?? false);
+        });
+
+        if (!$allRequiredChecked) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please select all required labels (4X, B2C, B2B, USDT) before sending to Telegram.',
+            ], 422);
+        }
+
+        // Build message with label information
+        $labelLines = [];
+        foreach ($requiredLabelKeys as $key) {
+            $label = $labels[$key] ?? false;
+            if ($this->isLabelChecked($label)) {
+                $labelName = strtoupper($key);
+                $checkerName = is_array($label) && isset($label['checker_name']) ? $label['checker_name'] : 'N/A';
+                $chorId = is_array($label) && isset($label['chor_id']) && !empty($label['chor_id']) && strtoupper($label['chor_id']) !== 'NULL' ? $label['chor_id'] : 'N/A';
+                $remark = is_array($label) && isset($label['remark']) && !empty($label['remark']) ? $label['remark'] : 'N/A';
+                
+                $labelLines[] = "🏷 Label: {$labelName}";
+                $labelLines[] = "👤Checker: {$checkerName}";
+                $labelLines[] = "🆔 Chor ID: {$chorId}";
+                $labelLines[] = "🗒 Remark: {$remark}";
+                $labelLines[] = ""; // Empty line between labels
+            }
+        }
+        
+        // Remove last empty line
+        if (end($labelLines) === "") {
+            array_pop($labelLines);
+        }
+
+        $message = "🚨🚨🚨 Fraudulent Activity Notification 🚨🚨🚨\n\n";
+        $message .= "📊 Event Details\n\n";
+        $message .= "📍 Event Name: {$market->eventName}\n";
+        $message .= "🏢 Market Name: {$market->marketName}\n\n";
+        $message .= implode("\n", $labelLines);
+
+        // Get Telegram bot token and chat ID from config
+        $botToken = config('services.telegram.bot_token');
+        $chatId = config('services.telegram.froud_chat_id');
+
+        if (empty($botToken) || empty($chatId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Telegram bot configuration is missing. Please check your .env file.',
+            ], 500);
+        }
+
+        // Send message to Telegram
+        $telegramUrl = "https://api.telegram.org/bot{$botToken}/sendMessage";
+        
+        $response = \Illuminate\Support\Facades\Http::post($telegramUrl, [
+            'chat_id' => $chatId,
+            'text' => $message,
+        ]);
+
+        if ($response->successful()) {
+            // Log to system_logs
+            try {
+                $user = auth()->user();
+                DB::table('system_logs')->insert([
+                    'user_id' => $user->id ?? null,
+                    'action' => 'telegram_fraud_notification_sent',
+                    'description' => "Fraudulent activity notification sent to Telegram for market '{$market->marketName}' (Event: {$market->eventName}) by " . ($user->name ?? 'System'),
+                    'exEventId' => $market->exEventId ?? null,
+                    'label_name' => null,
+                    'old_value' => null,
+                    'new_value' => 'telegram_sent',
+                    'event_name' => $market->eventName ?? 'N/A',
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to log Telegram notification to system_logs: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification sent to Telegram successfully.',
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send notification to Telegram. Please try again.',
+            ], 500);
+        }
+    }
+
     private function normalizeLabels($labels): array
     {
         $default = collect($this->getLabelKeys())
