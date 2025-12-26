@@ -89,7 +89,8 @@ class MarketController extends Controller
         // Apply optimized filters with raw DB queries
         $this->applyFilters($query, $request);
 
-        $hasCustomDateFilter = $request->boolean('date_from_enabled') || $request->boolean('date_to_enabled');
+        // Check if date fields are filled (not just enabled flags) - this allows filtering when dates are provided in URL
+        $hasCustomDateFilter = $request->boolean('date_from_enabled') || $request->boolean('date_to_enabled') || $request->filled('date_from') || $request->filled('date_to');
         $isRecentlyAdded = $request->boolean('recently_added');
 
         if (!$hasCustomDateFilter && !$isRecentlyAdded) {
@@ -338,11 +339,24 @@ class MarketController extends Controller
         $dateFilters = $this->resolveMarketDateFilters($request, $isRecentlyAdded);
 
         if ($dateFilters['start'] && $dateFilters['end']) {
-            $query->whereBetween($dateFilters['column'], [$dateFilters['start'], $dateFilters['end']]);
+            $startDate = Carbon::parse($dateFilters['start'])->format('Y-m-d');
+            $endDate = Carbon::parse($dateFilters['end'])->format('Y-m-d');
+            
+            if ($startDate === $endDate) {
+                // Same day - use whereDate for accurate date-only comparison
+                $query->whereDate($dateFilters['column'], $startDate);
+            } else {
+                // Different days - use whereBetween with full datetime range
+                $query->whereBetween($dateFilters['column'], [$dateFilters['start'], $dateFilters['end']]);
+            }
         } elseif ($dateFilters['start']) {
-            $query->where($dateFilters['column'], '>=', $dateFilters['start']);
+            $startDate = Carbon::parse($dateFilters['start'])->format('Y-m-d');
+            $quotedColumn = $this->quoteColumn($dateFilters['column']);
+            $query->whereRaw("DATE({$quotedColumn}) >= ?", [$startDate]);
         } elseif ($dateFilters['end']) {
-            $query->where($dateFilters['column'], '<=', $dateFilters['end']);
+            $endDate = Carbon::parse($dateFilters['end'])->format('Y-m-d');
+            $quotedColumn = $this->quoteColumn($dateFilters['column']);
+            $query->whereRaw("DATE({$quotedColumn}) <= ?", [$endDate]);
         }
 
         // Search filter (includes Event Name, Market Name, Exch Event ID, and Exch Market ID)
@@ -456,16 +470,29 @@ class MarketController extends Controller
 
         $dateFilters = $this->resolveMarketDateFilters($request, $isRecentlyAdded);
         $quotedColumn = $this->quoteColumn($dateFilters['column']);
+        
+        // Use DATE() function for date-only comparison when both start and end are on the same day
+        // This handles timestamp without timezone columns correctly
         if ($dateFilters['start'] && $dateFilters['end']) {
-            $conditions[] = "{$quotedColumn} BETWEEN ? AND ?";
-            $bindings[] = $dateFilters['start'];
-            $bindings[] = $dateFilters['end'];
+            $startDate = Carbon::parse($dateFilters['start'])->format('Y-m-d');
+            $endDate = Carbon::parse($dateFilters['end'])->format('Y-m-d');
+            
+            if ($startDate === $endDate) {
+                // Same day - use DATE() function for accurate comparison
+                $conditions[] = "DATE({$quotedColumn}) = ?";
+                $bindings[] = $startDate;
+            } else {
+                // Different days - use BETWEEN with full datetime range
+                $conditions[] = "{$quotedColumn} BETWEEN ? AND ?";
+                $bindings[] = $dateFilters['start'];
+                $bindings[] = $dateFilters['end'];
+            }
         } elseif ($dateFilters['start']) {
-            $conditions[] = "{$quotedColumn} >= ?";
-            $bindings[] = $dateFilters['start'];
+            $conditions[] = "DATE({$quotedColumn}) >= ?";
+            $bindings[] = Carbon::parse($dateFilters['start'])->format('Y-m-d');
         } elseif ($dateFilters['end']) {
-            $conditions[] = "{$quotedColumn} <= ?";
-            $bindings[] = $dateFilters['end'];
+            $conditions[] = "DATE({$quotedColumn}) <= ?";
+            $bindings[] = Carbon::parse($dateFilters['end'])->format('Y-m-d');
         }
 
         if ($request->filled('search')) {
@@ -490,8 +517,9 @@ class MarketController extends Controller
     private function resolveMarketDateFilters(Request $request, bool $isRecentlyAdded): array
     {
         $timezone = config('app.timezone', 'UTC');
-        $dateFromEnabled = $request->boolean('date_from_enabled');
-        $dateToEnabled = $request->boolean('date_to_enabled');
+        // Check if date fields are filled (not just enabled flags) - this allows filtering when dates are provided in URL
+        $dateFromEnabled = $request->boolean('date_from_enabled') || $request->filled('date_from');
+        $dateToEnabled = $request->boolean('date_to_enabled') || $request->filled('date_to');
         $timeFromEnabled = $request->boolean('time_from_enabled');
         $timeToEnabled = $request->boolean('time_to_enabled');
 
@@ -545,7 +573,9 @@ class MarketController extends Controller
             $endDateTime = $startDateTime->copy()->endOfDay();
         }
 
-        $columnName = $isRecentlyAdded ? 'created_at' : 'marketTime';
+        // Always use marketTime column for date filtering, regardless of recently_added flag
+        // The recently_added flag only affects which markets are shown, not which date column to filter on
+        $columnName = 'marketTime';
         
         return [
             'start' => $startDateTime ? $startDateTime->format('Y-m-d H:i:s') : null,
