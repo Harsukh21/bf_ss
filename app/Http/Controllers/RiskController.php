@@ -715,6 +715,7 @@ class RiskController extends Controller
                 'completed_by_name' => $user->name,
                 'completed_by_email' => $user->email,
                 'completed_at' => now(),
+                'completeTime' => now(), // Set completeTime for scheduled notification
                 'updated_at' => now(),
             ]);
 

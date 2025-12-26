@@ -29,6 +29,12 @@ return Application::configure(basePath: dirname(__DIR__))
             ->withoutOverlapping()
             ->runInBackground();
         
+        // Schedule completed markets check to run every minute
+        $schedule->command('markets:check-completed')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->runInBackground();
+        
         // Schedule in-play market check to run every minute
         $schedule->command('markets:check-inplay')
             ->everyMinute()

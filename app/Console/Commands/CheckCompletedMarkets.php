@@ -8,52 +8,64 @@ use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use App\Services\TelegramService;
 
-class CheckInPlayMarkets extends Command
+class CheckCompletedMarkets extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'markets:check-inplay';
+    protected $signature = 'markets:check-completed';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Check for markets that turned in-play and send Telegram notifications';
+    protected $description = 'Check for markets completed 10 minutes ago and send Telegram notifications';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $this->info('Checking for markets that turned in-play...');
+        $this->info('Checking for markets completed 10 minutes ago...');
 
-        // Get ALL markets with status = 3 (INPLAY) 
-        // Only check markets where marketName is "Match Odds" or "Moneyline"
-        // We'll filter out already-notified markets using database table for reliable duplicate prevention
+        // Calculate time range: markets completed exactly 10 minutes ago (with 1 minute window)
+        $now = Carbon::now();
+        $tenMinutesAgo = $now->copy()->subMinutes(10);
+        $elevenMinutesAgo = $now->copy()->subMinutes(11);
         
-        $allInPlayMarkets = DB::table('market_lists')
-            ->where('status', 3) // INPLAY status
-            ->whereIn('marketName', ['Match Odds', 'Moneyline']) // Only Match Odds and Moneyline markets
-            ->select('id', 'exMarketId', 'exEventId', 'eventName', 'marketName', 'type', 'marketTime', 'sportName', 'updated_at', 'created_at')
+        // Get markets that were completed 10 minutes ago (between 10-11 minutes ago)
+        $completedMarkets = DB::table('market_lists')
+            ->where('is_done', true)
+            ->whereNotNull('completeTime')
+            ->whereBetween('completeTime', [
+                $elevenMinutesAgo->format('Y-m-d H:i:s'),
+                $tenMinutesAgo->format('Y-m-d H:i:s')
+            ])
+            ->select('id', 'exMarketId', 'exEventId', 'eventName', 'marketName', 'sportName', 'tournamentsName', 'completeTime', 'status')
             ->get();
         
+        if ($completedMarkets->isEmpty()) {
+            $this->info('No markets completed 10 minutes ago found.');
+            return 0;
+        }
+
         // Get list of already notified market IDs from database
         $notifiedMarketIds = DB::table('telegram_notifications')
-            ->whereIn('exMarketId', $allInPlayMarkets->pluck('exMarketId')->toArray())
+            ->where('notification_type', 'completed')
+            ->whereIn('exMarketId', $completedMarkets->pluck('exMarketId')->toArray())
             ->pluck('exMarketId')
             ->toArray();
         
         // Filter out markets that have already been notified
-        $inPlayMarkets = $allInPlayMarkets->filter(function($market) use ($notifiedMarketIds) {
+        $marketsToNotify = $completedMarkets->filter(function($market) use ($notifiedMarketIds) {
             return !in_array($market->exMarketId, $notifiedMarketIds);
         });
 
-        if ($inPlayMarkets->isEmpty()) {
-            $this->info('No new in-play markets found.');
+        if ($marketsToNotify->isEmpty()) {
+            $this->info('All markets have already been notified.');
             return 0;
         }
 
@@ -62,10 +74,11 @@ class CheckInPlayMarkets extends Command
         $failedCount = 0;
         $skippedCount = 0;
 
-        foreach ($inPlayMarkets as $market) {
+        foreach ($marketsToNotify as $market) {
             // Double-check in database to prevent race conditions
             $alreadyNotified = DB::table('telegram_notifications')
                 ->where('exMarketId', $market->exMarketId)
+                ->where('notification_type', 'completed')
                 ->exists();
             
             if ($alreadyNotified) {
@@ -73,16 +86,16 @@ class CheckInPlayMarkets extends Command
                 continue; // Skip if already notified
             }
 
-            // Format the date with bullet separator
-            $marketDate = $market->marketTime 
-                ? Carbon::parse($market->marketTime)->format('M d, Y • h:i A')
-                : Carbon::parse($market->updated_at)->format('M d, Y • h:i A');
+            // Format the completion date
+            $completionDate = $market->completeTime 
+                ? Carbon::parse($market->completeTime)->format('M d, Y • h:i A')
+                : Carbon::now()->format('M d, Y • h:i A');
 
             // Format Telegram message
-            $message = $this->formatInPlayMessage($market, $marketDate);
+            $message = $this->formatCompletedMessage($market, $completionDate);
 
-            // Send Telegram notification
-            $success = $telegramService->sendMessage($message);
+            // Send Telegram notification to TELEGRAM_CHAT_ID (not FROUD)
+            $success = $telegramService->sendMessage($message, config('services.telegram.chat_id'));
 
             if ($success) {
                 // Mark as notified in database (permanent record to prevent duplicates)
@@ -92,14 +105,14 @@ class CheckInPlayMarkets extends Command
                         'exEventId' => $market->exEventId,
                         'eventName' => $market->eventName,
                         'marketName' => $market->marketName,
-                        'notification_type' => 'inplay',
+                        'notification_type' => 'completed',
                         'notified_at' => now(),
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
                     
                     // Also cache for faster future lookups
-                    $cacheKey = "inplay_notified_{$market->exMarketId}";
+                    $cacheKey = "completed_notified_{$market->exMarketId}";
                     Cache::put($cacheKey, true, now()->addHours(24));
                     
                     $notifiedCount++;
@@ -123,18 +136,18 @@ class CheckInPlayMarkets extends Command
     }
 
     /**
-     * Format the in-play notification message
+     * Format the completed market notification message
      *
      * @param object $market
      * @param string $date
      * @return string
      */
-    protected function formatInPlayMessage($market, string $date): string
+    protected function formatCompletedMessage($market, string $date): string
     {
-        // Use marketName directly (will be "Match Odds" or "Moneyline")
-        $marketName = $market->marketName ?? 'N/A';
         $eventName = $market->eventName ?? 'N/A';
+        $marketName = $market->marketName ?? 'N/A';
         $sport = $market->sportName ?? 'N/A';
+        $tournament = $market->tournamentsName ?? 'N/A';
         $exEventId = $market->exEventId ?? '';
         
         // Create clickable links for different platforms
@@ -143,9 +156,11 @@ class CheckInPlayMarkets extends Command
         $usdtLink = $exEventId ? "<a href=\"https://usdtplayer.com/sports/details/{$exEventId}\">USDT</a>" : 'USDT';
 
         $lines = [
-            "🟢🟢🟢 Event In-Play 🟢🟢🟢",
+            "🔴🔴🔴 Market Completed/Closed 🔴🔴🔴",
             "",
             "<b>Sport:</b> " . $sport,
+            "",
+            "<b>Tournament:</b> " . $tournament,
             "",
             "<b>Event:</b> " . $eventName,
             "",
@@ -153,11 +168,9 @@ class CheckInPlayMarkets extends Command
             "",
             "<b>Market:</b> " . $marketName,
             "",
-            "<b>Date:</b> " . $date,
+            "<b>Completed Date:</b> " . $date,
             "",
-            "<b>Status:</b> IN-PLAY 🔴🔥",
-            "",
-            "<b>🔍✅ Please check that SC has been added to all labels and that all rates are working correctly.</b>",
+            "<b>Status:</b> COMPLETED ✅",
         ];
 
         return implode("\n", $lines);
