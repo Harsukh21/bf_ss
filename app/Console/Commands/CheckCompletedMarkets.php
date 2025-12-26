@@ -148,7 +148,6 @@ class CheckCompletedMarkets extends Command
         $eventName = $market->eventName ?? 'N/A';
         $marketName = $market->marketName ?? 'N/A';
         $sport = $market->sportName ?? 'N/A';
-        $tournament = $market->tournamentsName ?? 'N/A';
         $exEventId = $market->exEventId ?? '';
         
         // Create clickable links for different platforms
@@ -157,21 +156,21 @@ class CheckCompletedMarkets extends Command
         $usdtLink = $exEventId ? "<a href=\"https://usdtplayer.com/sports/details/{$exEventId}\">USDT</a>" : 'USDT';
 
         $lines = [
-            "🔴🔴🔴 Market Completed/Closed 🔴🔴🔴",
+            "<b>🔴🔴🔴 Market Completed/Closed 🔴🔴🔴</b>",
             "",
             "<b>Sport:</b> " . $sport,
             "",
-            "<b>Tournament:</b> " . $tournament,
-            "",
             "<b>Event:</b> " . $eventName,
             "",
-            " " . $trboLink . " || " . $fourXLink . " || " . $usdtLink . " ",
+            "<b> " . $trboLink . " || " . $fourXLink . " || " . $usdtLink . " </b>",
             "",
             "<b>Market:</b> " . $marketName,
             "",
             "<b>Completed Date:</b> " . $date,
             "",
             "<b>Status:</b> COMPLETED ✅",
+            "",
+            "<b>🔍✅ Please check that the events and markets are removed from the Exch.</b>",
         ];
 
         return implode("\n", $lines);
