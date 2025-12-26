@@ -40,6 +40,7 @@ return [
         'chat_id' => env('TELEGRAM_CHAT_ID'),
         'bot_username' => env('TELEGRAM_BOT_USERNAME'),
         'froud_chat_id' => env('TELEGRAM_BOT_FROUD'),
+        'sc_chat_id' => env('TELEGRAM_BOT_SC'),
     ],
 
 ];

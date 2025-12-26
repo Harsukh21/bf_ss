@@ -94,8 +94,9 @@ class CheckCompletedMarkets extends Command
             // Format Telegram message
             $message = $this->formatCompletedMessage($market, $completionDate);
 
-            // Send Telegram notification to TELEGRAM_CHAT_ID (not FROUD)
-            $success = $telegramService->sendMessage($message, config('services.telegram.chat_id'));
+            // Send Telegram notification to TELEGRAM_BOT_SC
+            $chatId = config('services.telegram.sc_chat_id');
+            $success = $telegramService->sendMessage($message, $chatId);
 
             if ($success) {
                 // Mark as notified in database (permanent record to prevent duplicates)
