@@ -40,6 +40,12 @@ return Application::configure(basePath: dirname(__DIR__))
             ->everyMinute()
             ->withoutOverlapping()
             ->runInBackground();
+        
+        // Schedule scorecard labels check to run every minute
+        $schedule->command('scorecard:check-labels')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->runInBackground();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
