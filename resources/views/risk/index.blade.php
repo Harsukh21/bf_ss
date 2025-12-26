@@ -129,16 +129,18 @@
 
     .confirm-toast {
         position: fixed;
-        top: 1.5rem;
-        right: 1.5rem;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.95);
         max-width: 420px;
+        width: 90%;
         background: #fff;
         border-radius: 0.75rem;
         padding: 1.25rem;
         box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
         opacity: 0;
-        transform: translateX(100%);
-        transition: opacity 0.3s ease, transform 0.3s ease;
+        visibility: hidden;
+        transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
         z-index: 2000;
         border-left: 4px solid #3b82f6;
     }
@@ -150,7 +152,90 @@
 
     .confirm-toast.show {
         opacity: 1;
-        transform: translateX(0);
+        visibility: visible;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    .confirm-toast-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        z-index: 1999;
+    }
+
+    .confirm-toast-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .webpin-toast {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.95);
+        max-width: 420px;
+        width: 90%;
+        background: #fff;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+        z-index: 2000;
+        border-left: 4px solid #10b981;
+    }
+
+    .dark .webpin-toast {
+        background: #1f2937;
+        border-left-color: #34d399;
+    }
+
+    .webpin-toast.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    .webpin-toast-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        z-index: 1999;
+    }
+
+    .webpin-toast-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .webpin-toast__input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .dark .webpin-toast__input {
+        background: #374151;
+        border-color: #4b5563;
+        color: #f3f4f6;
+    }
+
+    .webpin-toast__input:focus {
+        outline: none;
+        ring: 2px;
+        ring-color: #3b82f6;
+        border-color: #3b82f6;
     }
 
     .confirm-toast__title {
@@ -1324,12 +1409,25 @@
 <div id="riskToast" class="risk-toast"></div>
 
 <!-- Confirmation Toast Modal -->
+<div id="confirmToastOverlay" class="confirm-toast-overlay"></div>
 <div id="confirmToast" class="confirm-toast">
     <div class="confirm-toast__title">Confirm Action</div>
     <div class="confirm-toast__message" id="confirmToastMessage"></div>
     <div class="confirm-toast__actions">
         <button type="button" class="confirm-toast__btn confirm-toast__btn--cancel" id="confirmToastCancel">Cancel</button>
         <button type="button" class="confirm-toast__btn confirm-toast__btn--confirm" id="confirmToastConfirm">Confirm</button>
+    </div>
+</div>
+
+<!-- Web PIN Toast Modal -->
+<div id="webpinToastOverlay" class="webpin-toast-overlay"></div>
+<div id="webpinToast" class="webpin-toast">
+    <div class="confirm-toast__title">Enter Web PIN</div>
+    <div class="confirm-toast__message" id="webpinToastMessage"></div>
+    <input type="password" id="webpinToastInput" class="webpin-toast__input" placeholder="Enter your Web PIN..." autocomplete="off">
+    <div class="confirm-toast__actions">
+        <button type="button" class="confirm-toast__btn confirm-toast__btn--cancel" id="webpinToastCancel">Cancel</button>
+        <button type="button" class="confirm-toast__btn confirm-toast__btn--confirm" id="webpinToastConfirm">Submit</button>
     </div>
 </div>
 
@@ -1880,11 +1978,12 @@
     // Confirmation toast functions
     function showConfirmToast(message, onConfirm, onCancel) {
         const confirmToast = document.getElementById('confirmToast');
+        const confirmToastOverlay = document.getElementById('confirmToastOverlay');
         const confirmToastMessage = document.getElementById('confirmToastMessage');
         const confirmBtn = document.getElementById('confirmToastConfirm');
         const cancelBtn = document.getElementById('confirmToastCancel');
         
-        if (!confirmToast || !confirmToastMessage || !confirmBtn || !cancelBtn) return;
+        if (!confirmToast || !confirmToastOverlay || !confirmToastMessage || !confirmBtn || !cancelBtn) return;
         
         confirmToastMessage.textContent = message;
         
@@ -1905,18 +2004,142 @@
             if (onCancel) onCancel();
         });
         
-        // Show toast
+        // Close on overlay click (but not on modal content click)
+        const overlayClickHandler = (e) => {
+            if (e.target === confirmToastOverlay) {
+                hideConfirmToast();
+                if (onCancel) onCancel();
+            }
+        };
+        confirmToastOverlay.addEventListener('click', overlayClickHandler);
+        
+        // Prevent clicks inside modal from closing it
+        confirmToast.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        
+        // Show overlay and toast
         setTimeout(() => {
+            confirmToastOverlay.classList.add('show');
             confirmToast.classList.add('show');
         }, 10);
     }
     
     function hideConfirmToast() {
         const confirmToast = document.getElementById('confirmToast');
+        const confirmToastOverlay = document.getElementById('confirmToastOverlay');
         if (confirmToast) {
             confirmToast.classList.remove('show');
         }
+        if (confirmToastOverlay) {
+            confirmToastOverlay.classList.remove('show');
+        }
     }
+    
+    // Web PIN toast functions
+    let webpinEnterHandler = null;
+    let webpinOverlayHandler = null;
+    
+    function showWebPinToast(message, onConfirm, onCancel) {
+        const webpinToast = document.getElementById('webpinToast');
+        const webpinToastOverlay = document.getElementById('webpinToastOverlay');
+        const webpinToastMessage = document.getElementById('webpinToastMessage');
+        const webpinInput = document.getElementById('webpinToastInput');
+        const confirmBtn = document.getElementById('webpinToastConfirm');
+        const cancelBtn = document.getElementById('webpinToastCancel');
+        
+        if (!webpinToast || !webpinToastOverlay || !webpinToastMessage || !webpinInput || !confirmBtn || !cancelBtn) return;
+        
+        webpinToastMessage.textContent = message;
+        webpinInput.value = '';
+        
+        // Remove existing event listeners by cloning and replacing
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        
+        // Remove old handlers if they exist
+        if (webpinEnterHandler) {
+            webpinInput.removeEventListener('keydown', webpinEnterHandler);
+        }
+        if (webpinOverlayHandler) {
+            webpinToastOverlay.removeEventListener('click', webpinOverlayHandler);
+        }
+        
+        // Add new event listeners
+        const handleConfirm = () => {
+            const webPin = webpinInput.value.trim();
+            if (!webPin) {
+                showRiskToast('Web PIN is required', 'error');
+                webpinInput.focus();
+                return;
+            }
+            hideWebPinToast();
+            if (onConfirm) onConfirm(webPin);
+        };
+        
+        newConfirmBtn.addEventListener('click', handleConfirm);
+        
+        newCancelBtn.addEventListener('click', () => {
+            hideWebPinToast();
+            if (onCancel) onCancel();
+        });
+        
+        // Handle Enter key
+        webpinEnterHandler = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleConfirm();
+            }
+        };
+        webpinInput.addEventListener('keydown', webpinEnterHandler);
+        
+        // Close on overlay click (but not on modal content click)
+        webpinOverlayHandler = (e) => {
+            if (e.target === webpinToastOverlay) {
+                hideWebPinToast();
+                if (onCancel) onCancel();
+            }
+        };
+        webpinToastOverlay.addEventListener('click', webpinOverlayHandler);
+        
+        // Prevent clicks inside modal from closing it
+        webpinToast.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        
+        // Show overlay and toast
+        setTimeout(() => {
+            webpinToastOverlay.classList.add('show');
+            webpinToast.classList.add('show');
+            webpinInput.focus();
+        }, 10);
+    }
+    
+    function hideWebPinToast() {
+        const webpinToast = document.getElementById('webpinToast');
+        const webpinToastOverlay = document.getElementById('webpinToastOverlay');
+        const webpinInput = document.getElementById('webpinToastInput');
+        
+        if (webpinToast) {
+            webpinToast.classList.remove('show');
+        }
+        if (webpinToastOverlay) {
+            webpinToastOverlay.classList.remove('show');
+        }
+        
+        // Clean up event listeners
+        if (webpinEnterHandler && webpinInput) {
+            webpinInput.removeEventListener('keydown', webpinEnterHandler);
+            webpinEnterHandler = null;
+        }
+        if (webpinOverlayHandler && webpinToastOverlay) {
+            webpinToastOverlay.removeEventListener('click', webpinOverlayHandler);
+            webpinOverlayHandler = null;
+        }
+    }
+    
     
     // Add click handler for Complete buttons (using event delegation)
     document.addEventListener('click', function(e) {
@@ -2002,38 +2225,46 @@
                 }
             }
             
-            // Only ask for Web PIN using a simple prompt
-            const webPin = prompt(`Enter your Web PIN to complete "${marketName}":`);
-            if (!webPin) {
-                return; // User cancelled
-            }
-            
-            // Mark as done with the data from labels
-            const markDoneResponse = await fetch(doneUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json',
+            // Show Web PIN toast modal instead of browser prompt
+            showWebPinToast(
+                `Enter your Web PIN to complete "${marketName}":`,
+                async (webPin) => {
+                    // Mark as done with the data from labels
+                    try {
+                        const markDoneResponse = await fetch(doneUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                name: name,
+                                chor_id: chorId,
+                                remark: remark,
+                                web_pin: webPin
+                            }),
+                        });
+                        
+                        const markDoneData = await markDoneResponse.json();
+                        if (markDoneData.success) {
+                            markMarketAsDone(marketId);
+                            showRiskToast('Market marked as done', 'success');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            showRiskToast(markDoneData.message || 'Unable to mark as done', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error marking market as done:', error);
+                        showRiskToast('Unable to mark as done', 'error');
+                    }
                 },
-                body: JSON.stringify({
-                    name: name,
-                    chor_id: chorId,
-                    remark: remark,
-                    web_pin: webPin
-                }),
-            });
-            
-            const markDoneData = await markDoneResponse.json();
-            if (markDoneData.success) {
-                markMarketAsDone(marketId);
-                showRiskToast('Market marked as done', 'success');
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            } else {
-                showRiskToast(markDoneData.message || 'Unable to mark as done', 'error');
-            }
+                () => {
+                    // User cancelled - do nothing
+                }
+            );
         } catch (error) {
             console.error('Error marking market as done:', error);
             showRiskToast('Unable to mark as done', 'error');
