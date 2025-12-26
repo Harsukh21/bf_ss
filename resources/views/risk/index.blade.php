@@ -127,6 +127,97 @@
         background: #dc2626;
     }
 
+    .confirm-toast {
+        position: fixed;
+        top: 1.5rem;
+        right: 1.5rem;
+        max-width: 420px;
+        background: #fff;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
+        opacity: 0;
+        transform: translateX(100%);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        z-index: 2000;
+        border-left: 4px solid #3b82f6;
+    }
+
+    .dark .confirm-toast {
+        background: #1f2937;
+        border-left-color: #60a5fa;
+    }
+
+    .confirm-toast.show {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .confirm-toast__title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.75rem;
+    }
+
+    .dark .confirm-toast__title {
+        color: #f3f4f6;
+    }
+
+    .confirm-toast__message {
+        font-size: 0.875rem;
+        color: #4b5563;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+
+    .dark .confirm-toast__message {
+        color: #d1d5db;
+    }
+
+    .confirm-toast__actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+    }
+
+    .confirm-toast__btn {
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .confirm-toast__btn--cancel {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    .confirm-toast__btn--cancel:hover {
+        background: #e5e7eb;
+    }
+
+    .dark .confirm-toast__btn--cancel {
+        background: #374151;
+        color: #d1d5db;
+    }
+
+    .dark .confirm-toast__btn--cancel:hover {
+        background: #4b5563;
+    }
+
+    .confirm-toast__btn--confirm {
+        background: #3b82f6;
+        color: #fff;
+    }
+
+    .confirm-toast__btn--confirm:hover {
+        background: #2563eb;
+    }
+
     .filter-field-group {
         background-color: #f9fafb;
         border: 1px solid #e5e7eb;
@@ -614,27 +705,28 @@
                                     return $isLabelChecked($labelStates[$key] ?? false);
                                 });
                                 $isDone = (bool) $market->is_done;
-                                $buttonDisabled = !$requiredLabelsChecked || $isDone;
-                                
-                                // Determine badge text and color
-                                if ($isDone) {
-                                    $badgeText = 'Completed';
-                                    $badgeClass = 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
-                                } elseif ($requiredLabelsChecked) {
-                                    $badgeText = 'Checked';
-                                    $badgeClass = 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300';
-                                } else {
-                                    $badgeText = 'Pending';
-                                    $badgeClass = 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300';
-                                }
                             @endphp
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" data-market-row="{{ $market->id }}">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <span
-                                        class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full {{ $badgeClass }}"
-                                    >
-                                        {{ $badgeText }}
-                                    </span>
+                                    @if($isDone)
+                                        <span class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                                            Completed
+                                        </span>
+                                    @elseif($requiredLabelsChecked)
+                                        <button 
+                                            type="button"
+                                            class="js-complete-market-btn inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-md bg-green-600 hover:bg-green-700 text-white transition-colors disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+                                            data-market-id="{{ $market->id }}"
+                                            data-market-name="{{ $market->eventName }} - {{ $market->marketName }}"
+                                            data-done-url="{{ route('risk.markets.done', $market->id) }}"
+                                        >
+                                            Complete
+                                        </button>
+                                    @else
+                                        <span class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300">
+                                            Pending
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 align-top">
                                     <div class="font-semibold text-gray-900 dark:text-gray-100">{{ $market->eventName }}</div>
@@ -1231,6 +1323,16 @@
 
 <div id="riskToast" class="risk-toast"></div>
 
+<!-- Confirmation Toast Modal -->
+<div id="confirmToast" class="confirm-toast">
+    <div class="confirm-toast__title">Confirm Action</div>
+    <div class="confirm-toast__message" id="confirmToastMessage"></div>
+    <div class="confirm-toast__actions">
+        <button type="button" class="confirm-toast__btn confirm-toast__btn--cancel" id="confirmToastCancel">Cancel</button>
+        <button type="button" class="confirm-toast__btn confirm-toast__btn--confirm" id="confirmToastConfirm">Confirm</button>
+    </div>
+</div>
+
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
@@ -1618,6 +1720,12 @@
                 if (data.success) {
                     showRiskToast('Checkbox checked successfully', 'success');
                     closeRemarkModal();
+                    
+                    // Update Complete button state if all checkboxes are now checked
+                    if (data.all_required_checked && activeMarketId) {
+                        updateDoneButtonState(activeMarketId, data.labels);
+                    }
+                    
                     // Refresh page to show updated checkbox state
                     setTimeout(() => {
                         window.location.reload();
@@ -1691,40 +1799,149 @@
         };
         
         const allRequiredChecked = requiredLabelKeys.every(key => isLabelChecked(labels[key]));
-        // Find the badge span in the same row
+        // Find the action cell in the same row
         const row = document.querySelector(`tr[data-market-row="${marketId}"]`);
         if (!row) return;
         
-        const badge = row.querySelector('td:first-child span');
-        if (!badge) return;
+        const actionCell = row.querySelector('td:first-child');
+        if (!actionCell) return;
 
-        // Update badge based on checkbox state
+        // Check if market is already done by looking for Completed text
+        const actionText = actionCell.textContent.trim();
+        const isDone = actionText.includes('Completed');
+        
+        if (isDone) {
+            // Already completed, don't change anything
+            return;
+        }
+
+        // Update button/badge based on checkbox state
         if (allRequiredChecked) {
-            badge.textContent = 'Checked';
-            badge.classList.remove('bg-yellow-100', 'text-yellow-700', 'dark:bg-yellow-900/20', 'dark:text-yellow-300', 'bg-gray-200', 'text-gray-600', 'dark:bg-gray-700', 'dark:text-gray-300');
-            badge.classList.add('bg-green-100', 'text-green-700', 'dark:bg-green-900/20', 'dark:text-green-300');
+            // Show Complete button if not already shown
+            const existingButton = actionCell.querySelector('.js-complete-market-btn');
+            const existingBadge = actionCell.querySelector('span');
+            
+            if (!existingButton && existingBadge && existingBadge.textContent.trim() === 'Pending') {
+                // Get market name from row
+                const eventName = row.querySelector('td:nth-child(2) .font-semibold')?.textContent?.trim() || 'Market';
+                const marketName = row.querySelector('td:nth-child(2) .font-medium')?.textContent?.trim() || '';
+                const marketNameFull = eventName + (marketName ? ' - ' + marketName : '');
+                
+                // Get done URL from existing button data or construct it
+                const doneUrl = existingButton?.dataset.doneUrl || `/risk/markets/${marketId}/done`;
+                
+                // Replace Pending badge with Complete button
+                existingBadge.outerHTML = `<button 
+                    type="button"
+                    class="js-complete-market-btn inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-md bg-green-600 hover:bg-green-700 text-white transition-colors"
+                    data-market-id="${marketId}"
+                    data-market-name="${marketNameFull}"
+                    data-done-url="${doneUrl}"
+                >
+                    Complete
+                </button>`;
+            }
         } else {
-            badge.textContent = 'Pending';
-            badge.classList.remove('bg-green-100', 'text-green-700', 'dark:bg-green-900/20', 'dark:text-green-300', 'bg-gray-200', 'text-gray-600', 'dark:bg-gray-700', 'dark:text-gray-300');
-            badge.classList.add('bg-yellow-100', 'text-yellow-700', 'dark:bg-yellow-900/20', 'dark:text-yellow-300');
+            // Show Pending badge if Complete button exists
+            const existingButton = actionCell.querySelector('.js-complete-market-btn');
+            if (existingButton) {
+                existingButton.outerHTML = `<span class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300">
+                    Pending
+                </span>`;
+            }
         }
     }
 
     function markMarketAsDone(marketId) {
-        // Find the badge span in the same row
+        // Find the action cell in the same row
         const row = document.querySelector(`tr[data-market-row="${marketId}"]`);
         if (!row) return;
         
-        const badge = row.querySelector('td:first-child span');
-        if (!badge) return;
+        const actionCell = row.querySelector('td:first-child');
+        if (!actionCell) return;
 
-        badge.textContent = 'Completed';
-        badge.classList.remove('bg-yellow-100', 'text-yellow-700', 'dark:bg-yellow-900/20', 'dark:text-yellow-300', 'bg-green-100', 'text-green-700', 'dark:bg-green-900/20', 'dark:text-green-300');
-        badge.classList.add('bg-gray-200', 'text-gray-600', 'dark:bg-gray-700', 'dark:text-gray-300');
+        // Replace button/badge with Completed badge
+        const existingButton = actionCell.querySelector('.js-complete-market-btn');
+        const existingBadge = actionCell.querySelector('span');
+        
+        if (existingButton) {
+            existingButton.outerHTML = `<span class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                Completed
+            </span>`;
+        } else if (existingBadge) {
+            existingBadge.textContent = 'Completed';
+            existingBadge.className = 'inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
+        }
 
         const checkboxes = document.querySelectorAll(`.market-label-checkbox[data-market-id="${marketId}"]`);
         checkboxes.forEach(box => box.disabled = true);
     }
+    
+    // Confirmation toast functions
+    function showConfirmToast(message, onConfirm, onCancel) {
+        const confirmToast = document.getElementById('confirmToast');
+        const confirmToastMessage = document.getElementById('confirmToastMessage');
+        const confirmBtn = document.getElementById('confirmToastConfirm');
+        const cancelBtn = document.getElementById('confirmToastCancel');
+        
+        if (!confirmToast || !confirmToastMessage || !confirmBtn || !cancelBtn) return;
+        
+        confirmToastMessage.textContent = message;
+        
+        // Remove existing event listeners by cloning and replacing
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        
+        // Add new event listeners
+        newConfirmBtn.addEventListener('click', () => {
+            hideConfirmToast();
+            if (onConfirm) onConfirm();
+        });
+        
+        newCancelBtn.addEventListener('click', () => {
+            hideConfirmToast();
+            if (onCancel) onCancel();
+        });
+        
+        // Show toast
+        setTimeout(() => {
+            confirmToast.classList.add('show');
+        }, 10);
+    }
+    
+    function hideConfirmToast() {
+        const confirmToast = document.getElementById('confirmToast');
+        if (confirmToast) {
+            confirmToast.classList.remove('show');
+        }
+    }
+    
+    // Add click handler for Complete buttons (using event delegation)
+    document.addEventListener('click', function(e) {
+        const button = e.target.closest('.js-complete-market-btn');
+        if (!button) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const marketId = button.dataset.marketId;
+        const marketName = button.dataset.marketName;
+        const doneUrl = button.dataset.doneUrl;
+        
+        // Show confirmation toast instead of browser confirm dialog
+        showConfirmToast(
+            `Are you sure you want to mark "${marketName}" as completed?\n\nThis will move the market to Completed Markets section.`,
+            () => {
+                // User confirmed - open the remark modal for final confirmation with details
+                openRemarkModal(marketId, marketName, doneUrl);
+            },
+            () => {
+                // User cancelled - do nothing
+            }
+        );
+    });
 
     function showRiskToast(message, type = 'success') {
         if (!toastElement) return;

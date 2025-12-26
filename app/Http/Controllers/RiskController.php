@@ -613,58 +613,18 @@ class RiskController extends Controller
             'updated_at' => now(),
         ];
 
-        // Always set is_done based on whether all required checkboxes are checked
-        // This ensures markets move between pending and completed lists correctly
-        $previousIsDone = $market->is_done ?? false;
-        if ($allRequiredChecked) {
-            $updateData['is_done'] = true;
-        } else {
-            $updateData['is_done'] = false;
-        }
+        // Don't automatically set is_done - user must click Complete button to mark as done
+        // This allows users to uncheck checkboxes even after all 4 are checked
+        // Only update labels, not is_done status
 
         DB::table('market_lists')
             ->where('id', $marketId)
             ->update($updateData);
 
-        // Log if market status changed (moved to/from completed) to system_logs table
-        if ($previousIsDone != $updateData['is_done']) {
-            $statusChange = $updateData['is_done'] ? 'moved to Completed Markets' : 'moved to Pending Markets';
-            $checkedLabels = [];
-            foreach ($labels as $key => $value) {
-                if ($isLabelChecked($value)) {
-                    $checkedLabels[$key] = is_array($value) ? ($value['checker_name'] ?? 'N/A') : 'checked';
-                }
-            }
-            
-            $checkedLabelsStr = implode(', ', array_map(function($key, $value) {
-                return strtoupper($key) . ': ' . (is_array($value) ? $value : 'checked');
-            }, array_keys($checkedLabels), $checkedLabels));
-            
-            try {
-                DB::table('system_logs')->insert([
-                    'user_id' => auth()->id(),
-                    'action' => 'market_status_changed',
-                    'description' => "Market '{$market->marketName}' (Event: {$market->eventName}) {$statusChange}. Previous status: " . ($previousIsDone ? 'completed' : 'pending') . ", New status: " . ($updateData['is_done'] ? 'completed' : 'pending') . ". Checked labels: {$checkedLabelsStr}",
-                    'exEventId' => $market->exEventId ?? null,
-                    'label_name' => null,
-                    'old_value' => $previousIsDone ? 'completed' : 'pending',
-                    'new_value' => $updateData['is_done'] ? 'completed' : 'pending',
-                    'event_name' => $market->eventName ?? 'N/A',
-                    'ip_address' => request()->ip(),
-                    'user_agent' => request()->userAgent(),
-                    'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-            } catch (\Exception $e) {
-                // Log error but don't fail the request
-                \Log::error('Failed to log market status change to system_logs: ' . $e->getMessage());
-            }
-        }
-
         return response()->json([
             'success' => true,
             'labels' => $labels,
-            'is_done' => $updateData['is_done'],
+            'is_done' => $market->is_done ?? false, // Return current status, don't change it
             'all_required_checked' => $allRequiredChecked,
         ]);
     }
