@@ -13,6 +13,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\GeneralSettingsController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ScriptController;
+use App\Http\Controllers\ManualUpdateController;
 
 // Welcome page
 Route::get('/', function () {
@@ -166,6 +167,13 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::delete('/{id}', [\App\Http\Controllers\NotificationController::class, 'destroy'])
             ->middleware('permission:delete-notifications')
             ->name('destroy');
+    });
+
+    // Manual Update markets
+    Route::prefix('manual-update')->name('manual-update.')->group(function () {
+        Route::get('/', [ManualUpdateController::class, 'index'])->name('index');
+        Route::get('/view/{exMarketId?}', [ManualUpdateController::class, 'view'])->name('view');
+        Route::post('/update', [ManualUpdateController::class, 'update'])->name('update');
     });
 
     // System Logs
