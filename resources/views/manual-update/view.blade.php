@@ -87,14 +87,7 @@
                 </select>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Winner Type</label>
-                <input type="text" name="winnerType" value="{{ old('winnerType', $market->winnerType) }}"
-                       class="mt-2 h-11 w-full rounded-md border border-gray-300 px-3 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-                       placeholder="settle or void">
-            </div>
-
-            <div class="md:col-span-2">
+            <div id="selectionNameField" class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Winner Selection Name</label>
                 <input type="text" name="selectionName" value="{{ old('selectionName', $market->selectionName) }}"
                        class="mt-2 h-11 w-full rounded-md border border-gray-300 px-3 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
@@ -111,4 +104,28 @@
         </form>
     </div>
 </div>
+
+@push('js')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const statusSelect = document.querySelector('select[name="status"]');
+        const selectionField = document.getElementById('selectionNameField');
+        const selectionInput = selectionField ? selectionField.querySelector('input[name="selectionName"]') : null;
+
+        if (!statusSelect || !selectionField || !selectionInput) return;
+
+        const updateSelectionField = () => {
+            const isSettled = statusSelect.value === '4';
+            selectionField.classList.toggle('hidden', !isSettled);
+            selectionInput.required = isSettled;
+            if (!isSettled) {
+                selectionInput.value = '';
+            }
+        };
+
+        updateSelectionField();
+        statusSelect.addEventListener('change', updateSelectionField);
+    });
+</script>
+@endpush
 @endsection

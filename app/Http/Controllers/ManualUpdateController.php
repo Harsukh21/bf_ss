@@ -116,8 +116,7 @@ class ManualUpdateController extends Controller
         $validated = $request->validate([
             'exMarketId' => ['required', 'string'],
             'status' => ['required', 'integer', 'between:1,6'],
-            'winnerType' => ['nullable', 'string', 'max:255'],
-            'selectionName' => ['nullable', 'string', 'max:255'],
+            'selectionName' => ['nullable', 'string', 'max:255', 'required_if:status,4'],
         ]);
 
         $exMarketId = trim($validated['exMarketId']);
@@ -139,12 +138,12 @@ class ManualUpdateController extends Controller
             'updated_at' => now(),
         ];
 
-        if ($request->filled('winnerType')) {
-            $updatePayload['winnerType'] = trim($validated['winnerType']);
-        }
-
-        if ($request->filled('selectionName')) {
+        if ($newStatus === 4) {
+            $updatePayload['winnerType'] = 'settle';
             $updatePayload['selectionName'] = trim($validated['selectionName']);
+        } elseif ($newStatus === 5) {
+            $updatePayload['winnerType'] = 'void';
+            $updatePayload['selectionName'] = null;
         }
 
         if (in_array($newStatus, [4, 5], true)) {
