@@ -48,7 +48,7 @@ class CheckScorecardLabels extends Command
             ->whereNotNull('events.marketTime')
             ->where('events.marketTime', '>=', $todayStart->format('Y-m-d H:i:s')) // Only check events from today onwards (ignore old events)
             ->where('events.marketTime', '<=', $tenMinutesAgo->format('Y-m-d H:i:s')) // marketTime was at least 10 minutes ago
-            ->whereNotNull('market_lists.completeTime') // Only check events where at least one market has completeTime not null
+            ->whereNotNull('events.completeTime') // Only check events where at least one market has completeTime not null
             ->select('events.id', 'events.exEventId', 'events.eventName', 'events.sportId', 'events.tournamentsName', 'events.marketTime', 'events.labels')
             ->distinct() // Avoid duplicate events if multiple markets have completeTime
             ->get();
