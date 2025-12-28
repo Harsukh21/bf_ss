@@ -32,21 +32,25 @@ class CheckScorecardLabels extends Command
 
         $now = Carbon::now();
         $tenMinutesAgo = $now->copy()->subMinutes(10);
-        // Only check events from today onwards (ignore old events)
+        // Only check events from today onwards (ignore old events with marketTime before today)
         $todayStart = $now->copy()->startOfDay();
 
         // Get events where:
         // 1. marketTime is not null
-        // 2. marketTime is from today onwards (ignore old events)
+        // 2. marketTime is from today onwards (ignore old events with marketTime before today)
         // 3. marketTime was at least 10 minutes ago (marketTime <= now - 10 minutes)
-        // 4. At least one of the 4 required labels (4X, B2C, B2B, USDT) is NOT checked
+        // 4. At least one market in this event has completeTime NOT NULL (market was completed)
+        // 5. At least one of the 4 required labels (4X, B2C, B2B, USDT) is NOT checked
         $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
 
         $events = DB::table('events')
-            ->whereNotNull('marketTime')
-            ->where('marketTime', '>=', $todayStart->format('Y-m-d H:i:s')) // Only check events from today onwards
-            ->where('marketTime', '<=', $tenMinutesAgo->format('Y-m-d H:i:s')) // marketTime was at least 10 minutes ago
-            ->select('id', 'exEventId', 'eventName', 'sportId', 'tournamentsName', 'marketTime', 'labels')
+            ->join('market_lists', 'events.exEventId', '=', 'market_lists.exEventId')
+            ->whereNotNull('events.marketTime')
+            ->where('events.marketTime', '>=', $todayStart->format('Y-m-d H:i:s')) // Only check events from today onwards (ignore old events)
+            ->where('events.marketTime', '<=', $tenMinutesAgo->format('Y-m-d H:i:s')) // marketTime was at least 10 minutes ago
+            ->whereNotNull('market_lists.completeTime') // Only check events where at least one market has completeTime not null
+            ->select('events.id', 'events.exEventId', 'events.eventName', 'events.sportId', 'events.tournamentsName', 'events.marketTime', 'events.labels')
+            ->distinct() // Avoid duplicate events if multiple markets have completeTime
             ->get();
 
         if ($events->isEmpty()) {
