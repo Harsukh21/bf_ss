@@ -39,7 +39,7 @@ class CheckScorecardLabels extends Command
         // 1. marketTime is not null
         // 2. marketTime is from today onwards (ignore old events with marketTime before today)
         // 3. marketTime was at least 10 minutes ago (marketTime <= now - 10 minutes)
-        // 4. At least one market in this event has completeTime NOT NULL (market was completed)
+        // 4. completeTime IS NULL (event not completed yet - send notifications)
         // 5. At least one of the 4 required labels (4X, B2C, B2B, USDT) is NOT checked
         $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
 
@@ -48,9 +48,9 @@ class CheckScorecardLabels extends Command
             ->whereNotNull('events.marketTime')
             ->where('events.marketTime', '>=', $todayStart->format('Y-m-d H:i:s')) // Only check events from today onwards (ignore old events)
             ->where('events.marketTime', '<=', $tenMinutesAgo->format('Y-m-d H:i:s')) // marketTime was at least 10 minutes ago
-            ->whereNotNull('events.completeTime') // Only check events where at least one market has completeTime not null
+            ->whereNull('events.completeTime') // Only check events where completeTime is NULL (not completed yet)
             ->select('events.id', 'events.exEventId', 'events.eventName', 'events.sportId', 'events.tournamentsName', 'events.marketTime', 'events.labels')
-            ->distinct() // Avoid duplicate events if multiple markets have completeTime
+            ->distinct() // Avoid duplicate events if multiple markets exist
             ->get();
 
         if ($events->isEmpty()) {
