@@ -26,6 +26,15 @@ class ManualUpdateController extends Controller
     private const REDIS_EVENT_SPORT_MAP = 'cache:event:sportMap';
     private const REDIS_MARKET_META_PREFIX = 'market:meta:';
 
+    /**
+     * Safely check if the client is a Redis instance (PhpRedis extension)
+     * Returns false if the Redis class doesn't exist
+     */
+    private function isPhpRedisClient($client): bool
+    {
+        return class_exists('\Redis') && $client instanceof \Redis;
+    }
+
     public function index(Request $request)
     {
         $filters = [
@@ -222,27 +231,27 @@ class ManualUpdateController extends Controller
             $client = $connection->client();
             $originalPrefix = null;
 
-            if ($client instanceof \Redis && defined('Redis::OPT_PREFIX')) {
+            if ($this->isPhpRedisClient($client) && defined('Redis::OPT_PREFIX')) {
                 $originalPrefix = $client->getOption(\Redis::OPT_PREFIX);
                 $client->setOption(\Redis::OPT_PREFIX, '');
             }
 
             try {
                 if ($removalList) {
-                    if ($client instanceof \Redis) {
+                    if ($this->isPhpRedisClient($client)) {
                         $client->srem(self::REDIS_MARKET_IDS, ...$removalList);
                     } else {
                         $connection->command('SREM', array_merge([self::REDIS_MARKET_IDS], $removalList));
                     }
                 }
 
-                if ($client instanceof \Redis) {
+                if ($this->isPhpRedisClient($client)) {
                     $client->del($metaKey);
                 } else {
                     $connection->command('DEL', [$metaKey]);
                 }
             } finally {
-                if ($client instanceof \Redis && $originalPrefix !== null) {
+                if ($this->isPhpRedisClient($client) && $originalPrefix !== null) {
                     $client->setOption(\Redis::OPT_PREFIX, $originalPrefix);
                 }
             }
@@ -266,7 +275,7 @@ class ManualUpdateController extends Controller
             $client = $connection->client();
             $originalPrefix = null;
 
-            if ($client instanceof \Redis && defined('Redis::OPT_PREFIX')) {
+            if ($this->isPhpRedisClient($client) && defined('Redis::OPT_PREFIX')) {
                 $originalPrefix = $client->getOption(\Redis::OPT_PREFIX);
                 $client->setOption(\Redis::OPT_PREFIX, '');
             }
@@ -274,7 +283,7 @@ class ManualUpdateController extends Controller
             try {
                 $removeFromSet = function (string $key, callable $predicate) use ($connection, $client) {
                     $members = [];
-                    if ($client instanceof \Redis) {
+                    if ($this->isPhpRedisClient($client)) {
                         $members = $client->smembers($key) ?: [];
                     } else {
                         $members = $connection->command('SMEMBERS', [$key]) ?: [];
@@ -291,7 +300,7 @@ class ManualUpdateController extends Controller
                     if (!$toRemove) {
                         return;
                     }
-                    if ($client instanceof \Redis) {
+                    if ($this->isPhpRedisClient($client)) {
                         $client->srem($key, ...$toRemove);
                     } else {
                         $connection->command('SREM', array_merge([$key], $toRemove));
@@ -329,7 +338,7 @@ class ManualUpdateController extends Controller
                 });
 
                 $keys = [];
-                if ($client instanceof \Redis) {
+                if ($this->isPhpRedisClient($client)) {
                     $keys = $client->hkeys(self::REDIS_INPLAY_FREEZE_WATCH) ?: [];
                 } else {
                     $keys = $connection->command('HKEYS', [self::REDIS_INPLAY_FREEZE_WATCH]) ?: [];
@@ -344,7 +353,7 @@ class ManualUpdateController extends Controller
                         }
                     }
                     if ($toRemove) {
-                        if ($client instanceof \Redis) {
+                        if ($this->isPhpRedisClient($client)) {
                             $client->hdel(self::REDIS_INPLAY_FREEZE_WATCH, ...$toRemove);
                         } else {
                             $connection->command('HDEL', array_merge([self::REDIS_INPLAY_FREEZE_WATCH], $toRemove));
@@ -352,13 +361,13 @@ class ManualUpdateController extends Controller
                     }
                 }
 
-                if ($client instanceof \Redis) {
+                if ($this->isPhpRedisClient($client)) {
                     $client->hdel(self::REDIS_EVENT_SPORT_MAP, $eventId);
                 } else {
                     $connection->command('HDEL', [self::REDIS_EVENT_SPORT_MAP, $eventId]);
                 }
             } finally {
-                if ($client instanceof \Redis && $originalPrefix !== null) {
+                if ($this->isPhpRedisClient($client) && $originalPrefix !== null) {
                     $client->setOption(\Redis::OPT_PREFIX, $originalPrefix);
                 }
             }
