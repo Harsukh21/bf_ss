@@ -83,6 +83,9 @@ class MarketController extends Controller
                 'isRecentlyAdded',
                 'status',
                 'completeTime',
+                'selectionName',
+                'winnerType',
+                'labels',
                 'created_at'
             ]);
 
