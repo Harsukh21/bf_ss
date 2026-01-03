@@ -36,7 +36,7 @@ class CheckScorecardLabels extends Command
         $todayStart = $now->copy()->startOfDay();
 
         // Get events where:
-        // 1. marketTime is not null
+        // 1. marketTime is not null (from market_lists table)
         // 2. marketTime is from today onwards (ignore old events with marketTime before today)
         // 3. marketTime was at least 10 minutes ago (marketTime <= now - 10 minutes)
         // 4. completeTime IS NULL (event not completed yet - send notifications)
@@ -47,13 +47,13 @@ class CheckScorecardLabels extends Command
 
         $events = DB::table('events')
             ->join('market_lists', 'events.exEventId', '=', 'market_lists.exEventId')
-            ->whereNotNull('events.marketTime')
-            ->where('events.marketTime', '>=', $todayStart->format('Y-m-d H:i:s')) // Only check events from today onwards (ignore old events)
-            ->where('events.marketTime', '<=', $tenMinutesAgo->format('Y-m-d H:i:s')) // marketTime was at least 10 minutes ago
+            ->whereNotNull('market_lists.marketTime')
+            ->where('market_lists.marketTime', '>=', $todayStart->format('Y-m-d H:i:s')) // Only check events from today onwards (ignore old events)
+            ->where('market_lists.marketTime', '<=', $tenMinutesAgo->format('Y-m-d H:i:s')) // marketTime was at least 10 minutes ago
             ->whereNull('events.completeTime') // Only check events where completeTime is NULL (not completed yet)
             ->where('events.sportId', '!=', 7) // Exclude Horse Racing events (sportId = 7)
             ->where('market_lists.status', '=', 3) // Only check in-play markets (status = 3)
-            ->select('events.id', 'events.exEventId', 'events.eventName', 'events.sportId', 'events.tournamentsName', 'events.marketTime', 'events.labels')
+            ->select('events.id', 'events.exEventId', 'events.eventName', 'events.sportId', 'events.tournamentsName', 'market_lists.marketTime', 'events.labels')
             ->distinct() // Avoid duplicate events if multiple markets exist
             ->get();
 
@@ -201,7 +201,8 @@ class CheckScorecardLabels extends Command
         $sports = config('sports.sports', []);
         $sport = $sportId && isset($sports[$sportId]) ? $sports[$sportId] : 'N/A';
         $tournament = $event->tournamentsName ?? 'N/A';
-        $marketTime = $event->marketTime 
+        // Use marketTime from market_lists table
+        $marketTime = isset($event->marketTime) && $event->marketTime 
             ? Carbon::parse($event->marketTime)->format('M d, Y • h:i A')
             : 'N/A';
 
