@@ -325,6 +325,42 @@ class PermissionSeeder extends Seeder
                     'description' => 'Send test messages via Telegram bot',
                 ],
             ],
+
+            // Tasks Management Group
+            'Tasks' => [
+                [
+                    'name' => 'View Tasks',
+                    'description' => 'View list of tasks',
+                ],
+                [
+                    'name' => 'Create Tasks',
+                    'description' => 'Create new tasks',
+                ],
+                [
+                    'name' => 'Edit Tasks',
+                    'description' => 'Edit existing tasks',
+                ],
+                [
+                    'name' => 'Delete Tasks',
+                    'description' => 'Delete tasks',
+                ],
+                [
+                    'name' => 'View Task Details',
+                    'description' => 'View detailed task information',
+                ],
+                [
+                    'name' => 'Update Task Status',
+                    'description' => 'Update task status (pending, in progress, completed)',
+                ],
+                [
+                    'name' => 'Update Task Progress',
+                    'description' => 'Update task progress percentage',
+                ],
+                [
+                    'name' => 'View All Tasks',
+                    'description' => 'View all tasks in the system (Super Admin only)',
+                ],
+            ],
         ];
 
         // Create permissions

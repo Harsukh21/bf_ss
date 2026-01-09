@@ -144,6 +144,99 @@
                 </div>
                 @endif
 
+                <!-- Tasks Dropdown -->
+                <div class="relative">
+                    @php
+                        $isTasksActive = request()->routeIs('tasks.*');
+                        // Get task counts for current user
+                        $taskQuery = \App\Models\Task::query();
+                        if (!auth()->user()->hasRole('super-admin')) {
+                            $taskQuery->where(function($q) {
+                                $q->where('assigned_to', auth()->id())
+                                  ->orWhere('created_by', auth()->id());
+                            });
+                        }
+                        $totalTasksCount = $taskQuery->count();
+                        $pendingTasksCount = (clone $taskQuery)->where('status', 'pending')->count();
+                        $inProgressTasksCount = (clone $taskQuery)->where('status', 'in_progress')->count();
+                        $completedTasksCount = (clone $taskQuery)->where('status', 'completed')->count();
+                        $dueTasksCount = (clone $taskQuery)->whereNotNull('due_date')->where('due_date', '<=', now())->where('status', '!=', 'completed')->count();
+                    @endphp
+                    <button onclick="toggleDropdown('tasks')" class="flex items-center justify-between w-full px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ $isTasksActive ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                            </svg>
+                            Tasks
+                            @if($totalTasksCount > 0)
+                                <span class="ml-2 px-2 py-0.5 text-xs font-semibold rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">{{ $totalTasksCount }}</span>
+                            @endif
+                        </div>
+                        <svg id="tasks-arrow" class="w-4 h-4 transition-transform duration-200 {{ $isTasksActive ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+
+                    <div id="tasks-dropdown" class="space-y-1 ml-4 {{ $isTasksActive ? '' : 'hidden' }}">
+                        <a href="{{ route('tasks.index') }}" class="flex items-center justify-between px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('tasks.index') && !request()->has('status') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                                All Tasks
+                            </div>
+                            @if($totalTasksCount > 0)
+                                <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">{{ $totalTasksCount }}</span>
+                            @endif
+                        </a>
+                        @if($pendingTasksCount > 0)
+                        <a href="{{ route('tasks.index') }}?status=pending" class="flex items-center justify-between px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request('status') == 'pending' ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Pending
+                            </div>
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400">{{ $pendingTasksCount }}</span>
+                        </a>
+                        @endif
+                        @if($inProgressTasksCount > 0)
+                        <a href="{{ route('tasks.in-progress') }}" class="flex items-center justify-between px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('tasks.in-progress') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                In Progress
+                            </div>
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">{{ $inProgressTasksCount }}</span>
+                        </a>
+                        @endif
+                        @if($completedTasksCount > 0)
+                        <a href="{{ route('tasks.complete') }}" class="flex items-center justify-between px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('tasks.complete') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Complete
+                            </div>
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">{{ $completedTasksCount }}</span>
+                        </a>
+                        @endif
+                        @if($dueTasksCount > 0)
+                        <a href="{{ route('tasks.due') }}" class="flex items-center justify-between px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('tasks.due') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 border-r-3 border-primary-600 dark:border-primary-400 font-semibold' : '' }}">
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                </svg>
+                                Due Tasks
+                            </div>
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">{{ $dueTasksCount }}</span>
+                        </a>
+                        @endif
+                    </div>
+                </div>
+
+
                 <!-- Settle Team -->
                 @if(auth()->user()->hasPermission('view-scorecard'))
                     <a href="{{ route('scorecard.index') }}" 

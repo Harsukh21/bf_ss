@@ -86,6 +86,46 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/export/csv', [MarketRateController::class, 'export'])->name('export');
     });
 
+    // Tasks Management - Protected by permissions
+    Route::prefix('tasks')->name('tasks.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\TaskController::class, 'index'])
+            ->middleware('permission:view-tasks')
+            ->name('index');
+        Route::get('/create', [\App\Http\Controllers\TaskController::class, 'create'])
+            ->middleware('permission:create-tasks')
+            ->name('create');
+        Route::post('/', [\App\Http\Controllers\TaskController::class, 'store'])
+            ->middleware('permission:create-tasks')
+            ->name('store');
+        Route::get('/in-progress', [\App\Http\Controllers\TaskController::class, 'inProgress'])
+            ->middleware('permission:view-tasks')
+            ->name('in-progress');
+        Route::get('/complete', [\App\Http\Controllers\TaskController::class, 'complete'])
+            ->middleware('permission:view-tasks')
+            ->name('complete');
+        Route::get('/due', [\App\Http\Controllers\TaskController::class, 'due'])
+            ->middleware('permission:view-tasks')
+            ->name('due');
+        Route::get('/{task}', [\App\Http\Controllers\TaskController::class, 'show'])
+            ->middleware('permission:view-task-details')
+            ->name('show');
+        Route::get('/{task}/edit', [\App\Http\Controllers\TaskController::class, 'edit'])
+            ->middleware('permission:edit-tasks')
+            ->name('edit');
+        Route::put('/{task}', [\App\Http\Controllers\TaskController::class, 'update'])
+            ->middleware('permission:edit-tasks')
+            ->name('update');
+        Route::delete('/{task}', [\App\Http\Controllers\TaskController::class, 'destroy'])
+            ->middleware('permission:delete-tasks')
+            ->name('destroy');
+        Route::post('/{task}/update-status', [\App\Http\Controllers\TaskController::class, 'updateStatus'])
+            ->middleware('permission:update-task-status')
+            ->name('update-status');
+        Route::post('/{task}/update-progress', [\App\Http\Controllers\TaskController::class, 'updateProgress'])
+            ->middleware('permission:update-task-progress')
+            ->name('update-progress');
+    });
+
     // Scorecard - Protected by permissions
     Route::prefix('scorecard')->name('scorecard.')->group(function () {
         Route::get('/', [\App\Http\Controllers\ScorecardController::class, 'index'])
