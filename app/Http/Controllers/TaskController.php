@@ -28,46 +28,7 @@ class TaskController extends Controller
 
         $query->latest();
 
-        // Filter by status
-        if ($request->has('status') && $request->status != '') {
-            $query->where('status', $request->status);
-        }
-
-        // Filter by priority
-        if ($request->has('priority') && $request->priority != '') {
-            $query->where('priority', $request->priority);
-        }
-
-        // Filter by assigned user
-        if ($request->has('assigned_to') && $request->assigned_to != '') {
-            $query->where('assigned_to', $request->assigned_to);
-        }
-
-        // Filter by created by
-        if ($request->has('created_by') && $request->created_by != '') {
-            $query->where('created_by', $request->created_by);
-        }
-
-        // Filter by progress range
-        if ($request->has('progress_min') && $request->progress_min != '') {
-            $query->where('progress', '>=', $request->progress_min);
-        }
-        if ($request->has('progress_max') && $request->progress_max != '') {
-            $query->where('progress', '<=', $request->progress_max);
-        }
-
-        // Filter by due date range
-        if ($request->has('due_date_from') && $request->due_date_from != '') {
-            $query->whereDate('due_date', '>=', $request->due_date_from);
-        }
-        if ($request->has('due_date_to') && $request->due_date_to != '') {
-            $query->whereDate('due_date', '<=', $request->due_date_to);
-        }
-
-        // Filter overdue tasks
-        if ($request->has('overdue') && $request->overdue) {
-            $query->overdue();
-        }
+        $this->applyTaskFilters($request, $query);
 
         $tasks = $query->paginate(15)->appends($request->except('page'));
         $users = User::orderBy('name')->get();
@@ -207,7 +168,9 @@ class TaskController extends Controller
             });
         }
 
-        $tasks = $query->latest()->paginate(15);
+        $this->applyTaskFilters($request, $query, false);
+
+        $tasks = $query->latest()->paginate(15)->appends($request->except('page'));
         $users = User::orderBy('name')->get();
 
         return view('tasks.in-progress', compact('tasks', 'users'));
@@ -229,7 +192,9 @@ class TaskController extends Controller
             });
         }
 
-        $tasks = $query->latest('completed_at')->paginate(15);
+        $this->applyTaskFilters($request, $query, false);
+
+        $tasks = $query->latest('completed_at')->paginate(15)->appends($request->except('page'));
         $users = User::orderBy('name')->get();
 
         return view('tasks.complete', compact('tasks', 'users'));
@@ -251,10 +216,56 @@ class TaskController extends Controller
             });
         }
 
-        $tasks = $query->orderBy('due_date', 'asc')->paginate(15);
+        $this->applyTaskFilters($request, $query);
+
+        $tasks = $query->orderBy('due_date', 'asc')->paginate(15)->appends($request->except('page'));
         $users = User::orderBy('name')->get();
 
         return view('tasks.due', compact('tasks', 'users'));
+    }
+
+    private function applyTaskFilters(Request $request, $query, bool $allowStatus = true): void
+    {
+        // Filter by status
+        if ($allowStatus && $request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by priority
+        if ($request->filled('priority')) {
+            $query->where('priority', $request->priority);
+        }
+
+        // Filter by assigned user
+        if ($request->filled('assigned_to')) {
+            $query->where('assigned_to', $request->assigned_to);
+        }
+
+        // Filter by created by
+        if ($request->filled('created_by')) {
+            $query->where('created_by', $request->created_by);
+        }
+
+        // Filter by progress range
+        if ($request->filled('progress_min')) {
+            $query->where('progress', '>=', $request->progress_min);
+        }
+        if ($request->filled('progress_max')) {
+            $query->where('progress', '<=', $request->progress_max);
+        }
+
+        // Filter by due date range
+        if ($request->filled('due_date_from')) {
+            $query->whereDate('due_date', '>=', $request->due_date_from);
+        }
+        if ($request->filled('due_date_to')) {
+            $query->whereDate('due_date', '<=', $request->due_date_to);
+        }
+
+        // Filter overdue tasks
+        if ($request->boolean('overdue')) {
+            $query->overdue();
+        }
     }
 
     /**
