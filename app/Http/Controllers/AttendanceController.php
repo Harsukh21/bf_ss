@@ -197,6 +197,56 @@ class AttendanceController extends Controller
     }
 
     /**
+     * Admin: Create form to add attendance for any user.
+     */
+    public function adminCreate(Request $request)
+    {
+        $users      = User::orderBy('name')->get();
+        $selectedId = $request->integer('user_id');
+        return view('attendance.create', compact('users', 'selectedId'));
+    }
+
+    /**
+     * Admin: Store a new attendance record for any user.
+     */
+    public function adminStore(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id'          => 'required|exists:users,id',
+            'date'             => 'required|date',
+            'login_time'       => 'nullable|date_format:H:i',
+            'break_start_time' => 'nullable|date_format:H:i',
+            'break_end_time'   => 'nullable|date_format:H:i|after:break_start_time',
+            'logout_time'      => 'nullable|date_format:H:i|after:login_time',
+            'status'           => 'required|in:present,absent,half_day,on_leave,holiday,incomplete',
+            'notes'            => 'nullable|string|max:500',
+        ]);
+
+        // Prevent duplicate record for same user+date
+        if (Attendance::where('user_id', $validated['user_id'])->where('date', $validated['date'])->exists()) {
+            return back()
+                ->with('error', 'A record already exists for this user on that date. Please edit the existing record.')
+                ->withInput();
+        }
+
+        // Append seconds for TIME columns
+        foreach (['login_time', 'break_start_time', 'break_end_time', 'logout_time'] as $field) {
+            if (!empty($validated[$field])) {
+                $validated[$field] .= ':00';
+            }
+        }
+
+        $attendance = Attendance::create($validated);
+        $attendance->recalculateHours();
+
+        $userName = User::find($validated['user_id'])->name;
+        $dateStr  = \Carbon\Carbon::parse($validated['date'])->format('d M Y');
+
+        return redirect()->route('attendance.admin.index')
+            ->with('success', "Attendance added for {$userName} on {$dateStr}.");
+    }
+
+    /**
      * Admin: Edit form for a single attendance record.
      */
     public function adminEdit(Attendance $attendance)

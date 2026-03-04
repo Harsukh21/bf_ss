@@ -315,6 +315,8 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
             Route::get('/admin/{user}', [AttendanceController::class, 'adminShow'])->name('admin.show');
         });
         Route::middleware('permission:manage-attendance')->group(function () {
+            Route::get('/create', [AttendanceController::class, 'adminCreate'])->name('create');
+            Route::post('/create', [AttendanceController::class, 'adminStore'])->name('store');
             Route::get('/{attendance}/edit', [AttendanceController::class, 'adminEdit'])->name('edit');
             Route::put('/{attendance}', [AttendanceController::class, 'adminUpdate'])->name('update');
         });
