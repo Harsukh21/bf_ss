@@ -259,7 +259,7 @@
                             </svg>
                             Employees
                         </a>
-                        <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('emp-attendance.*') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 font-semibold' : '' }}">
+                        <a href="{{ route('emp-attendance.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('emp-attendance.*') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 font-semibold' : '' }}">
                             <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>

@@ -94,6 +94,26 @@ class PermissionSeeder extends Seeder
                 ],
             ],
 
+            // Attendance Group
+            'Attendance' => [
+                [
+                    'name' => 'View Attendance',
+                    'description' => 'View attendance records',
+                ],
+                [
+                    'name' => 'Create Attendance',
+                    'description' => 'Add new attendance records',
+                ],
+                [
+                    'name' => 'Edit Attendance',
+                    'description' => 'Edit attendance records',
+                ],
+                [
+                    'name' => 'Delete Attendance',
+                    'description' => 'Delete attendance records',
+                ],
+            ],
+
             // Events Management Group
             'Events' => [
                 [

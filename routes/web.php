@@ -15,6 +15,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ScriptController;
 use App\Http\Controllers\ManualUpdateController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\AttendanceController;
 
 // Welcome page
 Route::get('/', function () {
@@ -309,6 +310,17 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/{employee}/edit', [EmployeeController::class, 'edit'])->name('edit');
         Route::put('/{employee}', [EmployeeController::class, 'update'])->name('update');
         Route::delete('/{employee}', [EmployeeController::class, 'destroy'])->name('destroy');
+    });
+
+    // Attendance
+    Route::prefix('attendance')->name('emp-attendance.')->group(function () {
+        Route::get('/', [AttendanceController::class, 'index'])->name('index');
+        Route::get('/create', [AttendanceController::class, 'create'])->name('create');
+        Route::post('/', [AttendanceController::class, 'store'])->name('store');
+        Route::get('/{empAttendance}', [AttendanceController::class, 'show'])->name('show');
+        Route::get('/{empAttendance}/edit', [AttendanceController::class, 'edit'])->name('edit');
+        Route::put('/{empAttendance}', [AttendanceController::class, 'update'])->name('update');
+        Route::delete('/{empAttendance}', [AttendanceController::class, 'destroy'])->name('destroy');
     });
 
     // Profile & Settings

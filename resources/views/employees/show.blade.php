@@ -6,23 +6,25 @@
 
     <!-- Header -->
     <div class="mb-6 flex items-center justify-between">
-        <div class="flex items-center gap-4">
-            <a href="{{ route('employees.index') }}" class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            </a>
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $employee->name }}</h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{{ $employee->employee_id }}
-                    @if($employee->designation) · {{ $employee->designation }}@endif
-                    @if($employee->department) · {{ $employee->department }}@endif
-                </p>
-            </div>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $employee->name }}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ $employee->employee_id }}
+                @if($employee->designation) · {{ $employee->designation }}@endif
+                @if($employee->department) · {{ $employee->department }}@endif
+            </p>
         </div>
-        <a href="{{ route('employees.edit', $employee) }}"
-           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-            Edit
-        </a>
+        <div class="flex items-center gap-3">
+            <a href="{{ route('employees.edit', $employee) }}"
+               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                Edit
+            </a>
+            <a href="{{ route('employees.index') }}"
+               class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                Back
+            </a>
+        </div>
     </div>
 
     @if(session('success'))

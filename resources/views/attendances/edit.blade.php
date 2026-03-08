@@ -1,16 +1,16 @@
 @extends('layouts.app')
-@section('title', 'Add Employee')
+@section('title', 'Edit Attendance')
 
 @section('content')
-<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
 
-    <!-- Header -->
+    {{-- Header --}}
     <div class="mb-6 flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Add Employee</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Fill in the details to create a new employee record</p>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit Attendance</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ $attendance->employee->name }} · {{ $attendance->date->format('d M Y') }}</p>
         </div>
-        <a href="{{ route('employees.index') }}"
+        <a href="{{ route('emp-attendance.show', $attendance) }}"
            class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             Back
@@ -31,14 +31,21 @@
     </div>
     @endif
 
+    {{-- Delete form --}}
+    <form id="att-delete-form" action="{{ route('emp-attendance.destroy', $attendance) }}" method="POST" class="hidden">
+        @csrf @method('DELETE')
+    </form>
+
     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <form method="POST" action="{{ route('employees.store') }}" enctype="multipart/form-data">
-            @csrf
-            @include('employees.partials.form', [
-                'submitLabel' => 'Create Employee',
-                'cancelUrl'   => route('employees.index'),
+        <form method="POST" action="{{ route('emp-attendance.update', $attendance) }}">
+            @csrf @method('PUT')
+            @include('attendances.partials.form', [
+                'submitLabel'   => 'Save Changes',
+                'cancelUrl'     => route('emp-attendance.show', $attendance),
+                'deleteConfirm' => 'Delete this attendance record? This cannot be undone.',
             ])
         </form>
     </div>
+
 </div>
 @endsection
