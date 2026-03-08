@@ -112,7 +112,9 @@
                     <div class="sm:col-span-2">
                         <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Reporting Manager</dt>
                         <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                            @if($employee->reportingManager)
+                            @if($employee->reporting_manager_name)
+                                {{ $employee->reporting_manager_name }}
+                            @elseif($employee->reportingManager)
                                 <a href="{{ route('employees.show', $employee->reportingManager) }}" class="text-primary-600 dark:text-primary-400 hover:underline">
                                     {{ $employee->reportingManager->name }}
                                     <span class="text-gray-400 text-xs">({{ $employee->reportingManager->employee_id }})</span>

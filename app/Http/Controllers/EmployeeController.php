@@ -68,6 +68,7 @@ class EmployeeController extends Controller
         $validated['remote_access_enabled'] = $request->boolean('remote_access_enabled');
         $validated['status']                = $validated['status'] ?? 'active';
         $validated['employment_type']       = $validated['employment_type'] ?? 'full-time';
+        $validated['reporting_manager_id']  = null;
 
         // Handle file uploads — use the employee_id slug as the folder
         $empId = $validated['employee_id'];
@@ -106,6 +107,7 @@ class EmployeeController extends Controller
 
         $validated['antivirus_installed']   = $request->boolean('antivirus_installed');
         $validated['remote_access_enabled'] = $request->boolean('remote_access_enabled');
+        $validated['reporting_manager_id']  = null;
 
         $empId = $validated['employee_id'];
 
@@ -158,6 +160,7 @@ class EmployeeController extends Controller
             'department'                => 'nullable|string|max:100',
             'designation'               => 'nullable|string|max:100',
             'reporting_manager_id'      => 'nullable|exists:employees,id',
+            'reporting_manager_name'    => 'nullable|string|max:255',
             'employment_type'           => 'nullable|in:full-time,part-time,contract,intern',
             'work_location'             => 'nullable|string|max:255',
             'probation_period'          => 'nullable|string|max:100',

@@ -16,7 +16,7 @@ class Employee extends Model
         'employee_id', 'email', 'name', 'username', 'date_of_birth',
         'gender', 'marital_status', 'blood_group', 'address',
         // Job Related
-        'joining_date', 'department', 'designation', 'reporting_manager_id',
+        'joining_date', 'department', 'designation', 'reporting_manager_id', 'reporting_manager_name',
         'employment_type', 'work_location', 'probation_period', 'status',
         // Bank Details
         'bank_name', 'account_holder_name', 'bank_account_number', 'ifsc_code',

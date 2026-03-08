@@ -161,14 +161,9 @@ $lbl    = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
         </div>
         <div>
             <label class="{{ $lbl }}">Reporting Manager</label>
-            <select name="reporting_manager_id" class="{{ $inp }}">
-                <option value="">None</option>
-                @foreach($managers as $mgr)
-                <option value="{{ $mgr->id }}" {{ old('reporting_manager_id', $e?->reporting_manager_id) == $mgr->id ? 'selected' : '' }}>
-                    {{ $mgr->name }} ({{ $mgr->employee_id }})
-                </option>
-                @endforeach
-            </select>
+            <input type="text" name="reporting_manager_name"
+                value="{{ old('reporting_manager_name', $e?->reporting_manager_name ?? $e?->reportingManager?->name) }}"
+                class="{{ $inp }}" placeholder="Manager name...">
         </div>
         <div>
             <label class="{{ $lbl }}">Employment Type</label>
