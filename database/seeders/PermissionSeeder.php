@@ -326,46 +326,6 @@ class PermissionSeeder extends Seeder
                 ],
             ],
 
-            // Attendance Management Group
-            'Attendance' => [
-                [
-                    'name' => 'View Attendance',
-                    'description' => 'View own attendance records and clock in/out',
-                ],
-                [
-                    'name' => 'Mark Attendance',
-                    'description' => 'Clock in, start/end break, and clock out',
-                ],
-                [
-                    'name' => 'View All Attendance',
-                    'description' => 'View attendance records of all employees',
-                ],
-                [
-                    'name' => 'Manage Attendance',
-                    'description' => 'Edit and correct attendance records for any employee',
-                ],
-                [
-                    'name' => 'View Leaves',
-                    'description' => 'View own leave requests',
-                ],
-                [
-                    'name' => 'Create Leaves',
-                    'description' => 'Submit new leave requests',
-                ],
-                [
-                    'name' => 'Manage Leaves',
-                    'description' => 'Approve or reject leave requests for all employees',
-                ],
-                [
-                    'name' => 'View Holidays',
-                    'description' => 'View the holiday calendar',
-                ],
-                [
-                    'name' => 'Manage Holidays',
-                    'description' => 'Add, edit, and delete holidays from the calendar',
-                ],
-            ],
-
             // Tasks Management Group
             'Tasks' => [
                 [

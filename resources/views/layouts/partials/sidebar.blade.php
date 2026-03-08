@@ -236,46 +236,6 @@
                     </div>
                 </div>
 
-
-                <!-- Attendance Dropdown -->
-                @if(auth()->user()->hasPermission('view-attendance') || auth()->user()->hasRole('super-admin'))
-                @php
-                    $isAttendanceActive = request()->routeIs('attendance.*') || request()->routeIs('leaves.*') || request()->routeIs('holidays.*');
-                @endphp
-                <div class="relative">
-                    <button onclick="toggleDropdown('attendance')" class="flex items-center justify-between w-full px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ $isAttendanceActive ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            Attendance
-                        </div>
-                        <svg id="attendance-arrow" class="w-4 h-4 transition-transform duration-200 {{ $isAttendanceActive ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </button>
-                    <div id="attendance-dropdown" class="space-y-1 ml-4 {{ $isAttendanceActive ? '' : 'hidden' }}">
-                        <a href="{{ route('attendance.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('attendance.index') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 font-semibold' : '' }}">
-                            My Attendance
-                        </a>
-                        <a href="{{ route('leaves.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('leaves.index') || request()->routeIs('leaves.create') || request()->routeIs('leaves.show') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 font-semibold' : '' }}">
-                            My Leaves
-                        </a>
-                        <a href="{{ route('holidays.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('holidays.*') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 font-semibold' : '' }}">
-                            Holiday Calendar
-                        </a>
-                        @if(auth()->user()->hasPermission('view-all-attendance') || auth()->user()->hasRole('super-admin'))
-                        <a href="{{ route('attendance.admin.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('attendance.admin.*') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 font-semibold' : '' }}">
-                            All Attendance
-                        </a>
-                        @endif
-                        @if(auth()->user()->hasPermission('manage-leaves') || auth()->user()->hasRole('super-admin'))
-                        <a href="{{ route('leaves.admin.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('leaves.admin.*') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 font-semibold' : '' }}">
-                            Leave Requests
-                        </a>
-                        @endif
-                    </div>
-                </div>
-                @endif
-
                 <!-- Settle Team -->
                 @if(auth()->user()->hasPermission('view-scorecard'))
                     <a href="{{ route('scorecard.index') }}" 

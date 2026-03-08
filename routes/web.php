@@ -14,9 +14,6 @@ use App\Http\Controllers\GeneralSettingsController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ScriptController;
 use App\Http\Controllers\ManualUpdateController;
-use App\Http\Controllers\AttendanceController;
-use App\Http\Controllers\LeaveController;
-use App\Http\Controllers\HolidayController;
 
 // Welcome page
 Route::get('/', function () {
@@ -302,53 +299,6 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         });
     });
     
-    // Attendance Routes
-    Route::prefix('attendance')->name('attendance.')->group(function () {
-        Route::get('/', [AttendanceController::class, 'index'])->name('index');
-        Route::post('/clock-in', [AttendanceController::class, 'clockIn'])->name('clock-in');
-        Route::post('/break-start', [AttendanceController::class, 'breakStart'])->name('break-start');
-        Route::post('/break-end', [AttendanceController::class, 'breakEnd'])->name('break-end');
-        Route::post('/clock-out', [AttendanceController::class, 'clockOut'])->name('clock-out');
-        // Admin routes
-        Route::middleware('permission:view-all-attendance')->group(function () {
-            Route::get('/admin', [AttendanceController::class, 'adminIndex'])->name('admin.index');
-            Route::get('/admin/{user}', [AttendanceController::class, 'adminShow'])->name('admin.show');
-        });
-        Route::middleware('permission:manage-attendance')->group(function () {
-            Route::get('/create', [AttendanceController::class, 'adminCreate'])->name('create');
-            Route::post('/create', [AttendanceController::class, 'adminStore'])->name('store');
-            Route::get('/{attendance}/edit', [AttendanceController::class, 'adminEdit'])->name('edit');
-            Route::put('/{attendance}', [AttendanceController::class, 'adminUpdate'])->name('update');
-        });
-    });
-
-    // Leave Routes
-    Route::prefix('leaves')->name('leaves.')->group(function () {
-        Route::get('/', [LeaveController::class, 'index'])->name('index');
-        Route::get('/create', [LeaveController::class, 'create'])->name('create');
-        Route::post('/', [LeaveController::class, 'store'])->name('store');
-        Route::get('/{leave}', [LeaveController::class, 'show'])->name('show');
-        Route::post('/{leave}/cancel', [LeaveController::class, 'cancel'])->name('cancel');
-        // Admin routes
-        Route::middleware('permission:manage-leaves')->group(function () {
-            Route::get('/admin/all', [LeaveController::class, 'adminIndex'])->name('admin.index');
-            Route::post('/{leave}/approve', [LeaveController::class, 'approve'])->name('approve');
-            Route::post('/{leave}/reject', [LeaveController::class, 'reject'])->name('reject');
-        });
-    });
-
-    // Holiday Routes
-    Route::prefix('holidays')->name('holidays.')->group(function () {
-        Route::get('/', [HolidayController::class, 'index'])->name('index');
-        Route::middleware('permission:manage-holidays')->group(function () {
-            Route::get('/create', [HolidayController::class, 'create'])->name('create');
-            Route::post('/', [HolidayController::class, 'store'])->name('store');
-            Route::get('/{holiday}/edit', [HolidayController::class, 'edit'])->name('edit');
-            Route::put('/{holiday}', [HolidayController::class, 'update'])->name('update');
-            Route::delete('/{holiday}', [HolidayController::class, 'destroy'])->name('destroy');
-        });
-    });
-
     // Profile & Settings
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('index');
