@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Attendance Module Cleanup Script - Run on LIVE server
+# Attendance Module Cleanup Script - Run on LIVE server (PostgreSQL)
 # =============================================================================
 # This script removes the attendance module from the live environment:
 #   - Drops the attendances, leaves, and holidays database tables
@@ -25,10 +25,10 @@ else
     exit 1
 fi
 
-DB_PORT="${DB_PORT:-3306}"
+DB_PORT="${DB_PORT:-5432}"
 
 echo "============================================="
-echo "  Attendance Module Cleanup"
+echo "  Attendance Module Cleanup (PostgreSQL)"
 echo "============================================="
 echo "Database : $DB_DATABASE"
 echo "Host     : $DB_HOST:$DB_PORT"
@@ -48,38 +48,39 @@ fi
 echo ""
 echo "Running cleanup SQL..."
 
-mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_DATABASE" <<'SQL'
+PGPASSWORD="$DB_PASSWORD" psql \
+    -h "$DB_HOST" \
+    -p "$DB_PORT" \
+    -U "$DB_USERNAME" \
+    -d "$DB_DATABASE" \
+    <<'SQL'
 
 -- -------------------------------------------------------
 -- 1. Drop attendance-related tables
 -- -------------------------------------------------------
-SET FOREIGN_KEY_CHECKS = 0;
-
-DROP TABLE IF EXISTS `attendances`;
-DROP TABLE IF EXISTS `leaves`;
-DROP TABLE IF EXISTS `holidays`;
-
-SET FOREIGN_KEY_CHECKS = 1;
+DROP TABLE IF EXISTS "attendances" CASCADE;
+DROP TABLE IF EXISTS "leaves" CASCADE;
+DROP TABLE IF EXISTS "holidays" CASCADE;
 
 -- -------------------------------------------------------
 -- 2. Remove attendance permissions from role_permission pivot
---    (adjust table name if yours differs)
 -- -------------------------------------------------------
-DELETE rp FROM `role_permission` rp
-INNER JOIN `permissions` p ON p.id = rp.permission_id
-WHERE p.`group` = 'Attendance';
+DELETE FROM "role_permission"
+WHERE "permission_id" IN (
+    SELECT id FROM "permissions" WHERE "group" = 'Attendance'
+);
 
 -- -------------------------------------------------------
 -- 3. Remove attendance permissions
 -- -------------------------------------------------------
-DELETE FROM `permissions`
-WHERE `group` = 'Attendance';
+DELETE FROM "permissions"
+WHERE "group" = 'Attendance';
 
 -- -------------------------------------------------------
 -- 4. Remove migration records
 -- -------------------------------------------------------
-DELETE FROM `migrations`
-WHERE `migration` IN (
+DELETE FROM "migrations"
+WHERE "migration" IN (
     '2026_03_04_225710_create_attendances_table',
     '2026_03_04_225710_create_leaves_table',
     '2026_03_04_225710_create_holidays_table'
