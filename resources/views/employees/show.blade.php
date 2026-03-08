@@ -164,17 +164,25 @@
                     @include('employees.partials.detail-row', ['label' => 'PAN Number', 'value' => $employee->pan_number])
 
                     @foreach([
-                        ['label' => 'Photo', 'link' => $employee->photo_link],
-                        ['label' => 'Address Proof', 'link' => $employee->address_proof_link],
-                        ['label' => 'Aadhar Proof', 'link' => $employee->aadhar_proof_link],
-                        ['label' => 'PAN Proof', 'link' => $employee->pan_proof_link],
-                        ['label' => 'Resume', 'link' => $employee->resume_link],
+                        ['label' => 'Photo', 'link' => $employee->photo_link, 'isImage' => true],
+                        ['label' => 'Address Proof', 'link' => $employee->address_proof_link, 'isImage' => false],
+                        ['label' => 'Aadhar Proof', 'link' => $employee->aadhar_proof_link, 'isImage' => false],
+                        ['label' => 'PAN Proof', 'link' => $employee->pan_proof_link, 'isImage' => false],
+                        ['label' => 'Resume', 'link' => $employee->resume_link, 'isImage' => false],
                     ] as $doc)
+                    @php $docExt = $doc['link'] ? strtolower(pathinfo(parse_url($doc['link'], PHP_URL_PATH), PATHINFO_EXTENSION)) : ''; @endphp
                     <div>
                         <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ $doc['label'] }}</dt>
                         <dd class="mt-1">
                             @if($doc['link'])
-                                <a href="{{ $doc['link'] }}" target="_blank" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View ↗</a>
+                                @if($doc['isImage'] || in_array($docExt, ['jpg','jpeg','png','webp']))
+                                    <a href="{{ $doc['link'] }}" target="_blank">
+                                        <img src="{{ $doc['link'] }}" alt="{{ $doc['label'] }}"
+                                             class="w-16 h-16 rounded-lg object-cover border border-gray-200 dark:border-gray-600 hover:opacity-80 transition-opacity">
+                                    </a>
+                                @else
+                                    <a href="{{ $doc['link'] }}" target="_blank" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View ↗</a>
+                                @endif
                             @else
                                 <span class="text-sm text-gray-400 italic">—</span>
                             @endif
@@ -248,6 +256,37 @@
                         <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100 whitespace-pre-line">{{ $employee->extra_devices_details }}</dd>
                     </div>
                     @endif
+
+                    @if($employee->about_pc_link || $employee->cmd_photo_link)
+                    <div class="sm:col-span-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                        <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Device Screenshots</dt>
+                        <dd class="flex flex-wrap gap-4">
+                            @if($employee->about_pc_link)
+                            <div class="text-center">
+                                @php $ext = strtolower(pathinfo(parse_url($employee->about_pc_link, PHP_URL_PATH), PATHINFO_EXTENSION)); @endphp
+                                @if(in_array($ext, ['jpg','jpeg','png','webp']))
+                                    <a href="{{ $employee->about_pc_link }}" target="_blank">
+                                        <img src="{{ $employee->about_pc_link }}" alt="About PC"
+                                             class="w-24 h-24 rounded-lg object-cover border border-gray-200 dark:border-gray-600 hover:opacity-80 transition-opacity">
+                                    </a>
+                                @else
+                                    <a href="{{ $employee->about_pc_link }}" target="_blank" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View ↗</a>
+                                @endif
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">About PC</p>
+                            </div>
+                            @endif
+                            @if($employee->cmd_photo_link)
+                            <div class="text-center">
+                                <a href="{{ $employee->cmd_photo_link }}" target="_blank">
+                                    <img src="{{ $employee->cmd_photo_link }}" alt="CMD Photo"
+                                         class="w-24 h-24 rounded-lg object-cover border border-gray-200 dark:border-gray-600 hover:opacity-80 transition-opacity">
+                                </a>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">CMD Photo</p>
+                            </div>
+                            @endif
+                        </dd>
+                    </div>
+                    @endif
                 </dl>
             </div>
 
@@ -274,7 +313,7 @@
                         Edit Employee
                     </a>
                     <form action="{{ route('employees.destroy', $employee) }}" method="POST"
-                          onsubmit="return confirm('Delete {{ addslashes($employee->name) }}? This cannot be undone.')">
+                          data-confirm="Delete {{ addslashes($employee->name) }}? This cannot be undone." data-confirm-text="Delete">
                         @csrf @method('DELETE')
                         <button type="submit"
                                 class="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">

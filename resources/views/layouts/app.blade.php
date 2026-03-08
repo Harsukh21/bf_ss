@@ -249,7 +249,7 @@
 
             static remove(toast) {
                 if (!toast) return;
-                
+
                 toast.classList.add('translate-x-full', 'opacity-0');
                 setTimeout(() => {
                     if (toast.parentElement) {
@@ -258,10 +258,98 @@
                 }, 300);
             }
 
+            static confirm(message, confirmText = 'Confirm', cancelText = 'Cancel') {
+                return new Promise((resolve) => {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4';
+                    overlay.style.cssText = 'opacity:0;transition:opacity 0.2s ease;';
+
+                    const modal = document.createElement('div');
+                    modal.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-sm w-full';
+                    modal.style.cssText = 'transform:scale(0.93);opacity:0;transition:transform 0.2s ease,opacity 0.2s ease;';
+
+                    modal.innerHTML = `
+                        <div class="p-6">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                    </svg>
+                                </div>
+                                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Confirm Action</h3>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">${message}</p>
+                            <div class="flex gap-3 justify-end">
+                                <button class="tc-cancel px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    ${cancelText}
+                                </button>
+                                <button class="tc-confirm px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
+                                    ${confirmText}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+
+                    overlay.appendChild(modal);
+                    document.body.appendChild(overlay);
+                    document.body.style.overflow = 'hidden';
+
+                    requestAnimationFrame(() => {
+                        overlay.style.opacity = '1';
+                        modal.style.transform = 'scale(1)';
+                        modal.style.opacity = '1';
+                    });
+
+                    const cleanup = (result) => {
+                        overlay.style.opacity = '0';
+                        modal.style.transform = 'scale(0.93)';
+                        modal.style.opacity = '0';
+                        setTimeout(() => {
+                            if (overlay.parentElement) overlay.parentElement.removeChild(overlay);
+                            document.body.style.overflow = '';
+                            resolve(result);
+                        }, 200);
+                    };
+
+                    modal.querySelector('.tc-cancel').addEventListener('click', () => cleanup(false));
+                    modal.querySelector('.tc-confirm').addEventListener('click', () => cleanup(true));
+                    overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
+                });
+            }
         }
 
         // Make ToastNotification globally available
         window.ToastNotification = ToastNotification;
+
+        // Global data-confirm handler for forms
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (!form.dataset.confirm) return;
+            e.preventDefault();
+            const msg = form.dataset.confirm;
+            const confirmText = form.dataset.confirmText || 'Confirm';
+            ToastNotification.confirm(msg, confirmText).then(confirmed => {
+                if (confirmed) {
+                    form.removeAttribute('data-confirm');
+                    form.submit();
+                }
+            });
+        }, true);
+
+        // Global data-confirm handler for buttons (triggering other forms)
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('[data-confirm][data-form-id]');
+            if (!btn) return;
+            e.preventDefault();
+            const msg = btn.dataset.confirm;
+            const confirmText = btn.dataset.confirmText || 'Confirm';
+            ToastNotification.confirm(msg, confirmText).then(confirmed => {
+                if (confirmed) {
+                    const form = document.getElementById(btn.dataset.formId);
+                    if (form) form.submit();
+                }
+            });
+        }, true);
 
         // Prevent back button access after logout
         window.addEventListener('pageshow', function(event) {
@@ -428,15 +516,6 @@
                 }
             } catch (error) {
                 console.error('Logout error:', error);
-                // Fallback to native confirm if modal fails
-                if (confirm('Are you sure you want to logout? This will end your current session and redirect you to the login page. Any unsaved work will be lost.')) {
-                    const form = document.getElementById('sidebarLogoutForm');
-                    if (form) {
-                        form.submit();
-                    } else {
-                        window.location.href = '/login';
-                    }
-                }
             }
         }
         

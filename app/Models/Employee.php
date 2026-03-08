@@ -36,6 +36,7 @@ class Employee extends Model
         'device_assigned_date', 'device_condition', 'company_asset_id', 'installed_work_apps',
         // Security
         'device_login_email', 'antivirus_installed', 'remote_access_enabled',
+        'about_pc_link', 'cmd_photo_link',
         // Optional Advanced
         'mac_address', 'ip_address',
         // Additional

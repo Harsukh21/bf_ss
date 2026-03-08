@@ -122,7 +122,7 @@
             
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">This will log you out from all devices except this one. You'll need to log in again on other devices.</p>
             
-            <form action="{{ route('profile.logout-all-devices') }}" method="POST" class="space-y-4" onsubmit="return confirm('Are you sure you want to logout from all other devices?')">
+            <form action="{{ route('profile.logout-all-devices') }}" method="POST" class="space-y-4" data-confirm="Are you sure you want to logout from all other devices?" data-confirm-text="Logout All">
                 @csrf
                 
                 <div>
@@ -173,10 +173,10 @@
                             </div>
                         </div>
                         @if($session['session_id'] !== $user->current_session_id)
-                        <form action="{{ route('profile.terminate-session', $session['session_id']) }}" method="POST" class="inline">
+                        <form action="{{ route('profile.terminate-session', $session['session_id']) }}" method="POST" class="inline" data-confirm="Are you sure you want to terminate this session?" data-confirm-text="Terminate">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm" onclick="return confirm('Are you sure you want to terminate this session?')">
+                            <button type="submit" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>

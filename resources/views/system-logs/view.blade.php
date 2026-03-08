@@ -139,22 +139,11 @@
 @push('js')
 <script>
 function handleClearLog() {
-    if (typeof ToastNotification === 'undefined') {
-        // Fallback to browser confirm if toast system not available
-        if (confirm('Are you sure you want to clear this log file? This will remove all log entries but keep the file.')) {
-            document.getElementById('clearLogForm').submit();
-        }
-        return;
-    }
-    
     ToastNotification.confirm(
         'Are you sure you want to clear this log file? This will remove all log entries but keep the file.',
-        'Clear',
-        'Cancel'
-    ).then((confirmed) => {
-        if (confirmed) {
-            document.getElementById('clearLogForm').submit();
-        }
+        'Clear'
+    ).then(confirmed => {
+        if (confirmed) document.getElementById('clearLogForm').submit();
     });
 }
 </script>

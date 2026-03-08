@@ -99,7 +99,7 @@
                 @endif
 
                 <!-- Disable 2FA -->
-                <form action="{{ route('profile.two-factor.disable') }}" method="POST" class="space-y-4" onsubmit="return confirm('Are you sure you want to disable two-factor authentication? This will make your account less secure.')">
+                <form action="{{ route('profile.two-factor.disable') }}" method="POST" class="space-y-4" data-confirm="Are you sure you want to disable two-factor authentication? This will make your account less secure." data-confirm-text="Disable">
                     @csrf
                     
                     <div>

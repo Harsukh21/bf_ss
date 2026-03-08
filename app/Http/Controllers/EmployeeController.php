@@ -16,6 +16,8 @@ class EmployeeController extends Controller
         'pan_proof_link'          => 'pan_proof',
         'resume_link'             => 'resume',
         'bank_account_proof_link' => 'bank_proof',
+        'about_pc_link'           => 'about_pc',
+        'cmd_photo_link'          => 'cmd_photo',
     ];
 
     public function index(Request $request)
@@ -209,6 +211,8 @@ class EmployeeController extends Controller
             'device_login_email'        => 'nullable|email|max:255',
             'antivirus_installed'       => 'nullable|boolean',
             'remote_access_enabled'     => 'nullable|boolean',
+            'about_pc_link'             => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'cmd_photo_link'            => 'nullable|file|image|mimes:jpg,jpeg,png,webp|max:5120',
             // Advanced
             'mac_address'               => 'nullable|string|max:50',
             'ip_address'                => 'nullable|ip|max:50',

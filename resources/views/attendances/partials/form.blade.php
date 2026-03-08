@@ -119,7 +119,7 @@ $lbl    = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1';
 <div class="flex items-center {{ isset($deleteConfirm) ? 'justify-between' : 'justify-end' }} gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
     @if(isset($deleteConfirm))
     <button type="button"
-            onclick="if(confirm('{{ $deleteConfirm }}')) document.getElementById('att-delete-form').submit()"
+            data-confirm="{{ $deleteConfirm }}" data-confirm-text="Delete" data-form-id="att-delete-form"
             class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         Delete

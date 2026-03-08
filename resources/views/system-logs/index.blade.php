@@ -207,21 +207,21 @@
 @push('js')
 <script>
 function handleClearLog(filename, index) {
-    if (confirm('Are you sure you want to clear the log file "' + filename + '"? This will remove all log entries but keep the file.')) {
-        const form = document.getElementById('clearLogForm_' + index);
-        if (form) {
-            form.submit();
+    ToastNotification.confirm('Are you sure you want to clear the log file "' + filename + '"? This will remove all log entries but keep the file.', 'Clear').then(confirmed => {
+        if (confirmed) {
+            const form = document.getElementById('clearLogForm_' + index);
+            if (form) form.submit();
         }
-    }
+    });
 }
 
 function handleClearAllLogs() {
-    if (confirm('Are you sure you want to clear ALL log files? This will remove all log entries but keep the files.')) {
-        const form = document.getElementById('clearAllLogsForm');
-        if (form) {
-            form.submit();
+    ToastNotification.confirm('Are you sure you want to clear ALL log files? This will remove all log entries but keep the files.', 'Clear All').then(confirmed => {
+        if (confirmed) {
+            const form = document.getElementById('clearAllLogsForm');
+            if (form) form.submit();
         }
-    }
+    });
 }
 </script>
 @endpush

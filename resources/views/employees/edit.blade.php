@@ -37,7 +37,7 @@
     </form>
 
     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <form method="POST" action="{{ route('employees.update', $employee) }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('employees.update', $employee) }}" enctype="multipart/form-data" novalidate>
             @csrf @method('PUT')
             @include('employees.partials.form', [
                 'submitLabel'   => 'Save Changes',

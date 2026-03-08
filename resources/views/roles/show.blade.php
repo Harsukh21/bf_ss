@@ -213,8 +213,8 @@
                             </svg>
                             Edit Role
                         </a>
-                        <form method="POST" action="{{ route('roles.destroy', $role) }}" 
-                              onsubmit="return confirm('Are you sure you want to delete this role? This action cannot be undone.');"
+                        <form method="POST" action="{{ route('roles.destroy', $role) }}"
+                              data-confirm="Are you sure you want to delete this role? This action cannot be undone." data-confirm-text="Delete"
                               class="w-full">
                             @csrf
                             @method('DELETE')

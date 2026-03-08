@@ -492,6 +492,27 @@ $lbl    = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Remote Access Enabled</span>
         </label>
     </div>
+
+    <h3 class="text-base font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Device Screenshots</h3>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        @include('employees.partials.file-field', [
+            'name'    => 'about_pc_link',
+            'label'   => 'About PC',
+            'accept'  => '.jpg,.jpeg,.png,.pdf',
+            'hint'    => 'JPG, PNG or PDF — max 5MB',
+            'current' => $e?->about_pc_link,
+            'isImage' => true,
+        ])
+        @include('employees.partials.file-field', [
+            'name'    => 'cmd_photo_link',
+            'label'   => 'CMD Photo',
+            'accept'  => '.jpg,.jpeg,.png,.webp',
+            'hint'    => 'JPG, PNG or WebP — max 5MB',
+            'current' => $e?->cmd_photo_link,
+            'isImage' => true,
+        ])
+    </div>
+
     <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-3">
         <button type="button" class="emp-nav-prev inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700" data-current="device">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -519,7 +540,7 @@ $lbl    = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
         <div>
             @if(isset($deleteLabel) && isset($deleteConfirm))
             <button type="button"
-                onclick="if(confirm('{{ $deleteConfirm }}')) document.getElementById('emp-delete-form').submit()"
+                data-confirm="{{ $deleteConfirm }}" data-confirm-text="Delete" data-form-id="emp-delete-form"
                 class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 {{ $deleteLabel }}

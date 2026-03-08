@@ -185,7 +185,7 @@
             <!-- Delete Button (Only for Super Admin and Creator) -->
             @if(auth()->user()->hasRole('super-admin') || $task->created_by == auth()->id())
                 <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <form action="{{ route('tasks.destroy', $task) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this task? This action cannot be undone.');">
+                    <form action="{{ route('tasks.destroy', $task) }}" method="POST" data-confirm="Are you sure you want to delete this task? This action cannot be undone." data-confirm-text="Delete">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">

@@ -32,7 +32,7 @@
     @endif
 
     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <form method="POST" action="{{ route('employees.store') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('employees.store') }}" enctype="multipart/form-data" novalidate>
             @csrf
             @include('employees.partials.form', [
                 'submitLabel' => 'Create Employee',
