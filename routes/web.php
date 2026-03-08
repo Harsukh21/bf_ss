@@ -14,6 +14,7 @@ use App\Http\Controllers\GeneralSettingsController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ScriptController;
 use App\Http\Controllers\ManualUpdateController;
+use App\Http\Controllers\EmployeeController;
 
 // Welcome page
 Route::get('/', function () {
@@ -299,6 +300,17 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         });
     });
     
+    // Employees
+    Route::prefix('employees')->name('employees.')->group(function () {
+        Route::get('/', [EmployeeController::class, 'index'])->name('index');
+        Route::get('/create', [EmployeeController::class, 'create'])->name('create');
+        Route::post('/', [EmployeeController::class, 'store'])->name('store');
+        Route::get('/{employee}', [EmployeeController::class, 'show'])->name('show');
+        Route::get('/{employee}/edit', [EmployeeController::class, 'edit'])->name('edit');
+        Route::put('/{employee}', [EmployeeController::class, 'update'])->name('update');
+        Route::delete('/{employee}', [EmployeeController::class, 'destroy'])->name('destroy');
+    });
+
     // Profile & Settings
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('index');

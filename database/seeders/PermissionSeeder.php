@@ -74,6 +74,26 @@ class PermissionSeeder extends Seeder
                 ],
             ],
 
+            // Employees Management Group
+            'Employees' => [
+                [
+                    'name' => 'View Employees',
+                    'description' => 'View list of employees',
+                ],
+                [
+                    'name' => 'Create Employees',
+                    'description' => 'Add new employees',
+                ],
+                [
+                    'name' => 'Edit Employees',
+                    'description' => 'Edit employee information',
+                ],
+                [
+                    'name' => 'Delete Employees',
+                    'description' => 'Delete employees',
+                ],
+            ],
+
             // Events Management Group
             'Events' => [
                 [
