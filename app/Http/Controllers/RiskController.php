@@ -411,6 +411,7 @@ class RiskController extends Controller
         $labelMetadata = $request->input('label_metadata');
         $isUnchecking = $request->input('is_unchecking', false);
         $checkPermission = $request->input('check_permission', false);
+        $simpleToggle = $request->input('simple_toggle', false);
         $labelKey = $request->input('label_key') ?? ($labelMetadata['label_key'] ?? null);
 
         // If just checking permission (before opening modal)
@@ -444,6 +445,46 @@ class RiskController extends Controller
             return response()->json([
                 'success' => true,
                 'can_check' => true,
+            ]);
+        }
+
+        // Simple toggle: merge a single boolean label into existing labels (web_pin verified if provided)
+        if ($simpleToggle && $labelKey) {
+            $webPin = $request->input('web_pin', '');
+            if (!empty($webPin)) {
+                $userData = DB::table('users')->where('id', $user->id)->first();
+                if (empty($userData->web_pin)) {
+                    return response()->json(['success' => false, 'message' => 'Web PIN is not set for your account.'], 422);
+                }
+                $storedPin = $userData->web_pin;
+                $isVerified = preg_match('/^\$2[ayb]\$.{56}$/', $storedPin)
+                    ? Hash::check($webPin, $storedPin)
+                    : ($webPin === $storedPin);
+                if (!$isVerified) {
+                    return response()->json(['success' => false, 'message' => 'Invalid Web PIN. Please try again.'], 422);
+                }
+            }
+
+            $labels = $this->normalizeLabels($existingLabels);
+            $labels[$labelKey] = (bool) ($requestLabels[$labelKey] ?? false);
+
+            DB::table('market_lists')
+                ->where('id', $marketId)
+                ->update(['labels' => json_encode($labels), 'updated_at' => now()]);
+
+            $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
+            $isLabelChecked = function($value) {
+                if (is_bool($value)) return $value === true;
+                if (is_array($value) && isset($value['checked'])) return (bool) $value['checked'];
+                return false;
+            };
+            $allRequiredChecked = collect($requiredLabelKeys)->every(fn($k) => isset($labels[$k]) && $isLabelChecked($labels[$k]));
+
+            return response()->json([
+                'success' => true,
+                'labels' => $labels,
+                'is_done' => $market->is_done ?? false,
+                'all_required_checked' => $allRequiredChecked,
             ]);
         }
 

@@ -466,28 +466,74 @@ window.themeToggle = {
         const savedTheme = localStorage.getItem('theme');
         const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         const theme = savedTheme || systemTheme;
-        
-        this.setTheme(theme);
+        this.applyTheme(theme);
     },
 
-    setTheme: function(theme) {
+    applyTheme: function(theme) {
         if (theme === 'dark') {
             document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
         } else {
             document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
         }
+        localStorage.setItem('theme', theme);
     },
 
     bindToggle: function() {
-        const themeToggle = document.getElementById('themeToggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => {
-                const isDark = document.documentElement.classList.contains('dark');
-                this.setTheme(isDark ? 'light' : 'dark');
-            });
-        }
+        const btn = document.getElementById('themeToggle');
+        if (!btn) return;
+
+        btn.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.contains('dark');
+            const nextTheme = isDark ? 'light' : 'dark';
+
+            // Spin the icon
+            const iconWrap = btn.querySelector('.theme-icon-wrap');
+            if (iconWrap) {
+                iconWrap.classList.remove('spinning');
+                void iconWrap.offsetWidth; // reflow to restart animation
+                iconWrap.classList.add('spinning');
+                iconWrap.addEventListener('animationend', () => iconWrap.classList.remove('spinning'), { once: true });
+            }
+
+            // Glow pulse on button
+            btn.classList.remove('glow');
+            void btn.offsetWidth;
+            btn.classList.add('glow');
+            btn.addEventListener('animationend', () => btn.classList.remove('glow'), { once: true });
+
+            // View Transitions API – circular reveal from button centre
+            if (document.startViewTransition) {
+                const rect = btn.getBoundingClientRect();
+                const x = Math.round(rect.left + rect.width  / 2);
+                const y = Math.round(rect.top  + rect.height / 2);
+                const maxR = Math.hypot(
+                    Math.max(x, window.innerWidth  - x),
+                    Math.max(y, window.innerHeight - y)
+                );
+
+                const transition = document.startViewTransition(() => {
+                    this.applyTheme(nextTheme);
+                });
+
+                transition.ready.then(() => {
+                    const clipStart = `circle(0px at ${x}px ${y}px)`;
+                    const clipEnd   = `circle(${maxR}px at ${x}px ${y}px)`;
+                    document.documentElement.animate(
+                        { clipPath: [clipStart, clipEnd] },
+                        {
+                            duration: 420,
+                            easing: 'ease-in',
+                            pseudoElement: '::view-transition-new(root)',
+                        }
+                    );
+                });
+            } else {
+                // Fallback: simple fade transition
+                document.documentElement.style.transition = 'background-color 0.3s ease, color 0.3s ease';
+                this.applyTheme(nextTheme);
+                setTimeout(() => { document.documentElement.style.transition = ''; }, 350);
+            }
+        });
     }
 };
 

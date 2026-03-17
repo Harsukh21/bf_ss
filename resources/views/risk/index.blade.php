@@ -1464,13 +1464,13 @@
                 </label>
                 <input type="text" id="nameInput" value="{{ auth()->user()->name }}" readonly class="w-full border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed" required>
             </div>
-            <div>
+            <div id="chorIdRow">
                 <label for="chorIdInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Chor ID <span class="text-red-500">*</span>
                 </label>
                 <textarea id="chorIdInput" class="w-full border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500" rows="3" placeholder="Enter Chor ID..." required></textarea>
             </div>
-            <div>
+            <div id="remarkRow">
                 <label for="remarkInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Remark <span class="text-red-500">*</span>
                 </label>
@@ -1649,31 +1649,14 @@
             
             // If checking a checkbox, verify it's not already checked by another admin
             if (checkbox.checked) {
-                // Cancel Goal: save directly without popup
+                // Cancel Goal: open simplified modal (Name + Web PIN only)
                 if (labelKey === 'cancel_goal') {
-                    fetch(updateUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json',
-                        },
-                        body: JSON.stringify({ labels: { cancel_goal: true } }),
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            showRiskToast('Cancel Goal checked', 'success');
-                            setTimeout(() => { window.location.reload(); }, 500);
-                        } else {
-                            checkbox.checked = false;
-                            showRiskToast(data.message || 'Unable to update Cancel Goal', 'error');
-                        }
-                    })
-                    .catch(() => {
-                        checkbox.checked = false;
-                        showRiskToast('Unable to update Cancel Goal', 'error');
-                    });
+                    const marketName = checkbox.dataset.marketName || 'Market';
+                    activeLabelKey = labelKey;
+                    activeUpdateUrl = updateUrl;
+                    pendingCheckboxState = true;
+                    checkbox.checked = false;
+                    openCancelGoalModal(marketId, marketName);
                     return;
                 }
 
@@ -1788,8 +1771,31 @@
         remarkInput.value = existingRemark || 'Checking';
         webPinInput.value = '';
         
+        // Ensure Chor ID and Remark are visible for normal labels
+        document.getElementById('chorIdRow').style.display = '';
+        document.getElementById('remarkRow').style.display = '';
         remarkModal.classList.add('active');
         remarkOverlay.classList.add('active');
+    }
+
+    function openCancelGoalModal(marketId, marketName) {
+        activeMarketId = marketId;
+        activeMarketName = marketName;
+        activeDoneUrl = null;
+        remarkMarketName.textContent = `Market: ${marketName}`;
+        document.getElementById('remarkModalLabelKey').textContent = 'Checkbox: CANCEL_GOAL';
+        nameInput.value = '';
+        nameInput.removeAttribute('readonly');
+        nameInput.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-600', 'dark:text-gray-400', 'cursor-not-allowed');
+        nameInput.classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-gray-100');
+        nameInput.placeholder = 'Enter checker name...';
+        webPinInput.value = '';
+        // Hide Chor ID and Remark rows
+        document.getElementById('chorIdRow').style.display = 'none';
+        document.getElementById('remarkRow').style.display = 'none';
+        remarkModal.classList.add('active');
+        remarkOverlay.classList.add('active');
+        setTimeout(() => nameInput.focus(), 50);
     }
 
     function openRemarkModal(marketId, marketName, doneUrl) {
@@ -1803,6 +1809,9 @@
         nameInput.value = '{{ auth()->user()->name }}';
         chorIdInput.value = 'NULL';
         webPinInput.value = '';
+        // Ensure Chor ID and Remark are visible
+        document.getElementById('chorIdRow').style.display = '';
+        document.getElementById('remarkRow').style.display = '';
         remarkModal.classList.add('active');
         remarkOverlay.classList.add('active');
     }
@@ -1825,6 +1834,14 @@
         nameInput.value = '';
         chorIdInput.value = '';
         webPinInput.value = '';
+        // Restore nameInput to readonly state
+        nameInput.setAttribute('readonly', true);
+        nameInput.classList.remove('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-gray-100');
+        nameInput.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-600', 'dark:text-gray-400', 'cursor-not-allowed');
+        nameInput.placeholder = '';
+        // Restore hidden rows
+        document.getElementById('chorIdRow').style.display = '';
+        document.getElementById('remarkRow').style.display = '';
         remarkModal.classList.remove('active');
         remarkOverlay.classList.remove('active');
     }
@@ -1888,14 +1905,16 @@
             nameInput.focus();
             return;
         }
-        
-        if (!chorId.length) {
+
+        const isCancelGoal = activeLabelKey === 'cancel_goal';
+
+        if (!isCancelGoal && !chorId.length) {
             showRiskToast('Chor ID is required', 'error');
             chorIdInput.focus();
             return;
         }
-        
-        if (!remark.length) {
+
+        if (!isCancelGoal && !remark.length) {
             showRiskToast('Remark is required', 'error');
             remarkInput.focus();
             return;
@@ -1911,7 +1930,11 @@
 
         // Check if this is for a checkbox or mark done
         if (activeLabelKey && activeUpdateUrl) {
-            // Submit checkbox with metadata
+            // Cancel Goal: simple_toggle with web_pin verification
+            const requestBody = isCancelGoal
+                ? { simple_toggle: true, label_key: 'cancel_goal', web_pin: webPin, labels: { cancel_goal: true } }
+                : { labels: { [activeLabelKey]: true }, label_metadata: { label_key: activeLabelKey, checker_name: name, chor_id: chorId, remark: remark, web_pin: webPin } };
+
             fetch(activeUpdateUrl, {
                 method: 'POST',
                 headers: {
@@ -1919,16 +1942,7 @@
                     'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json',
                 },
-                body: JSON.stringify({ 
-                    labels: { [activeLabelKey]: true },
-                    label_metadata: {
-                        label_key: activeLabelKey,
-                        checker_name: name,
-                        chor_id: chorId,
-                        remark: remark,
-                        web_pin: webPin
-                    }
-                }),
+                body: JSON.stringify(requestBody),
             })
             .then(response => response.json())
             .then(data => {
