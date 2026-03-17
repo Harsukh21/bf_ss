@@ -936,11 +936,12 @@
                                         <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Labels:</span>
                                         @php
                                             $requiredLabelKeys = ['4x', 'b2c', 'b2b', 'usdt'];
-                                            $excludedLabels = ['bookmaker', 'unmatch'];
+                                            $excludedLabels = ['bookmaker', 'unmatch', 'cancel_goal'];
+                                            $isSoccer = strtolower($market->sportName ?? '') === 'soccer';
                                         @endphp
                                         @foreach($labelStates as $key => $value)
-                                            @php 
-                                                // Skip bookmaker and unmatch labels
+                                            @php
+                                                // Skip bookmaker, unmatch and cancel_goal (cancel_goal handled separately)
                                                 if (in_array($key, $excludedLabels)) {
                                                     continue;
                                                 }
@@ -991,6 +992,43 @@
                                                 </span>
                                             </label>
                                         @endforeach
+                                        @if($isSoccer)
+                                            @php
+                                                $cgKey = 'cancel_goal';
+                                                $cgValue = $labelStates[$cgKey] ?? false;
+                                                $cgCheckboxId = "market-option-{$market->id}-{$cgKey}";
+                                                $cgIsChecked = is_bool($cgValue) ? $cgValue : (is_array($cgValue) && isset($cgValue['checked']) ? (bool) $cgValue['checked'] : false);
+                                                $cgCheckedBy = is_array($cgValue) ? ($cgValue['checked_by'] ?? null) : null;
+                                                $cgCheckerName = is_array($cgValue) ? ($cgValue['checker_name'] ?? null) : null;
+                                                $cgChorId = is_array($cgValue) ? ($cgValue['chor_id'] ?? null) : null;
+                                                $cgRemark = is_array($cgValue) ? ($cgValue['remark'] ?? null) : null;
+                                                $cgIsCheckedByOther = $cgCheckedBy !== null && $cgCheckedBy != auth()->id() && $cgIsChecked;
+                                                $cgIsDisabled = $isDone || $cgIsCheckedByOther;
+                                            @endphp
+                                            <label for="{{ $cgCheckboxId }}" class="inline-flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    id="{{ $cgCheckboxId }}"
+                                                    class="market-label-checkbox rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
+                                                    data-market-id="{{ $market->id }}"
+                                                    data-label-key="{{ $cgKey }}"
+                                                    data-market-name="{{ $market->eventName }} / {{ $market->marketName }}"
+                                                    data-required="false"
+                                                    data-checked-by="{{ $cgCheckedBy ?? '' }}"
+                                                    data-checker-name="{{ $cgCheckerName ?? '' }}"
+                                                    data-chor-id="{{ $cgChorId ?? '' }}"
+                                                    data-remark="{{ $cgRemark ?? '' }}"
+                                                    @checked($cgIsChecked)
+                                                    @disabled($cgIsDisabled)
+                                                >
+                                                <span class="text-gray-500 dark:text-gray-400 uppercase">
+                                                    Cancel Goal
+                                                    @if($cgIsChecked && $cgCheckerName)
+                                                        <span class="text-xs font-normal text-gray-400 dark:text-gray-500">({{ $cgCheckerName }})</span>
+                                                    @endif
+                                                </span>
+                                            </label>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -1548,6 +1586,11 @@
             // Check if checkbox has existing data (was previously checked)
             const hasExistingData = checkbox.dataset.checkerName || checkbox.dataset.chorId || checkbox.dataset.remark;
             
+            // Cancel Goal: never show the edit modal
+            if (checkbox.dataset.labelKey === 'cancel_goal') {
+                return;
+            }
+
             // If checkbox is checked and has existing data, allow editing
             if (checkbox.checked && hasExistingData && !checkbox.disabled) {
                 const checkedBy = checkbox.dataset.checkedBy || '';
@@ -1606,6 +1649,34 @@
             
             // If checking a checkbox, verify it's not already checked by another admin
             if (checkbox.checked) {
+                // Cancel Goal: save directly without popup
+                if (labelKey === 'cancel_goal') {
+                    fetch(updateUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({ labels: { cancel_goal: true } }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showRiskToast('Cancel Goal checked', 'success');
+                            setTimeout(() => { window.location.reload(); }, 500);
+                        } else {
+                            checkbox.checked = false;
+                            showRiskToast(data.message || 'Unable to update Cancel Goal', 'error');
+                        }
+                    })
+                    .catch(() => {
+                        checkbox.checked = false;
+                        showRiskToast('Unable to update Cancel Goal', 'error');
+                    });
+                    return;
+                }
+
                 // First check if checkbox is already checked by another admin
             fetch(updateUrl, {
                 method: 'POST',
@@ -1614,7 +1685,7 @@
                     'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json',
                 },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         check_permission: true,
                         label_key: labelKey
                     }),
@@ -1624,15 +1695,15 @@
                     if (data.can_check) {
                         // Get market name from checkbox data attribute
                         const marketName = checkbox.dataset.marketName || 'Market';
-                        
+
                         // Store state
                         activeLabelKey = labelKey;
                         activeUpdateUrl = updateUrl;
                         pendingCheckboxState = true;
-                        
+
                         // Temporarily uncheck until modal is submitted
                         checkbox.checked = false;
-                        
+
                         // Open modal with existing values if available
                         openCheckboxModal(marketId, marketName, labelKey, existingCheckerName, existingChorId, existingRemark);
                     } else {

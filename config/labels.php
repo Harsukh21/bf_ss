@@ -22,6 +22,7 @@ return [
         'usdt' => 'USDT',
         'bookmaker' => 'BOOKMAKER',
         'unmatch' => 'UNMATCH',
+        'cancel_goal' => 'CANCEL GOAL',
     ],
 
     /*
