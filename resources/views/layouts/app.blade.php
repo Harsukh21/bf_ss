@@ -122,50 +122,45 @@
 
         /* ── Dark/Light mode toggle animation ── */
 
-        /* View Transitions API – circular reveal from toggle button */
-        ::view-transition-old(root),
+        /*
+         * Cancel the browser's default cross-fade and let JS drive the
+         * clip-path reveal instead. The new snapshot always sits on top so
+         * the circle expands to reveal the incoming theme in both directions.
+         */
+        ::view-transition-old(root) {
+            animation: none;
+            mix-blend-mode: normal;
+            z-index: 1;
+        }
         ::view-transition-new(root) {
             animation: none;
             mix-blend-mode: normal;
-        }
-        ::view-transition-new(root) { z-index: 999; }
-        ::view-transition-old(root) { z-index: 1;   }
-        .dark::view-transition-new(root) { z-index: 1;   }
-        .dark::view-transition-old(root) { z-index: 999; }
-
-        /* Theme toggle button */
-        #themeToggle {
-            position: relative;
-            overflow: visible;
+            z-index: 999;
         }
 
-        /* Icon wrapper — spins on click */
+        /* Icon wrapper — rotates on click */
         .theme-icon-wrap {
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-                        opacity  0.25s ease;
         }
         .theme-icon-wrap.spinning {
             animation: theme-icon-spin 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
         @keyframes theme-icon-spin {
-            0%   { transform: rotate(0deg)   scale(1);    opacity: 1; }
-            40%  { transform: rotate(180deg) scale(0.6);  opacity: 0.3; }
-            60%  { transform: rotate(220deg) scale(0.6);  opacity: 0.3; }
-            100% { transform: rotate(360deg) scale(1);    opacity: 1; }
+            0%   { transform: rotate(0deg)   scale(1);   opacity: 1;   }
+            40%  { transform: rotate(180deg) scale(0.5); opacity: 0.2; }
+            60%  { transform: rotate(220deg) scale(0.5); opacity: 0.2; }
+            100% { transform: rotate(360deg) scale(1);   opacity: 1;   }
         }
 
-        /* Glow pulse on the button after toggle */
+        /* Ripple glow on the button */
         @keyframes theme-btn-glow {
-            0%   { box-shadow: 0 0 0 0 rgba(99,102,241,0.5); }
-            60%  { box-shadow: 0 0 0 8px rgba(99,102,241,0);  }
-            100% { box-shadow: 0 0 0 0 rgba(99,102,241,0);    }
+            0%   { box-shadow: 0 0 0 0   rgba(99,102,241,0.55); }
+            60%  { box-shadow: 0 0 0 10px rgba(99,102,241,0);    }
+            100% { box-shadow: 0 0 0 0   rgba(99,102,241,0);     }
         }
-        #themeToggle.glow {
-            animation: theme-btn-glow 0.6s ease-out;
-        }
+        #themeToggle.glow { animation: theme-btn-glow 0.55s ease-out; }
     </style>
     
     <!-- Alpine.js CDN -->

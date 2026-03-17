@@ -506,29 +506,28 @@ window.themeToggle = {
                 const rect = btn.getBoundingClientRect();
                 const x = Math.round(rect.left + rect.width  / 2);
                 const y = Math.round(rect.top  + rect.height / 2);
-                const maxR = Math.hypot(
+                // Radius large enough to cover the furthest corner of the viewport
+                const maxR = Math.ceil(Math.hypot(
                     Math.max(x, window.innerWidth  - x),
                     Math.max(y, window.innerHeight - y)
-                );
+                ));
 
                 const transition = document.startViewTransition(() => {
                     this.applyTheme(nextTheme);
                 });
 
                 transition.ready.then(() => {
-                    const clipStart = `circle(0px at ${x}px ${y}px)`;
-                    const clipEnd   = `circle(${maxR}px at ${x}px ${y}px)`;
                     document.documentElement.animate(
-                        { clipPath: [clipStart, clipEnd] },
+                        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${maxR}px at ${x}px ${y}px)`] },
                         {
-                            duration: 420,
-                            easing: 'ease-in',
+                            duration: 400,
+                            easing: 'ease-out',
                             pseudoElement: '::view-transition-new(root)',
                         }
                     );
-                });
+                }).catch(() => {});
             } else {
-                // Fallback: simple fade transition
+                // Fallback: smooth opacity crossfade via short CSS transition
                 document.documentElement.style.transition = 'background-color 0.3s ease, color 0.3s ease';
                 this.applyTheme(nextTheme);
                 setTimeout(() => { document.documentElement.style.transition = ''; }, 350);
