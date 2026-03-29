@@ -10,55 +10,53 @@ body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #1f2
 /* ===== HEADER ===== */
 .header-wrap {
     background: #0f766e;
-    padding: 20px 24px 16px;
+    padding: 18px 20px;
     width: 100%;
 }
-.header-logo-box {
-    float: left;
-    background: #fff;
-    border-radius: 6px;
-    padding: 5px 10px;
-    font-size: 11px;
-    font-weight: 700;
-    color: #0f766e;
-    margin-right: 14px;
-    margin-top: 2px;
-    line-height: 1.2;
-}
+.header-table { width: 100%; border-collapse: collapse; }
+.header-table td { vertical-align: middle; padding: 0; border: none; background: transparent; }
 .header-logo-img {
-    height: 44px;
+    height: 48px;
     width: auto;
     max-width: 100px;
     object-fit: contain;
+    border-radius: 4px;
+    background: #fff;
+    padding: 3px 6px;
+    display: block;
 }
-.header-info-right {
-    float: right;
-    text-align: right;
-    color: rgba(255,255,255,0.85);
-    font-size: 11px;
-    line-height: 1.8;
+.header-logo-box {
+    background: #fff;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #0f766e;
+    display: inline-block;
 }
-.header-title-name {
-    font-size: 22px;
+.header-name {
+    font-size: 20px;
     font-weight: 700;
     color: #fff;
     line-height: 1.1;
-    display: block;
 }
-.header-subtitle {
-    font-size: 12px;
+.header-sub {
+    font-size: 11px;
     color: rgba(255,255,255,0.75);
-    display: block;
     margin-top: 3px;
 }
-.clearfix::after { content: ''; display: table; clear: both; }
+.header-right-cell {
+    text-align: right;
+    color: rgba(255,255,255,0.85);
+    font-size: 11px;
+    line-height: 1.9;
+    white-space: nowrap;
+    width: 130px;
+    vertical-align: top;
+}
 
 /* ===== INFO TABLE ===== */
-.info-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 0;
-}
+.info-table { width: 100%; border-collapse: collapse; }
 .info-table td {
     padding: 7px 10px;
     border: 1px solid #e5e7eb;
@@ -66,20 +64,16 @@ body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #1f2
     vertical-align: middle;
 }
 .info-table .lbl {
-    width: 18%;
+    width: 17%;
     background: #f9fafb;
     font-weight: 700;
     color: #374151;
     white-space: nowrap;
 }
-.info-table .val {
-    width: 32%;
-    color: #111827;
-}
+.info-table .val { width: 33%; color: #111827; }
 .val-green { color: #059669; font-weight: 700; }
 .val-red   { color: #dc2626; font-weight: 700; }
 
-/* Badge */
 .badge {
     display: inline-block;
     padding: 2px 10px;
@@ -98,29 +92,31 @@ body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #1f2
     color: #0f766e;
     text-transform: uppercase;
     letter-spacing: 1px;
-    padding: 14px 24px 8px;
+    padding: 14px 20px 8px;
 }
 
-/* ===== PROOF CONTENT BOX ===== */
-.proof-box {
-    margin: 0 24px 16px;
-    padding: 14px 16px;
-    background: #f0fdfa;
-    border: 1px solid #99f6e4;
+/* ===== PROOF CONTENT — inherit proof type HTML styles ===== */
+.proof-content-wrap {
+    margin: 0 20px 16px;
+    border: 1px solid #e5e7eb;
     border-radius: 4px;
+    padding: 14px 16px;
     font-size: 12px;
     line-height: 1.75;
-    color: #134e4a;
+    color: #1f2937;
+    background: #fff;
 }
-.proof-box p  { margin: 0 0 8px; }
-.proof-box b, .proof-box strong { font-weight: 700; }
-.proof-box table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-.proof-box td, .proof-box th { padding: 5px 8px; border: 1px solid #99f6e4; font-size: 11px; }
-.proof-box th { background: #0f766e; color: #fff; }
 
-/* ===== NAV SECTION ===== */
+/* Allow proof type's own table/box styles to render */
+.proof-content-wrap table { width: 100%; border-collapse: collapse; }
+.proof-content-wrap td, .proof-content-wrap th { padding: 5px 8px; border: 1px solid #d1d5db; font-size: 11px; }
+.proof-content-wrap th { background: #0f766e; color: #fff; }
+.proof-content-wrap p  { margin: 0 0 8px; }
+.proof-content-wrap b, .proof-content-wrap strong { font-weight: 700; }
+
+/* ===== NAV BOX ===== */
 .nav-box {
-    margin: 0 24px 12px;
+    margin: 0 20px 12px;
     padding: 10px 14px;
     background: #f9fafb;
     border: 1px solid #e5e7eb;
@@ -131,38 +127,35 @@ body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #1f2
 }
 
 /* ===== FOOTER ===== */
-.footer-wrap {
-    margin-top: 20px;
-    background: #f8fafc;
-    border-top: 2px solid #e5e7eb;
-    padding: 8px 24px;
-    width: 100%;
-}
-.footer-left  { float: left;  font-size: 10px; color: #9ca3af; }
-.footer-right { float: right; font-size: 10px; color: #9ca3af; }
+.footer-table { width: 100%; border-collapse: collapse; margin-top: 18px; background: #f8fafc; border-top: 2px solid #e5e7eb; }
+.footer-table td { padding: 8px 20px; border: none; font-size: 10px; color: #9ca3af; }
 </style>
 </head>
 <body>
 
 {{-- ===== HEADER ===== --}}
-<div class="header-wrap clearfix">
-    <div class="header-info-right">
-        <span>Proof #{{ $proof->id }}</span><br>
-        @if($proof->proof_date)<span>{{ $proof->proof_date->format('d M Y') }}</span><br>@endif
-        @if($whatsappGroup)<span>{{ $whatsappGroup }}</span>@endif
-    </div>
-
-    @if($proof->whitelabel?->logo_link)
-        <img src="{{ public_path('storage/' . ltrim($proof->whitelabel->logo_link, '/')) }}"
-             class="header-logo-img" style="float:left;margin-right:12px;border-radius:4px;background:#fff;padding:3px;" alt="Logo">
-    @else
-        <div class="header-logo-box" style="float:left;">Logo</div>
-    @endif
-
-    <div style="overflow:hidden;">
-        <span class="header-title-name">{{ $proof->whitelabel?->name ?? $label->name }}</span>
-        <span class="header-subtitle">{{ $proof->proofType?->name ?? 'Proof Document' }}</span>
-    </div>
+<div class="header-wrap">
+    <table class="header-table">
+        <tr>
+            <td style="width:60px;padding-right:12px;">
+                @if($proof->whitelabel?->logo_link)
+                    <img src="{{ public_path('storage/' . ltrim($proof->whitelabel->logo_link, '/')) }}"
+                         class="header-logo-img" alt="Logo">
+                @else
+                    <span class="header-logo-box">Logo</span>
+                @endif
+            </td>
+            <td>
+                <div class="header-name">{{ $proof->whitelabel?->name ?? $label->name }}</div>
+                <div class="header-sub">{{ $proof->proofType?->name ?? 'Proof Document' }}</div>
+            </td>
+            <td class="header-right-cell">
+                <div>Proof #{{ $proof->id }}</div>
+                @if($proof->proof_date)<div>{{ $proof->proof_date->format('d M Y') }}</div>@endif
+                @if($whatsappGroup)<div>{{ $whatsappGroup }}</div>@endif
+            </td>
+        </tr>
+    </table>
 </div>
 
 {{-- ===== INFO TABLE ===== --}}
@@ -209,10 +202,10 @@ body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #1f2
     </tr>
 </table>
 
-{{-- ===== PROOF CONTENT ===== --}}
+{{-- ===== PROOF TYPE HTML CONTENT (rendered as-is) ===== --}}
 @if($templateHtml)
 <div class="section-title">Proof Content</div>
-<div class="proof-box">{!! $templateHtml !!}</div>
+<div class="proof-content-wrap">{!! $templateHtml !!}</div>
 @endif
 
 {{-- ===== NAVIGATION ===== --}}
@@ -227,13 +220,15 @@ body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #1f2
 @endif
 
 {{-- ===== FOOTER ===== --}}
-<div class="footer-wrap clearfix">
-    <span class="footer-left">{{ $proof->whitelabel?->domain ?? $label->name }} &mdash; Proof #{{ $proof->id }}</span>
-    <span class="footer-right">
-        Generated: {{ now()->format('d M Y, H:i') }}
-        @if($proofMaker) &nbsp;&bull;&nbsp; By: {{ $proofMaker }}@endif
-    </span>
-</div>
+<table class="footer-table">
+    <tr>
+        <td>{{ $proof->whitelabel?->domain ?? $label->name }} — Proof #{{ $proof->id }}</td>
+        <td style="text-align:right;">
+            Generated: {{ now()->format('d M Y, H:i') }}
+            @if($proofMaker) &bull; By: {{ $proofMaker }}@endif
+        </td>
+    </tr>
+</table>
 
 </body>
 </html>
