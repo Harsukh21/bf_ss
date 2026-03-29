@@ -1,0 +1,46 @@
+@extends('layouts.app')
+@section('title', 'Add Proof — ' . $label->name)
+@section('content')
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+
+    {{-- Header --}}
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Add Proof</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Label: <span class="font-medium text-gray-700 dark:text-gray-300">{{ $label->name }}</span></p>
+        </div>
+        <a href="{{ route('labels.proof', $label) }}"
+           class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Back
+        </a>
+    </div>
+
+    {{-- Errors --}}
+    @if($errors->any())
+    <div class="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+        <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+            <div>
+                <p class="text-sm font-medium text-red-700 dark:text-red-300">Please fix the following errors:</p>
+                <ul class="mt-1 text-sm text-red-600 dark:text-red-400 list-disc list-inside space-y-0.5">
+                    @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
+                </ul>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Form card --}}
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <form method="POST" action="{{ route('labels.proof.store', $label) }}" enctype="multipart/form-data" novalidate>
+            @csrf
+            @include('labels.modules._proof_form', ['proof' => null])
+            <div class="flex items-center gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <button type="submit" class="px-6 py-2 text-sm font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors">Create</button>
+                <a href="{{ route('labels.proof', $label) }}" class="px-6 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection

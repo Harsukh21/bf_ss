@@ -94,6 +94,26 @@ class PermissionSeeder extends Seeder
                 ],
             ],
 
+            // Labels Group
+            'Labels' => [
+                [
+                    'name' => 'View Labels',
+                    'description' => 'View list of labels',
+                ],
+                [
+                    'name' => 'Create Labels',
+                    'description' => 'Create new labels',
+                ],
+                [
+                    'name' => 'Edit Labels',
+                    'description' => 'Edit existing labels',
+                ],
+                [
+                    'name' => 'Delete Labels',
+                    'description' => 'Delete labels',
+                ],
+            ],
+
             // Attendance Group
             'Attendance' => [
                 [

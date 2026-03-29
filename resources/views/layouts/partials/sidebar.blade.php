@@ -342,6 +342,90 @@
                     </a>
                 @endif
 
+                <!-- Labels Dropdown -->
+                @php
+                    $isLabelsActive  = request()->routeIs('labels.*');
+                    $allSidebarLabels = \App\Models\Label::orderBy('name')->get();
+                    $currentLabelId  = optional(request()->route('label'))->id;
+                @endphp
+                <div class="relative">
+                    <button onclick="toggleDropdown('labels')" class="flex items-center justify-between w-full px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ $isLabelsActive ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                            </svg>
+                            Labels
+                        </div>
+                        <svg id="labels-arrow" class="w-4 h-4 transition-transform duration-200 {{ $isLabelsActive ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+
+                    <div id="labels-dropdown" class="space-y-1 ml-4 {{ $isLabelsActive ? '' : 'hidden' }}">
+
+                        {{-- Static items --}}
+                        <a href="{{ route('labels.index') }}"
+                           class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('labels.index') && !$currentLabelId ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 font-semibold' : '' }}">
+                            <svg class="w-4 h-4 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                            </svg>
+                            Labels
+                        </a>
+                        <!-- <a href="{{ route('labels.create') }}"
+                           class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors {{ request()->routeIs('labels.create') ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 font-semibold' : '' }}">
+                            <svg class="w-4 h-4 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Add Labels
+                        </a> -->
+
+                        {{-- Dynamic label entries --}}
+                        @foreach($allSidebarLabels as $sLabel)
+                        @php $isThisLabelActive = $currentLabelId === $sLabel->id; @endphp
+                        <div class="relative">
+                            <button onclick="toggleDropdown('label-{{ $sLabel->id }}')"
+                                    class="flex items-center justify-between w-full px-4 py-2 text-sm rounded-lg transition-colors
+                                           {{ $isThisLabelActive
+                                               ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-medium'
+                                               : 'text-gray-600 dark:text-gray-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400' }}">
+                                <div class="flex items-center min-w-0">
+                                    <svg class="w-4 h-4 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                                    </svg>
+                                    <span class="truncate">{{ $sLabel->name }}</span>
+                                </div>
+                                <svg id="label-{{ $sLabel->id }}-arrow" class="w-3.5 h-3.5 ml-1 flex-shrink-0 transition-transform duration-200 {{ $isThisLabelActive ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+
+                            <div id="label-{{ $sLabel->id }}-dropdown" class="space-y-0.5 ml-4 mt-0.5 {{ $isThisLabelActive ? '' : 'hidden' }}">
+                                @foreach([
+                                    ['name' => 'Whitelabel', 'route' => 'labels.whitelabel', 'icon' => 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'],
+                                    ['name' => 'Prooftype',  'route' => 'labels.prooftype',  'icon' => 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'],
+                                    ['name' => 'Sports',     'route' => 'labels.sports',     'icon' => 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064'],
+                                    ['name' => 'Proof',      'route' => 'labels.proof',      'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+                                    ['name' => 'Reports',    'route' => 'labels.reports',    'icon' => 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+                                    ['name' => 'Notes',      'route' => 'labels.notes',      'icon' => 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'],
+                                ] as $sub)
+                                <a href="{{ route($sub['route'], $sLabel) }}"
+                                   class="flex items-center px-4 py-1.5 text-xs rounded-lg transition-colors
+                                          {{ request()->routeIs($sub['route']) && $isThisLabelActive
+                                              ? 'bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 font-semibold'
+                                              : 'text-gray-500 dark:text-gray-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400' }}">
+                                    <svg class="w-3.5 h-3.5 mr-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $sub['icon'] }}"/>
+                                    </svg>
+                                    {{ $sub['name'] }}
+                                </a>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endforeach
+
+                    </div>
+                </div>
+
                 <!-- Manual Update -->
                 <a href="{{ route('manual-update.index') }}"
                    class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 ease-in-out {{ request()->routeIs('manual-update.*') ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400' : '' }}">

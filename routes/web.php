@@ -16,6 +16,13 @@ use App\Http\Controllers\ScriptController;
 use App\Http\Controllers\ManualUpdateController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\LabelController;
+use App\Http\Controllers\LabelWhitelabelController;
+use App\Http\Controllers\LabelProoftypeController;
+use App\Http\Controllers\LabelSportsController;
+use App\Http\Controllers\LabelProofController;
+use App\Http\Controllers\LabelReportsController;
+use App\Http\Controllers\LabelNotesController;
 
 // Welcome page
 Route::get('/', function () {
@@ -321,6 +328,52 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
         Route::get('/{empAttendance}/edit', [AttendanceController::class, 'edit'])->name('edit');
         Route::put('/{empAttendance}', [AttendanceController::class, 'update'])->name('update');
         Route::delete('/{empAttendance}', [AttendanceController::class, 'destroy'])->name('destroy');
+    });
+
+    // Labels
+    Route::prefix('labels')->name('labels.')->group(function () {
+        Route::get('/', [LabelController::class, 'index'])->name('index');
+        Route::get('/create', [LabelController::class, 'create'])->name('create');
+        Route::post('/', [LabelController::class, 'store'])->name('store');
+        Route::put('/{label}', [LabelController::class, 'update'])->name('update');
+        Route::delete('/{label}', [LabelController::class, 'destroy'])->name('destroy');
+
+        // Label sub-modules
+        Route::prefix('/{label}')->group(function () {
+            // Whitelabel CRUD
+            Route::get('/whitelabel',                         [LabelWhitelabelController::class, 'index'])->name('whitelabel');
+            Route::post('/whitelabel',                        [LabelWhitelabelController::class, 'store'])->name('whitelabel.store');
+            Route::post('/whitelabel/{whitelabel}',           [LabelWhitelabelController::class, 'update'])->name('whitelabel.update');
+            Route::delete('/whitelabel/{whitelabel}',         [LabelWhitelabelController::class, 'destroy'])->name('whitelabel.destroy');
+
+            Route::get('/prooftype',                          [LabelProoftypeController::class, 'index'])->name('prooftype');
+            Route::post('/prooftype',                         [LabelProoftypeController::class, 'store'])->name('prooftype.store');
+            Route::post('/prooftype/{prooftype}',             [LabelProoftypeController::class, 'update'])->name('prooftype.update');
+            Route::delete('/prooftype/{prooftype}',           [LabelProoftypeController::class, 'destroy'])->name('prooftype.destroy');
+            Route::get('/sports',                             [LabelSportsController::class, 'index'])->name('sports');
+            Route::post('/sports',                            [LabelSportsController::class, 'store'])->name('sports.store');
+            Route::post('/sports/{sport}',                    [LabelSportsController::class, 'update'])->name('sports.update');
+            Route::delete('/sports/{sport}',                  [LabelSportsController::class, 'destroy'])->name('sports.destroy');
+            Route::get('/proof',                              [LabelProofController::class, 'index'])->name('proof');
+            Route::get('/proof/create',                       [LabelProofController::class, 'create'])->name('proof.create');
+            Route::post('/proof',                             [LabelProofController::class, 'store'])->name('proof.store');
+            Route::get('/proof/{proof}',                      [LabelProofController::class, 'show'])->name('proof.show');
+            Route::get('/proof/{proof}/edit',                 [LabelProofController::class, 'edit'])->name('proof.edit');
+            Route::post('/proof/{proof}',                     [LabelProofController::class, 'update'])->name('proof.update');
+            Route::delete('/proof/{proof}',                   [LabelProofController::class, 'destroy'])->name('proof.destroy');
+            Route::get('/proof/{proof}/download',             [LabelProofController::class, 'download'])->name('proof.download');
+            Route::get('/reports',                            [LabelReportsController::class, 'index'])->name('reports');
+            Route::get('/reports/create',                     [LabelReportsController::class, 'create'])->name('reports.create');
+            Route::post('/reports',                           [LabelReportsController::class, 'store'])->name('reports.store');
+            Route::get('/reports/export',                     [LabelReportsController::class, 'export'])->name('reports.export');
+            Route::get('/reports/{report}/edit',              [LabelReportsController::class, 'edit'])->name('reports.edit');
+            Route::post('/reports/{report}',                  [LabelReportsController::class, 'update'])->name('reports.update');
+            Route::delete('/reports/{report}',                [LabelReportsController::class, 'destroy'])->name('reports.destroy');
+            Route::get('/notes',                              [LabelNotesController::class, 'index'])->name('notes');
+            Route::post('/notes',                             [LabelNotesController::class, 'store'])->name('notes.store');
+            Route::post('/notes/{note}',                      [LabelNotesController::class, 'update'])->name('notes.update');
+            Route::delete('/notes/{note}',                    [LabelNotesController::class, 'destroy'])->name('notes.destroy');
+        });
     });
 
     // Profile & Settings
