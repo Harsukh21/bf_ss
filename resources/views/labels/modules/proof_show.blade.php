@@ -30,7 +30,7 @@
              style="background-color: {{ $proof->whitelabel?->color ?? '#0f766e' }};">
             <div class="flex items-center gap-4">
                 @if($proof->whitelabel?->logo_link)
-                    <img src="{{ asset('storage/' . $proof->whitelabel->logo_link) }}"
+                    <img src="{{ asset($proof->whitelabel->logo_link) }}"
                          class="h-12 w-auto object-contain bg-white rounded-lg p-1.5 max-w-[120px]"
                          alt="{{ $proof->whitelabel->name }}">
                 @else

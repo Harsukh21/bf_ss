@@ -139,7 +139,7 @@ body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #1f2
         <tr>
             <td style="width:60px;padding-right:12px;">
                 @if($proof->whitelabel?->logo_link)
-                    <img src="{{ public_path('storage/' . ltrim($proof->whitelabel->logo_link, '/')) }}"
+                    <img src="{{ public_path(ltrim($proof->whitelabel->logo_link, '/')) }}"
                          class="header-logo-img" alt="Logo">
                 @else
                     <span class="header-logo-box">Logo</span>

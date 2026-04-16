@@ -193,14 +193,32 @@ class LabelProofController extends Controller
             ->with('success', 'Proof deleted successfully.');
     }
 
+    public function preview(Request $request, Label $label, LabelProof $proof)
+    {
+        abort_if($proof->label_id !== $label->id, 404);
+        $proof->load(['whitelabel', 'proofType', 'sport']);
+
+        $proofMaker    = (string) ($request->input('proof_maker') ?? '');
+        $whatsappGroup = (string) ($request->input('whatsapp_group') ?? $proof->whatsapp_group ?? '');
+
+        $templateHtml = $this->applyPlaceholders(
+            $proof->proofType?->description ?? '',
+            $proof,
+            $proofMaker,
+            $whatsappGroup
+        );
+
+        return view('labels.modules.proof_preview', compact('label', 'proof', 'templateHtml', 'proofMaker', 'whatsappGroup'));
+    }
+
     public function download(Request $request, Label $label, LabelProof $proof)
     {
         abort_if($proof->label_id !== $label->id, 404);
 
         $proof->load(['whitelabel', 'proofType', 'sport']);
 
-        $proofMaker    = $request->input('proof_maker', '');
-        $whatsappGroup = $request->input('whatsapp_group', $proof->whatsapp_group ?? '');
+        $proofMaker    = (string) ($request->input('proof_maker') ?? '');
+        $whatsappGroup = (string) ($request->input('whatsapp_group') ?? $proof->whatsapp_group ?? '');
 
         $templateHtml = $this->applyPlaceholders(
             $proof->proofType?->description ?? '',
@@ -222,7 +240,7 @@ class LabelProofController extends Controller
         return $pdf->download($filename);
     }
 
-    private function applyPlaceholders(string $template, LabelProof $proof, string $proofMaker = '', string $whatsappGroup = ''): string
+    private function applyPlaceholders(string $template, LabelProof $proof, ?string $proofMaker = null, ?string $whatsappGroup = null): string
     {
         $map = [
             'USER'         => $proof->user_name ?? '',
@@ -235,8 +253,8 @@ class LabelProofController extends Controller
             'PROFIT_LOSS'  => $proof->profit_loss !== null ? number_format($proof->profit_loss, 0) : '',
             'DATE'         => $proof->proof_date?->format('d/m/Y') ?? '',
             'WHITELABEL'   => $proof->whitelabel?->name ?? '',
-            'WHATSAPP'     => $whatsappGroup ?: ($proof->whatsapp_group ?? ''),
-            'PROOF_MAKER'  => $proofMaker,
+            'WHATSAPP'     => $whatsappGroup ?? $proof->whatsapp_group ?? '',
+            'PROOF_MAKER'  => $proofMaker ?? '',
             'NAVIGATION'   => $proof->navigation ?? '',
             'NAVIGATION2'  => $proof->navigation2 ?? '',
         ];

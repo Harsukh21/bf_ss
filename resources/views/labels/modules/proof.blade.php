@@ -229,39 +229,44 @@
     </div>
 </div>
 
-{{-- ========= CONFIRM DOWNLOAD MODAL ========= --}}
-<div id="downloadOverlay" class="fixed inset-0 bg-black/50 z-[900] hidden items-center justify-center" onclick="if(event.target===this)closeDownloadModal()">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm mx-4 overflow-hidden">
-        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Confirm Download</h3>
-            <button onclick="closeDownloadModal()" class="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-        </div>
-        <div class="px-5 py-4 space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Proof Maker</label>
-                <input type="text" id="dlProofMaker" placeholder="Enter proof maker name..."
-                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+{{-- ========= PREVIEW + DOWNLOAD OVERLAY ========= --}}
+<div id="previewOverlay" class="fixed inset-0 z-[950] hidden flex-col bg-gray-900/80">
+    {{-- Top bar --}}
+    <div class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow flex-shrink-0 flex-wrap">
+        <button onclick="closePreview()"
+            class="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" title="Close">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <span class="text-sm font-semibold text-gray-800 dark:text-gray-100 mr-2">Preview & Download</span>
+
+        <div class="flex items-center gap-2 flex-1 flex-wrap">
+            <div class="flex items-center gap-1.5">
+                <label class="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Proof Maker</label>
+                <input type="text" id="dlProofMaker" placeholder="Enter proof maker..."
+                    oninput="refreshPreview()"
+                    class="px-2.5 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 w-44">
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">WhatsApp Group</label>
-                <input type="text" id="dlWhatsappGroup" placeholder="WhatsApp group name..."
-                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+            <div class="flex items-center gap-1.5">
+                <label class="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">WhatsApp Group</label>
+                <input type="text" id="dlWhatsappGroup"
+                    oninput="refreshPreview()"
+                    class="px-2.5 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 w-44">
             </div>
         </div>
-        <div class="flex items-center gap-3 px-5 pb-5 pt-1">
-            <button onclick="submitDownload()"
-                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-                Download PDF
-            </button>
-            <button onclick="closeDownloadModal()"
-                class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                Cancel
-            </button>
+
+        <button onclick="submitDownload()"
+            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors whitespace-nowrap">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            Download PDF
+        </button>
+    </div>
+
+    {{-- Preview iframe --}}
+    <div class="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900 flex items-start justify-center py-4 px-2 overflow-y-auto">
+        <div class="bg-white shadow-2xl w-full max-w-3xl rounded-lg overflow-hidden">
+            <iframe id="previewFrame" src="" style="width:100%;height:85vh;border:none;display:block;"></iframe>
         </div>
     </div>
 </div>
@@ -389,35 +394,58 @@
 
 @push('js')
 <script>
-// ===== Download modal =====
+// ===== Preview + Download =====
 var _dlProof = null;
-var _dlBaseUrls = @json($proofs->mapWithKeys(fn($p) => [$p->id => route('labels.proof.download', [$label, $p])]));
+var _previewBaseUrls  = @json($proofs->mapWithKeys(fn($p) => [$p->id => route('labels.proof.preview',  [$label, $p])]));
+var _downloadBaseUrls = @json($proofs->mapWithKeys(fn($p) => [$p->id => route('labels.proof.download', [$label, $p])]));
+var _refreshTimer = null;
 
 function openDownloadModal(proof) {
     _dlProof = proof;
-    document.getElementById('dlProofMaker').value = '';
+    document.getElementById('dlProofMaker').value    = '';
     document.getElementById('dlWhatsappGroup').value = proof.whatsapp_group || '';
-    const overlay = document.getElementById('downloadOverlay');
+    const overlay = document.getElementById('previewOverlay');
     overlay.classList.remove('hidden');
     overlay.classList.add('flex');
     document.body.style.overflow = 'hidden';
-    setTimeout(() => document.getElementById('dlProofMaker').focus(), 50);
+    loadPreview();
+    setTimeout(() => document.getElementById('dlProofMaker').focus(), 80);
 }
-function closeDownloadModal() {
-    const overlay = document.getElementById('downloadOverlay');
-    overlay.classList.add('hidden');
-    overlay.classList.remove('flex');
+function closePreview() {
+    document.getElementById('previewOverlay').classList.add('hidden');
+    document.getElementById('previewOverlay').classList.remove('flex');
+    document.getElementById('previewFrame').srcdoc = '';
     document.body.style.overflow = '';
     _dlProof = null;
+}
+function buildPreviewUrl() {
+    const maker = document.getElementById('dlProofMaker').value;
+    const wa    = document.getElementById('dlWhatsappGroup').value;
+    return _previewBaseUrls[_dlProof.id]
+        + '?proof_maker=' + encodeURIComponent(maker)
+        + '&whatsapp_group=' + encodeURIComponent(wa);
+}
+function loadPreview() {
+    if (!_dlProof) return;
+    const frame = document.getElementById('previewFrame');
+    frame.srcdoc = '<div style="display:flex;align-items:center;justify-content:center;height:200px;font-family:sans-serif;color:#6b7280;font-size:14px;">Loading preview...</div>';
+    fetch(buildPreviewUrl(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.text())
+        .then(html => { frame.srcdoc = html; })
+        .catch(() => { frame.srcdoc = '<div style="padding:24px;color:#dc2626;">Failed to load preview.</div>'; });
+}
+function refreshPreview() {
+    clearTimeout(_refreshTimer);
+    _refreshTimer = setTimeout(loadPreview, 700);
 }
 function submitDownload() {
     if (!_dlProof) return;
     const maker = document.getElementById('dlProofMaker').value;
     const wa    = document.getElementById('dlWhatsappGroup').value;
-    const base  = _dlBaseUrls[_dlProof.id];
-    const url   = base + '?proof_maker=' + encodeURIComponent(maker) + '&whatsapp_group=' + encodeURIComponent(wa);
+    const url   = _downloadBaseUrls[_dlProof.id]
+        + '?proof_maker=' + encodeURIComponent(maker)
+        + '&whatsapp_group=' + encodeURIComponent(wa);
     window.location.href = url;
-    closeDownloadModal();
 }
 
 // ===== Filter panel =====

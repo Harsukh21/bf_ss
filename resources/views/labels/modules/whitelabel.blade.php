@@ -70,7 +70,7 @@
                         {{-- Logo --}}
                         <td class="px-4 py-3">
                             @if($wl->logo_link)
-                                <img src="{{ $wl->logo_link }}" alt="{{ $wl->name }}" class="w-10 h-10 object-contain rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
+                                <img src="{{ asset($wl->logo_link) }}" alt="{{ $wl->name }}" class="w-10 h-10 object-contain rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
                             @else
                                 <div class="w-10 h-10 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,8 +301,9 @@
 
 @push('js')
 <script>
-const addUrl  = "{{ route('labels.whitelabel.store', $label) }}";
+const addUrl   = "{{ route('labels.whitelabel.store', $label) }}";
 const editBase = "{{ url('labels/' . $label->id . '/whitelabel') }}";
+const _assetBase = "{{ rtrim(asset('/'), '/') }}";
 
 function openAddModal() {
     resetForm();
@@ -324,7 +325,7 @@ function openEditModal(wl) {
     document.getElementById('wlColorPicker').value = color;
     document.getElementById('wlDomain').value   = wl.domain || '';
     if (wl.logo_link) {
-        document.getElementById('logoPreview').src = wl.logo_link;
+        document.getElementById('logoPreview').src = _assetBase + wl.logo_link;
         document.getElementById('logoPreviewWrap').classList.remove('hidden');
         document.getElementById('logoPlaceholder').classList.add('hidden');
     }
@@ -344,7 +345,7 @@ function openViewModal(wl) {
     const logoEl = document.getElementById('viewLogo');
     const logoWrap = document.getElementById('viewLogoWrap');
     if (wl.logo_link) {
-        logoEl.src = wl.logo_link;
+        logoEl.src = _assetBase + wl.logo_link;
         logoWrap.classList.remove('hidden');
     } else {
         logoWrap.classList.add('hidden');

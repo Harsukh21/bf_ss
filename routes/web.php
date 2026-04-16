@@ -362,6 +362,7 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
             Route::post('/proof/{proof}',                     [LabelProofController::class, 'update'])->name('proof.update');
             Route::delete('/proof/{proof}',                   [LabelProofController::class, 'destroy'])->name('proof.destroy');
             Route::get('/proof/{proof}/download',             [LabelProofController::class, 'download'])->name('proof.download');
+            Route::get('/proof/{proof}/preview',              [LabelProofController::class, 'preview'])->name('proof.preview');
             Route::get('/reports',                            [LabelReportsController::class, 'index'])->name('reports');
             Route::get('/reports/create',                     [LabelReportsController::class, 'create'])->name('reports.create');
             Route::post('/reports',                           [LabelReportsController::class, 'store'])->name('reports.store');
