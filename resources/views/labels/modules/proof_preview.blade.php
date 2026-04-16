@@ -86,7 +86,7 @@
 <div class="header">
     <div class="header-left">
         @if($proof->whitelabel?->logo_link)
-            <img src="{{ asset($proof->whitelabel->logo_link) }}" class="header-logo" alt="{{ $proof->whitelabel->name }}">
+            <img src="{{ $proof->whitelabel->logo_link }}" class="header-logo" alt="{{ $proof->whitelabel->name }}">
         @else
             <div class="header-logo-ph">
                 <svg width="26" height="26" fill="none" stroke="rgba(255,255,255,.7)" viewBox="0 0 24 24">
