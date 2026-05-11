@@ -34,6 +34,14 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// Serve storage files without needing a public symlink
+Route::get('/storage/{path}', function (string $path) {
+    $fullPath = storage_path('app/public/' . $path);
+    if (!file_exists($fullPath)) abort(404);
+    $mime = mime_content_type($fullPath) ?: 'application/octet-stream';
+    return response()->file($fullPath, ['Content-Type' => $mime]);
+})->where('path', '.*')->name('storage.file');
+
 // Protected Routes
 Route::middleware(['auth', 'prevent.back'])->group(function () {
     // Dashboard

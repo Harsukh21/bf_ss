@@ -22,155 +22,108 @@
         </button>
     </div>
 
-    {{-- Proof Document Preview --}}
+    {{-- Proof Document Preview (matches PDF layout) --}}
     <div class="rounded-xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700">
 
-        {{-- Document Header --}}
-        <div class="px-6 py-5 flex items-center justify-between"
-             style="background-color: {{ $proof->whitelabel?->color ?? '#0f766e' }};">
-            <div class="flex items-center gap-4">
-                @if($proof->whitelabel?->logo_link)
-                    <img src="{{ $proof->whitelabel->logo_link }}"
-                         class="h-12 w-auto object-contain bg-white rounded-lg p-1.5 max-w-[120px]"
-                         alt="{{ $proof->whitelabel->name }}">
-                @else
-                    <div class="h-12 w-12 rounded-lg bg-white/20 flex items-center justify-center">
-                        <svg class="w-7 h-7 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                    </div>
-                @endif
-                <div>
-                    <h2 class="text-lg font-bold text-white leading-tight">{{ $proof->whitelabel?->name ?? $label->name }}</h2>
-                    @if($proof->proofType)
-                        <p class="text-sm text-white/75">{{ $proof->proofType->name }}</p>
-                    @endif
-                </div>
-            </div>
-            <div class="text-right text-white/80 text-sm space-y-0.5">
-                @if($proof->proof_date)
-                    <div class="font-medium text-white">{{ $proof->proof_date->format('d M Y') }}</div>
-                @endif
-                @if($proof->whatsapp_group)
-                    <div>{{ $proof->whatsapp_group }}</div>
-                @endif
-            </div>
-        </div>
-
-        {{-- Proof Info Grid --}}
-        <div class="bg-white dark:bg-gray-800 px-6 py-4">
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3 text-sm mb-4">
-                @if($proof->whitelabel)
-                <div>
-                    <span class="font-semibold text-gray-700 dark:text-gray-300">Whitelabel: </span>
-                    <span class="text-gray-900 dark:text-gray-100">{{ $proof->whitelabel->name }}</span>
-                </div>
-                @endif
-                @if($proof->sport)
-                <div>
-                    <span class="font-semibold text-gray-700 dark:text-gray-300">Sport: </span>
-                    <span class="text-gray-900 dark:text-gray-100">{{ $proof->sport->name }}</span>
-                </div>
-                @endif
-                @if($proof->agent_name)
-                <div>
-                    <span class="font-semibold text-gray-700 dark:text-gray-300">Agent: </span>
-                    <span class="text-gray-900 dark:text-gray-100">{{ $proof->agent_name }}</span>
-                </div>
-                @endif
-                @if($proof->event_name)
-                <div>
-                    <span class="font-semibold text-gray-700 dark:text-gray-300">Event: </span>
-                    <span class="text-gray-900 dark:text-gray-100 truncate">{{ $proof->event_name }}</span>
-                </div>
-                @endif
-                @if($proof->user_name)
-                <div>
-                    <span class="font-semibold text-gray-700 dark:text-gray-300">User: </span>
-                    <span class="text-gray-900 dark:text-gray-100">{{ $proof->user_name }}</span>
-                </div>
-                @endif
-                @if($proof->market_name)
-                <div>
-                    <span class="font-semibold text-gray-700 dark:text-gray-300">Market: </span>
-                    <span class="text-gray-900 dark:text-gray-100">{{ $proof->market_name }}</span>
-                </div>
-                @endif
-                @if($proof->amount !== null)
-                <div>
-                    <span class="font-semibold text-gray-700 dark:text-gray-300">Amount: </span>
-                    <span class="text-gray-900 dark:text-gray-100 font-mono">{{ number_format($proof->amount, 0) }}</span>
-                </div>
-                @endif
-                @if($proof->profit_loss !== null)
-                <div>
-                    <span class="font-semibold text-gray-700 dark:text-gray-300">P/L: </span>
-                    <span class="font-mono font-semibold @if($proof->profit_loss > 0) text-green-600 @elseif($proof->profit_loss < 0) text-red-600 @else text-gray-900 dark:text-gray-100 @endif">
-                        {{ number_format($proof->profit_loss, 0) }}
-                    </span>
-                </div>
-                @endif
-            </div>
-
-            {{-- Proof Type HTML Content --}}
-            @if($templateHtml)
-            <div class="prose prose-sm max-w-none dark:prose-invert text-sm text-gray-800 dark:text-gray-200 leading-relaxed border-t border-gray-100 dark:border-gray-700 pt-4">
-                {!! $templateHtml !!}
-            </div>
-            @endif
-
-            {{-- Navigation --}}
-            @if($proof->navigation)
-            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Navigation</p>
-                <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ $proof->navigation }}</p>
-            </div>
-            @endif
-
-            {{-- Navigation 2 --}}
-            @if($proof->navigation2)
-            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Navigation 2</p>
-                <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ $proof->navigation2 }}</p>
-            </div>
-            @endif
-
-            {{-- Images --}}
-            @if(!empty($proof->images))
-            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Screenshots</p>
-                <div class="flex flex-wrap gap-2">
-                    @foreach($proof->images as $img)
-                    <a href="{{ asset('storage/' . $img) }}" target="_blank">
-                        <img src="{{ asset('storage/' . $img) }}" class="h-20 w-auto rounded-lg border border-gray-200 dark:border-gray-600 object-cover hover:opacity-80 transition-opacity" alt="Screenshot">
-                    </a>
-                    @endforeach
-                </div>
-            </div>
-            @endif
-
-            {{-- Nav2 Images --}}
-            @if(!empty($proof->navigation2_images))
-            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Navigation 2 Screenshots</p>
-                <div class="flex flex-wrap gap-2">
-                    @foreach($proof->navigation2_images as $img)
-                    <a href="{{ asset('storage/' . $img) }}" target="_blank">
-                        <img src="{{ asset('storage/' . $img) }}" class="h-20 w-auto rounded-lg border border-gray-200 dark:border-gray-600 object-cover hover:opacity-80 transition-opacity" alt="Screenshot">
-                    </a>
-                    @endforeach
-                </div>
-            </div>
+        {{-- Header: dark bg + logo only --}}
+        <div class="px-6 py-4 flex items-center" style="background:#111827;">
+            @if($proof->whitelabel?->logo_link)
+                <img src="{{ $proof->whitelabel->logo_link }}"
+                     class="h-16 w-auto object-contain max-w-[160px]"
+                     alt="{{ $proof->whitelabel->name }}">
+            @else
+                <span class="text-xl font-bold text-white">{{ $proof->whitelabel?->name ?? $label->name }}</span>
             @endif
         </div>
 
-        {{-- Document Footer --}}
-        <div class="px-6 py-3 flex items-center justify-between text-xs text-white/75"
-             style="background-color: {{ $proof->whitelabel?->color ?? '#0f766e' }};">
-            <span>{{ $proof->whitelabel?->domain ?? $label->name }}</span>
-            <span>#{{ $proof->id }}</span>
+        {{-- Info row: 3 columns --}}
+        <div class="bg-white dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-start gap-4">
+                {{-- Left: whitelabel / agent / user --}}
+                <div class="flex-1 text-sm font-bold text-gray-900 dark:text-gray-100 leading-loose">
+                    <div>whitelabel user: {{ $proof->whitelabel?->name ?? '—' }}</div>
+                    <div>Agent: {{ $proof->agent_name ?? '—' }}</div>
+                    <div>User: {{ $proof->user_name ?? '—' }}</div>
+                </div>
+                {{-- Center: Total Amount --}}
+                <div class="flex-1 text-center text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center justify-center">
+                    Total Amount: {{ $proof->amount !== null ? number_format($proof->amount, 0) : '—' }}
+                </div>
+                {{-- Right: sport / event / market --}}
+                <div class="flex-1 text-right text-sm font-bold text-gray-900 dark:text-gray-100 leading-loose">
+                    <div>Sport Name: {{ $proof->sport?->name ?? '—' }}</div>
+                    <div>Event Name: {{ $proof->event_name ?? '—' }}</div>
+                    <div>Market Name: {{ $proof->market_name ?? '—' }}</div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Template HTML content: raw, no wrapper box --}}
+        @if($templateHtml)
+        <div class="bg-white dark:bg-gray-800 px-6 py-5 text-sm text-gray-800 dark:text-gray-200 leading-relaxed proof-content">
+            {!! $templateHtml !!}
+        </div>
+        @endif
+
+        {{-- Navigation --}}
+        @if($proof->navigation)
+        <div class="bg-white dark:bg-gray-800 px-6 pb-4">
+            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Navigation</p>
+            <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap bg-gray-50 dark:bg-gray-700 rounded p-3">{{ $proof->navigation }}</p>
+        </div>
+        @endif
+        @if($proof->navigation2)
+        <div class="bg-white dark:bg-gray-800 px-6 pb-4">
+            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Navigation 2</p>
+            <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap bg-gray-50 dark:bg-gray-700 rounded p-3">{{ $proof->navigation2 }}</p>
+        </div>
+        @endif
+
+        {{-- Images --}}
+        @if(!empty($proof->images))
+        <div class="bg-white dark:bg-gray-800 px-6 pb-4">
+            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Screenshots</p>
+            <div class="flex flex-wrap gap-2">
+                @foreach($proof->images as $img)
+                <a href="{{ asset('storage/' . $img) }}" target="_blank">
+                    <img src="{{ asset('storage/' . $img) }}" class="h-20 w-auto rounded-lg border border-gray-200 dark:border-gray-600 object-cover hover:opacity-80 transition-opacity" alt="Screenshot">
+                </a>
+                @endforeach
+            </div>
+        </div>
+        @endif
+        @if(!empty($proof->navigation2_images))
+        <div class="bg-white dark:bg-gray-800 px-6 pb-4">
+            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Navigation 2 Screenshots</p>
+            <div class="flex flex-wrap gap-2">
+                @foreach($proof->navigation2_images as $img)
+                <a href="{{ asset('storage/' . $img) }}" target="_blank">
+                    <img src="{{ asset('storage/' . $img) }}" class="h-20 w-auto rounded-lg border border-gray-200 dark:border-gray-600 object-cover hover:opacity-80 transition-opacity" alt="Screenshot">
+                </a>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        {{-- Footer: dark bg --}}
+        <div class="px-6 py-3 flex items-center justify-between text-xs" style="background:#111827;">
+            <span style="color:rgba(255,255,255,0.75);">
+                {{ $proof->whitelabel?->domain ?? $label->name }}
+                @if($proof->whatsapp_group) &bull; {{ $proof->whatsapp_group }}@endif
+            </span>
+            <span style="color:rgba(255,255,255,0.75);">
+                {{ now()->format('d M Y') }} &bull; #{{ $proof->id }}
+            </span>
         </div>
     </div>
+
+    <style>
+        .proof-content p   { margin-bottom: 8px; }
+        .proof-content b, .proof-content strong { font-weight: 700; }
+        .proof-content table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+        .proof-content td, .proof-content th { padding: 5px 8px; border: 1px solid #d1d5db; font-size: 12px; }
+        .proof-content th { background: #374151; color: #fff; }
+    </style>
 </div>
 
 {{-- ===== CONFIRM DOWNLOAD MODAL ===== --}}

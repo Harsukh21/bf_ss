@@ -104,25 +104,23 @@
 </head>
 <body class="antialiased font-sans">
     <div class="min-h-screen gradient-bg flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <!-- Background Pattern -->
-        <div class="absolute inset-0 overflow-hidden">
-            <!-- Animated Geometric Shapes -->
-            <div class="absolute top-10 left-10 w-20 h-20 bg-white opacity-20 rounded-lg animate-pulse-slow transform rotate-45"></div>
-            <div class="absolute top-32 right-20 w-16 h-16 bg-white opacity-15 rounded-full animate-bounce-slow"></div>
-            <div class="absolute bottom-20 left-20 w-24 h-24 bg-white opacity-25 transform rotate-12 animate-float"></div>
-            <div class="absolute bottom-32 right-10 w-12 h-12 bg-white opacity-20 rounded-lg animate-spin-slow"></div>
-            <div class="absolute top-1/2 left-1/4 w-8 h-8 bg-white opacity-30 rounded-full animate-pulse"></div>
-            <div class="absolute top-1/3 right-1/3 w-14 h-14 bg-white opacity-20 transform -rotate-45 animate-float-delayed"></div>
-            
-            <!-- Floating Particles -->
-            <div class="absolute top-1/4 left-1/2 w-2 h-2 bg-white opacity-40 rounded-full animate-float-particle-1"></div>
-            <div class="absolute top-3/4 right-1/4 w-1 h-1 bg-white opacity-50 rounded-full animate-float-particle-2"></div>
-            <div class="absolute top-1/2 right-1/2 w-3 h-3 bg-white opacity-30 rounded-full animate-float-particle-3"></div>
-            <div class="absolute bottom-1/4 left-1/3 w-2 h-2 bg-white opacity-40 rounded-full animate-float-particle-4"></div>
-            
-            <!-- Grid Pattern -->
-            <div class="absolute inset-0 opacity-5">
-                <div class="grid-pattern"></div>
+        <!-- Flower clusters: all 5 flowers layered on each other, centred on each corner -->
+        <div class="absolute inset-0 overflow-hidden" aria-hidden="true">
+            <!-- Cluster 1 – top-left corner -->
+            <div class="fl-cluster" id="cl-tl">
+                <img class="fl-c fl-blue_flower" src="{{ asset('assets/img/flowers/blue_flower.png') }}"  alt="">
+                <img class="fl-c fl-blue_leaves"  src="{{ asset('assets/img/flowers/blue_leaves.png') }}" alt="">
+                <img class="fl-c fl-blue_leaf"    src="{{ asset('assets/img/flowers/blue_leaf.png') }}"   alt="">
+                <img class="fl-c fl-red_b"        src="{{ asset('assets/img/flowers/red_flower_b.png') }}" alt="">
+                <img class="fl-c fl-red_a"        src="{{ asset('assets/img/flowers/red_flower_a.png') }}" alt="">
+            </div>
+            <!-- Cluster 2 – bottom-right corner -->
+            <div class="fl-cluster" id="cl-br">
+                <img class="fl-c fl-blue_flower" src="{{ asset('assets/img/flowers/blue_flower.png') }}"  alt="">
+                <img class="fl-c fl-blue_leaves"  src="{{ asset('assets/img/flowers/blue_leaves.png') }}" alt="">
+                <img class="fl-c fl-blue_leaf"    src="{{ asset('assets/img/flowers/blue_leaf.png') }}"   alt="">
+                <img class="fl-c fl-red_b"        src="{{ asset('assets/img/flowers/red_flower_b.png') }}" alt="">
+                <img class="fl-c fl-red_a"        src="{{ asset('assets/img/flowers/red_flower_a.png') }}" alt="">
             </div>
         </div>
 
@@ -171,185 +169,47 @@
         </div>
     </div>
 
-    <!-- Custom Animations -->
     <style>
-        /* Slow pulse animation */
-        .animate-pulse-slow {
-            animation: pulse-slow 4s ease-in-out infinite;
+        /*
+         * Each cluster is a fixed-size box positioned so ~25% hangs off the
+         * corner (the remaining ~75% is visible).  All flower images are
+         * placed at the box centre with  top:50%; left:50%  in CSS.
+         * GSAP adds  xPercent:-50; yPercent:-50  so every image—regardless
+         * of its own width—is centred on the SAME point (the box centre).
+         * GSAP then owns all further transforms (scale, rotation, opacity).
+         */
+        .fl-cluster {
+            position: absolute;
+            width: 420px;
+            height: 420px;
+            pointer-events: none;
         }
+        /* Hang ~25% off each corner so 75% is inside the viewport */
+        #cl-tl { top:    -105px; left:  -105px; }
+        #cl-br { bottom: -105px; right: -105px; }
 
-        @keyframes pulse-slow {
-            0%, 100% {
-                opacity: 0.2;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.4;
-                transform: scale(1.05);
-            }
+        .fl-c {
+            position: absolute;
+            top:  50%;
+            left: 50%;
+            display: block;
         }
+        /* Outer blue layers are biggest; red inner flowers are smallest */
+        .fl-blue_leaf   { width: 380px; }
+        .fl-blue_flower { width: 350px; }
+        .fl-blue_leaves { width: 320px; }
+        .fl-red_b       { width: 180px; }
+        .fl-red_a       { width: 130px; }
 
-        /* Slow bounce animation */
-        .animate-bounce-slow {
-            animation: bounce-slow 3s ease-in-out infinite;
-        }
-
-        @keyframes bounce-slow {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-20px);
-            }
-        }
-
-        /* Floating animation */
-        .animate-float {
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0px) rotate(12deg);
-            }
-            50% {
-                transform: translateY(-15px) rotate(12deg);
-            }
-        }
-
-        /* Delayed floating animation */
-        .animate-float-delayed {
-            animation: float-delayed 8s ease-in-out infinite;
-            animation-delay: 2s;
-        }
-
-        @keyframes float-delayed {
-            0%, 100% {
-                transform: translateY(0px) rotate(-45deg);
-            }
-            50% {
-                transform: translateY(-25px) rotate(-45deg);
-            }
-        }
-
-        /* Slow spin animation */
-        .animate-spin-slow {
-            animation: spin-slow 20s linear infinite;
-        }
-
-        @keyframes spin-slow {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Particle animations */
-        .animate-float-particle-1 {
-            animation: float-particle-1 12s ease-in-out infinite;
-        }
-
-        .animate-float-particle-2 {
-            animation: float-particle-2 10s ease-in-out infinite;
-            animation-delay: 1s;
-        }
-
-        .animate-float-particle-3 {
-            animation: float-particle-3 14s ease-in-out infinite;
-            animation-delay: 2s;
-        }
-
-        .animate-float-particle-4 {
-            animation: float-particle-4 11s ease-in-out infinite;
-            animation-delay: 3s;
-        }
-
-        @keyframes float-particle-1 {
-            0%, 100% {
-                transform: translateY(0px) translateX(0px);
-                opacity: 0.4;
-            }
-            25% {
-                transform: translateY(-30px) translateX(10px);
-                opacity: 0.6;
-            }
-            50% {
-                transform: translateY(-15px) translateX(-5px);
-                opacity: 0.3;
-            }
-            75% {
-                transform: translateY(-40px) translateX(15px);
-                opacity: 0.5;
-            }
-        }
-
-        @keyframes float-particle-2 {
-            0%, 100% {
-                transform: translateY(0px) translateX(0px);
-                opacity: 0.5;
-            }
-            33% {
-                transform: translateY(-25px) translateX(-10px);
-                opacity: 0.7;
-            }
-            66% {
-                transform: translateY(-35px) translateX(5px);
-                opacity: 0.3;
-            }
-        }
-
-        @keyframes float-particle-3 {
-            0%, 100% {
-                transform: translateY(0px) translateX(0px);
-                opacity: 0.3;
-            }
-            20% {
-                transform: translateY(-20px) translateX(8px);
-                opacity: 0.5;
-            }
-            40% {
-                transform: translateY(-40px) translateX(-12px);
-                opacity: 0.4;
-            }
-            60% {
-                transform: translateY(-25px) translateX(6px);
-                opacity: 0.6;
-            }
-            80% {
-                transform: translateY(-35px) translateX(-8px);
-                opacity: 0.3;
-            }
-        }
-
-        @keyframes float-particle-4 {
-            0%, 100% {
-                transform: translateY(0px) translateX(0px);
-                opacity: 0.4;
-            }
-            50% {
-                transform: translateY(-30px) translateX(12px);
-                opacity: 0.6;
-            }
-        }
-
-        /* Grid pattern */
-        .grid-pattern {
-            background-image: 
-                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: grid-move 20s linear infinite;
-        }
-
-        @keyframes grid-move {
-            0% {
-                background-position: 0 0;
-            }
-            100% {
-                background-position: 50px 50px;
-            }
+        @media (max-width: 900px) {
+            .fl-cluster     { width: 280px; height: 280px; }
+            #cl-tl          { top: -70px;  left:  -70px;  }
+            #cl-br          { bottom: -70px; right: -70px; }
+            .fl-blue_leaf   { width: 250px; }
+            .fl-blue_flower { width: 230px; }
+            .fl-blue_leaves { width: 210px; }
+            .fl-red_b       { width: 120px; }
+            .fl-red_a       { width:  90px; }
         }
     </style>
 
@@ -601,6 +461,62 @@
         } catch (error) {
             console.warn('Auth JavaScript error:', error);
         }
+    </script>
+
+    <!-- GSAP for flower cluster animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        /*
+         * Layer config: each flower class, its spin direction and speed.
+         * All flowers share the same cluster centre — CSS puts them at
+         * top:50%;left:50% and GSAP shifts them xPercent:-50,yPercent:-50
+         * so every image (regardless of width) centres on the same point.
+         */
+        var layers = [
+            { cls: '.fl-blue_leaf',   dir:  1, dur: 18 },
+            { cls: '.fl-blue_flower', dir: -1, dur: 15 },
+            { cls: '.fl-blue_leaves', dir:  1, dur: 12 },
+            { cls: '.fl-red_b',       dir: -1, dur: 14 },
+            { cls: '.fl-red_a',       dir:  1, dur: 10 },
+        ];
+
+        /* 1. Set initial state for every flower image */
+        document.querySelectorAll('.fl-c').forEach(function (el) {
+            gsap.set(el, {
+                xPercent: -50,   /* centres on the CSS top:50%;left:50% anchor */
+                yPercent: -50,
+                scale: 0,
+                opacity: 0,
+                transformOrigin: '50% 50%'
+            });
+        });
+
+        /* 2. Animate each cluster (both #cl-tl and #cl-br) */
+        document.querySelectorAll('.fl-cluster').forEach(function (cluster, ci) {
+            layers.forEach(function (layer, li) {
+                var el = cluster.querySelector(layer.cls);
+                if (!el) return;
+
+                /* Pop-in with spring ease, staggered per cluster + per layer */
+                gsap.to(el, {
+                    scale: 1,
+                    opacity: 0.94,
+                    duration: 0.8,
+                    delay: 0.15 + ci * 0.25 + li * 0.12,
+                    ease: 'back.out(1.7)',
+                    onComplete: function () {
+                        gsap.to(el, {
+                            rotation: layer.dir * 360,
+                            repeat: -1,
+                            ease: 'none',
+                            duration: layer.dur
+                        });
+                    }
+                });
+            });
+        });
+    });
     </script>
 
     @stack('scripts')
