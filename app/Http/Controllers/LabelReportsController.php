@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Label;
+use App\Models\LabelProof;
 use App\Models\LabelReport;
 use App\Models\LabelProofType;
 use App\Models\LabelSport;
@@ -123,6 +124,50 @@ class LabelReportsController extends Controller
 
         return redirect()->route('labels.reports', $label)
             ->with('success', 'Report record updated successfully.');
+    }
+
+    public function storeFromProof(Request $request, Label $label, LabelProof $proof)
+    {
+        abort_if($proof->label_id !== $label->id, 404);
+
+        $request->validate([
+            'before_void_balance' => 'nullable|numeric',
+            'after_void_balance'  => 'nullable|numeric',
+            'catch_by'            => 'nullable|string|max:255',
+            'void_status'         => 'nullable|string|max:50',
+            'remark'              => 'nullable|string',
+        ]);
+
+        $originals = [];
+        if ($proof->sport || $proof->event_name || $proof->market_name) {
+            $originals[] = [
+                'sport_name'  => $proof->sport?->name ?? '',
+                'event_name'  => $proof->event_name ?? '',
+                'market_name' => $proof->market_name ?? '',
+                'pl'          => $proof->profit_loss !== null ? (float) $proof->profit_loss : null,
+                'bet_details' => [],
+            ];
+        }
+
+        LabelReport::create([
+            'label_id'            => $label->id,
+            'report_date'         => $proof->proof_date,
+            'user_name'           => $proof->user_name,
+            'agent'               => $proof->agent_name,
+            'origin'              => $proof->whitelabel?->name,
+            'proof_type_id'       => $proof->proof_type_id,
+            'proof_status'        => $proof->status ?? 'submitted',
+            'void_status'         => $request->void_status,
+            'remark'              => $request->remark,
+            'catch_by'            => $request->catch_by,
+            'before_void_balance' => $request->before_void_balance,
+            'after_void_balance'  => $request->after_void_balance,
+            'originals'           => $originals,
+            'created_by'          => auth()->id(),
+        ]);
+
+        return redirect()->route('labels.reports', $label)
+            ->with('success', 'Report created from proof #' . $proof->id . ' successfully.');
     }
 
     public function destroy(Label $label, LabelReport $report)

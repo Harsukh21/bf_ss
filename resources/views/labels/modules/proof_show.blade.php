@@ -20,6 +20,11 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             Download PDF
         </button>
+        <button onclick="openReportModal()"
+            class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Add to Report
+        </button>
     </div>
 
     {{-- Proof Document Preview (matches PDF layout) --}}
@@ -126,6 +131,77 @@
     </style>
 </div>
 
+{{-- ===== ADD TO REPORT MODAL ===== --}}
+<div id="reportOverlay" class="fixed inset-0 bg-black/50 z-[900] hidden items-center justify-center" onclick="if(event.target===this)closeReportModal()">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Add Proof to Report</h3>
+            <button onclick="closeReportModal()" class="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        {{-- Pre-filled summary --}}
+        <div class="px-5 pt-4 pb-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 space-y-1">
+            <div><span class="font-semibold">User:</span> {{ $proof->user_name ?? '—' }}</div>
+            <div><span class="font-semibold">Agent:</span> {{ $proof->agent_name ?? '—' }}</div>
+            <div><span class="font-semibold">Origin:</span> {{ $proof->whitelabel?->name ?? '—' }}</div>
+            <div><span class="font-semibold">Date:</span> {{ $proof->proof_date?->format('d M Y') ?? '—' }}</div>
+            <div><span class="font-semibold">Amount:</span> {{ $proof->amount !== null ? number_format($proof->amount, 0) : '—' }}</div>
+        </div>
+
+        <form method="POST" action="{{ route('labels.proof.addToReport', [$label, $proof]) }}">
+            @csrf
+            <div class="px-5 py-4 space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Before Void Balance</label>
+                        <input type="number" step="0.01" name="before_void_balance" placeholder="0.00"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">After Void Balance</label>
+                        <input type="number" step="0.01" name="after_void_balance" placeholder="0.00"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Catch By</label>
+                    <input type="text" name="catch_by" placeholder="Enter name..."
+                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Void Status</label>
+                    <select name="void_status" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="">— Select —</option>
+                        <option value="voided">Voided</option>
+                        <option value="not_voided">Not Voided</option>
+                        <option value="partial">Partial</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Remark</label>
+                    <textarea name="remark" rows="2" placeholder="Optional remark..."
+                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"></textarea>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 px-5 pb-5 pt-1">
+                <button type="submit"
+                    class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Add to Report
+                </button>
+                <button type="button" onclick="closeReportModal()"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 {{-- ===== CONFIRM DOWNLOAD MODAL ===== --}}
 <div id="downloadOverlay" class="fixed inset-0 bg-black/50 z-[900] hidden items-center justify-center" onclick="if(event.target===this)closeDownloadModal()">
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm mx-4 overflow-hidden">
@@ -167,6 +243,18 @@
 
 @push('js')
 <script>
+function openReportModal() {
+    const overlay = document.getElementById('reportOverlay');
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+function closeReportModal() {
+    const overlay = document.getElementById('reportOverlay');
+    overlay.classList.add('hidden');
+    overlay.classList.remove('flex');
+    document.body.style.overflow = '';
+}
 function openDownloadModal() {
     const overlay = document.getElementById('downloadOverlay');
     overlay.classList.remove('hidden');
