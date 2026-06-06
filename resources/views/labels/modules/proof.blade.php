@@ -261,6 +261,13 @@
             </svg>
             Download PDF
         </button>
+        <button onclick="openReportFromPreview()"
+            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors whitespace-nowrap">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Add to Report
+        </button>
     </div>
 
     {{-- Preview iframe --}}
@@ -268,6 +275,74 @@
         <div class="bg-white shadow-2xl w-full max-w-3xl rounded-lg overflow-hidden">
             <iframe id="previewFrame" src="" style="width:100%;height:85vh;border:none;display:block;"></iframe>
         </div>
+    </div>
+</div>
+
+{{-- ========= ADD TO REPORT SUB-MODAL ========= --}}
+<div id="addToReportModal" class="fixed inset-0 z-[960] hidden items-center justify-center bg-black/60" onclick="if(event.target===this)closeReportFromPreview()">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Add Proof to Report</h3>
+            <button onclick="closeReportFromPreview()" class="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        {{-- Pre-filled summary --}}
+        <div id="rp-summary" class="px-5 pt-3 pb-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 space-y-1">
+            <div><span class="font-semibold">User:</span> <span id="rp-user"></span></div>
+            <div><span class="font-semibold">Agent:</span> <span id="rp-agent"></span></div>
+            <div><span class="font-semibold">Date:</span> <span id="rp-date"></span></div>
+            <div><span class="font-semibold">Amount:</span> <span id="rp-amount"></span></div>
+        </div>
+        <form id="addToReportForm" method="POST" action="">
+            @csrf
+            <div class="px-5 py-4 space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Before Void Balance</label>
+                        <input type="number" step="0.01" name="before_void_balance" id="rpBeforeBalance" placeholder="0.00"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">After Void Balance</label>
+                        <input type="number" step="0.01" name="after_void_balance" id="rpAfterBalance" placeholder="0.00"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Catch By</label>
+                    <input type="text" name="catch_by" id="rpCatchBy" placeholder="Enter name..."
+                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Void Status</label>
+                    <select name="void_status" id="rpVoidStatus" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="">— Select —</option>
+                        <option value="voided">Voided</option>
+                        <option value="not_voided">Not Voided</option>
+                        <option value="partial">Partial</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Remark</label>
+                    <textarea name="remark" id="rpRemark" rows="2" placeholder="Optional remark..."
+                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"></textarea>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 px-5 pb-5 pt-1">
+                <button type="submit"
+                    class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Add to Report
+                </button>
+                <button type="button" onclick="closeReportFromPreview()"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -396,8 +471,9 @@
 <script>
 // ===== Preview + Download =====
 var _dlProof = null;
-var _previewBaseUrls  = @json($proofs->mapWithKeys(fn($p) => [$p->id => route('labels.proof.preview',  [$label, $p])]));
-var _downloadBaseUrls = @json($proofs->mapWithKeys(fn($p) => [$p->id => route('labels.proof.download', [$label, $p])]));
+var _previewBaseUrls    = @json($proofs->mapWithKeys(fn($p) => [$p->id => route('labels.proof.preview',  [$label, $p])]));
+var _downloadBaseUrls   = @json($proofs->mapWithKeys(fn($p) => [$p->id => route('labels.proof.download', [$label, $p])]));
+var _addToReportUrls    = @json($proofs->mapWithKeys(fn($p) => [$p->id => route('labels.proof.addToReport', [$label, $p])]));
 var _refreshTimer = null;
 
 function openDownloadModal(proof) {
@@ -446,6 +522,29 @@ function submitDownload() {
         + '?proof_maker=' + encodeURIComponent(maker)
         + '&whatsapp_group=' + encodeURIComponent(wa);
     window.location.href = url;
+}
+
+// ===== Add to Report (from preview) =====
+function openReportFromPreview() {
+    if (!_dlProof) return;
+    document.getElementById('rp-user').textContent   = _dlProof.user_name  || '—';
+    document.getElementById('rp-agent').textContent  = _dlProof.agent_name || '—';
+    document.getElementById('rp-date').textContent   = _dlProof.proof_date || '—';
+    document.getElementById('rp-amount').textContent = _dlProof.amount !== null ? Number(_dlProof.amount).toLocaleString() : '—';
+    document.getElementById('rpBeforeBalance').value = '';
+    document.getElementById('rpAfterBalance').value  = '';
+    document.getElementById('rpCatchBy').value       = '';
+    document.getElementById('rpVoidStatus').value    = '';
+    document.getElementById('rpRemark').value        = '';
+    document.getElementById('addToReportForm').action = _addToReportUrls[_dlProof.id];
+    const modal = document.getElementById('addToReportModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+function closeReportFromPreview() {
+    const modal = document.getElementById('addToReportModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
 }
 
 // ===== Filter panel =====
