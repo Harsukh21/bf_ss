@@ -367,7 +367,7 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
             Route::post('/proof',                             [LabelProofController::class, 'store'])->name('proof.store');
             Route::get('/proof/{proof}',                      [LabelProofController::class, 'show'])->name('proof.show');
             Route::get('/proof/{proof}/edit',                 [LabelProofController::class, 'edit'])->name('proof.edit');
-            Route::post('/proof/{proof}',                     [LabelProofController::class, 'update'])->name('proof.update');
+            Route::match(['POST','PUT','PATCH'], '/proof/{proof}', [LabelProofController::class, 'update'])->name('proof.update');
             Route::delete('/proof/{proof}',                   [LabelProofController::class, 'destroy'])->name('proof.destroy');
             Route::get('/proof/{proof}/download',             [LabelProofController::class, 'download'])->name('proof.download');
             Route::get('/proof/{proof}/preview',              [LabelProofController::class, 'preview'])->name('proof.preview');
@@ -376,7 +376,7 @@ Route::middleware(['auth', 'prevent.back'])->group(function () {
             Route::post('/reports',                           [LabelReportsController::class, 'store'])->name('reports.store');
             Route::get('/reports/export',                     [LabelReportsController::class, 'export'])->name('reports.export');
             Route::get('/reports/{report}/edit',              [LabelReportsController::class, 'edit'])->name('reports.edit');
-            Route::post('/reports/{report}',                  [LabelReportsController::class, 'update'])->name('reports.update');
+            Route::match(['POST','PUT','PATCH'], '/reports/{report}', [LabelReportsController::class, 'update'])->name('reports.update');
             Route::delete('/reports/{report}',                [LabelReportsController::class, 'destroy'])->name('reports.destroy');
             Route::get('/notes',                              [LabelNotesController::class, 'index'])->name('notes');
             Route::post('/notes',                             [LabelNotesController::class, 'store'])->name('notes.store');
