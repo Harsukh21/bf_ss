@@ -106,6 +106,27 @@ body {
     color: #374151;
 }
 
+/* ── SCREENSHOTS ───────────────────────────────────── */
+.img-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 28px 4px;
+}
+.img-grid {
+    margin: 0 28px 12px;
+    width: calc(100% - 56px);
+}
+.img-grid img {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 8px;
+    border: 1px solid #e5e7eb;
+    display: block;
+}
+
 /* ── FOOTER ────────────────────────────────────────── */
 .ftr { background: #111827; padding: 8px 28px; margin-top: 20px; width: 100%; }
 .ftr-tbl { width: 100%; border-collapse: collapse; }
@@ -157,6 +178,25 @@ body {
 @if($proof->navigation2)
 <div class="nav-title">Navigation 2</div>
 <div class="nav-box">{{ $proof->navigation2 }}</div>
+@endif
+
+{{-- ── SCREENSHOTS ── --}}
+@if(!empty($proof->images))
+<div class="img-title">Screenshots</div>
+<div class="img-grid">
+    @foreach($proof->images as $img)
+    <img src="{{ public_path('storage/' . $img) }}" alt="Screenshot">
+    @endforeach
+</div>
+@endif
+
+@if(!empty($proof->navigation2_images))
+<div class="img-title">Navigation 2 Screenshots</div>
+<div class="img-grid">
+    @foreach($proof->navigation2_images as $img)
+    <img src="{{ public_path('storage/' . $img) }}" alt="Screenshot">
+    @endforeach
+</div>
 @endif
 
 {{-- ── FOOTER ── --}}
