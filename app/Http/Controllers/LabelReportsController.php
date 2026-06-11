@@ -131,37 +131,35 @@ class LabelReportsController extends Controller
         abort_if($proof->label_id !== $label->id, 404);
 
         $request->validate([
+            'report_date'         => 'nullable|date',
+            'user_name'           => 'nullable|string|max:255',
+            'agent'               => 'nullable|string|max:255',
+            'origin'              => 'nullable|string|max:255',
             'before_void_balance' => 'nullable|numeric',
             'after_void_balance'  => 'nullable|numeric',
             'catch_by'            => 'nullable|string|max:255',
+            'proof_type_id'       => 'nullable|exists:label_proof_types,id',
+            'proof_status'        => 'nullable|string|max:50',
             'void_status'         => 'nullable|string|max:50',
             'remark'              => 'nullable|string',
+            'originals'           => 'nullable|array',
         ]);
 
-        $originals = [];
-        if ($proof->sport || $proof->event_name || $proof->market_name) {
-            $originals[] = [
-                'sport_name'  => $proof->sport?->name ?? '',
-                'event_name'  => $proof->event_name ?? '',
-                'market_name' => $proof->market_name ?? '',
-                'pl'          => $proof->profit_loss !== null ? (float) $proof->profit_loss : null,
-                'bet_details' => [],
-            ];
-        }
+        $originals = $this->buildOriginals($request);
 
         LabelReport::create([
             'label_id'            => $label->id,
-            'report_date'         => $proof->proof_date,
-            'user_name'           => $proof->user_name,
-            'agent'               => $proof->agent_name,
-            'origin'              => $proof->whitelabel?->name,
-            'proof_type_id'       => $proof->proof_type_id,
-            'proof_status'        => $proof->status ?? 'submitted',
-            'void_status'         => $request->void_status,
-            'remark'              => $request->remark,
-            'catch_by'            => $request->catch_by,
+            'report_date'         => $request->report_date ?: $proof->proof_date,
+            'user_name'           => $request->user_name ?? $proof->user_name,
+            'agent'               => $request->agent ?? $proof->agent_name,
+            'origin'              => $request->origin ?? $proof->whitelabel?->name,
             'before_void_balance' => $request->before_void_balance,
             'after_void_balance'  => $request->after_void_balance,
+            'catch_by'            => $request->catch_by,
+            'proof_type_id'       => $request->proof_type_id ?: $proof->proof_type_id,
+            'proof_status'        => $request->proof_status ?: ($proof->status ?? 'submitted'),
+            'void_status'         => $request->void_status,
+            'remark'              => $request->remark,
             'originals'           => $originals,
             'created_by'          => auth()->id(),
         ]);

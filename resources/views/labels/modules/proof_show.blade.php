@@ -131,74 +131,217 @@
     </style>
 </div>
 
-{{-- ===== ADD TO REPORT MODAL ===== --}}
-<div id="reportOverlay" class="fixed inset-0 bg-black/50 z-[900] hidden items-center justify-center" onclick="if(event.target===this)closeReportModal()">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
-        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Add Proof to Report</h3>
+{{-- ===== ADD TO REPORT MODAL (full form) ===== --}}
+<div id="reportOverlay" class="fixed inset-0 bg-black/50 z-[900] hidden items-center justify-center p-4" onclick="if(event.target===this)closeReportModal()">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-3xl mx-auto overflow-hidden flex flex-col" style="max-height:90vh;">
+
+        {{-- Header --}}
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Add to Report</h3>
             <button onclick="closeReportModal()" class="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
 
-        {{-- Pre-filled summary --}}
-        <div class="px-5 pt-4 pb-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 space-y-1">
-            <div><span class="font-semibold">User:</span> {{ $proof->user_name ?? '—' }}</div>
-            <div><span class="font-semibold">Agent:</span> {{ $proof->agent_name ?? '—' }}</div>
-            <div><span class="font-semibold">Origin:</span> {{ $proof->whitelabel?->name ?? '—' }}</div>
-            <div><span class="font-semibold">Date:</span> {{ $proof->proof_date?->format('d M Y') ?? '—' }}</div>
-            <div><span class="font-semibold">Amount:</span> {{ $proof->amount !== null ? number_format($proof->amount, 0) : '—' }}</div>
-        </div>
+        {{-- Scrollable body --}}
+        <div class="overflow-y-auto flex-1">
+            <form method="POST" action="{{ route('labels.proof.addToReport', [$label, $proof]) }}" novalidate>
+                @csrf
+                <div class="px-5 py-4 space-y-4">
 
-        <form method="POST" action="{{ route('labels.proof.addToReport', [$label, $proof]) }}">
-            @csrf
-            <div class="px-5 py-4 space-y-3">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Before Void Balance</label>
-                        <input type="number" step="0.01" name="before_void_balance" placeholder="0.00"
-                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    {{-- Row 1: Date / User Name --}}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+                            <input type="date" name="report_date"
+                                value="{{ $proof->proof_date?->format('Y-m-d') ?? now()->format('Y-m-d') }}"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">User Name</label>
+                            <input type="text" name="user_name" value="{{ $proof->user_name }}" placeholder="Enter User Name"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
                     </div>
+
+                    {{-- Row 2: Agent / Origin --}}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Agent</label>
+                            <input type="text" name="agent" value="{{ $proof->agent_name }}" placeholder="Enter Agent"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Origin</label>
+                            <input type="text" name="origin" value="{{ $proof->whitelabel?->name }}" placeholder="Enter Origin"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                    </div>
+
+                    {{-- Row 3: Before / After Void Balance --}}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Before Void Balance</label>
+                            <input type="number" step="0.01" name="before_void_balance" placeholder="0.00"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">After Void Balance</label>
+                            <input type="number" step="0.01" name="after_void_balance" placeholder="0.00"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                    </div>
+
+                    {{-- Row 4: Catch By / Proof Type --}}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catch By</label>
+                            <select name="catch_by"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <option value="">Select Catch By</option>
+                                <option value="Self">Self</option>
+                                <option value="Agent">Agent</option>
+                                <option value="System">System</option>
+                                <option value="Risk Team">Risk Team</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Proof Type</label>
+                            <select name="proof_type_id"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <option value="">Select Proof Type</option>
+                                @foreach($proofTypes as $pt)
+                                    <option value="{{ $pt->id }}" @selected($proof->proof_type_id == $pt->id)>{{ $pt->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- Row 5: Proof Status / Void Status --}}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Proof Status</label>
+                            <select name="proof_status"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <option value="submitted" @selected(($proof->status ?? 'submitted') === 'submitted')>Submitted</option>
+                                <option value="approved" @selected(($proof->status ?? '') === 'approved')>Approved</option>
+                                <option value="rejected" @selected(($proof->status ?? '') === 'rejected')>Rejected</option>
+                                <option value="pending" @selected(($proof->status ?? '') === 'pending')>Pending</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Void Status</label>
+                            <select name="void_status"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <option value="">— Select —</option>
+                                <option value="Void">Void</option>
+                                <option value="Not Void">Not Void</option>
+                                <option value="Partial Void">Partial Void</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- Remark --}}
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">After Void Balance</label>
-                        <input type="number" step="0.01" name="after_void_balance" placeholder="0.00"
-                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remark</label>
+                        <input type="text" name="remark" placeholder="Enter Remark"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+
+                    {{-- Originals --}}
+                    <div class="pt-2">
+                        <h2 class="text-base font-bold text-gray-900 dark:text-gray-100 mb-3">Originals</h2>
+
+                        <div id="rptOriginalsContainer" class="space-y-4">
+                            {{-- Initial original pre-filled from proof --}}
+                            <div class="original-card border border-gray-200 dark:border-gray-600 rounded-xl p-4 bg-gray-50 dark:bg-gray-800/50">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Original <span class="orig-num">1</span></h3>
+                                    <button type="button" onclick="rptRemoveOriginal(this)" class="p-1 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-4 gap-3 mb-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Sport Name</label>
+                                        <select name="originals[0][sport_name]"
+                                            class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500">
+                                            <option value="">Select Sport</option>
+                                            @foreach($sports as $sp)
+                                                <option value="{{ $sp->name }}" @selected($proof->sport?->name === $sp->name)>{{ $sp->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Event Name</label>
+                                        <input type="text" name="originals[0][event_name]" value="{{ $proof->event_name }}" placeholder="Enter Event Name"
+                                            class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Market Name</label>
+                                        <input type="text" name="originals[0][market_name]" value="{{ $proof->market_name }}" placeholder="Enter Market Name"
+                                            class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">P&amp;L</label>
+                                        <input type="number" step="0.01" name="originals[0][pl]" value="{{ $proof->profit_loss }}"
+                                            class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Bet Details</p>
+                                    <div class="bet-details-container space-y-2">
+                                        <div class="bet-detail-row grid grid-cols-3 gap-3">
+                                            <div>
+                                                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Odds</label>
+                                                <input type="number" step="0.01" name="originals[0][bet_details][0][odds]"
+                                                    class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Stack</label>
+                                                <input type="number" step="0.01" name="originals[0][bet_details][0][stack]"
+                                                    class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Time</label>
+                                                <input type="text" name="originals[0][bet_details][0][time]" placeholder="HH:MM:SS"
+                                                    class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="rptAddBetDetail(this)"
+                                        class="mt-2 text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                        Add Bet Detail
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="rptAddOriginal()"
+                            class="mt-3 text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            + Add Original
+                        </button>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Catch By</label>
-                    <input type="text" name="catch_by" placeholder="Enter name..."
-                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+
+                {{-- Footer --}}
+                <div class="flex items-center gap-3 px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex-shrink-0">
+                    <button type="submit"
+                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Create Report
+                    </button>
+                    <button type="button" onclick="closeReportModal()"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                        Cancel
+                    </button>
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Void Status</label>
-                    <select name="void_status" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                        <option value="">— Select —</option>
-                        <option value="voided">Voided</option>
-                        <option value="not_voided">Not Voided</option>
-                        <option value="partial">Partial</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Remark</label>
-                    <textarea name="remark" rows="2" placeholder="Optional remark..."
-                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"></textarea>
-                </div>
-            </div>
-            <div class="flex items-center gap-3 px-5 pb-5 pt-1">
-                <button type="submit"
-                    class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    Add to Report
-                </button>
-                <button type="button" onclick="closeReportModal()"
-                    class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                    Cancel
-                </button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -243,6 +386,100 @@
 
 @push('js')
 <script>
+// ── Report modal originals ──────────────────────────────
+let rptOrigIndex = 1;
+const rptSportsData = @json($sports->pluck('name'));
+
+function rptBuildSportsOptions(selected) {
+    let html = '<option value="">Select Sport</option>';
+    rptSportsData.forEach(name => {
+        html += `<option value="${name}"${name === selected ? ' selected' : ''}>${name}</option>`;
+    });
+    return html;
+}
+
+function rptAddOriginal() {
+    const container = document.getElementById('rptOriginalsContainer');
+    const oi = rptOrigIndex;
+    const card = document.createElement('div');
+    card.className = 'original-card border border-gray-200 dark:border-gray-600 rounded-xl p-4 bg-gray-50 dark:bg-gray-800/50';
+    card.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Original <span class="orig-num">${oi + 1}</span></h3>
+            <button type="button" onclick="rptRemoveOriginal(this)" class="p-1 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+        </div>
+        <div class="grid grid-cols-4 gap-3 mb-3">
+            <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Sport Name</label>
+                <select name="originals[${oi}][sport_name]" class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500">
+                    ${rptBuildSportsOptions('')}
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Event Name</label>
+                <input type="text" name="originals[${oi}][event_name]" placeholder="Enter Event Name" class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Market Name</label>
+                <input type="text" name="originals[${oi}][market_name]" placeholder="Enter Market Name" class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">P&amp;L</label>
+                <input type="number" step="0.01" name="originals[${oi}][pl]" class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500">
+            </div>
+        </div>
+        <div>
+            <p class="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Bet Details</p>
+            <div class="bet-details-container space-y-2">
+                <div class="bet-detail-row grid grid-cols-3 gap-3">
+                    <div><label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Odds</label><input type="number" step="0.01" name="originals[${oi}][bet_details][0][odds]" class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500"></div>
+                    <div><label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Stack</label><input type="number" step="0.01" name="originals[${oi}][bet_details][0][stack]" class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500"></div>
+                    <div><label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Time</label><input type="text" name="originals[${oi}][bet_details][0][time]" placeholder="HH:MM:SS" class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500"></div>
+                </div>
+            </div>
+            <button type="button" onclick="rptAddBetDetail(this)" class="mt-2 text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Add Bet Detail
+            </button>
+        </div>
+    `;
+    container.appendChild(card);
+    rptOrigIndex++;
+    rptRenumberOriginals();
+}
+
+function rptRemoveOriginal(btn) {
+    btn.closest('.original-card').remove();
+    rptRenumberOriginals();
+}
+
+function rptRenumberOriginals() {
+    document.querySelectorAll('#rptOriginalsContainer .original-card').forEach((card, i) => {
+        card.querySelector('.orig-num').textContent = i + 1;
+        card.querySelectorAll('[name]').forEach(el => {
+            el.name = el.name.replace(/originals\[\d+\]/, `originals[${i}]`);
+        });
+    });
+}
+
+function rptAddBetDetail(btn) {
+    const card = btn.closest('.original-card');
+    const betContainer = card.querySelector('.bet-details-container');
+    const oi = card.querySelectorAll('[name]')[0]?.name.match(/originals\[(\d+)\]/)?.[1] ?? 0;
+    const bi = betContainer.querySelectorAll('.bet-detail-row').length;
+    const row = document.createElement('div');
+    row.className = 'bet-detail-row grid grid-cols-3 gap-3 relative';
+    row.innerHTML = `
+        <div><label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Odds</label><input type="number" step="0.01" name="originals[${oi}][bet_details][${bi}][odds]" class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500"></div>
+        <div><label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Stack</label><input type="number" step="0.01" name="originals[${oi}][bet_details][${bi}][stack]" class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500"></div>
+        <div class="relative"><label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Time</label><input type="text" name="originals[${oi}][bet_details][${bi}][time]" placeholder="HH:MM:SS" class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary-500"><button type="button" onclick="this.closest('.bet-detail-row').remove()" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs leading-none">×</button></div>
+    `;
+    betContainer.appendChild(row);
+}
+
+// ── Modal open/close ────────────────────────────────────
 function openReportModal() {
     const overlay = document.getElementById('reportOverlay');
     overlay.classList.remove('hidden');

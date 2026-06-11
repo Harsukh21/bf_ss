@@ -106,8 +106,10 @@ class LabelProofController extends Controller
         $proof->load(['whitelabel', 'proofType', 'sport']);
 
         $templateHtml = $this->applyPlaceholders($proof->proofType?->description ?? '', $proof);
+        $proofTypes   = LabelProofType::where('label_id', $label->id)->orderBy('name')->get();
+        $sports       = LabelSport::where('label_id', $label->id)->orderBy('name')->get();
 
-        return view('labels.modules.proof_show', compact('label', 'proof', 'templateHtml'));
+        return view('labels.modules.proof_show', compact('label', 'proof', 'templateHtml', 'proofTypes', 'sports'));
     }
 
     public function edit(Label $label, LabelProof $proof)
